@@ -1,54 +1,49 @@
 <!DOCTYPE html>
-<html >
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>clock with moment.js & jquery</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.1.0/moment.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <meta charset="UTF-8">
+    <title>datetime</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+    <style>
+        /* NOTE: The styles were added inline because Prefixfree needs access to your styles and they must be inlined if they are on local disk! */
 
-  <link rel='stylesheet prefetch' href='http://gabrielw.de/dev/_storage/liquidcrystal/liquidcrystal.css'>
+        body {
+            font-family: "Century Gothic", CenturyGothic, sans-serif;
+            user-select: none;
+            user-drag: none;
+            font-size: 100px;
+            background-color: transparent;
+            overflow: hidden;
+        }
 
-      <style>
-      /* NOTE: The styles were added inline because Prefixfree needs access to your styles and they must be inlined if they are on local disk! */
-      body {
-  font-family: "Century Gothic", CenturyGothic, sans-serif;
-  user-select: none;
-  user-drag: none;
-  font-size: 100px;
-  background-color: transparent;
-  overflow: hidden;
-}
+        .ap {
+            font-size: 30%;
+        }
 
-.ap {
-  font-size: 30%;
-}
+        .day {
+            padding-left: 10px;
+            font-size: 80%;
+            float: left;
+        }
 
-.day {
-  padding-left: 10px;
-  font-size: 80%;
-  float: left;
-}
+        .monthday {
+            padding-top: 6px;
+            padding-left: 110px;
+            font-size: 35%;
+        }
 
-.monthday {
-  padding-top: 6px;
-  padding-left: 110px;
-  font-size: 35%;
-}
-
-.clock {
-  color: #eee;
-}
+        .clock {
+            color: #eee;
+        }
     </style>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js"></script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prefixfree/1.0.7/prefixfree.min.js"></script>
 </head>
 
 <body>
-  <div id="clock" class="clock">loading ...</div>
-  
+    <div id="clock" class="clock">loading ...</div>
     <script src="js/index.js"></script>
-
 </body>
+
 </html>
