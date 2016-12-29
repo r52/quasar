@@ -1,0 +1,1 @@
+A simple sample date/time widget
