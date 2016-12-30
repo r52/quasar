@@ -79,6 +79,9 @@ private:
     QString getWidgetConfigKey(QString key);
 
 private:
+    // Web engine widget
+    QWebEngineView *webview;
+
     // Widget data
     QJsonObject data;
 
@@ -86,6 +89,7 @@ private:
     QPoint oldPos;
     
     // Menu actions
-    QAction* rName;
+    QAction *rName;
+    QAction *rReload;
     QAction *rClose;
 };

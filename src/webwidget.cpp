@@ -9,12 +9,10 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     // Copy data
     data = dat;
 
-    createContextMenuActions();
-
     // No frame/border, no taskbar button
     setWindowFlags(Qt::FramelessWindowHint | Qt::SubWindow);
 
-    QWebEngineView *webview = new QWebEngineView(this);
+    webview = new QWebEngineView(this);
 
     QString startFilePath = QFileInfo(data[WGT_DEF_FULLPATH].toString()).canonicalPath().append("/");
     QUrl startFile = QUrl::fromLocalFile(startFilePath.append(data[WGT_DEF_STARTFILE].toString()));
@@ -32,6 +30,9 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
 
     // Overlay for catching drag and drop events
     OverlayWidget *overlay = new OverlayWidget(this);
+
+    // Create context menu
+    createContextMenuActions();
 
     QSettings settings(STATE_CFG_FILENAME, QSettings::IniFormat);
     restoreGeometry(settings.value(getWidgetConfigKey("geometry")).toByteArray());
@@ -63,7 +64,10 @@ void WebWidget::createContextMenuActions()
     rName = new QAction(data[WGT_DEF_NAME].toString());
     rName->font().setBold(true);
 
-    rClose = new QAction(tr("Close"), this);
+    rReload = new QAction(tr("&Reload"), this);
+    connect(rReload, &QAction::triggered, webview, &QWebEngineView::reload);
+
+    rClose = new QAction(tr("&Close"), this);
     connect(rClose, &QAction::triggered, this, &WebWidget::close);
 }
 
@@ -83,6 +87,7 @@ void WebWidget::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu menu(this);
     menu.addAction(rName);
+    menu.addAction(rReload);
     menu.addAction(rClose);
 
     menu.exec(event->globalPos());
