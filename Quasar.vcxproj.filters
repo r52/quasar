@@ -40,54 +40,54 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="GeneratedFiles\qrc_quasar.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="quasar.cpp">
+    <ClCompile Include="src\quasar.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\webwidget.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\widgetregistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_quasar.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_quasar.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\qrc_quasar.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_webwidget.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_widgetregistry.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_webwidget.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="webwidget.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="widgetregistry.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_widgetregistry.cpp">
+    <ClCompile Include="GeneratedFiles\Debug\moc_webwidget.cpp">
       <Filter>Generated Files\Debug</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_widgetregistry.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_quasar.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_webwidget.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="quasar.h">
-      <Filter>Header Files</Filter>
-    </CustomBuild>
     <CustomBuild Include="quasar.ui">
       <Filter>Form Files</Filter>
     </CustomBuild>
     <CustomBuild Include="quasar.qrc">
       <Filter>Resource Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="webwidget.h">
-      <Filter>Form Files</Filter>
+    <CustomBuild Include="src\quasar.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
-    <CustomBuild Include="widgetregistry.h">
+    <CustomBuild Include="src\widgetregistry.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="src\webwidget.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
@@ -95,7 +95,7 @@
     <ClInclude Include="GeneratedFiles\ui_quasar.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="widgetdefs.h">
+    <ClInclude Include="src\widgetdefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
