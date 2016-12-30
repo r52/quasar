@@ -2,9 +2,10 @@
 
 #include <QtWidgets/QMainWindow>
 #include <QSystemTrayIcon>
-#include <QSet>
 
 #include "ui_quasar.h"
+
+#include "widgetregistry.h"
 
 class QTextEdit;
 class WebWidget;
@@ -14,19 +15,18 @@ class Quasar : public QMainWindow
     Q_OBJECT
 
 public:
-    Quasar(QWidget *parent = Q_NULLPTR);
+    Quasar(Quasar *&inst, QWidget *parent = Q_NULLPTR);
     ~Quasar();
+
+    void logMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
 private slots:
     void openWebWidget();
-    void closeWebWidget(WebWidget* widget);
 
 protected:
     virtual void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
 
 private:
-    bool loadWebWidget(QString filename);
-
     void createTrayIcon();
     void createActions();
 
@@ -47,9 +47,6 @@ private:
     // Log widget
     QTextEdit *logEdit;
 
-    // Widget registry for cleanup
-    QSet<WebWidget*> webwidgets;
-
-    // Loaded widgets list
-    QStringList loadedList;
+    // Widget registry
+    WidgetRegistry reg;
 };

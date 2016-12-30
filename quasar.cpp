@@ -1,20 +1,15 @@
 #include "quasar.h"
 
-#include "webwidget.h"
-#include "widgetdefs.h"
-
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QMenu>
 #include <QCloseEvent>
 #include <QFileDialog>
-#include <QDebug>
-#include <QJsonDocument>
-#include <QSetIterator>
 
-Quasar::Quasar(QWidget *parent)
+Quasar::Quasar(Quasar *&inst, QWidget *parent)
     : QMainWindow(parent)
 {
+    inst = this;
     ui.setupUi(this);
 
     // Setup system tray
@@ -39,30 +34,19 @@ Quasar::Quasar(QWidget *parent)
 
     ui.centralWidget->setLayout(layout);
 
-    resize(500, 400);
+    resize(600, 400);
 
     // Load settings
-    QSettings settings(STATE_CFG_FILENAME, QSettings::IniFormat);
-    loadedList = settings.value("global/loaded").toStringList();
-
-    foreach(const QString &f, loadedList)
-    {
-        loadWebWidget(f);
-    }
+    reg.loadLoadedWidgets();
 }
 
 Quasar::~Quasar()
 {
-    QSetIterator<WebWidget*> it(webwidgets);
+}
 
-    while (it.hasNext())
-    {
-        auto widget = it.next();
-        widget->saveSettings();
-        delete widget;
-    }
-
-    webwidgets.clear();
+void Quasar::logMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+{
+    logEdit->append(qFormatLogMessage(type, context, msg));
 }
 
 void Quasar::openWebWidget()
@@ -71,74 +55,7 @@ void Quasar::openWebWidget()
         QDir::currentPath(),
         tr("Widget Definitions (*.json)"));
 
-    if (!loadedList.contains(fname))
-    {
-        if (loadWebWidget(fname))
-        {
-            loadedList.append(fname);
-            QSettings settings(STATE_CFG_FILENAME, QSettings::IniFormat);
-            settings.setValue("global/loaded", loadedList);
-        }
-    }
-}
-
-bool Quasar::loadWebWidget(QString filename)
-{
-    if (!filename.isNull())
-    {
-        QFile wgtFile(filename);
-
-        if (!wgtFile.open(QIODevice::ReadOnly))
-        {
-            qWarning() << "Failed to load '" << filename << "'";
-            return false;
-        }
-
-        QByteArray wgtDat = wgtFile.readAll();
-        QJsonDocument loadDoc(QJsonDocument::fromJson(wgtDat));
-
-        QJsonObject dat = loadDoc.object();
-        dat[WGT_DEF_FULLPATH] = filename;
-
-        if (WebWidget::validateWidgetDefinition(dat))
-        {
-            qDebug() << "Loading widget " << dat[WGT_DEF_FULLPATH].toString();
-            WebWidget *widget = new WebWidget(dat);
-            webwidgets.insert(widget);
-
-            connect(widget, &WebWidget::WebWidgetClosed, this, &Quasar::closeWebWidget);
-            widget->show();
-
-            return true;
-        }
-        else
-        {
-            qWarning() << "Invalid widget definition '" << filename << "'";
-        }
-    }
-    else
-    {
-        qWarning() << "Null filename";
-    }
-
-    return false;
-}
-
-void Quasar::closeWebWidget(WebWidget* widget)
-{
-    // Remove from loaded list
-    QJsonObject data = widget->getData();
-    loadedList.removeOne(data[WGT_DEF_FULLPATH].toString());
-
-    // Remove from registry
-    auto it = webwidgets.find(widget);
-
-    if (it != webwidgets.end())
-    {
-        webwidgets.erase(it);
-    }
-
-    widget->deleteLater();
+    reg.loadWebWidget(fname);
 }
 
 void Quasar::createTrayIcon()

@@ -64,6 +64,15 @@
     <ClCompile Include="webwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="widgetregistry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_widgetregistry.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_widgetregistry.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="quasar.h">
@@ -77,6 +86,9 @@
     </CustomBuild>
     <CustomBuild Include="webwidget.h">
       <Filter>Form Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="widgetregistry.h">
+      <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

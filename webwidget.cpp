@@ -4,7 +4,6 @@
 #include <QAction>
 #include <QMenu>
 
-
 WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
 {
     // Copy data
@@ -79,7 +78,6 @@ void WebWidget::mouseMoveEvent(QMouseEvent *evt)
     move(x() + delta.x(), y() + delta.y());
     oldPos = evt->globalPos();
 }
-
 
 void WebWidget::contextMenuEvent(QContextMenuEvent *event)
 {
