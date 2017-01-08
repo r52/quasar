@@ -3,6 +3,7 @@
 
 #include <QAction>
 #include <QMenu>
+#include <QtWebEngineWidgets/QWebEngineSettings>
 
 WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
 {
@@ -17,6 +18,10 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     QString startFilePath = QFileInfo(data[WGT_DEF_FULLPATH].toString()).canonicalPath().append("/");
     QUrl startFile = QUrl::fromLocalFile(startFilePath.append(data[WGT_DEF_STARTFILE].toString()));
 
+    // TODO: make these settings
+    webview->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, false);
+    webview->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
+
     webview->setUrl(startFile);
 
     // Optional background transparency
@@ -26,8 +31,6 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
         webview->page()->setBackgroundColor(Qt::transparent);
     }
 
-    webview->resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
-
     // Overlay for catching drag and drop events
     OverlayWidget *overlay = new OverlayWidget(this);
 
@@ -36,6 +39,10 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
 
     QSettings settings(STATE_CFG_FILENAME, QSettings::IniFormat);
     restoreGeometry(settings.value(getWidgetConfigKey("geometry")).toByteArray());
+
+    // resize
+    webview->resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
+    resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
 }
 
 bool WebWidget::validateWidgetDefinition(const QJsonObject &dat)
@@ -87,7 +94,9 @@ void WebWidget::contextMenuEvent(QContextMenuEvent *event)
 {
     QMenu menu(this);
     menu.addAction(rName);
+    menu.addSeparator();
     menu.addAction(rReload);
+    menu.addSeparator();
     menu.addAction(rClose);
 
     menu.exec(event->globalPos());
