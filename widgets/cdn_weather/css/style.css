@@ -1,0 +1,61 @@
+body {
+    font-family: "Century Gothic", CenturyGothic, sans-serif;
+    user-select: none;
+    user-drag: none;
+    font-size: 14px;
+    background-color: transparent;
+    overflow: hidden;
+    color: #fff;
+    text-shadow: 1px 1px #000;
+}
+
+.current_cond,
+.current_temp {
+    font-size: 30px;
+}
+
+.blk {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.l_blk {
+    width: 200px;
+    text-align: right;
+    display: inline-block;
+}
+
+.r_blk {
+    display: inline-block;
+    text-align: right;
+    width: 100px;
+}
+
+.img_blk {
+    display: inline-block;
+    vertical-align: middle;
+    width: 100px;
+}
+
+.resize {
+    max-width: 50%;
+    max-height: 50%;
+}
+
+.img_blk img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.time {
+    display: block;
+}
+
+.temp {
+    font-size: 24px;
+}
+
+.date {
+    margin-left: 20px;
+}
