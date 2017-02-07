@@ -43,6 +43,8 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     // resize
     webview->resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
     resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
+
+    setWindowTitle(data[WGT_DEF_NAME].toString());
 }
 
 bool WebWidget::validateWidgetDefinition(const QJsonObject &dat)
@@ -68,7 +70,7 @@ void WebWidget::saveSettings()
 
 void WebWidget::createContextMenuActions()
 {
-    rName = new QAction(data[WGT_DEF_NAME].toString());
+    rName = new QAction(data[WGT_DEF_NAME].toString(), this);
     rName->font().setBold(true);
 
     rReload = new QAction(tr("&Reload"), this);
