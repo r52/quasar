@@ -85,7 +85,7 @@ private:
     QJsonObject data;
 
     // Drag and drop pos
-    QPoint oldPos;
+    QPoint dragPosition;
     
     // Menu actions
     QAction *rName;

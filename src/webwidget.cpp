@@ -82,14 +82,18 @@ void WebWidget::createContextMenuActions()
 
 void WebWidget::mousePressEvent(QMouseEvent *evt)
 {
-    oldPos = evt->globalPos();
+    if (evt->button() == Qt::LeftButton) {
+        dragPosition = evt->globalPos() - frameGeometry().topLeft();
+        evt->accept();
+    }
 }
 
 void WebWidget::mouseMoveEvent(QMouseEvent *evt)
 {
-    const QPoint delta = evt->globalPos() - oldPos;
-    move(x() + delta.x(), y() + delta.y());
-    oldPos = evt->globalPos();
+    if (evt->buttons() & Qt::LeftButton) {
+        move(evt->globalPos() - dragPosition);
+        evt->accept();
+    }
 }
 
 void WebWidget::contextMenuEvent(QContextMenuEvent *event)
