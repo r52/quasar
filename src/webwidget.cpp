@@ -11,7 +11,7 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     data = dat;
 
     // No frame/border, no taskbar button
-    setWindowFlags(Qt::FramelessWindowHint | Qt::SubWindow);
+    Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::SubWindow;
 
     webview = new QWebEngineView(this);
 
@@ -37,8 +37,19 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     // Create context menu
     createContextMenuActions();
 
+    // Restore settings
     QSettings settings;
     restoreGeometry(settings.value(getWidgetConfigKey("geometry")).toByteArray());
+    bool ontop = settings.value(getWidgetConfigKey("alwaysOnTop")).toBool();
+
+    if (ontop)
+    {
+        flags |= Qt::WindowStaysOnTopHint;
+        rOnTop->setChecked(true);
+    }
+
+    // Set flags
+    setWindowFlags(flags);
 
     // resize
     webview->resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
@@ -66,6 +77,7 @@ void WebWidget::saveSettings()
 {
     QSettings settings;
     settings.setValue(getWidgetConfigKey("geometry"), saveGeometry());
+    settings.setValue(getWidgetConfigKey("alwaysOnTop"), rOnTop->isChecked());
 }
 
 void WebWidget::createContextMenuActions()
@@ -75,6 +87,10 @@ void WebWidget::createContextMenuActions()
 
     rReload = new QAction(tr("&Reload"), this);
     connect(rReload, &QAction::triggered, webview, &QWebEngineView::reload);
+
+    rOnTop = new QAction(tr("&Always on Top"), this);
+    rOnTop->setCheckable(true);
+    connect(rOnTop, &QAction::triggered, this, &WebWidget::toggleOnTop);
 
     rClose = new QAction(tr("&Close"), this);
     connect(rClose, &QAction::triggered, this, &WebWidget::close);
@@ -102,6 +118,7 @@ void WebWidget::contextMenuEvent(QContextMenuEvent *event)
     menu.addAction(rName);
     menu.addSeparator();
     menu.addAction(rReload);
+    menu.addAction(rOnTop);
     menu.addSeparator();
     menu.addAction(rClose);
 
@@ -114,6 +131,27 @@ void WebWidget::closeEvent(QCloseEvent *event)
 
     emit WebWidgetClosed(this);
     event->accept();
+}
+
+void WebWidget::toggleOnTop(bool ontop)
+{
+    auto flags = windowFlags();
+
+    if (ontop)
+    {
+        flags |= Qt::WindowStaysOnTopHint;
+    }
+    else
+    {
+        flags &= ~Qt::WindowStaysOnTopHint;
+    }
+
+    setWindowFlags(flags);
+
+    // Refresh widget
+    QPoint pos = this->pos();
+    move(pos);
+    show();
 }
 
 QString WebWidget::getWidgetConfigKey(QString key)

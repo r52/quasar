@@ -74,6 +74,9 @@ protected:
 
     virtual void closeEvent(QCloseEvent *event) override;
 
+protected slots:
+    void toggleOnTop(bool ontop);
+
 private:
     QString getWidgetConfigKey(QString key);
 
@@ -90,5 +93,6 @@ private:
     // Menu actions
     QAction *rName;
     QAction *rReload;
+    QAction *rOnTop;
     QAction *rClose;
 };
