@@ -34,11 +34,11 @@ void WidgetRegistry::loadLoadedWidgets()
 
     foreach(const QString &f, loadedList)
     {
-        loadWebWidget(f);
+        loadWebWidget(f, false);
     }
 }
 
-bool WidgetRegistry::loadWebWidget(QString filename)
+bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
 {
     if (!filename.isNull())
     {
@@ -62,7 +62,15 @@ bool WidgetRegistry::loadWebWidget(QString filename)
         QJsonObject dat = loadDoc.object();
         dat[WGT_DEF_FULLPATH] = filename;
 
-        if (WebWidget::validateWidgetDefinition(dat))
+        if (!WebWidget::validateWidgetDefinition(dat))
+        {
+            qWarning() << "Invalid widget definition '" << filename << "'";
+        }
+        else if (warnSecurity && !WebWidget::acceptSecurityWarnings(dat))
+        {
+            qWarning() << "Denied loading '" << filename << "'";
+        }
+        else
         {
             qDebug() << "Loading widget " << dat[WGT_DEF_NAME].toString() << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
             WebWidget *widget = new WebWidget(dat);
@@ -73,10 +81,6 @@ bool WidgetRegistry::loadWebWidget(QString filename)
             widget->show();
 
             return true;
-        }
-        else
-        {
-            qWarning() << "Invalid widget definition '" << filename << "'";
         }
     }
 

@@ -14,7 +14,7 @@ public:
     ~WidgetRegistry();
 
     void loadLoadedWidgets();
-    bool loadWebWidget(QString filename);
+    bool loadWebWidget(QString filename, bool warnSecurity = true);
 
 public slots:
     void closeWebWidget(WebWidget* widget);

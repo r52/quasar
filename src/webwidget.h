@@ -52,6 +52,7 @@ public:
     explicit WebWidget(const QJsonObject &dat, QWidget *parent = Q_NULLPTR);
 
     static bool validateWidgetDefinition(const QJsonObject &dat);
+    static bool acceptSecurityWarnings(const QJsonObject &dat);
 
     QJsonObject getData()
     {

@@ -6,3 +6,4 @@
 #define WGT_DEF_STARTFILE       "startFile"
 #define WGT_DEF_FULLPATH        "fullPath"
 #define WGT_DEF_TRANSPARENTBG   "transparentBg"
+#define WGT_DEF_REMOTEACCESS    "remoteAccess"

@@ -3,6 +3,7 @@
 
 #include <QAction>
 #include <QMenu>
+#include <QMessageBox>
 #include <QtWebEngineWidgets/QWebEngineSettings>
 
 WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
@@ -18,9 +19,12 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     QString startFilePath = QFileInfo(data[WGT_DEF_FULLPATH].toString()).canonicalPath().append("/");
     QUrl startFile = QUrl::fromLocalFile(startFilePath.append(data[WGT_DEF_STARTFILE].toString()));
 
-    // TODO: make these settings
     webview->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, false);
-    webview->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
+
+    if (data[WGT_DEF_REMOTEACCESS].toBool())
+    {
+        webview->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
+    }
 
     webview->setUrl(startFile);
 
@@ -71,6 +75,26 @@ bool WebWidget::validateWidgetDefinition(const QJsonObject &dat)
     }
 
     return false;
+}
+
+bool WebWidget::acceptSecurityWarnings(const QJsonObject &dat)
+{
+    bool accept = true;
+
+    if (dat.contains(WGT_DEF_REMOTEACCESS) && dat[WGT_DEF_REMOTEACCESS].toBool())
+    {
+        accept = false;
+
+        auto reply = QMessageBox::warning(nullptr, tr("Remote Access"),
+            tr("This widget requires remote access to external URLs. This may pose a security risk.\n\nContinue loading?"), QMessageBox::Ok | QMessageBox::Cancel);
+
+        if (reply == QMessageBox::Ok)
+        {
+            accept = true;
+        }
+    }
+
+    return accept;
 }
 
 void WebWidget::saveSettings()
