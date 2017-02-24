@@ -11,7 +11,7 @@ WidgetRegistry::WidgetRegistry()
 WidgetRegistry::~WidgetRegistry()
 {
     // Save loaded list
-    QSettings settings(STATE_CFG_FILENAME, QSettings::IniFormat);
+    QSettings settings;
     settings.setValue("global/loaded", QStringList(map.keys()));
 
     // Delete alive widgets and clear list
@@ -29,7 +29,7 @@ WidgetRegistry::~WidgetRegistry()
 
 void WidgetRegistry::loadLoadedWidgets()
 {
-    QSettings settings(STATE_CFG_FILENAME, QSettings::IniFormat);
+    QSettings settings;
     QStringList loadedList = settings.value("global/loaded").toStringList();
 
     foreach(const QString &f, loadedList)

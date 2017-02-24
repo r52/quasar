@@ -3,7 +3,6 @@
 #include <QtGui>
 #include <QtWebEngineWidgets/QWebEngineView>
 
-#define STATE_CFG_FILENAME "state.ini"
 
 // From https://stackoverflow.com/questions/19362455/dark-transparent-layer-over-a-qmainwindow-in-qt
 class OverlayWidget : public QWidget

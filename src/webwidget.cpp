@@ -37,7 +37,7 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     // Create context menu
     createContextMenuActions();
 
-    QSettings settings(STATE_CFG_FILENAME, QSettings::IniFormat);
+    QSettings settings;
     restoreGeometry(settings.value(getWidgetConfigKey("geometry")).toByteArray());
 
     // resize
@@ -64,7 +64,7 @@ bool WebWidget::validateWidgetDefinition(const QJsonObject &dat)
 
 void WebWidget::saveSettings()
 {
-    QSettings settings(STATE_CFG_FILENAME, QSettings::IniFormat);
+    QSettings settings;
     settings.setValue(getWidgetConfigKey("geometry"), saveGeometry());
 }
 
