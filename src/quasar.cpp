@@ -1,5 +1,6 @@
 #include "quasar.h"
 
+#include <QSystemTrayIcon>
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QMenu>

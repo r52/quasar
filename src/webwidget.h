@@ -1,8 +1,9 @@
 #pragma once
 
 #include <QtGui>
-#include <QtWebEngineWidgets/QWebEngineView>
+#include <QWidget>
 
+QT_FORWARD_DECLARE_CLASS(QWebEngineView);
 
 // From https://stackoverflow.com/questions/19362455/dark-transparent-layer-over-a-qmainwindow-in-qt
 class OverlayWidget : public QWidget

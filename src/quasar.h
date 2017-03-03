@@ -1,13 +1,12 @@
 #pragma once
 
-#include <QtWidgets/QMainWindow>
-#include <QSystemTrayIcon>
-
 #include "ui_quasar.h"
-
 #include "widgetregistry.h"
 
-class QTextEdit;
+#include <QtWidgets/QMainWindow>
+
+QT_FORWARD_DECLARE_CLASS(QSystemTrayIcon);
+QT_FORWARD_DECLARE_CLASS(QTextEdit);
 class WebWidget;
 
 class Quasar : public QMainWindow

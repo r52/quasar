@@ -5,6 +5,7 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QtWebEngineWidgets/QWebEngineSettings>
+#include <QtWebEngineWidgets/QWebEngineView>
 
 WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
 {

@@ -3,7 +3,7 @@
 #include <QObject>
 #include <QMap>
 
-class WebWidget;
+QT_FORWARD_DECLARE_CLASS(WebWidget);
 
 class WidgetRegistry : public QObject
 {
