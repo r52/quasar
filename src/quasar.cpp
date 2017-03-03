@@ -1,5 +1,6 @@
 #include "quasar.h"
 
+#include <QDebug>
 #include <QSystemTrayIcon>
 #include <QVBoxLayout>
 #include <QTextEdit>
@@ -8,7 +9,7 @@
 #include <QFileDialog>
 
 Quasar::Quasar(Quasar *&inst, QWidget *parent)
-    : QMainWindow(parent)
+    : QMainWindow(parent), server(this)
 {
     inst = this;
     ui.setupUi(this);
@@ -39,6 +40,12 @@ Quasar::Quasar(Quasar *&inst, QWidget *parent)
 
     // Load settings
     reg.loadLoadedWidgets();
+
+    // Init data server
+    if (!server.initialize())
+    {
+        qWarning() << "Data Server initialization failed";
+    }
 }
 
 Quasar::~Quasar()

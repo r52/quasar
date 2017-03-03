@@ -2,6 +2,7 @@
 
 #include "ui_quasar.h"
 #include "widgetregistry.h"
+#include "dataserver.h"
 
 #include <QtWidgets/QMainWindow>
 
@@ -48,4 +49,7 @@ private:
 
     // Widget registry
     WidgetRegistry reg;
+
+    // Data server
+    DataServer server;
 };
