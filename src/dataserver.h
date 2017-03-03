@@ -15,8 +15,6 @@ public:
     explicit DataServer(QObject *parent = Q_NULLPTR);
     ~DataServer();
 
-    bool initialize();
-
 private slots:
     void onNewConnection();
     void processMessage(QString message);

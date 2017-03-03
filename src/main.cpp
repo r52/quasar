@@ -1,14 +1,16 @@
 #include "quasar.h"
+
 #include <QtWidgets/QApplication>
 #include <QSettings>
+#include <QTextEdit>
 
-static Quasar *instance = nullptr;
+static QTextEdit* logEdit = nullptr;
 
 void msg_handler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    if (nullptr != instance)
+    if (nullptr != logEdit)
     {
-        instance->logMessage(type, context, msg);
+        logEdit->append(qFormatLogMessage(type, context, msg));
     }
 }
 
@@ -21,11 +23,15 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
 
+    logEdit = new QTextEdit();
+    logEdit->setReadOnly(true);
+    logEdit->setAcceptRichText(true);
+
     QApplication::setApplicationName("Quasar");
     QApplication::setOrganizationName("Quasar");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    Quasar w(instance);
+    Quasar w(logEdit);
     w.hide();
 
     return a.exec();

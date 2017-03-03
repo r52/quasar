@@ -15,10 +15,8 @@ class Quasar : public QMainWindow
     Q_OBJECT
 
 public:
-    Quasar(Quasar *&inst, QWidget *parent = Q_NULLPTR);
+    Quasar(QTextEdit *logWidget, QWidget *parent = Q_NULLPTR);
     ~Quasar();
-
-    void logMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
 private slots:
     void openWebWidget();
@@ -43,9 +41,6 @@ private:
     QAction *loadAction;
     QAction *logAction;
     QAction *quitAction;
-    
-    // Log widget
-    QTextEdit *logEdit;
 
     // Widget registry
     WidgetRegistry reg;

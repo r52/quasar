@@ -8,10 +8,9 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 
-Quasar::Quasar(Quasar *&inst, QWidget *parent)
+Quasar::Quasar(QTextEdit *logWidget, QWidget *parent)
     : QMainWindow(parent), server(this)
 {
-    inst = this;
     ui.setupUi(this);
 
     // Setup system tray
@@ -27,12 +26,7 @@ Quasar::Quasar(Quasar *&inst, QWidget *parent)
 
     // Setup log widget
     QVBoxLayout *layout = new QVBoxLayout();
-
-    logEdit = new QTextEdit();
-    logEdit->setReadOnly(true);
-    logEdit->setAcceptRichText(true);
-
-    layout->addWidget(logEdit);
+    layout->addWidget(logWidget);
 
     ui.centralWidget->setLayout(layout);
 
@@ -40,21 +34,10 @@ Quasar::Quasar(Quasar *&inst, QWidget *parent)
 
     // Load settings
     reg.loadLoadedWidgets();
-
-    // Init data server
-    if (!server.initialize())
-    {
-        qWarning() << "Data Server initialization failed";
-    }
 }
 
 Quasar::~Quasar()
 {
-}
-
-void Quasar::logMessage(QtMsgType type, const QMessageLogContext &context, const QString &msg)
-{
-    logEdit->append(qFormatLogMessage(type, context, msg));
 }
 
 void Quasar::openWebWidget()
