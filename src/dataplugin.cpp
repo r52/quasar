@@ -159,12 +159,14 @@ void DataPlugin::getAndSendData(QString source)
     {
         char buf[1024] = "";
 
+        // Poll plugin for data source
         if (!getData(qPrintable(source), buf, sizeof(buf)))
         {
             qWarning() << "getData(" << getCode() << ", " << source << ") failed";
             return;
         }
 
+        // Craft response
         QJsonObject reply;
         reply["type"] = "data";
         reply["plugin"] = getCode();

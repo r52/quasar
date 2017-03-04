@@ -54,7 +54,7 @@ void DataServer::loadDataPlugins()
 
     for (QFileInfo &file : list)
     {
-        QString libpath = file.path() + file.completeBaseName();
+        QString libpath = file.path() + "/" + file.completeBaseName();
 
         qInfo() << "Loading data plugin" << libpath;
 
