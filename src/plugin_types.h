@@ -9,8 +9,7 @@ extern "C" {
         QUASAR_LOG_DEBUG,
         QUASAR_LOG_INFO,
         QUASAR_LOG_WARNING,
-        QUASAR_LOG_CRITICAL,
-        QUASAR_LOG_FATAL
+        QUASAR_LOG_CRITICAL
     };
 
     // Log function fp
@@ -25,12 +24,12 @@ extern "C" {
     struct QuasarPluginInfo
     {
         log_func_type logFunc;
-        char pluginName[64];                // name of this plugin
-        char pluginCode[16];                // short code for widgets to identify and subscribe to this plugin
-        char author[64];                    // author
-        char description[256];              // plugin description
-        unsigned int numDataSources;           // number of data sources
-        QuasarPluginDataSource* dataSources;   // list of data sources this plugin offers
+        char pluginName[64];                    // name of this plugin
+        char pluginCode[16];                    // unique short code for widgets to identify and subscribe to this plugin
+        char author[64];                        // author
+        char description[256];                  // plugin description
+        unsigned int numDataSources;            // number of data sources
+        QuasarPluginDataSource* dataSources;    // list of data sources this plugin offers
     };
 
 #if defined(__cplusplus)

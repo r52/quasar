@@ -1,10 +1,16 @@
 #include "dataserver.h"
 
+#include "dataplugin.h"
+
+#include <QDebug>
+#include <QDir>
 #include <QSettings>
 #include <QtWebSockets/QWebSocketServer>
 #include <QtWebSockets/QWebSocket>
+#include <QJsonDocument>
+#include <QJsonObject>
 
-DataServer::DataServer(QObject *parent) : 
+DataServer::DataServer(QObject *parent) :
     QObject(parent),
     m_pWebSocketServer(nullptr)
 {
@@ -17,9 +23,11 @@ DataServer::DataServer(QObject *parent) :
 
     if (m_pWebSocketServer->listen(QHostAddress::LocalHost, port))
     {
-        qDebug() << "Data server running locally on port" << port;
+        qInfo() << "Data server running locally on port" << port;
         connect(m_pWebSocketServer, &QWebSocketServer::newConnection,
             this, &DataServer::onNewConnection);
+
+        loadDataPlugins();
     }
     else
     {
@@ -31,6 +39,79 @@ DataServer::~DataServer()
 {
     m_pWebSocketServer->close();
     qDeleteAll(m_clients.begin(), m_clients.end());
+}
+
+void DataServer::loadDataPlugins()
+{
+    QDir dir("plugins/");
+    QFileInfoList list = dir.entryInfoList(QDir::Files);
+
+    if (list.count() == 0)
+    {
+        qInfo() << "No data plugins found";
+        return;
+    }
+
+    for (QFileInfo &file : list)
+    {
+        QString libpath = file.path() + file.completeBaseName();
+
+        qInfo() << "Loading data plugin" << libpath;
+
+        DataPlugin* plugin = DataPlugin::load(libpath, this);
+
+        if (!plugin)
+        {
+            qInfo() << "Failed to load plugin" << libpath;
+        }
+        else if (!plugin->setupPlugin())
+        {
+            qInfo() << "Failed to setup plugin" << libpath;
+        }
+        else if (m_plugins.contains(plugin->getCode()))
+        {
+            qWarning() << "Plugin with code '" << plugin->getCode() << "' already loaded. Unloading" << libpath;
+        }
+        else
+        {
+            m_plugins[plugin->getCode()] = plugin;
+            plugin = nullptr;
+        }
+
+        if (plugin != nullptr)
+        {
+            delete plugin;
+        }
+    }
+}
+
+void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
+{
+    if (req.isEmpty())
+    {
+        qWarning() << "Invalid JSON object request from '" << sender->peerName() << "'";
+        return;
+    }
+
+    QString type = req["type"].toString();
+
+    if (type == "subscribe")
+    {
+        QString plugin = req["plugin"].toString();
+        QString source = req["source"].toString();
+
+        if (!m_plugins.contains(plugin))
+        {
+            qWarning() << "Unknown plugin '" << plugin << "'";
+            return;
+        }
+
+        m_plugins[plugin]->addSubscriber(source, sender);
+    }
+    else
+    {
+        qWarning() << "Unknown request type";
+    }
 }
 
 void DataServer::onNewConnection()
@@ -47,7 +128,19 @@ void DataServer::processMessage(QString message)
 {
     QWebSocket *pSender = qobject_cast<QWebSocket *>(sender());
 
-    // TODO: code this
+    if (pSender)
+    {
+        QJsonDocument doc = QJsonDocument::fromJson(message.toUtf8());
+
+        if (doc.isNull())
+        {
+            qWarning() << "Error parsing message from '" << pSender->peerName() << "'";
+            qWarning() << message;
+            return;
+        }
+
+        handleRequest(doc.object(), pSender);
+    }
 }
 
 void DataServer::socketDisconnected()
@@ -57,7 +150,11 @@ void DataServer::socketDisconnected()
     {
         m_clients.removeAll(pClient);
 
-        // TODO: also delete from plugins
+        for (DataPlugin *plugin : m_plugins)
+        {
+            plugin->removeSubscriber(pClient);
+        }
+
         pClient->deleteLater();
     }
 }

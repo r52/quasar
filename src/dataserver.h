@@ -3,9 +3,12 @@
 #include <QtCore/QObject>
 #include <QtCore/QList>
 #include <QtCore/QByteArray>
+#include <QMap>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
+
+class DataPlugin;
 
 class DataServer : public QObject
 {
@@ -15,6 +18,10 @@ public:
     explicit DataServer(QObject *parent = Q_NULLPTR);
     ~DataServer();
 
+private:
+    void loadDataPlugins();
+    void handleRequest(const QJsonObject &req, QWebSocket *sender);
+
 private slots:
     void onNewConnection();
     void processMessage(QString message);
@@ -23,4 +30,5 @@ private slots:
 private:
     QWebSocketServer *m_pWebSocketServer;
     QList<QWebSocket *> m_clients;
+    QMap<QString, DataPlugin*> m_plugins;
 };

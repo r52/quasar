@@ -17,7 +17,7 @@ void msg_handler(QtMsgType type, const QMessageLogContext &context, const QStrin
 int main(int argc, char *argv[])
 {
     qInstallMessageHandler(msg_handler);
-    qSetMessagePattern("[%{time}] %{type} - %{message}");
+    qSetMessagePattern("[%{time}] - %{type} - %{function} - %{message}");
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);

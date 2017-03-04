@@ -30,7 +30,7 @@ Quasar::Quasar(QTextEdit *logWidget, QWidget *parent)
 
     ui.centralWidget->setLayout(layout);
 
-    resize(600, 400);
+    resize(800, 400);
 
     // Load settings
     reg.loadLoadedWidgets();

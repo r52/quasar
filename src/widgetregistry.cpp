@@ -2,10 +2,8 @@
 #include "widgetdefs.h"
 #include "webwidget.h"
 
-
 WidgetRegistry::WidgetRegistry()
 {
-
 }
 
 WidgetRegistry::~WidgetRegistry()
@@ -72,7 +70,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
         }
         else
         {
-            qDebug() << "Loading widget " << dat[WGT_DEF_NAME].toString() << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
+            qInfo() << "Loading widget " << dat[WGT_DEF_NAME].toString() << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
             WebWidget *widget = new WebWidget(dat);
 
             map.insert(dat[WGT_DEF_FULLPATH].toString(), widget);
@@ -92,7 +90,7 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
     // Remove from loaded list
     QJsonObject data = widget->getData();
 
-    qDebug() << "Closing widget " << data[WGT_DEF_NAME].toString() << " (" << data[WGT_DEF_FULLPATH].toString() << ")";
+    qInfo() << "Closing widget " << data[WGT_DEF_NAME].toString() << " (" << data[WGT_DEF_FULLPATH].toString() << ")";
 
     // Remove from registry
     auto it = map.find(data[WGT_DEF_FULLPATH].toString());
