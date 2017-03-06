@@ -7,6 +7,7 @@
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
+QT_FORWARD_DECLARE_CLASS(Quasar)
 
 class DataPlugin;
 
@@ -15,7 +16,7 @@ class DataServer : public QObject
     Q_OBJECT;
 
 public:
-    explicit DataServer(QObject *parent = Q_NULLPTR);
+    explicit DataServer(Quasar *parent);
     ~DataServer();
 
 private:
@@ -28,6 +29,7 @@ private slots:
     void socketDisconnected();
 
 private:
+    Quasar *m_parent;
     QWebSocketServer *m_pWebSocketServer;
     QList<QWebSocket *> m_clients;
     QMap<QString, DataPlugin*> m_plugins;

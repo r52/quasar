@@ -23,6 +23,7 @@ WidgetRegistry::~WidgetRegistry()
     }
 
     map.clear();
+    name_to_def_map.clear();
 }
 
 void WidgetRegistry::loadLoadedWidgets()
@@ -75,6 +76,9 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
 
             map.insert(dat[WGT_DEF_FULLPATH].toString(), widget);
 
+            // also map widget name
+            name_to_def_map.insert(dat[WGT_DEF_NAME].toString(), dat[WGT_DEF_FULLPATH].toString());
+
             connect(widget, &WebWidget::WebWidgetClosed, this, &WidgetRegistry::closeWebWidget);
             widget->show();
 
@@ -83,6 +87,23 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
     }
 
     return false;
+}
+
+WebWidget* WidgetRegistry::findWidgetByName(QString widgetName)
+{
+    auto itn = name_to_def_map.find(widgetName);
+
+    if (itn != name_to_def_map.end())
+    {
+        auto it = map.find((*itn));
+
+        if (it != map.end())
+        {
+            return *it;
+        }
+    }
+
+    return nullptr;
 }
 
 void WidgetRegistry::closeWebWidget(WebWidget* widget)
@@ -99,6 +120,7 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
     {
         Q_ASSERT((*it) == widget);
         map.erase(it);
+        name_to_def_map.remove(data[WGT_DEF_NAME].toString());
     }
 
     widget->deleteLater();

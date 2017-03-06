@@ -82,12 +82,6 @@ bool DataPlugin::setupPlugin()
     m_author = info.author;
     m_desc = info.description;
 
-    if (m_code.isEmpty() || m_name.isEmpty())
-    {
-        qWarning() << "Invalid plugin name or code in file" << m_libpath;
-        return false;
-    }
-
     if (nullptr != info.dataSources)
     {
         for (unsigned int i = 0; i < info.numDataSources; i++)
@@ -100,6 +94,14 @@ bool DataPlugin::setupPlugin()
 
             m_datasources[info.dataSources[i].dataSrc].refreshmsec = info.dataSources[i].refreshMsec;
         }
+
+        free(info.dataSources, info.numDataSources);
+    }
+
+    if (m_code.isEmpty() || m_name.isEmpty())
+    {
+        qWarning() << "Invalid plugin name or code in file" << m_libpath;
+        return false;
     }
 
     m_Initialized = true;
@@ -184,7 +186,7 @@ void DataPlugin::getAndSendData(QString source)
 }
 
 DataPlugin::DataPlugin(plugin_free freeFunc, plugin_init initFunc, plugin_get_data getDataFunc, QString path, QObject *parent /*= Q_NULLPTR*/) :
-    free(freeFunc), init(initFunc), getData(getDataFunc), m_libpath(path)
+    QObject(parent), free(freeFunc), init(initFunc), getData(getDataFunc), m_libpath(path)
 {
 }
 

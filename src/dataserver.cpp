@@ -1,6 +1,6 @@
 #include "dataserver.h"
-
 #include "dataplugin.h"
+#include "quasar.h"
 
 #include <QDebug>
 #include <QDir>
@@ -10,10 +10,16 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-DataServer::DataServer(QObject *parent) :
-    QObject(parent),
+DataServer::DataServer(Quasar *parent) :
+    m_parent(parent),
+    QObject((QObject*)parent),
     m_pWebSocketServer(nullptr)
 {
+    if (nullptr == m_parent)
+    {
+        throw std::invalid_argument("Parent cannot be null");
+    }
+
     m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"),
         QWebSocketServer::NonSecureMode,
         this);
@@ -97,8 +103,18 @@ void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
 
     if (type == "subscribe")
     {
+        QString widgetName = req["widget"].toString();
         QString plugin = req["plugin"].toString();
         QString source = req["source"].toString();
+
+        // subWidget parameter currently unused
+        WebWidget *subWidget = m_parent->getWidgetRegistry().findWidgetByName(widgetName);
+
+        if (!subWidget)
+        {
+            qWarning() << "Unidentified widget name '" << widgetName << "'";
+            return;
+        }
 
         if (!m_plugins.contains(plugin))
         {
