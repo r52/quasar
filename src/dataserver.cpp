@@ -68,11 +68,11 @@ void DataServer::loadDataPlugins()
 
         if (!plugin)
         {
-            qInfo() << "Failed to load plugin" << libpath;
+            qWarning() << "Failed to load plugin" << libpath;
         }
         else if (!plugin->setupPlugin())
         {
-            qInfo() << "Failed to setup plugin" << libpath;
+            qWarning() << "Failed to setup plugin" << libpath;
         }
         else if (m_plugins.contains(plugin->getCode()))
         {

@@ -37,7 +37,7 @@ DataPlugin* DataPlugin::load(QString libpath, QObject *parent /*= Q_NULLPTR*/)
 
     if (!lib.load())
     {
-        qInfo() << lib.errorString();
+        qWarning() << lib.errorString();
         return nullptr;
     }
 
