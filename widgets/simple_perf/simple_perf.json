@@ -1,0 +1,7 @@
+{
+    "name": "simple_perf",
+    "width": 400,
+    "height": 120,
+    "startFile": "index.html",
+    "transparentBg": true
+}
