@@ -26,9 +26,9 @@ public:
 
     static DataPlugin* load(QString libpath, QObject *parent = Q_NULLPTR);
 
-    typedef void (*plugin_free)(void*, int);
-    typedef bool (*plugin_init)(QuasarPluginInfo*);
-    typedef bool (*plugin_get_data)(const char*, char*, int);
+    typedef void(*plugin_free)(void*, int);
+    typedef int(*plugin_init)(QuasarPluginInfo*);
+    typedef int(*plugin_get_data)(const char*, char*, int, int*);
 
     const plugin_free free;
     const plugin_init init;
@@ -36,7 +36,7 @@ public:
 
     bool setupPlugin();
 
-    void addSubscriber(QString source, QWebSocket *subscriber);
+    bool addSubscriber(QString source, QWebSocket *subscriber, QString widgetName);
     void removeSubscriber(QWebSocket *subscriber);
 
     QString getLibPath() { return m_libpath; };

@@ -60,6 +60,8 @@ public:
         return data;
     }
 
+    QString getName();
+
     void saveSettings();
 
 signals:

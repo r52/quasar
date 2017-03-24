@@ -88,10 +88,11 @@ bool DataPlugin::setupPlugin()
         {
             if (m_datasources.contains(info.dataSources[i].dataSrc))
             {
-                qWarning() << "Plugin '" << m_code << "' tried to register more than one data source '" << info.dataSources[i].dataSrc << "'";
+                qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << info.dataSources[i].dataSrc << "'";
                 continue;
             }
 
+            qInfo() << "Plugin " << m_code << " registering data source '" << info.dataSources[i].dataSrc << "'";
             m_datasources[info.dataSources[i].dataSrc].refreshmsec = info.dataSources[i].refreshMsec;
         }
 
@@ -100,7 +101,7 @@ bool DataPlugin::setupPlugin()
 
     if (m_code.isEmpty() || m_name.isEmpty())
     {
-        qWarning() << "Invalid plugin name or code in file" << m_libpath;
+        qWarning() << "Invalid plugin name or code in file " << m_libpath;
         return false;
     }
 
@@ -108,14 +109,14 @@ bool DataPlugin::setupPlugin()
     return true;
 }
 
-void DataPlugin::addSubscriber(QString source, QWebSocket *subscriber)
+bool DataPlugin::addSubscriber(QString source, QWebSocket *subscriber, QString widgetName)
 {
     if (subscriber)
     {
         if (!m_datasources.contains(source))
         {
-            qWarning() << "Unknown data source '" << source << "' requested in plugin '" << m_code << "' by '" << subscriber->peerName() << "'";
-            return;
+            qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
+            return false;
         }
 
         // TODO maybe needs locks
@@ -130,7 +131,13 @@ void DataPlugin::addSubscriber(QString source, QWebSocket *subscriber)
             connect(data.timer, &QTimer::timeout, this, [this, source] { DataPlugin::getAndSendData(source); });
             data.timer->start(data.refreshmsec);
         }
+
+        return true;
     }
+
+    qCritical() << "Unknown subscriber.";
+
+    return false;
 }
 
 void DataPlugin::removeSubscriber(QWebSocket *subscriber)
@@ -160,9 +167,10 @@ void DataPlugin::getAndSendData(QString source)
     if (data.subscribers.count() > 0)
     {
         char buf[1024] = "";
+        int convert_to_json = false;
 
         // Poll plugin for data source
-        if (!getData(qPrintable(source), buf, sizeof(buf)))
+        if (!getData(qPrintable(source), buf, sizeof(buf), &convert_to_json))
         {
             qWarning() << "getData(" << getCode() << ", " << source << ") failed";
             return;
@@ -173,7 +181,16 @@ void DataPlugin::getAndSendData(QString source)
         reply["type"] = "data";
         reply["plugin"] = getCode();
         reply["source"] = source;
-        reply["data"] = QString(buf);
+
+        if (convert_to_json)
+        {
+            QString str = QString::fromUtf8(buf);
+            reply["data"] = QJsonDocument::fromJson(str.toUtf8()).object();
+        }
+        else
+        {
+            reply["data"] = QString::fromUtf8(buf);
+        }
 
         QJsonDocument doc(reply);
         QString message(doc.toJson());

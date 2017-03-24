@@ -1,6 +1,7 @@
 #include "dataserver.h"
 #include "dataplugin.h"
 #include "quasar.h"
+#include "webwidget.h"
 
 #include <QDebug>
 #include <QDir>
@@ -60,7 +61,7 @@ void DataServer::loadDataPlugins()
 
     for (QFileInfo &file : list)
     {
-        QString libpath = file.path() + "/" + file.completeBaseName();
+        QString libpath = file.path() + "/" + file.fileName();
 
         qInfo() << "Loading data plugin" << libpath;
 
@@ -76,10 +77,11 @@ void DataServer::loadDataPlugins()
         }
         else if (m_plugins.contains(plugin->getCode()))
         {
-            qWarning() << "Plugin with code '" << plugin->getCode() << "' already loaded. Unloading" << libpath;
+            qWarning() << "Plugin with code " << plugin->getCode() << " already loaded. Unloading" << libpath;
         }
         else
         {
+            qInfo() << "Plugin " << plugin->getCode() << " loaded.";
             m_plugins[plugin->getCode()] = plugin;
             plugin = nullptr;
         }
@@ -95,7 +97,7 @@ void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
 {
     if (req.isEmpty())
     {
-        qWarning() << "Invalid JSON object request from '" << sender->peerName() << "'";
+        qWarning() << "Invalid JSON object request";
         return;
     }
 
@@ -105,24 +107,36 @@ void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
     {
         QString widgetName = req["widget"].toString();
         QString plugin = req["plugin"].toString();
-        QString source = req["source"].toString();
+        QString sources = req["source"].toString();
 
         // subWidget parameter currently unused
         WebWidget *subWidget = m_parent->getWidgetRegistry().findWidgetByName(widgetName);
 
         if (!subWidget)
         {
-            qWarning() << "Unidentified widget name '" << widgetName << "'";
+            qWarning() << "Unidentified widget name " << widgetName;
             return;
         }
 
         if (!m_plugins.contains(plugin))
         {
-            qWarning() << "Unknown plugin '" << plugin << "'";
+            qWarning() << "Unknown plugin " << plugin;
             return;
         }
 
-        m_plugins[plugin]->addSubscriber(source, sender);
+        QStringList srclist = sources.split(',', QString::SkipEmptyParts);
+
+        for (QString& src : srclist)
+        {
+            if (m_plugins[plugin]->addSubscriber(src, sender, subWidget->getName()))
+            {
+                qInfo() << "Widget " << widgetName << " subscribed to plugin " << plugin << " source " << src;
+            }
+            else
+            {
+                qWarning() << "Widget " << widgetName << " failed to subscribed to plugin " << plugin << " source " << src;
+            }
+        }
     }
     else
     {
@@ -150,7 +164,7 @@ void DataServer::processMessage(QString message)
 
         if (doc.isNull())
         {
-            qWarning() << "Error parsing message from '" << pSender->peerName() << "'";
+            qWarning() << "Error parsing WebSocket message";
             qWarning() << message;
             return;
         }

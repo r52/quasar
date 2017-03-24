@@ -6,6 +6,9 @@
 #include <QMessageBox>
 #include <QtWebEngineWidgets/QWebEngineSettings>
 #include <QtWebEngineWidgets/QWebEngineView>
+#include <QtWebEngineWidgets/QWebEngineScript>
+#include <QtWebEngineWidgets/QWebEngineScriptCollection>
+
 
 WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
 {
@@ -27,7 +30,7 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
         webview->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     }
 
-    webview->setUrl(startFile);
+    webview->load(startFile);
 
     // Optional background transparency
     if (data[WGT_DEF_TRANSPARENTBG].toBool())
@@ -59,6 +62,20 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     // resize
     webview->resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
     resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
+
+    // Create page globals
+    quint16 port = settings.value("global/dataport", 13337).toUInt();
+
+    QString pageGlobalScript = QString("var qWidgetName = \"%1\"; var qWsServerUrl = \"ws://localhost:%2\";")
+        .arg(data[WGT_DEF_NAME].toString()).arg(port);
+
+    QWebEngineScript pageGlobals;
+    pageGlobals.setName("PageGlobals");
+    pageGlobals.setInjectionPoint(QWebEngineScript::DocumentReady);
+    pageGlobals.setWorldId(0);
+    pageGlobals.setSourceCode(pageGlobalScript);
+
+    webview->page()->scripts().insert(pageGlobals);
 
     setWindowTitle(data[WGT_DEF_NAME].toString());
 }
@@ -96,6 +113,11 @@ bool WebWidget::acceptSecurityWarnings(const QJsonObject &dat)
     }
 
     return accept;
+}
+
+QString WebWidget::getName()
+{
+    return data[WGT_DEF_NAME].toString();
 }
 
 void WebWidget::saveSettings()
