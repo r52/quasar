@@ -5,6 +5,8 @@
 #include <QtCore/QByteArray>
 #include <QMap>
 
+#define QUASAR_DATA_SERVER_DEFAULT_PORT 13337
+
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 QT_FORWARD_DECLARE_CLASS(Quasar)

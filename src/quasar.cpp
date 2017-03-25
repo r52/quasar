@@ -1,4 +1,5 @@
 #include "quasar.h"
+#include "configdialog.h"
 
 #include <QDebug>
 #include <QSystemTrayIcon>
@@ -49,10 +50,17 @@ void Quasar::openWebWidget()
     reg.loadWebWidget(fname);
 }
 
+void Quasar::openConfigDialog()
+{
+    ConfigDialog dialog(this);
+    dialog.exec();
+}
+
 void Quasar::createTrayIcon()
 {
     trayIconMenu = new QMenu(this);
     trayIconMenu->addAction(loadAction);
+    trayIconMenu->addAction(settingsAction);
     trayIconMenu->addAction(logAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
@@ -65,6 +73,9 @@ void Quasar::createActions()
 {
     loadAction = new QAction(tr("&Load"), this);
     connect(loadAction, &QAction::triggered, this, &Quasar::openWebWidget);
+
+    settingsAction = new QAction(tr("&Settings"), this);
+    connect(settingsAction, &QAction::triggered, this, &Quasar::openConfigDialog);
 
     logAction = new QAction(tr("L&og"), this);
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);

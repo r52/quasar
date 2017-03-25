@@ -1,5 +1,6 @@
 #include "webwidget.h"
 #include "widgetdefs.h"
+#include "dataserver.h"
 
 #include <QAction>
 #include <QMenu>
@@ -63,7 +64,7 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
 
     // Create page globals
-    quint16 port = settings.value("global/dataport", 13337).toUInt();
+    quint16 port = settings.value("global/dataport", QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
     QString pageGlobalScript = QString("var qWidgetName = \"%1\"; var qWsServerUrl = \"ws://localhost:%2\";")
         .arg(data[WGT_DEF_NAME].toString()).arg(port);

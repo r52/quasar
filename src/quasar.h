@@ -23,6 +23,7 @@ public:
 
 private slots:
     void openWebWidget();
+    void openConfigDialog();
 
 protected:
     virtual void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
@@ -42,6 +43,7 @@ private:
 
     // Actions
     QAction *loadAction;
+    QAction *settingsAction;
     QAction *logAction;
     QAction *quitAction;
 

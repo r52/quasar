@@ -26,7 +26,7 @@ DataServer::DataServer(QObject *parent) :
         this);
 
     QSettings settings;
-    quint16 port = settings.value("global/dataport", 13337).toUInt();
+    quint16 port = settings.value("global/dataport", QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
     if (m_pWebSocketServer->listen(QHostAddress::LocalHost, port))
     {
