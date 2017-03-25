@@ -151,9 +151,26 @@ void DataPlugin::removeSubscriber(QWebSocket *subscriber)
     // Removes subscriber from all data sources
     if (subscriber)
     {
-        for (DataSource& src : m_datasources)
+        auto it = m_datasources.begin();
+
+        while (it != m_datasources.end())
         {
-            src.subscribers.remove(subscriber);
+            // Log if unsubscribed succeeded
+            if (it->subscribers.remove(subscriber))
+            {
+                qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it.key();
+            }
+
+            // Stop timer if no subscribers
+            if (it->subscribers.isEmpty())
+            {
+                it->timer->stop();
+                it->timer->deleteLater();
+
+                it->timer = nullptr;
+            }
+
+            ++it;
         }
     }
 }
@@ -170,7 +187,7 @@ void DataPlugin::getAndSendData(QString source)
     DataSource& data = m_datasources[source];
 
     // Only send if there are subscribers
-    if (data.subscribers.count() > 0)
+    if (!data.subscribers.isEmpty())
     {
         char buf[1024] = "";
         int convert_to_json = false;

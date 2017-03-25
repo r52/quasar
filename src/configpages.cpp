@@ -45,7 +45,7 @@ ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
     // build plugin list
     DataPluginMapType& pluginmap = m_quasar->getDataServer().getPlugins();
 
-    foreach(DataPlugin* plugin, pluginmap)
+    for (DataPlugin* plugin : pluginmap)
     {
         QListWidgetItem *item = new QListWidgetItem(pluginList);
         item->setText(plugin->getName());
@@ -153,7 +153,7 @@ PluginPage::PluginPage(QObject* quasar, QWidget *parent) :
     // build plugin list
     DataPluginMapType& pluginmap = m_quasar->getDataServer().getPlugins();
 
-    foreach(DataPlugin* plugin, pluginmap)
+    for (DataPlugin* plugin : pluginmap)
     {
         pluginCombo->addItem(plugin->getName(), QVariant::fromValue(plugin));
         pagesWidget->addWidget(new DataPluginPage(plugin));
