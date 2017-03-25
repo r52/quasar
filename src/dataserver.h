@@ -11,13 +11,17 @@ QT_FORWARD_DECLARE_CLASS(Quasar)
 
 class DataPlugin;
 
+typedef QMap<QString, DataPlugin*> DataPluginMapType;
+
 class DataServer : public QObject
 {
     Q_OBJECT;
 
 public:
-    explicit DataServer(Quasar *parent);
+    explicit DataServer(QObject *parent);
     ~DataServer();
+
+    DataPluginMapType& getPlugins() { return m_plugins; };
 
 private:
     void loadDataPlugins();
@@ -32,5 +36,5 @@ private:
     Quasar *m_parent;
     QWebSocketServer *m_pWebSocketServer;
     QList<QWebSocket *> m_clients;
-    QMap<QString, DataPlugin*> m_plugins;
+    DataPluginMapType m_plugins;
 };

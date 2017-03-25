@@ -9,7 +9,6 @@
 #include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 
-
 WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
 {
     // Copy data

@@ -129,6 +129,12 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket *subscriber, QString w
         {
             data.timer = new QTimer(this);
             connect(data.timer, &QTimer::timeout, this, [this, source] { DataPlugin::getAndSendData(source); });
+
+            if (0 == data.refreshmsec)
+            {
+                data.timer->setSingleShot(true);
+            }
+
             data.timer->start(data.refreshmsec);
         }
 
@@ -206,4 +212,3 @@ DataPlugin::DataPlugin(plugin_free freeFunc, plugin_init initFunc, plugin_get_da
     QObject(parent), free(freeFunc), init(initFunc), getData(getDataFunc), m_libpath(path)
 {
 }
-

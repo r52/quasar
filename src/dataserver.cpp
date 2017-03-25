@@ -11,14 +11,14 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-DataServer::DataServer(Quasar *parent) :
-    m_parent(parent),
-    QObject((QObject*)parent),
+DataServer::DataServer(QObject *parent) :
+    QObject(parent),
+    m_parent(qobject_cast<Quasar*>(parent)),
     m_pWebSocketServer(nullptr)
 {
     if (nullptr == m_parent)
     {
-        throw std::invalid_argument("Parent cannot be null");
+        throw std::invalid_argument("Parent must be a Quasar window");
     }
 
     m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"),

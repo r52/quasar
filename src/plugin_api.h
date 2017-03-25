@@ -13,7 +13,6 @@ extern "C" {
 #endif
 
     // WIP
-    // See wiki for API definition
 
     // Free plugin allocated data
     EXPORT void quasar_plugin_free(void* ptr, int size);
@@ -32,6 +31,8 @@ extern "C" {
     // treated as a JSON object (default false, meaning string)
     //
     // returns true if success, false otherwise
+    //
+    // This function needs to be re-entrant
     EXPORT int quasar_plugin_get_data(const char* dataSrc, char* buf, int bufsz, int* convert_data_to_json);
 
 #if defined(__cplusplus)

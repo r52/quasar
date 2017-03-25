@@ -17,6 +17,8 @@ struct DataSource
     QSet<QWebSocket *> subscribers;
 };
 
+typedef QMap<QString, DataSource> DataSourceMapType;
+
 class DataPlugin : public QObject
 {
     Q_OBJECT;
@@ -45,6 +47,8 @@ public:
     QString getDesc() { return m_desc; };
     QString getAuthor() { return m_author; };
 
+    DataSourceMapType& getDataSources() { return m_datasources; };
+
 private slots:
     void getAndSendData(QString source);
 
@@ -59,5 +63,5 @@ private:
     QString m_desc;
     QString m_author;
 
-    QMap<QString, DataSource> m_datasources;
+    DataSourceMapType m_datasources;
 };

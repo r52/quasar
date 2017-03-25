@@ -44,7 +44,6 @@ protected:
     }
 };
 
-
 class WebWidget : public QWidget
 {
     Q_OBJECT;
@@ -75,7 +74,6 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent *evt) override;
     virtual void contextMenuEvent(QContextMenuEvent *event) override;
 
-
     virtual void closeEvent(QCloseEvent *event) override;
 
 protected slots:
@@ -93,7 +91,7 @@ private:
 
     // Drag and drop pos
     QPoint dragPosition;
-    
+
     // Menu actions
     QAction *rName;
     QAction *rReload;
