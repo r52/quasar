@@ -23,8 +23,8 @@ enum PerfDataSources
 
 QuasarPluginDataSource sources[2] =
 {
-    { "cpu", 1000, 0 },
-    { "ram", 1000, 0 }
+    { "cpu", 5000, 0 },
+    { "ram", 5000, 0 }
 };
 
 // From https://stackoverflow.com/questions/23143693/retrieving-cpu-load-percent-total-in-windows-with-c
