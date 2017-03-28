@@ -82,6 +82,16 @@ ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
     plugCodeLayout->addWidget(plugCodeLabel);
     plugCodeLayout->addWidget(plugCode);
 
+    // version
+    QLabel *plugVerLabel = new QLabel(tr("Version:"));
+    plugVerLabel->setStyleSheet("font-weight: bold");
+    plugVersion = new QLabel;
+
+    QHBoxLayout *plugVerLayout = new QHBoxLayout;
+    plugVerLayout->setAlignment(Qt::AlignLeft);
+    plugVerLayout->addWidget(plugVerLabel);
+    plugVerLayout->addWidget(plugVersion);
+
     // author
     QLabel *plugAuthorLabel = new QLabel(tr("Author:"));
     plugAuthorLabel->setStyleSheet("font-weight: bold");
@@ -107,6 +117,7 @@ ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
     QVBoxLayout *infoLayout = new QVBoxLayout;
     infoLayout->addLayout(plugNameLayout);
     infoLayout->addLayout(plugCodeLayout);
+    infoLayout->addLayout(plugVerLayout);
     infoLayout->addLayout(plugAuthorLayout);
     infoLayout->addLayout(plugDescLayout);
     infoGroup->setLayout(infoLayout);

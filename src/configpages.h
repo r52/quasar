@@ -18,6 +18,7 @@ private:
 
     QLabel *plugName;
     QLabel *plugCode;
+    QLabel *plugVersion;
     QLabel *plugAuthor;
     QLabel *plugDesc;
 };
