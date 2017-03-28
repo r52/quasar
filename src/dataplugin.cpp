@@ -7,6 +7,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
+unsigned int DataPlugin::_uid = 0;
+
 void data_plugin_log(int level, const char* msg)
 {
     switch (level)
@@ -29,6 +31,10 @@ void data_plugin_log(int level, const char* msg)
 
 DataPlugin::~DataPlugin()
 {
+    if (nullptr != init)
+    {
+        init(QUASAR_INIT_SHUTDOWN, nullptr);
+    }
 }
 
 DataPlugin* DataPlugin::load(QString libpath, QObject *parent /*= Q_NULLPTR*/)
@@ -71,9 +77,9 @@ bool DataPlugin::setupPlugin()
 
     info.logFunc = data_plugin_log;
 
-    if (!init(&info))
+    if (!init(QUASAR_INIT_START, &info))
     {
-        qWarning() << "Failed to initialize plugin" << m_libpath;
+        qWarning() << "Failed to initialize QUASAR_INIT_START in plugin" << m_libpath;
         return false;
     }
 
@@ -81,6 +87,7 @@ bool DataPlugin::setupPlugin()
     m_code = info.pluginCode;
     m_author = info.author;
     m_desc = info.description;
+    m_version = info.version;
 
     if (nullptr != info.dataSources)
     {
@@ -93,10 +100,18 @@ bool DataPlugin::setupPlugin()
             }
 
             qInfo() << "Plugin " << m_code << " registering data source '" << info.dataSources[i].dataSrc << "'";
-            m_datasources[info.dataSources[i].dataSrc].refreshmsec = info.dataSources[i].refreshMsec;
-        }
 
-        free(info.dataSources, info.numDataSources);
+            DataSource& source = m_datasources[info.dataSources[i].dataSrc];
+            source.key = info.dataSources[i].dataSrc;
+            source.uid = info.dataSources[i].uid = ++DataPlugin::_uid;
+            source.refreshmsec = info.dataSources[i].refreshMsec;
+        }
+    }
+
+    if (!init(QUASAR_INIT_RESP, &info))
+    {
+        qWarning() << "Failed to initialize QUASAR_INIT_RESP in plugin" << m_libpath;
+        return false;
     }
 
     if (m_code.isEmpty() || m_name.isEmpty())
@@ -128,7 +143,7 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket *subscriber, QString w
         if (!data.timer)
         {
             data.timer = new QTimer(this);
-            connect(data.timer, &QTimer::timeout, this, [this, source] { DataPlugin::getAndSendData(source); });
+            connect(data.timer, &QTimer::timeout, this, [this, &data] { DataPlugin::getAndSendData(data); });
 
             if (0 == data.refreshmsec)
             {
@@ -175,27 +190,20 @@ void DataPlugin::removeSubscriber(QWebSocket *subscriber)
     }
 }
 
-void DataPlugin::getAndSendData(QString source)
+void DataPlugin::getAndSendData(DataSource& source)
 {
     // TODO maybe needs locks
-    if (!m_datasources.contains(source))
-    {
-        qWarning() << "Unknown data source '" << source << "' requested in plugin '" << m_code << "'";
-        return;
-    }
-
-    DataSource& data = m_datasources[source];
 
     // Only send if there are subscribers
-    if (!data.subscribers.isEmpty())
+    if (!source.subscribers.isEmpty())
     {
         char buf[1024] = "";
-        int convert_to_json = false;
+        int datatype = QUASAR_TREAT_AS_STRING;
 
         // Poll plugin for data source
-        if (!getData(qPrintable(source), buf, sizeof(buf), &convert_to_json))
+        if (!getData(source.uid, buf, sizeof(buf), &datatype))
         {
-            qWarning() << "getData(" << getCode() << ", " << source << ") failed";
+            qWarning() << "getData(" << getCode() << ", " << source.key << ") failed";
             return;
         }
 
@@ -203,22 +211,37 @@ void DataPlugin::getAndSendData(QString source)
         QJsonObject reply;
         reply["type"] = "data";
         reply["plugin"] = getCode();
-        reply["source"] = source;
+        reply["source"] = source.key;
 
-        if (convert_to_json)
+        switch (datatype)
         {
-            QString str = QString::fromUtf8(buf);
-            reply["data"] = QJsonDocument::fromJson(str.toUtf8()).object();
-        }
-        else
-        {
-            reply["data"] = QString::fromUtf8(buf);
+            case QUASAR_TREAT_AS_STRING:
+            {
+                reply["data"] = QString::fromUtf8(buf);
+                break;
+            }
+            case QUASAR_TREAT_AS_JSON:
+            {
+                QString str = QString::fromUtf8(buf);
+                reply["data"] = QJsonDocument::fromJson(str.toUtf8()).object();
+                break;
+            }
+            case QUASAR_TREAT_AS_BINARY:
+            {
+                reply["data"] = QJsonDocument::fromRawData(buf, sizeof(buf)).object();
+                break;
+            }
+            default:
+            {
+                qWarning() << "Undefined return data type " << datatype;
+                break;
+            }
         }
 
         QJsonDocument doc(reply);
         QString message(doc.toJson());
 
-        for (QWebSocket *sub : qAsConst(data.subscribers))
+        for (QWebSocket *sub : qAsConst(source.subscribers))
         {
             sub->sendTextMessage(message);
         }

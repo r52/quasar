@@ -51,7 +51,7 @@ DataServer::~DataServer()
 void DataServer::loadDataPlugins()
 {
     QDir dir("plugins/");
-    QFileInfoList list = dir.entryInfoList(QDir::Files);
+    QFileInfoList list = dir.entryInfoList(QStringList() << "*.dll" << "*.so" << "*.dylib", QDir::Files);
 
     if (list.count() == 0)
     {

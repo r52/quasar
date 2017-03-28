@@ -17,23 +17,24 @@ extern "C" {
     // Free plugin allocated data
     EXPORT void quasar_plugin_free(void* ptr, int size);
 
-    // Plugin init
+    // Plugin command
+    //
+    // Processes one of the commands
     //
     // returns true if successful, false otherwise
-    EXPORT int quasar_plugin_init(QuasarPluginInfo* info);
+    EXPORT int quasar_plugin_init(int cmd, QuasarPluginInfo* info);
 
     // Get data
     //
     // Retrieves the data of a specific data entry
-    // as a JSON-able string containing the requested data
     //
-    // convert_data_to_json specifies whether this piece of data should be
-    // treated as a JSON object (default false, meaning string)
+    // treatDataType specifies the type this piece of data should be
+    // treated as (default string)
     //
     // returns true if success, false otherwise
     //
     // This function needs to be re-entrant
-    EXPORT int quasar_plugin_get_data(const char* dataSrc, char* buf, int bufsz, int* convert_data_to_json);
+    EXPORT int quasar_plugin_get_data(unsigned int srcUid, char* buf, int bufsz, int* treatDataType);
 
 #if defined(__cplusplus)
 }
