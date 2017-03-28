@@ -19,7 +19,7 @@ struct DataSource
     QSet<QWebSocket *> subscribers;
 };
 
-typedef QMap<QString, DataSource> DataSourceMapType;
+using DataSourceMapType = QMap<QString, DataSource>;
 
 class DataPlugin : public QObject
 {
@@ -32,9 +32,9 @@ public:
 
     static DataPlugin* load(QString libpath, QObject *parent = Q_NULLPTR);
 
-    typedef void(*plugin_free)(void*, int);
-    typedef int(*plugin_init)(int, QuasarPluginInfo*);
-    typedef int(*plugin_get_data)(unsigned int, char*, int, int*);
+    using plugin_free = std::add_pointer_t<void(void*, int)>;
+    using plugin_init = std::add_pointer_t<int(int, QuasarPluginInfo*)>;
+    using plugin_get_data = std::add_pointer_t<int(unsigned int, char*, int, int*)>;
 
     const plugin_free free;
     const plugin_init init;

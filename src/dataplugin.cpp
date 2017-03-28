@@ -47,9 +47,9 @@ DataPlugin* DataPlugin::load(QString libpath, QObject *parent /*= Q_NULLPTR*/)
         return nullptr;
     }
 
-    plugin_free freeFunc = (plugin_free)lib.resolve("quasar_plugin_free");
-    plugin_init initFunc = (plugin_init)lib.resolve("quasar_plugin_init");
-    plugin_get_data getDataFunc = (plugin_get_data)lib.resolve("quasar_plugin_get_data");
+    plugin_free freeFunc = (plugin_free) lib.resolve("quasar_plugin_free");
+    plugin_init initFunc = (plugin_init) lib.resolve("quasar_plugin_init");
+    plugin_get_data getDataFunc = (plugin_get_data) lib.resolve("quasar_plugin_get_data");
 
     if (freeFunc && initFunc && getDataFunc)
     {

@@ -13,7 +13,7 @@ QT_FORWARD_DECLARE_CLASS(Quasar)
 
 class DataPlugin;
 
-typedef QMap<QString, DataPlugin*> DataPluginMapType;
+using DataPluginMapType = QMap<QString, DataPlugin*>;
 
 class DataServer : public QObject
 {
