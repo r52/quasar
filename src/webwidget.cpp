@@ -136,7 +136,9 @@ void WebWidget::saveSettings()
 void WebWidget::createContextMenuActions()
 {
     rName = new QAction(m_Name, this);
-    rName->font().setBold(true);
+    QFont f = rName->font();
+    f.setBold(true);
+    rName->setFont(f);
 
     rReload = new QAction(tr("&Reload"), this);
     connect(rReload, &QAction::triggered, webview, &QWebEngineView::reload);
