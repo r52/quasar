@@ -1,8 +1,8 @@
 #include "quasar.h"
 #include "configdialog.h"
+#include "webwidget.h"
 
 #include <QDebug>
-#include <QSystemTrayIcon>
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QMenu>
@@ -56,10 +56,37 @@ void Quasar::openConfigDialog()
     dialog.exec();
 }
 
+void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
+{
+    switch (reason)
+    {
+        case QSystemTrayIcon::Context:
+        {
+            // Regenerate widget list menu
+            widgetListMenu->clear();
+
+            WidgetMapType& widgets = reg.getWidgets();
+
+            for (WebWidget* widget : widgets)
+            {
+                widgetListMenu->addMenu(widget->getMenu());
+            }
+            break;
+        }
+
+        case QSystemTrayIcon::DoubleClick:
+        {
+            openWebWidget();
+            break;
+        }
+    }
+}
+
 void Quasar::createTrayIcon()
 {
     trayIconMenu = new QMenu(this);
     trayIconMenu->addAction(loadAction);
+    trayIconMenu->addMenu(widgetListMenu);
     trayIconMenu->addAction(settingsAction);
     trayIconMenu->addAction(logAction);
     trayIconMenu->addSeparator();
@@ -67,12 +94,16 @@ void Quasar::createTrayIcon()
 
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setContextMenu(trayIconMenu);
+
+    connect(trayIcon, &QSystemTrayIcon::activated, this, &Quasar::trayIconActivated);
 }
 
 void Quasar::createActions()
 {
     loadAction = new QAction(tr("&Load"), this);
     connect(loadAction, &QAction::triggered, this, &Quasar::openWebWidget);
+
+    widgetListMenu = new QMenu(tr("Widgets"), this);
 
     settingsAction = new QAction(tr("&Settings"), this);
     connect(settingsAction, &QAction::triggered, this, &Quasar::openConfigDialog);

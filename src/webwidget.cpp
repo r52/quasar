@@ -50,6 +50,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent
 
     // Create context menu
     createContextMenuActions();
+    createContextMenu();
 
     // Restore settings
     QSettings settings;
@@ -151,6 +152,17 @@ void WebWidget::createContextMenuActions()
     connect(rClose, &QAction::triggered, this, &WebWidget::close);
 }
 
+void WebWidget::createContextMenu()
+{
+    m_Menu = new QMenu(m_Name, this);
+    m_Menu->addAction(rName);
+    m_Menu->addSeparator();
+    m_Menu->addAction(rReload);
+    m_Menu->addAction(rOnTop);
+    m_Menu->addSeparator();
+    m_Menu->addAction(rClose);
+}
+
 void WebWidget::mousePressEvent(QMouseEvent *evt)
 {
     if (evt->button() == Qt::LeftButton) {
@@ -169,15 +181,7 @@ void WebWidget::mouseMoveEvent(QMouseEvent *evt)
 
 void WebWidget::contextMenuEvent(QContextMenuEvent *event)
 {
-    QMenu menu(this);
-    menu.addAction(rName);
-    menu.addSeparator();
-    menu.addAction(rReload);
-    menu.addAction(rOnTop);
-    menu.addSeparator();
-    menu.addAction(rClose);
-
-    menu.exec(event->globalPos());
+    m_Menu->exec(event->globalPos());
 }
 
 void WebWidget::closeEvent(QCloseEvent *event)

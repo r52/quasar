@@ -4,6 +4,7 @@
 #include <QWidget>
 
 QT_FORWARD_DECLARE_CLASS(QWebEngineView);
+QT_FORWARD_DECLARE_CLASS(QMenu);
 
 // From https://stackoverflow.com/questions/19362455/dark-transparent-layer-over-a-qmainwindow-in-qt
 class OverlayWidget : public QWidget
@@ -56,6 +57,7 @@ public:
 
     QJsonObject getData() { return data; }
     QString getName() { return m_Name; }
+    QMenu* getMenu() { return m_Menu; }
 
     QString getFullPath();
 
@@ -66,6 +68,7 @@ signals:
 
 protected:
     void createContextMenuActions();
+    void createContextMenu();
 
     // Overrides
     virtual void mousePressEvent(QMouseEvent *evt) override;
@@ -92,7 +95,8 @@ private:
     // Drag and drop pos
     QPoint dragPosition;
 
-    // Menu actions
+    // Menu/actions
+    QMenu *m_Menu;
     QAction *rName;
     QAction *rReload;
     QAction *rOnTop;

@@ -5,8 +5,8 @@
 #include "dataserver.h"
 
 #include <QtWidgets/QMainWindow>
+#include <QSystemTrayIcon>
 
-QT_FORWARD_DECLARE_CLASS(QSystemTrayIcon);
 QT_FORWARD_DECLARE_CLASS(QTextEdit);
 QT_FORWARD_DECLARE_CLASS(WebWidget);
 
@@ -24,6 +24,7 @@ public:
 private slots:
     void openWebWidget();
     void openConfigDialog();
+    void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 
 protected:
     virtual void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
@@ -41,7 +42,8 @@ private:
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
 
-    // Actions
+    // Actions/menus
+    QMenu *widgetListMenu;
     QAction *loadAction;
     QAction *settingsAction;
     QAction *logAction;
