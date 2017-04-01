@@ -110,7 +110,7 @@ void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
         QString sources = req["source"].toString();
 
         // subWidget parameter currently unused
-        WebWidget *subWidget = m_parent->getWidgetRegistry().findWidgetByName(widgetName);
+        WebWidget *subWidget = m_parent->getWidgetRegistry().findWidget(widgetName);
 
         if (!subWidget)
         {

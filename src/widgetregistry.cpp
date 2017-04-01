@@ -2,28 +2,29 @@
 #include "widgetdefs.h"
 #include "webwidget.h"
 
-WidgetRegistry::WidgetRegistry()
+WidgetRegistry::WidgetRegistry(QObject *parent)
+    : QObject(parent)
 {
 }
 
 WidgetRegistry::~WidgetRegistry()
 {
-    // Save loaded list
-    QSettings settings;
-    settings.setValue("global/loaded", QStringList(map.keys()));
+    QStringList loadedWidgets;
 
     // Delete alive widgets and clear list
-    QMapIterator<QString, WebWidget*> it(map);
-
-    while (it.hasNext())
+    for (WebWidget* widget : m_widgetMap)
     {
-        auto kv = it.next();
-        kv.value()->saveSettings();
-        delete kv.value();
+        widget->saveSettings();
+        loadedWidgets << widget->getFullPath();
+
+        delete widget;
     }
 
-    map.clear();
-    name_to_def_map.clear();
+    // Save loaded list
+    QSettings settings;
+    settings.setValue("global/loaded", loadedWidgets);
+
+    m_widgetMap.clear();
 }
 
 void WidgetRegistry::loadLoadedWidgets()
@@ -41,12 +42,6 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
 {
     if (!filename.isNull())
     {
-        if (map.count(filename) > 0)
-        {
-            qWarning() << "A widget with definition " << filename << " already loaded.";
-            return false;
-        }
-
         QFile wgtFile(filename);
 
         if (!wgtFile.open(QIODevice::ReadOnly))
@@ -71,13 +66,21 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
         }
         else
         {
-            qInfo() << "Loading widget " << dat[WGT_DEF_NAME].toString() << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
-            WebWidget *widget = new WebWidget(dat);
+            // Generate unique widget name
+            QString defName = dat[WGT_DEF_NAME].toString();
+            QString widgetName = defName;
+            int idx = 2;
 
-            map.insert(dat[WGT_DEF_FULLPATH].toString(), widget);
+            while (m_widgetMap.count(widgetName) > 0)
+            {
+                widgetName = defName + QString::number(idx++);
+            }
 
-            // also map widget name
-            name_to_def_map.insert(dat[WGT_DEF_NAME].toString(), dat[WGT_DEF_FULLPATH].toString());
+            qInfo() << "Loading widget " << widgetName << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
+
+            WebWidget *widget = new WebWidget(widgetName, dat);
+
+            m_widgetMap.insert(widgetName, widget);
 
             connect(widget, &WebWidget::WebWidgetClosed, this, &WidgetRegistry::closeWebWidget);
             widget->show();
@@ -89,18 +92,13 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
     return false;
 }
 
-WebWidget* WidgetRegistry::findWidgetByName(QString widgetName)
+WebWidget* WidgetRegistry::findWidget(QString widgetName)
 {
-    auto itn = name_to_def_map.find(widgetName);
+    auto it = m_widgetMap.find(widgetName);
 
-    if (itn != name_to_def_map.end())
+    if (it != m_widgetMap.end())
     {
-        auto it = map.find((*itn));
-
-        if (it != map.end())
-        {
-            return *it;
-        }
+        return *it;
     }
 
     return nullptr;
@@ -110,17 +108,17 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
 {
     // Remove from loaded list
     QJsonObject data = widget->getData();
+    QString name = widget->getName();
 
-    qInfo() << "Closing widget " << data[WGT_DEF_NAME].toString() << " (" << data[WGT_DEF_FULLPATH].toString() << ")";
+    qInfo() << "Closing widget " << name << " (" << data[WGT_DEF_FULLPATH].toString() << ")";
 
     // Remove from registry
-    auto it = map.find(data[WGT_DEF_FULLPATH].toString());
+    auto it = m_widgetMap.find(name);
 
-    if (it != map.end())
+    if (it != m_widgetMap.end())
     {
         Q_ASSERT((*it) == widget);
-        map.erase(it);
-        name_to_def_map.remove(data[WGT_DEF_NAME].toString());
+        m_widgetMap.erase(it);
     }
 
     widget->deleteLater();

@@ -10,18 +10,17 @@ class WidgetRegistry : public QObject
     Q_OBJECT
 
 public:
-    WidgetRegistry();
+    WidgetRegistry(QObject *parent = Q_NULLPTR);
     ~WidgetRegistry();
 
     void loadLoadedWidgets();
     bool loadWebWidget(QString filename, bool warnSecurity = true);
 
-    WebWidget* findWidgetByName(QString widgetName);
+    WebWidget* findWidget(QString widgetName);
 
 public slots:
     void closeWebWidget(WebWidget* widget);
 
 private:
-    QMap<QString, WebWidget*> map;
-    QMap<QString, QString> name_to_def_map;
+    QMap<QString, WebWidget*> m_widgetMap;
 };

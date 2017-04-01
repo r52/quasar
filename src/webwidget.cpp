@@ -10,8 +10,14 @@
 #include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 
-WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
+WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent)
+    : QWidget(parent), m_Name(widgetName)
 {
+    if (m_Name.isEmpty())
+    {
+        throw std::invalid_argument("Widget name cannot be null");
+    }
+
     // Copy data
     data = dat;
 
@@ -67,7 +73,7 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
     quint16 port = settings.value("global/dataport", QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
     QString pageGlobalScript = QString("var qWidgetName = \"%1\"; var qWsServerUrl = \"ws://localhost:%2\";")
-        .arg(data[WGT_DEF_NAME].toString()).arg(port);
+        .arg(m_Name).arg(port);
 
     QWebEngineScript pageGlobals;
     pageGlobals.setName("PageGlobals");
@@ -77,7 +83,7 @@ WebWidget::WebWidget(const QJsonObject &dat, QWidget *parent) : QWidget(parent)
 
     webview->page()->scripts().insert(pageGlobals);
 
-    setWindowTitle(data[WGT_DEF_NAME].toString());
+    setWindowTitle(m_Name);
 }
 
 bool WebWidget::validateWidgetDefinition(const QJsonObject &dat)
@@ -115,9 +121,9 @@ bool WebWidget::acceptSecurityWarnings(const QJsonObject &dat)
     return accept;
 }
 
-QString WebWidget::getName()
+QString WebWidget::getFullPath()
 {
-    return data[WGT_DEF_NAME].toString();
+    return data[WGT_DEF_FULLPATH].toString();
 }
 
 void WebWidget::saveSettings()
@@ -129,7 +135,7 @@ void WebWidget::saveSettings()
 
 void WebWidget::createContextMenuActions()
 {
-    rName = new QAction(data[WGT_DEF_NAME].toString(), this);
+    rName = new QAction(m_Name, this);
     rName->font().setBold(true);
 
     rReload = new QAction(tr("&Reload"), this);
@@ -203,5 +209,5 @@ void WebWidget::toggleOnTop(bool ontop)
 
 QString WebWidget::getWidgetConfigKey(QString key)
 {
-    return data[WGT_DEF_NAME].toString() + "/" + key;
+    return m_Name + "/" + key;
 }

@@ -49,17 +49,15 @@ class WebWidget : public QWidget
     Q_OBJECT;
 
 public:
-    explicit WebWidget(const QJsonObject &dat, QWidget *parent = Q_NULLPTR);
+    explicit WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent = Q_NULLPTR);
 
     static bool validateWidgetDefinition(const QJsonObject &dat);
     static bool acceptSecurityWarnings(const QJsonObject &dat);
 
-    QJsonObject getData()
-    {
-        return data;
-    }
+    QJsonObject getData() { return data; }
+    QString getName() { return m_Name; }
 
-    QString getName();
+    QString getFullPath();
 
     void saveSettings();
 
@@ -83,6 +81,8 @@ private:
     QString getWidgetConfigKey(QString key);
 
 private:
+    QString m_Name;
+
     // Web engine widget
     QWebEngineView *webview;
 

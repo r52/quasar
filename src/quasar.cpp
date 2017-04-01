@@ -10,7 +10,7 @@
 #include <QFileDialog>
 
 Quasar::Quasar(QTextEdit *logWidget, QWidget *parent)
-    : QMainWindow(parent), server(this)
+    : QMainWindow(parent), reg(this), server(this)
 {
     ui.setupUi(this);
 
