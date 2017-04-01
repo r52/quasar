@@ -10,6 +10,8 @@
 #include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 
+QString WebWidget::PageGlobalTemp;
+
 WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent)
     : QWidget(parent), m_Name(widgetName)
 {
@@ -71,18 +73,29 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent
     resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
 
     // Create page globals
+    if (PageGlobalTemp.isEmpty())
+    {
+        QFile file(":/Resources/pageglobals.js");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            throw std::exception("pageglobal script load failure");
+        }
+
+        QTextStream in(&file);
+        PageGlobalTemp = in.readAll();
+    }
+
     quint16 port = settings.value("global/dataport", QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
-    QString pageGlobalScript = QString("var qWidgetName = \"%1\"; var qWsServerUrl = \"ws://localhost:%2\";")
-        .arg(m_Name).arg(port);
+    QString pageGlobals = PageGlobalTemp.arg(m_Name).arg(port);
 
-    QWebEngineScript pageGlobals;
-    pageGlobals.setName("PageGlobals");
-    pageGlobals.setInjectionPoint(QWebEngineScript::DocumentReady);
-    pageGlobals.setWorldId(0);
-    pageGlobals.setSourceCode(pageGlobalScript);
+    QWebEngineScript script;
+    script.setName("PageGlobals");
+    script.setInjectionPoint(QWebEngineScript::DocumentReady);
+    script.setWorldId(0);
+    script.setSourceCode(pageGlobals);
 
-    webview->page()->scripts().insert(pageGlobals);
+    webview->page()->scripts().insert(script);
 
     setWindowTitle(m_Name);
 }

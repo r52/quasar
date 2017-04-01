@@ -84,6 +84,8 @@ private:
     QString getWidgetConfigKey(QString key);
 
 private:
+    static QString PageGlobalTemp;
+
     QString m_Name;
 
     // Web engine widget

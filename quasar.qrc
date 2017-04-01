@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>Resources/q.png</file>
+        <file>Resources/pageglobals.js</file>
     </qresource>
 </RCC>
