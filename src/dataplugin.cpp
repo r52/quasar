@@ -139,16 +139,16 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket *subscriber, QString w
 
         data.subscribers << subscriber;
 
-        // Initialize timer not done so
-        if (!data.timer)
+        if (0 == data.refreshmsec)
         {
+            // Fire single shot
+            QTimer::singleShot(0, this, [this, &data] { DataPlugin::getAndSendData(data); });
+        }
+        else if (!data.timer)
+        {
+            // Initialize timer not done so
             data.timer = new QTimer(this);
             connect(data.timer, &QTimer::timeout, this, [this, &data] { DataPlugin::getAndSendData(data); });
-
-            if (0 == data.refreshmsec)
-            {
-                data.timer->setSingleShot(true);
-            }
 
             data.timer->start(data.refreshmsec);
         }
@@ -179,10 +179,12 @@ void DataPlugin::removeSubscriber(QWebSocket *subscriber)
             // Stop timer if no subscribers
             if (it->subscribers.isEmpty())
             {
-                it->timer->stop();
-                it->timer->deleteLater();
-
-                it->timer = nullptr;
+                if (nullptr != it->timer)
+                {
+                    it->timer->stop();
+                    it->timer->deleteLater();
+                    it->timer = nullptr;
+                }
             }
 
             ++it;
