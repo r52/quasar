@@ -45,7 +45,7 @@ DataServer::DataServer(QObject *parent) :
 DataServer::~DataServer()
 {
     m_pWebSocketServer->close();
-    qDeleteAll(m_clients.begin(), m_clients.end());
+    qDeleteAll(m_clients);
 }
 
 void DataServer::loadDataPlugins()

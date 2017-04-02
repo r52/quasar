@@ -16,9 +16,9 @@ WidgetRegistry::~WidgetRegistry()
     {
         widget->saveSettings();
         loadedWidgets << widget->getFullPath();
-
-        delete widget;
     }
+
+    qDeleteAll(m_widgetMap);
 
     // Save loaded list
     QSettings settings;
