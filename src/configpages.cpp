@@ -3,9 +3,16 @@
 #include "quasar.h"
 #include "dataplugin.h"
 #include "configpages.h"
+#include "widgetdefs.h"
+
+namespace
+{
+    // setting names
+    QString QUASAR_SETTING_PORT = "portSpin";
+}
 
 ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
-    QWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
+    PageWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
 {
     if (nullptr == m_quasar)
     {
@@ -18,13 +25,16 @@ ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
     QLabel *portLabel = new QLabel(tr("Data Server port:"));
 
     QSettings settings;
-    int port = settings.value("global/dataport", QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
+    int port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
 
     QSpinBox *portSpin = new QSpinBox;
+    portSpin->setObjectName(QUASAR_SETTING_PORT);
     portSpin->setMinimum(1024);
     portSpin->setMaximum(65535);
     portSpin->setSingleStep(1);
     portSpin->setValue(port);
+
+    connect(portSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i) { this->m_settingsModified = true; });
 
     QHBoxLayout *generalLayout = new QHBoxLayout;
     generalLayout->addWidget(portLabel);
@@ -136,6 +146,20 @@ ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
     setLayout(mainLayout);
 }
 
+void ConfigurationPage::saveSettings(QSettings &settings, bool &restartNeeded)
+{
+    if (m_settingsModified)
+    {
+        auto portspin = findChild<QSpinBox *>(QUASAR_SETTING_PORT);
+
+        if (portspin)
+        {
+            settings.setValue(QUASAR_CONFIG_PORT, portspin->value());
+            restartNeeded = true;
+        }
+    }
+}
+
 void ConfigurationPage::pluginListClicked(QListWidgetItem *item)
 {
     DataPlugin *plugin = qvariant_cast<DataPlugin*>(item->data(Qt::UserRole));
@@ -144,13 +168,14 @@ void ConfigurationPage::pluginListClicked(QListWidgetItem *item)
     {
         plugName->setText(plugin->getName());
         plugCode->setText(plugin->getCode());
+        plugVersion->setText(plugin->getVersion());
         plugAuthor->setText(plugin->getAuthor());
         plugDesc->setText(plugin->getDesc());
     }
 }
 
 PluginPage::PluginPage(QObject* quasar, QWidget *parent) :
-    QWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
+    PageWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
 {
     if (nullptr == m_quasar)
     {
@@ -182,9 +207,25 @@ PluginPage::PluginPage(QObject* quasar, QWidget *parent) :
     setLayout(mainLayout);
 }
 
-DataPluginPage::DataPluginPage(DataPlugin* plugin, QWidget *parent)
+void PluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
 {
-    QGroupBox *sourceGroup = new QGroupBox(tr("Data Update Rate (ms)"));
+    auto pages = pagesWidget->children();
+
+    for (QObject* page : pages)
+    {
+        auto p = qobject_cast<PageWidget*>(page);
+
+        if (p)
+        {
+            p->saveSettings(settings, restartNeeded);
+        }
+    }
+}
+
+DataPluginPage::DataPluginPage(DataPlugin* plugin, QWidget *parent) :
+    PageWidget(parent)
+{
+    QGroupBox *sourceGroup = new QGroupBox(tr("Data Update Rate"));
     QVBoxLayout *sourceLayout = new QVBoxLayout;
 
     DataSourceMapType& sources = plugin->getDataSources();
@@ -202,6 +243,7 @@ DataPluginPage::DataPluginPage(DataPlugin* plugin, QWidget *parent)
         upSpin->setMaximum(INT_MAX);
         upSpin->setSingleStep(1);
         upSpin->setValue(it.value().refreshmsec);
+        upSpin->setSuffix("ms");
 
         QHBoxLayout *dataLayout = new QHBoxLayout;
         dataLayout->addWidget(sourceCheckBox);
@@ -217,4 +259,9 @@ DataPluginPage::DataPluginPage(DataPlugin* plugin, QWidget *parent)
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(sourceGroup);
     setLayout(mainLayout);
+}
+
+void DataPluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
+{
+    // TODO
 }

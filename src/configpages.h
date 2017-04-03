@@ -1,19 +1,39 @@
 #pragma once
 
 #include <QWidget>
+#include <QSettings>
 
 QT_FORWARD_DECLARE_CLASS(Quasar)
 QT_FORWARD_DECLARE_CLASS(DataPlugin)
+QT_FORWARD_DECLARE_CLASS(QListWidgetItem)
+QT_FORWARD_DECLARE_CLASS(QLabel)
+QT_FORWARD_DECLARE_CLASS(QStackedWidget)
 
-class ConfigurationPage : public QWidget
+class PageWidget : public QWidget
 {
+    Q_OBJECT
+
+public:
+    PageWidget(QWidget *parent = 0) : QWidget(parent) {}
+
+    virtual void saveSettings(QSettings &settings, bool &restartNeeded) = 0;
+};
+
+class ConfigurationPage : public PageWidget
+{
+    Q_OBJECT
+
 public:
     ConfigurationPage(QObject *quasar, QWidget *parent = 0);
+
+    virtual void saveSettings(QSettings &settings, bool &restartNeeded) override;
 
 private slots:
     void pluginListClicked(QListWidgetItem *item);
 
 private:
+    bool m_settingsModified = false;
+
     Quasar *m_quasar;
 
     QLabel *plugName;
@@ -23,10 +43,14 @@ private:
     QLabel *plugDesc;
 };
 
-class PluginPage : public QWidget
+class PluginPage : public PageWidget
 {
+    Q_OBJECT
+
 public:
     PluginPage(QObject *quasar, QWidget *parent = 0);
+
+    virtual void saveSettings(QSettings &settings, bool &restartNeeded) override;
 
 private:
     Quasar *m_quasar;
@@ -34,8 +58,12 @@ private:
     QStackedWidget *pagesWidget;
 };
 
-class DataPluginPage : public QWidget
+class DataPluginPage : public PageWidget
 {
+    Q_OBJECT
+
 public:
     DataPluginPage(DataPlugin *plugin, QWidget *parent = 0);
+
+    virtual void saveSettings(QSettings &settings, bool & restartNeeded) override;
 };

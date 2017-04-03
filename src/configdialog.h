@@ -16,6 +16,9 @@ public:
 public slots:
     void changePage(QListWidgetItem *current, QListWidgetItem *previous);
 
+private slots:
+    void saveSettings();
+
 private:
     void createIcons();
 

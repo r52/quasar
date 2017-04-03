@@ -85,7 +85,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent
         PageGlobalTemp = in.readAll();
     }
 
-    quint16 port = settings.value("global/dataport", QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+    quint16 port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
     QString pageGlobals = PageGlobalTemp.arg(m_Name).arg(port);
 

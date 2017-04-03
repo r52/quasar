@@ -7,3 +7,6 @@
 #define WGT_DEF_FULLPATH        "fullPath"
 #define WGT_DEF_TRANSPARENTBG   "transparentBg"
 #define WGT_DEF_REMOTEACCESS    "remoteAccess"
+
+#define QUASAR_CONFIG_PORT      "global/dataport"
+#define QUASAR_CONFIG_LOADED    "global/loaded"

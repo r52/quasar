@@ -2,6 +2,7 @@
 #include "dataplugin.h"
 #include "quasar.h"
 #include "webwidget.h"
+#include "widgetdefs.h"
 
 #include <QDebug>
 #include <QDir>
@@ -26,7 +27,7 @@ DataServer::DataServer(QObject *parent) :
         this);
 
     QSettings settings;
-    quint16 port = settings.value("global/dataport", QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+    quint16 port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
     if (m_pWebSocketServer->listen(QHostAddress::LocalHost, port))
     {

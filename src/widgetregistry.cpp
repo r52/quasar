@@ -22,7 +22,7 @@ WidgetRegistry::~WidgetRegistry()
 
     // Save loaded list
     QSettings settings;
-    settings.setValue("global/loaded", loadedWidgets);
+    settings.setValue(QUASAR_CONFIG_LOADED, loadedWidgets);
 
     m_widgetMap.clear();
 }
@@ -30,7 +30,7 @@ WidgetRegistry::~WidgetRegistry()
 void WidgetRegistry::loadLoadedWidgets()
 {
     QSettings settings;
-    QStringList loadedList = settings.value("global/loaded").toStringList();
+    QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();
 
     foreach(const QString &f, loadedList)
     {

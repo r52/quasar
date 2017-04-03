@@ -17,11 +17,13 @@ ConfigDialog::ConfigDialog(QObject* quasar)
     pagesWidget->addWidget(new ConfigurationPage(quasar));
     pagesWidget->addWidget(new PluginPage(quasar));
 
+    QPushButton *okButton = new QPushButton(tr("OK"));
     QPushButton *closeButton = new QPushButton(tr("Close"));
 
     createIcons();
     contentsWidget->setCurrentRow(0);
 
+    connect(okButton, &QAbstractButton::clicked, this, &ConfigDialog::saveSettings);
     connect(closeButton, &QAbstractButton::clicked, this, &QWidget::close);
 
     QHBoxLayout *horizontalLayout = new QHBoxLayout;
@@ -30,6 +32,7 @@ ConfigDialog::ConfigDialog(QObject* quasar)
 
     QHBoxLayout *buttonsLayout = new QHBoxLayout;
     buttonsLayout->addStretch(1);
+    buttonsLayout->addWidget(okButton);
     buttonsLayout->addWidget(closeButton);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
@@ -63,4 +66,29 @@ void ConfigDialog::changePage(QListWidgetItem *current, QListWidgetItem *previou
         current = previous;
 
     pagesWidget->setCurrentIndex(contentsWidget->row(current));
+}
+
+void ConfigDialog::saveSettings()
+{
+    QSettings settings;
+    bool restartNeeded = false;
+
+    auto pages = pagesWidget->children();
+
+    for (QObject* page : pages)
+    {
+        auto p = qobject_cast<PageWidget*>(page);
+
+        if (p)
+        {
+            p->saveSettings(settings, restartNeeded);
+        }
+    }
+
+    if (restartNeeded)
+    {
+        QMessageBox::information(nullptr, "Quasar", "Quasar needs to be restarted for these changes to take effect. Please restart the app.");
+    }
+
+    close();
 }
