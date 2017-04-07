@@ -31,6 +31,17 @@ void data_plugin_log(int level, const char* msg)
 
 DataPlugin::~DataPlugin()
 {
+    // Do some explicit cleanup
+    for (DataSource& src : m_datasources)
+    {
+        if (nullptr != src.timer)
+        {
+            delete src.timer;
+        }
+
+        src.subscribers.clear();
+    }
+
     if (nullptr != init)
     {
         init(QUASAR_INIT_SHUTDOWN, nullptr);
@@ -181,8 +192,7 @@ void DataPlugin::removeSubscriber(QWebSocket *subscriber)
             {
                 if (nullptr != it->timer)
                 {
-                    it->timer->stop();
-                    it->timer->deleteLater();
+                    delete it->timer;
                     it->timer = nullptr;
                 }
             }

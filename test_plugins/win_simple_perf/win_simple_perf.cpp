@@ -125,6 +125,7 @@ int quasar_plugin_init(int cmd, QuasarPluginInfo* info)
 
             return true;
         }
+
         case QUASAR_INIT_RESP:
         {
             // Process uid returns.
@@ -143,11 +144,14 @@ int quasar_plugin_init(int cmd, QuasarPluginInfo* info)
 
             return true;
         }
+
         case QUASAR_INIT_SHUTDOWN:
         {
-            // does nothing in this example, but should deallocate and shutdown any allocated resources
+            // This should deallocate and shutdown any allocated resources
+            logFunc = nullptr;
             return true;
         }
+
         default:
         {
             if (logFunc)
