@@ -19,12 +19,11 @@ WidgetRegistry::~WidgetRegistry()
     }
 
     qDeleteAll(m_widgetMap);
+    m_widgetMap.clear();
 
     // Save loaded list
     QSettings settings;
     settings.setValue(QUASAR_CONFIG_LOADED, loadedWidgets);
-
-    m_widgetMap.clear();
 }
 
 void WidgetRegistry::loadLoadedWidgets()
