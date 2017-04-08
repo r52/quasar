@@ -49,9 +49,9 @@ private:
     QAction *logAction;
     QAction *quitAction;
 
-    // Widget registry
-    WidgetRegistry reg;
-
     // Data server
     DataServer server;
+
+    // Widget registry
+    WidgetRegistry reg;
 };

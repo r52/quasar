@@ -49,7 +49,9 @@ DataServer::~DataServer()
     m_plugins.clear();
 
     m_pWebSocketServer->close();
+
     qDeleteAll(m_clients);
+    m_clients.clear();
 }
 
 void DataServer::loadDataPlugins()
