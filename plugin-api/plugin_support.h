@@ -10,9 +10,9 @@ extern "C" {
 
     EXPORT quasar_settings_t* quasar_create_settings(void);
 
-    EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char *name, const char *description, int min, int max, int step);
-    EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char *name, const char *description);
-    EXPORT quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char *name, const char *description, double min, double max, double step);
+    EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char *name, const char *description, int min, int max, int step, int default);
+    EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char *name, const char *description, bool default);
+    EXPORT quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char *name, const char *description, double min, double max, double step, double default);
 
     EXPORT intmax_t quasar_get_int(quasar_settings_t* settings, const char* name);
     EXPORT uintmax_t quasar_get_uint(quasar_settings_t* settings, const char* name);

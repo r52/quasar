@@ -69,6 +69,7 @@ public:
 
 private:
     bool m_dataSettingsModified = false;
+    bool m_plugSettingsModified = false;
 
     DataPlugin *plugin;
 };

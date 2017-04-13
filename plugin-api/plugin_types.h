@@ -34,7 +34,6 @@ extern "C" {
         QUASAR_TREAT_AS_BINARY
     };
 
-    // Opaque pre-decl (TODO: implement this)
     struct quasar_settings_t;
 
     struct quasar_data_source_t
@@ -89,11 +88,6 @@ extern "C" {
         //
         // This function should update local settings values
         plugin_settings_call_t update;
-
-        // get_defaults(quasar_settings_t* settings), optional
-        //
-        // This function should set default values for settings
-        plugin_settings_call_t get_defaults;
 
         // get_data(size_t uid, char* buf, size_t bufSz, int* treatDataType), required
         //

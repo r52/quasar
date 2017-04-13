@@ -135,7 +135,6 @@ quasar_plugin_info_t info =
     simple_perf_shutdown,
     nullptr,
     nullptr,
-    nullptr,
     simple_perf_get_data
 };
 

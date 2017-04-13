@@ -2,7 +2,7 @@
 
 #include <plugin_types.h>
 
-#include <chrono>
+#include <memory>
 #include <QtCore/QObject>
 #include <QSet>
 #include <QMap>
@@ -12,6 +12,7 @@ QT_FORWARD_DECLARE_CLASS(QTimer)
 
 #define QUASAR_DP_ENABLED_PREFIX "enabled_"
 #define QUASAR_DP_REFRESH_PREFIX "refresh_"
+#define QUASAR_DP_CUSTOM_PREFIX  "custom_"
 
 struct DataSource
 {
@@ -29,13 +30,13 @@ class DataPlugin : public QObject
     Q_OBJECT;
 
 public:
+    using plugin_load = std::add_pointer_t<quasar_plugin_info_t*(void)>;
+
     ~DataPlugin();
 
-    static unsigned int _uid;
+    static uintmax_t _uid;
 
     static DataPlugin* load(QString libpath, QObject *parent = Q_NULLPTR);
-
-    using plugin_load = std::add_pointer_t<quasar_plugin_info_t*(void)>;
 
     bool setupPlugin();
 
@@ -50,11 +51,19 @@ public:
     QString getVersion() { return m_version; };
     QString getSettingsCode(QString key) { return "plugin_" + getCode() + "/" + key; };
 
+    quasar_settings_t* getSettings() { return m_settings.get(); };
+
     DataSourceMapType& getDataSources() { return m_datasources; };
 
     void setDataSourceEnabled(QString source, bool enabled);
 
     void setDataSourceRefresh(QString source, uint32_t msec);
+
+    void setCustomSetting(QString name, int val);
+    void setCustomSetting(QString name, double val);
+    void setCustomSetting(QString name, bool val);
+
+    void updatePluginSettings();
 
 private slots:
     void getAndSendData(DataSource& source);
@@ -64,7 +73,9 @@ private:
 
     void createTimer(DataSource& data);
 
-    quasar_plugin_info_t* plugin;
+    quasar_plugin_info_t* m_plugin;
+
+    std::unique_ptr<quasar_settings_t> m_settings;
 
     bool m_Initialized = false;
 

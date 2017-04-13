@@ -5,6 +5,8 @@
 #include "configpages.h"
 #include "widgetdefs.h"
 
+#include "plugin_support_internal.h"
+
 namespace
 {
     // setting names
@@ -228,6 +230,7 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget *parent) :
     QGroupBox *sourceGroup = new QGroupBox(tr("Data Update Rate"));
     QVBoxLayout *sourceLayout = new QVBoxLayout;
 
+    // Create data source settings
     DataSourceMapType& sources = p->getDataSources();
 
     QSettings settings;
@@ -273,6 +276,77 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget *parent) :
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addWidget(sourceGroup);
+
+    // Create plugin custom settings if any
+    if (auto s = p->getSettings())
+    {
+        QGroupBox *plugGroup = new QGroupBox(tr("Plugin Settings"));
+        QVBoxLayout *plugLayout = new QVBoxLayout;
+
+        auto it = s->map.begin();
+
+        while (it != s->map.end())
+        {
+            QHBoxLayout *entryLayout = new QHBoxLayout;
+
+            QLabel *label = new QLabel;
+            label->setText(it->description);
+            entryLayout->addWidget(label);
+
+            switch (it->type)
+            {
+                case QUASAR_SETTING_ENTRY_INT:
+                {
+                    QSpinBox *s = new QSpinBox;
+                    s->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.key());
+                    s->setMinimum(it->inttype.min);
+                    s->setMaximum(it->inttype.max);
+                    s->setSingleStep(it->inttype.step);
+                    s->setValue(it->inttype.val);
+
+                    connect(s, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i) { this->m_plugSettingsModified = true; });
+
+                    entryLayout->addWidget(s);
+                    break;
+                }
+
+                case QUASAR_SETTING_ENTRY_DOUBLE:
+                {
+                    QDoubleSpinBox *d = new QDoubleSpinBox;
+                    d->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.key());
+                    d->setMinimum(it->doubletype.min);
+                    d->setMaximum(it->doubletype.max);
+                    d->setSingleStep(it->doubletype.step);
+                    d->setValue(it->doubletype.val);
+
+                    connect(d, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, [this](double d) { this->m_plugSettingsModified = true; });
+
+                    entryLayout->addWidget(d);
+                    break;
+                }
+
+                case QUASAR_SETTING_ENTRY_BOOL:
+                {
+                    QCheckBox *b = new QCheckBox;
+                    b->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.key());
+                    b->setChecked(it->booltype.val);
+
+                    connect(b, &QCheckBox::toggled, this, [this](bool state) { this->m_plugSettingsModified = true; });
+
+                    entryLayout->addWidget(b);
+                    break;
+                }
+            }
+
+            plugLayout->addLayout(entryLayout);
+
+            ++it;
+        }
+
+        plugGroup->setLayout(plugLayout);
+        mainLayout->addWidget(plugGroup);
+    }
+
     setLayout(mainLayout);
 }
 
@@ -302,5 +376,39 @@ void DataPluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
         }
     }
 
-    // TODO plugin settings support
+    // Save plugin custom settings
+    if (m_plugSettingsModified)
+    {
+        QList<QSpinBox*> intSources = findChildren<QSpinBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
+
+        for (QSpinBox* s : intSources)
+        {
+            QString name = s->objectName();
+            name = name.remove(QUASAR_DP_CUSTOM_PREFIX);
+
+            plugin->setCustomSetting(name, s->value());
+        }
+
+        QList<QCheckBox*> boolSources = findChildren<QCheckBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
+
+        for (QCheckBox* c : boolSources)
+        {
+            QString name = c->objectName();
+            name = name.remove(QUASAR_DP_CUSTOM_PREFIX);
+
+            plugin->setCustomSetting(name, c->isChecked());
+        }
+
+        QList<QDoubleSpinBox*> doubleSources = findChildren<QDoubleSpinBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
+
+        for (QDoubleSpinBox* d : doubleSources)
+        {
+            QString name = d->objectName();
+            name = name.remove(QUASAR_DP_CUSTOM_PREFIX);
+
+            plugin->setCustomSetting(name, d->value());
+        }
+
+        plugin->updatePluginSettings();
+    }
 }

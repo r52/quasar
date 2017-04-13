@@ -10,6 +10,9 @@
     <ClInclude Include="plugin_support.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="plugin_support_internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Resource Files">

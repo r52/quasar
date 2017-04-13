@@ -1,5 +1,7 @@
 #include "dataplugin.h"
 
+#include <plugin_support_internal.h>
+
 #include <QDebug>
 #include <QSettings>
 #include <QLibrary>
@@ -8,8 +10,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 
-unsigned int DataPlugin::_uid = 0;
-
+uintmax_t DataPlugin::_uid = 0;
 
 DataPlugin::~DataPlugin()
 {
@@ -19,18 +20,19 @@ DataPlugin::~DataPlugin()
         if (nullptr != src.timer)
         {
             delete src.timer;
+            src.timer = nullptr;
         }
 
         src.subscribers.clear();
     }
 
-    if (nullptr != plugin->shutdown)
+    if (nullptr != m_plugin->shutdown)
     {
-        plugin->shutdown(plugin);
+        m_plugin->shutdown(m_plugin);
     }
 
     // plugin is responsible for cleanup of quasar_plugin_info_t*
-    plugin = nullptr;
+    m_plugin = nullptr;
 }
 
 DataPlugin* DataPlugin::load(QString libpath, QObject *parent /*= Q_NULLPTR*/)
@@ -75,34 +77,34 @@ bool DataPlugin::setupPlugin()
         return true;
     }
 
-    m_name = plugin->name;
-    m_code = plugin->code;
-    m_author = plugin->author;
-    m_desc = plugin->description;
-    m_version = plugin->version;
+    m_name = m_plugin->name;
+    m_code = m_plugin->code;
+    m_author = m_plugin->author;
+    m_desc = m_plugin->description;
+    m_version = m_plugin->version;
 
     QSettings settings;
 
-    if (nullptr != plugin->dataSources)
+    if (nullptr != m_plugin->dataSources)
     {
-        for (unsigned int i = 0; i < plugin->numDataSources; i++)
+        for (unsigned int i = 0; i < m_plugin->numDataSources; i++)
         {
-            if (m_datasources.contains(plugin->dataSources[i].dataSrc))
+            if (m_datasources.contains(m_plugin->dataSources[i].dataSrc))
             {
-                qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << plugin->dataSources[i].dataSrc << "'";
+                qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << m_plugin->dataSources[i].dataSrc << "'";
                 continue;
             }
 
-            qInfo() << "Plugin " << m_code << " registering data source '" << plugin->dataSources[i].dataSrc << "'";
+            qInfo() << "Plugin " << m_code << " registering data source '" << m_plugin->dataSources[i].dataSrc << "'";
 
-            DataSource& source = m_datasources[plugin->dataSources[i].dataSrc];
-            source.key = plugin->dataSources[i].dataSrc;
-            source.uid = plugin->dataSources[i].uid = ++DataPlugin::_uid;
-            source.refreshmsec = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), plugin->dataSources[i].refreshMsec).toUInt();
+            DataSource& source = m_datasources[m_plugin->dataSources[i].dataSrc];
+            source.key = m_plugin->dataSources[i].dataSrc;
+            source.uid = m_plugin->dataSources[i].uid = ++DataPlugin::_uid;
+            source.refreshmsec = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), m_plugin->dataSources[i].refreshMsec).toUInt();
         }
     }
 
-    if (!plugin->init(plugin))
+    if (!m_plugin->init(m_plugin))
     {
         qWarning() << "Failed to initialize plugin" << m_libpath;
         return false;
@@ -114,7 +116,37 @@ bool DataPlugin::setupPlugin()
         return false;
     }
 
-    // TODO: plugin settings support
+
+    if (m_plugin->create_settings)
+    {
+        m_settings.reset(m_plugin->create_settings());
+
+        if (m_settings)
+        {
+            // Fill saved settings if any
+            auto it = m_settings->map.begin();
+
+            while (it != m_settings->map.end())
+            {
+                switch (it->type)
+                {
+                    case QUASAR_SETTING_ENTRY_INT:
+                        it->inttype.val = settings.value(getSettingsCode(it.key()), it->inttype.def).toInt();
+                        break;
+
+                    case QUASAR_SETTING_ENTRY_DOUBLE:
+                        it->doubletype.val = settings.value(getSettingsCode(it.key()), it->doubletype.def).toDouble();
+                        break;
+
+                    case QUASAR_SETTING_ENTRY_BOOL:
+                        it->booltype.val = settings.value(getSettingsCode(it.key()), it->booltype.def).toBool();
+                        break;
+                }
+
+                ++it;
+            }
+        }
+    }
 
     m_Initialized = true;
     return true;
@@ -186,7 +218,7 @@ void DataPlugin::getAndSendData(DataSource& source)
         int datatype = QUASAR_TREAT_AS_STRING;
 
         // Poll plugin for data source
-        if (!plugin->get_data(source.uid, buf, sizeof(buf), &datatype))
+        if (!m_plugin->get_data(source.uid, buf, sizeof(buf), &datatype))
         {
             qWarning() << "getData(" << getCode() << ", " << source.key << ") failed";
             return;
@@ -289,10 +321,54 @@ void DataPlugin::setDataSourceRefresh(QString source, uint32_t msec)
     }
 }
 
-DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent /*= Q_NULLPTR*/) :
-    QObject(parent), plugin(p), m_libpath(path)
+void DataPlugin::setCustomSetting(QString name, int val)
 {
-    if (nullptr == plugin)
+    if (m_settings)
+    {
+        m_settings->map[name].inttype.val = val;
+
+        // Save to file
+        QSettings settings;
+        settings.setValue(getSettingsCode(name), val);
+    }
+}
+
+void DataPlugin::setCustomSetting(QString name, double val)
+{
+    if (m_settings)
+    {
+        m_settings->map[name].doubletype.val = val;
+
+        // Save to file
+        QSettings settings;
+        settings.setValue(getSettingsCode(name), val);
+    }
+}
+
+void DataPlugin::setCustomSetting(QString name, bool val)
+{
+    if (m_settings)
+    {
+        m_settings->map[name].booltype.val = val;
+
+        // Save to file
+        QSettings settings;
+        settings.setValue(getSettingsCode(name), val);
+    }
+}
+
+void DataPlugin::updatePluginSettings()
+{
+    if (m_settings && m_plugin->update)
+    {
+        m_plugin->update(m_settings.get());
+    }
+}
+
+DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent /*= Q_NULLPTR*/) :
+    QObject(parent), m_plugin(p), m_libpath(path)
+{
+    if (nullptr == m_plugin)
     {
         throw std::invalid_argument("null plugin struct");
     }
