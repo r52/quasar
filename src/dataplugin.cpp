@@ -9,25 +9,6 @@
 
 unsigned int DataPlugin::_uid = 0;
 
-void data_plugin_log(int level, const char* msg)
-{
-    switch (level)
-    {
-    case QUASAR_LOG_DEBUG:
-        qDebug() << msg;
-        break;
-    case QUASAR_LOG_INFO:
-    default:
-        qInfo() << msg;
-        break;
-    case QUASAR_LOG_WARNING:
-        qWarning() << msg;
-        break;
-    case QUASAR_LOG_CRITICAL:
-        qCritical() << msg;
-        break;
-    }
-}
 
 DataPlugin::~DataPlugin()
 {
@@ -42,10 +23,13 @@ DataPlugin::~DataPlugin()
         src.subscribers.clear();
     }
 
-    if (nullptr != init)
+    if (nullptr != plugin->shutdown)
     {
-        init(QUASAR_INIT_SHUTDOWN, nullptr);
+        plugin->shutdown(plugin);
     }
+
+    // plugin is responsible for cleanup of quasar_plugin_info_t*
+    plugin = nullptr;
 }
 
 DataPlugin* DataPlugin::load(QString libpath, QObject *parent /*= Q_NULLPTR*/)
@@ -58,14 +42,21 @@ DataPlugin* DataPlugin::load(QString libpath, QObject *parent /*= Q_NULLPTR*/)
         return nullptr;
     }
 
-    plugin_free freeFunc = (plugin_free) lib.resolve("quasar_plugin_free");
-    plugin_init initFunc = (plugin_init) lib.resolve("quasar_plugin_init");
-    plugin_get_data getDataFunc = (plugin_get_data) lib.resolve("quasar_plugin_get_data");
+    plugin_load loadfunc = (plugin_load) lib.resolve("quasar_plugin_load");
 
-    if (freeFunc && initFunc && getDataFunc)
+    if (loadfunc)
     {
-        DataPlugin* plugin = new DataPlugin(freeFunc, initFunc, getDataFunc, libpath, parent);
-        return plugin;
+        quasar_plugin_info_t* p = loadfunc();
+
+        if (p && p->init && p->shutdown && p->get_data)
+        {
+            DataPlugin* plugin = new DataPlugin(p, libpath, parent);
+            return plugin;
+        }
+        else
+        {
+            qWarning() << "quasar_plugin_load failed in" << libpath;
+        }
     }
     else
     {
@@ -83,45 +74,34 @@ bool DataPlugin::setupPlugin()
         return true;
     }
 
-    QuasarPluginInfo info;
-    memset(&info, 0, sizeof(QuasarPluginInfo));
+    m_name = plugin->name;
+    m_code = plugin->code;
+    m_author = plugin->author;
+    m_desc = plugin->description;
+    m_version = plugin->version;
 
-    info.logFunc = data_plugin_log;
-
-    if (!init(QUASAR_INIT_START, &info))
+    if (nullptr != plugin->dataSources)
     {
-        qWarning() << "Failed to initialize QUASAR_INIT_START in plugin" << m_libpath;
-        return false;
-    }
-
-    m_name = info.pluginName;
-    m_code = info.pluginCode;
-    m_author = info.author;
-    m_desc = info.description;
-    m_version = info.version;
-
-    if (nullptr != info.dataSources)
-    {
-        for (unsigned int i = 0; i < info.numDataSources; i++)
+        for (unsigned int i = 0; i < plugin->numDataSources; i++)
         {
-            if (m_datasources.contains(info.dataSources[i].dataSrc))
+            if (m_datasources.contains(plugin->dataSources[i].dataSrc))
             {
-                qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << info.dataSources[i].dataSrc << "'";
+                qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << plugin->dataSources[i].dataSrc << "'";
                 continue;
             }
 
-            qInfo() << "Plugin " << m_code << " registering data source '" << info.dataSources[i].dataSrc << "'";
+            qInfo() << "Plugin " << m_code << " registering data source '" << plugin->dataSources[i].dataSrc << "'";
 
-            DataSource& source = m_datasources[info.dataSources[i].dataSrc];
-            source.key = info.dataSources[i].dataSrc;
-            source.uid = info.dataSources[i].uid = ++DataPlugin::_uid;
-            source.refreshmsec = info.dataSources[i].refreshMsec;
+            DataSource& source = m_datasources[plugin->dataSources[i].dataSrc];
+            source.key = plugin->dataSources[i].dataSrc;
+            source.uid = plugin->dataSources[i].uid = ++DataPlugin::_uid;
+            source.refreshmsec = plugin->dataSources[i].refreshMsec;
         }
     }
 
-    if (!init(QUASAR_INIT_RESP, &info))
+    if (!plugin->init(plugin))
     {
-        qWarning() << "Failed to initialize QUASAR_INIT_RESP in plugin" << m_libpath;
+        qWarning() << "Failed to initialize plugin" << m_libpath;
         return false;
     }
 
@@ -130,6 +110,8 @@ bool DataPlugin::setupPlugin()
         qWarning() << "Invalid plugin name or code in file " << m_libpath;
         return false;
     }
+
+    // TODO: plugin settings support
 
     m_Initialized = true;
     return true;
@@ -213,11 +195,14 @@ void DataPlugin::getAndSendData(DataSource& source)
         int datatype = QUASAR_TREAT_AS_STRING;
 
         // Poll plugin for data source
-        if (!getData(source.uid, buf, sizeof(buf), &datatype))
+        if (!plugin->get_data(source.uid, buf, sizeof(buf), &datatype))
         {
             qWarning() << "getData(" << getCode() << ", " << source.key << ") failed";
             return;
         }
+
+        // Make sure it is null terminated
+        buf[sizeof(buf) - 1] = 0;
 
         // Craft response
         QJsonObject reply;
@@ -260,7 +245,11 @@ void DataPlugin::getAndSendData(DataSource& source)
     }
 }
 
-DataPlugin::DataPlugin(plugin_free freeFunc, plugin_init initFunc, plugin_get_data getDataFunc, QString path, QObject *parent /*= Q_NULLPTR*/) :
-    QObject(parent), free(freeFunc), init(initFunc), getData(getDataFunc), m_libpath(path)
+DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent /*= Q_NULLPTR*/) :
+    QObject(parent), plugin(p), m_libpath(path)
 {
+    if (nullptr == plugin)
+    {
+        throw std::invalid_argument("null plugin struct");
+    }
 }

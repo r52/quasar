@@ -3,15 +3,14 @@
 #include <cstdio>
 #include <functional>
 #include <map>
+#include <plugin_support.h>
 #include <plugin_api.h>
-
-static log_func_type logFunc = nullptr;
 
 const char* pluginName = "Simple Performance Query";
 const char* pluginCode = "win_simple_perf";
 
-using GetDataFnType = std::function<int(char*, int, int*)>;
-using DataCallTable = std::map<unsigned int, GetDataFnType>;
+using GetDataFnType = std::function<bool(char*, size_t, int*)>;
+using DataCallTable = std::map<size_t, GetDataFnType>;
 
 static DataCallTable calltable;
 
@@ -21,7 +20,7 @@ enum PerfDataSources
     PERF_SRC_RAM
 };
 
-QuasarPluginDataSource sources[2] =
+quasar_data_source_t sources[2] =
 {
     { "cpu", 5000, 0 },
     { "ram", 5000, 0 }
@@ -54,7 +53,7 @@ float GetCPULoad()
     return GetSystemTimes(&idleTime, &kernelTime, &userTime) ? CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime) + FileTimeToInt64(userTime)) : -1.0f;
 }
 
-int getCPUData(char* buf, int bufsz, int* treatDataType)
+bool getCPUData(char* buf, size_t bufsz, int* treatDataType)
 {
     double cpu = GetCPULoad() * 100.0;
 
@@ -63,7 +62,7 @@ int getCPUData(char* buf, int bufsz, int* treatDataType)
     return true;
 }
 
-int getRAMData(char* buf, int bufsz, int* treatDataType)
+bool getRAMData(char* buf, size_t bufsz, int* treatDataType)
 {
     // https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
     // collect ram
@@ -83,95 +82,35 @@ int getRAMData(char* buf, int bufsz, int* treatDataType)
     return true;
 }
 
-void quasar_plugin_free(void* ptr, int size)
+bool simple_perf_init(quasar_plugin_info_t* info)
 {
-    if (size > 1)
+    // Process uid entries.
+    if (sources[PERF_SRC_CPU].uid != 0)
     {
-        delete[] ptr;
+        calltable[sources[PERF_SRC_CPU].uid] = getCPUData;
     }
-    else
+
+    if (sources[PERF_SRC_RAM].uid != 0)
     {
-        delete ptr;
+        calltable[sources[PERF_SRC_RAM].uid] = getRAMData;
     }
+
+    return true;
 }
 
-int quasar_plugin_init(int cmd, QuasarPluginInfo* info)
+bool simple_perf_shutdown(quasar_plugin_info_t* info)
 {
-    switch (cmd)
-    {
-        case QUASAR_INIT_START:
-        {
-            if (nullptr == info)
-            {
-                return false;
-            }
-
-            if (!info->logFunc)
-            {
-                return false;
-            }
-
-            logFunc = info->logFunc;
-            strcpy_s(info->pluginName, pluginName);
-            strcpy_s(info->pluginCode, pluginCode);
-            strcpy_s(info->author, "me");
-            strcpy_s(info->version, "v1");
-            strcpy_s(info->description, "Sample plugin that queries basic performance numbers");
-
-            // setup data sources
-
-            info->numDataSources = _countof(sources);
-            info->dataSources = sources;
-
-            return true;
-        }
-
-        case QUASAR_INIT_RESP:
-        {
-            // Process uid returns.
-            // This should also deallocate anything info->dataSources if
-            // it was allocated dynamically
-
-            if (sources[PERF_SRC_CPU].uid != 0)
-            {
-                calltable[sources[PERF_SRC_CPU].uid] = getCPUData;
-            }
-
-            if (sources[PERF_SRC_RAM].uid != 0)
-            {
-                calltable[sources[PERF_SRC_RAM].uid] = getRAMData;
-            }
-
-            return true;
-        }
-
-        case QUASAR_INIT_SHUTDOWN:
-        {
-            // This should deallocate and shutdown any allocated resources
-            logFunc = nullptr;
-            return true;
-        }
-
-        default:
-        {
-            if (logFunc)
-            {
-                logFunc(QUASAR_LOG_WARNING, "Unidentified command");
-            }
-            break;
-        }
-    }
-
-    return false;
+    // nothing to do. no dynamic allocations
+    return true;
 }
 
-int quasar_plugin_get_data(unsigned int srcUid, char* buf, int bufsz, int* treatDataType)
+bool simple_perf_get_data(size_t srcUid, char* buf, size_t bufsz, int* treatDataType)
 {
     if (calltable.count(srcUid) == 0)
     {
         char msg[256];
-        snprintf(msg, sizeof(msg), "Plugin '%s' - Unknown source %u", pluginCode, srcUid);
-        logFunc(QUASAR_LOG_WARNING, msg);
+        snprintf(msg, sizeof(msg), "Plugin '%s' - Unknown source %Iu", pluginCode, srcUid);
+        quasar_log(QUASAR_LOG_WARNING, msg);
     }
     else
     {
@@ -179,4 +118,28 @@ int quasar_plugin_get_data(unsigned int srcUid, char* buf, int bufsz, int* treat
     }
 
     return false;
+}
+
+quasar_plugin_info_t info =
+{
+    "Simple Performance Query",
+    "win_simple_perf",
+    "v1",
+    "me",
+    "Sample plugin that queries basic performance numbers",
+
+    _countof(sources),
+    sources,
+
+    simple_perf_init,
+    simple_perf_shutdown,
+    nullptr,
+    nullptr,
+    nullptr,
+    simple_perf_get_data
+};
+
+quasar_plugin_info_t* quasar_plugin_load(void)
+{
+    return &info;
 }

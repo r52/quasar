@@ -1,6 +1,6 @@
 #pragma once
 
-#include "plugin_types.h"
+#include <plugin_types.h>
 
 #include <chrono>
 #include <QtCore/QObject>
@@ -13,8 +13,8 @@ QT_FORWARD_DECLARE_CLASS(QTimer)
 struct DataSource
 {
     QString key;
-    unsigned int uid;
-    unsigned int refreshmsec;
+    size_t uid;
+    uint32_t refreshmsec;
     QTimer *timer = nullptr;
     QSet<QWebSocket *> subscribers;
 };
@@ -32,13 +32,7 @@ public:
 
     static DataPlugin* load(QString libpath, QObject *parent = Q_NULLPTR);
 
-    using plugin_free = std::add_pointer_t<void(void*, int)>;
-    using plugin_init = std::add_pointer_t<int(int, QuasarPluginInfo*)>;
-    using plugin_get_data = std::add_pointer_t<int(unsigned int, char*, int, int*)>;
-
-    const plugin_free free;
-    const plugin_init init;
-    const plugin_get_data getData;
+    using plugin_load = std::add_pointer_t<quasar_plugin_info_t*(void)>;
 
     bool setupPlugin();
 
@@ -58,7 +52,9 @@ private slots:
     void getAndSendData(DataSource& source);
 
 private:
-    DataPlugin(plugin_free freeFunc, plugin_init initFunc, plugin_get_data getDataFunc, QString path, QObject *parent = Q_NULLPTR);
+    DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent = Q_NULLPTR);
+
+    quasar_plugin_info_t* plugin;
 
     bool m_Initialized = false;
 

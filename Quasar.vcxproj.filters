@@ -146,12 +146,6 @@
     <ClInclude Include="src\widgetdefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\plugin_api.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\plugin_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="quasar.rc">
