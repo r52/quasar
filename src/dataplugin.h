@@ -10,6 +10,9 @@
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 QT_FORWARD_DECLARE_CLASS(QTimer)
 
+#define QUASAR_DP_ENABLED_PREFIX "enabled_"
+#define QUASAR_DP_REFRESH_PREFIX "refresh_"
+
 struct DataSource
 {
     QString key;
@@ -45,14 +48,21 @@ public:
     QString getDesc() { return m_desc; };
     QString getAuthor() { return m_author; };
     QString getVersion() { return m_version; };
+    QString getSettingsCode(QString key) { return "plugin_" + getCode() + "/" + key; };
 
     DataSourceMapType& getDataSources() { return m_datasources; };
+
+    void setDataSourceEnabled(QString source, bool enabled);
+
+    void setDataSourceRefresh(QString source, uint32_t msec);
 
 private slots:
     void getAndSendData(DataSource& source);
 
 private:
     DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent = Q_NULLPTR);
+
+    void createTimer(DataSource& data);
 
     quasar_plugin_info_t* plugin;
 

@@ -40,7 +40,7 @@ extern "C" {
     struct quasar_data_source_t
     {
         char dataSrc[32];           // codename of this data source
-        uint32_t refreshMsec;       // rate of refresh for this data source (0 means never; populated once and never changed)
+        uint32_t refreshMsec;       // default rate of refresh for this data source (0 means never; populated once and never changed)
         size_t uid;                 // uid assigned to this data source by quasar
     };
 

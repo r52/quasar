@@ -222,28 +222,43 @@ void PluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
     }
 }
 
-DataPluginPage::DataPluginPage(DataPlugin* plugin, QWidget *parent) :
-    PageWidget(parent)
+DataPluginPage::DataPluginPage(DataPlugin* p, QWidget *parent) :
+    PageWidget(parent), plugin(p)
 {
     QGroupBox *sourceGroup = new QGroupBox(tr("Data Update Rate"));
     QVBoxLayout *sourceLayout = new QVBoxLayout;
 
-    DataSourceMapType& sources = plugin->getDataSources();
+    DataSourceMapType& sources = p->getDataSources();
+
+    QSettings settings;
 
     auto it = sources.begin();
 
     while (it != sources.end())
     {
-        // do stuff
+        bool sourceEnabled = settings.value(plugin->getSettingsCode(QUASAR_DP_ENABLED_PREFIX + it.key()), true).toBool();
+
+        // create data source rate settings
         QCheckBox *sourceCheckBox = new QCheckBox(it.key());
-        sourceCheckBox->setChecked(true);
+        sourceCheckBox->setObjectName(QUASAR_DP_ENABLED_PREFIX + it.key());
+        sourceCheckBox->setChecked(sourceEnabled);
 
         QSpinBox *upSpin = new QSpinBox;
+        upSpin->setObjectName(QUASAR_DP_REFRESH_PREFIX + it.key());
         upSpin->setMinimum(0);
         upSpin->setMaximum(INT_MAX);
         upSpin->setSingleStep(1);
         upSpin->setValue(it.value().refreshmsec);
         upSpin->setSuffix("ms");
+        upSpin->setEnabled(sourceEnabled);
+
+        connect(sourceCheckBox, &QCheckBox::toggled, upSpin, [this, upSpin](bool state)
+        {
+            this->m_dataSettingsModified = true;
+            upSpin->setEnabled(state);
+        });
+
+        connect(upSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i) { this->m_dataSettingsModified = true; });
 
         QHBoxLayout *dataLayout = new QHBoxLayout;
         dataLayout->addWidget(sourceCheckBox);
@@ -263,5 +278,29 @@ DataPluginPage::DataPluginPage(DataPlugin* plugin, QWidget *parent) :
 
 void DataPluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
 {
-    // TODO
+    // Save data source settings
+    if (m_dataSettingsModified)
+    {
+        QList<QSpinBox*> refreshSources = findChildren<QSpinBox*>(QRegularExpression(QString(QUASAR_DP_REFRESH_PREFIX) + ".*"));
+
+        for (QSpinBox* s : refreshSources)
+        {
+            QString name = s->objectName();
+            name = name.remove(QUASAR_DP_REFRESH_PREFIX);
+
+            plugin->setDataSourceRefresh(name, s->value());
+        }
+
+        QList<QCheckBox*> enabledSources = findChildren<QCheckBox*>(QRegularExpression(QString(QUASAR_DP_ENABLED_PREFIX) + ".*"));
+
+        for (QCheckBox* c : enabledSources)
+        {
+            QString name = c->objectName();
+            name = name.remove(QUASAR_DP_ENABLED_PREFIX);
+
+            plugin->setDataSourceEnabled(name, c->isChecked());
+        }
+    }
+
+    // TODO plugin settings support
 }

@@ -81,6 +81,10 @@ void DataServer::loadDataPlugins()
         {
             qWarning() << "Failed to setup plugin" << libpath;
         }
+        else if (plugin->getCode() == "global")
+        {
+            qWarning() << "The 'global' plugin code is reserved. Unloading" << libpath;
+        }
         else if (m_plugins.contains(plugin->getCode()))
         {
             qWarning() << "Plugin with code " << plugin->getCode() << " already loaded. Unloading" << libpath;

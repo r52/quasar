@@ -1,6 +1,7 @@
 #include "dataplugin.h"
 
 #include <QDebug>
+#include <QSettings>
 #include <QLibrary>
 #include <QTimer>
 #include <QtWebSockets/QWebSocket>
@@ -80,6 +81,8 @@ bool DataPlugin::setupPlugin()
     m_desc = plugin->description;
     m_version = plugin->version;
 
+    QSettings settings;
+
     if (nullptr != plugin->dataSources)
     {
         for (unsigned int i = 0; i < plugin->numDataSources; i++)
@@ -95,7 +98,7 @@ bool DataPlugin::setupPlugin()
             DataSource& source = m_datasources[plugin->dataSources[i].dataSrc];
             source.key = plugin->dataSources[i].dataSrc;
             source.uid = plugin->dataSources[i].uid = ++DataPlugin::_uid;
-            source.refreshmsec = plugin->dataSources[i].refreshMsec;
+            source.refreshmsec = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), plugin->dataSources[i].refreshMsec).toUInt();
         }
     }
 
@@ -132,19 +135,7 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket *subscriber, QString w
 
         data.subscribers << subscriber;
 
-        if (0 == data.refreshmsec)
-        {
-            // Fire single shot
-            QTimer::singleShot(0, this, [this, &data] { DataPlugin::getAndSendData(data); });
-        }
-        else if (!data.timer)
-        {
-            // Initialize timer not done so
-            data.timer = new QTimer(this);
-            connect(data.timer, &QTimer::timeout, this, [this, &data] { DataPlugin::getAndSendData(data); });
-
-            data.timer->start(data.refreshmsec);
-        }
+        createTimer(data);
 
         return true;
     }
@@ -245,11 +236,87 @@ void DataPlugin::getAndSendData(DataSource& source)
     }
 }
 
+void DataPlugin::setDataSourceEnabled(QString source, bool enabled)
+{
+    if (!m_datasources.contains(source))
+    {
+        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        return;
+    }
+
+    DataSource& data = m_datasources[source];
+
+    // Save to file
+    QSettings settings;
+    settings.setValue(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source), enabled);
+
+    if (enabled)
+    {
+        // Create timer if not enabled
+        createTimer(data);
+    }
+    else
+    {
+        // Delete the timer if enabled
+        if (nullptr != data.timer)
+        {
+            delete data.timer;
+            data.timer = nullptr;
+        }
+    }
+}
+
+void DataPlugin::setDataSourceRefresh(QString source, uint32_t msec)
+{
+    if (!m_datasources.contains(source))
+    {
+        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        return;
+    }
+
+    DataSource& data = m_datasources[source];
+
+    data.refreshmsec = msec;
+
+    // Save to file
+    QSettings settings;
+    settings.setValue(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source), data.refreshmsec);
+
+    // Refresh timer if exists
+    if (nullptr != data.timer)
+    {
+        data.timer->setInterval(data.refreshmsec);
+    }
+}
+
 DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent /*= Q_NULLPTR*/) :
     QObject(parent), plugin(p), m_libpath(path)
 {
     if (nullptr == plugin)
     {
         throw std::invalid_argument("null plugin struct");
+    }
+}
+
+void DataPlugin::createTimer(DataSource& data)
+{
+    QSettings settings;
+    bool timerEnabled = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + data.key), true).toBool();
+
+    if (timerEnabled)
+    {
+        if (0 == data.refreshmsec)
+        {
+            // Fire single shot
+            QTimer::singleShot(0, this, [this, &data] { DataPlugin::getAndSendData(data); });
+        }
+        else if (!data.timer)
+        {
+            // Initialize timer not done so
+            data.timer = new QTimer(this);
+            connect(data.timer, &QTimer::timeout, this, [this, &data] { DataPlugin::getAndSendData(data); });
+
+            data.timer->start(data.refreshmsec);
+        }
     }
 }

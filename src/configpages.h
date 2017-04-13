@@ -63,7 +63,12 @@ class DataPluginPage : public PageWidget
     Q_OBJECT
 
 public:
-    DataPluginPage(DataPlugin *plugin, QWidget *parent = 0);
+    DataPluginPage(DataPlugin *p, QWidget *parent = 0);
 
     virtual void saveSettings(QSettings &settings, bool & restartNeeded) override;
+
+private:
+    bool m_dataSettingsModified = false;
+
+    DataPlugin *plugin;
 };
