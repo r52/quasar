@@ -77,18 +77,6 @@ extern "C" {
         // Should always return true
         plugin_info_call_t shutdown;
 
-        // create_settings(), optional
-        //
-        // Creates settings UI if any
-        //
-        // Returns quasar_settings_t* struct pointer if created, nullptr otherwise
-        plugin_create_settings_call_t create_settings;
-
-        // update(quasar_settings_t* settings), optional
-        //
-        // This function should update local settings values
-        plugin_settings_call_t update;
-
         // get_data(size_t uid, char* buf, size_t bufSz, int* treatDataType), required
         //
         // Retrieves the data of a specific data entry
@@ -100,6 +88,18 @@ extern "C" {
         //
         // This function needs to be re-entrant
         plugin_get_data_call_t get_data;
+
+        // create_settings(), optional
+        //
+        // Creates settings UI if any
+        //
+        // Returns quasar_settings_t* struct pointer if created, nullptr otherwise
+        plugin_create_settings_call_t create_settings;
+
+        // update(quasar_settings_t* settings), optional
+        //
+        // This function should update local settings values
+        plugin_settings_call_t update;
     };
 
 #if defined(__cplusplus)

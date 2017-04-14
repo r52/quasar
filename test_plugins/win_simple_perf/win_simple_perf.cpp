@@ -133,9 +133,9 @@ quasar_plugin_info_t info =
 
     simple_perf_init,
     simple_perf_shutdown,
+    simple_perf_get_data,
     nullptr,
-    nullptr,
-    simple_perf_get_data
+    nullptr
 };
 
 quasar_plugin_info_t* quasar_plugin_load(void)
