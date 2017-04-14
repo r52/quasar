@@ -11,6 +11,7 @@ namespace
 {
     // setting names
     QString QUASAR_SETTING_PORT = "portSpin";
+    QString QUASAR_SETTING_LOG = "logCombo";
 }
 
 ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
@@ -36,14 +37,26 @@ ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
     portSpin->setSingleStep(1);
     portSpin->setValue(port);
 
-    connect(portSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i) { this->m_settingsModified = true; });
+    connect(portSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int i) { this->m_settingsModified = true; });
 
     QHBoxLayout *generalLayout = new QHBoxLayout;
     generalLayout->addWidget(portLabel);
     generalLayout->addWidget(portSpin);
 
+    QLabel *logLabel = new QLabel(tr("Log Verbosity:"));
+
+    QComboBox *logCombo = new QComboBox;
+    logCombo->setObjectName(QUASAR_SETTING_LOG);
+    logCombo->addItems(QStringList() << "Debug" << "Info" << "Warning" << "Critical");
+    logCombo->setCurrentIndex(settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_LOG_INFO).toInt());
+
+    QHBoxLayout *logLayout = new QHBoxLayout;
+    logLayout->addWidget(logLabel);
+    logLayout->addWidget(logCombo);
+
     QVBoxLayout *configLayout = new QVBoxLayout;
     configLayout->addLayout(generalLayout);
+    configLayout->addLayout(logLayout);
     configGroup->setLayout(configLayout);
 
     // plugin group
@@ -160,6 +173,13 @@ void ConfigurationPage::saveSettings(QSettings &settings, bool &restartNeeded)
             restartNeeded = true;
         }
     }
+
+    auto logcombo = findChild<QComboBox *>(QUASAR_SETTING_LOG);
+
+    if (logcombo)
+    {
+        settings.setValue(QUASAR_CONFIG_LOGLEVEL, logcombo->currentIndex());
+    }
 }
 
 void ConfigurationPage::pluginListClicked(QListWidgetItem *item)
@@ -196,6 +216,11 @@ PluginPage::PluginPage(QObject* quasar, QWidget *parent) :
         pluginCombo->addItem(plugin->getName(), QVariant::fromValue(plugin));
         pagesWidget->addWidget(new DataPluginPage(plugin));
     }
+
+    connect(pluginCombo, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](int index)
+    {
+        pagesWidget->setCurrentIndex(index);
+    });
 
     QHBoxLayout *pluginLayout = new QHBoxLayout;
     pluginLayout->addWidget(pluginLabel);
@@ -255,13 +280,13 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget *parent) :
         upSpin->setSuffix("ms");
         upSpin->setEnabled(sourceEnabled);
 
-        connect(sourceCheckBox, &QCheckBox::toggled, upSpin, [this, upSpin](bool state)
+        connect(sourceCheckBox, &QCheckBox::toggled, [this, upSpin](bool state)
         {
             this->m_dataSettingsModified = true;
             upSpin->setEnabled(state);
         });
 
-        connect(upSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i) { this->m_dataSettingsModified = true; });
+        connect(upSpin, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int i) { this->m_dataSettingsModified = true; });
 
         QHBoxLayout *dataLayout = new QHBoxLayout;
         dataLayout->addWidget(sourceCheckBox);
@@ -304,7 +329,7 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget *parent) :
                     s->setSingleStep(it->inttype.step);
                     s->setValue(it->inttype.val);
 
-                    connect(s, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, [this](int i) { this->m_plugSettingsModified = true; });
+                    connect(s, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int i) { this->m_plugSettingsModified = true; });
 
                     entryLayout->addWidget(s);
                     break;
@@ -319,7 +344,7 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget *parent) :
                     d->setSingleStep(it->doubletype.step);
                     d->setValue(it->doubletype.val);
 
-                    connect(d, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this, [this](double d) { this->m_plugSettingsModified = true; });
+                    connect(d, static_cast<void(QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](double d) { this->m_plugSettingsModified = true; });
 
                     entryLayout->addWidget(d);
                     break;
@@ -331,7 +356,7 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget *parent) :
                     b->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.key());
                     b->setChecked(it->booltype.val);
 
-                    connect(b, &QCheckBox::toggled, this, [this](bool state) { this->m_plugSettingsModified = true; });
+                    connect(b, &QCheckBox::toggled, [this](bool state) { this->m_plugSettingsModified = true; });
 
                     entryLayout->addWidget(b);
                     break;
@@ -355,9 +380,9 @@ void DataPluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
     // Save data source settings
     if (m_dataSettingsModified)
     {
-        QList<QSpinBox*> refreshSources = findChildren<QSpinBox*>(QRegularExpression(QString(QUASAR_DP_REFRESH_PREFIX) + ".*"));
+        auto refreshSources = findChildren<QSpinBox*>(QRegularExpression(QString(QUASAR_DP_REFRESH_PREFIX) + ".*"));
 
-        for (QSpinBox* s : refreshSources)
+        for (auto s : refreshSources)
         {
             QString name = s->objectName();
             name = name.remove(QUASAR_DP_REFRESH_PREFIX);
@@ -365,9 +390,9 @@ void DataPluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
             plugin->setDataSourceRefresh(name, s->value());
         }
 
-        QList<QCheckBox*> enabledSources = findChildren<QCheckBox*>(QRegularExpression(QString(QUASAR_DP_ENABLED_PREFIX) + ".*"));
+        auto enabledSources = findChildren<QCheckBox*>(QRegularExpression(QString(QUASAR_DP_ENABLED_PREFIX) + ".*"));
 
-        for (QCheckBox* c : enabledSources)
+        for (auto c : enabledSources)
         {
             QString name = c->objectName();
             name = name.remove(QUASAR_DP_ENABLED_PREFIX);
@@ -379,9 +404,9 @@ void DataPluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
     // Save plugin custom settings
     if (m_plugSettingsModified)
     {
-        QList<QSpinBox*> intSources = findChildren<QSpinBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
+        auto intSources = findChildren<QSpinBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
 
-        for (QSpinBox* s : intSources)
+        for (auto s : intSources)
         {
             QString name = s->objectName();
             name = name.remove(QUASAR_DP_CUSTOM_PREFIX);
@@ -389,9 +414,9 @@ void DataPluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
             plugin->setCustomSetting(name, s->value());
         }
 
-        QList<QCheckBox*> boolSources = findChildren<QCheckBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
+        auto boolSources = findChildren<QCheckBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
 
-        for (QCheckBox* c : boolSources)
+        for (auto c : boolSources)
         {
             QString name = c->objectName();
             name = name.remove(QUASAR_DP_CUSTOM_PREFIX);
@@ -399,9 +424,9 @@ void DataPluginPage::saveSettings(QSettings &settings, bool &restartNeeded)
             plugin->setCustomSetting(name, c->isChecked());
         }
 
-        QList<QDoubleSpinBox*> doubleSources = findChildren<QDoubleSpinBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
+        auto doubleSources = findChildren<QDoubleSpinBox*>(QRegularExpression(QString(QUASAR_DP_CUSTOM_PREFIX) + ".*"));
 
-        for (QDoubleSpinBox* d : doubleSources)
+        for (auto d : doubleSources)
         {
             QString name = d->objectName();
             name = name.remove(QUASAR_DP_CUSTOM_PREFIX);

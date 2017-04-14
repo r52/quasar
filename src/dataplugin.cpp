@@ -390,7 +390,7 @@ void DataPlugin::createTimer(DataSource& data)
         {
             // Initialize timer not done so
             data.timer = new QTimer(this);
-            connect(data.timer, &QTimer::timeout, this, [this, &data] { DataPlugin::getAndSendData(data); });
+            connect(data.timer, &QTimer::timeout, [this, &data] { DataPlugin::getAndSendData(data); });
 
             data.timer->start(data.refreshmsec);
         }

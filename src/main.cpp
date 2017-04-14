@@ -1,4 +1,7 @@
 #include "quasar.h"
+#include "widgetdefs.h"
+
+#include <plugin_types.h>
 
 #include <QtWidgets/QApplication>
 #include <QSettings>
@@ -10,7 +13,37 @@ void msg_handler(QtMsgType type, const QMessageLogContext &context, const QStrin
 {
     if (nullptr != logEdit)
     {
-        logEdit->append(qFormatLogMessage(type, context, msg));
+        QSettings setting;
+        int loglevel = setting.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_LOG_INFO).toInt();
+        bool print = false;
+
+        switch (type)
+        {
+            case QtDebugMsg:
+                print = (loglevel == QUASAR_LOG_DEBUG);
+                break;
+
+            case QtInfoMsg:
+                print = (loglevel <= QUASAR_LOG_INFO);
+                break;
+
+            case QtWarningMsg:
+                print = (loglevel <= QUASAR_LOG_WARNING);
+                break;
+
+            case QtCriticalMsg:
+                print = (loglevel <= QUASAR_LOG_CRITICAL);
+                break;
+
+            default:
+                print = true;
+                break;
+        }
+
+        if (print)
+        {
+            logEdit->append(qFormatLogMessage(type, context, msg));
+        }
     }
 }
 
@@ -23,13 +56,13 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
 
-    logEdit = new QTextEdit();
-    logEdit->setReadOnly(true);
-    logEdit->setAcceptRichText(true);
-
     QApplication::setApplicationName("Quasar");
     QApplication::setOrganizationName("Quasar");
     QSettings::setDefaultFormat(QSettings::IniFormat);
+
+    logEdit = new QTextEdit();
+    logEdit->setReadOnly(true);
+    logEdit->setAcceptRichText(true);
 
     Quasar w(logEdit);
     w.hide();
