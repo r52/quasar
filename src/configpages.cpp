@@ -1,11 +1,12 @@
-#include <QtWidgets>
+#include "configpages.h"
 
 #include "quasar.h"
+#include "dataserver.h"
 #include "dataplugin.h"
-#include "configpages.h"
 #include "widgetdefs.h"
-
 #include "plugin_support_internal.h"
+
+#include <QtWidgets>
 
 namespace
 {
@@ -68,7 +69,7 @@ ConfigurationPage::ConfigurationPage(QObject *quasar, QWidget *parent) :
     QListWidget *pluginList = new QListWidget;
 
     // build plugin list
-    DataPluginMapType& pluginmap = m_quasar->getDataServer().getPlugins();
+    DataPluginMapType& pluginmap = m_quasar->getDataServer()->getPlugins();
 
     for (DataPlugin* plugin : pluginmap)
     {
@@ -209,7 +210,7 @@ PluginPage::PluginPage(QObject* quasar, QWidget *parent) :
     pagesWidget = new QStackedWidget;
 
     // build plugin list
-    DataPluginMapType& pluginmap = m_quasar->getDataServer().getPlugins();
+    DataPluginMapType& pluginmap = m_quasar->getDataServer()->getPlugins();
 
     for (DataPlugin* plugin : pluginmap)
     {

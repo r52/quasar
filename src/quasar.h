@@ -1,25 +1,25 @@
 #pragma once
 
 #include "ui_quasar.h"
-#include "widgetregistry.h"
-#include "dataserver.h"
 
-#include <QtWidgets/QMainWindow>
+#include <QMainWindow>
 #include <QSystemTrayIcon>
 
-QT_FORWARD_DECLARE_CLASS(QTextEdit);
-QT_FORWARD_DECLARE_CLASS(WebWidget);
+QT_FORWARD_DECLARE_CLASS(WidgetRegistry)
+QT_FORWARD_DECLARE_CLASS(DataServer)
+QT_FORWARD_DECLARE_CLASS(LogWindow)
+QT_FORWARD_DECLARE_CLASS(WebWidget)
 
 class Quasar : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    Quasar(QTextEdit *logWidget, QWidget *parent = Q_NULLPTR);
+    Quasar(QWidget *parent = Q_NULLPTR);
     ~Quasar();
 
-    WidgetRegistry& getWidgetRegistry() { return reg; };
-    DataServer& getDataServer() { return server; };
+    WidgetRegistry* getWidgetRegistry() { return reg; };
+    DataServer* getDataServer() { return server; };
 
 private slots:
     void openWebWidget();
@@ -38,6 +38,9 @@ private:
 private:
     Ui::QuasarClass ui;
 
+    // Log Window
+    LogWindow *logWindow;
+
     // Tray
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
@@ -50,8 +53,8 @@ private:
     QAction *quitAction;
 
     // Data server
-    DataServer server;
+    DataServer *server;
 
     // Widget registry
-    WidgetRegistry reg;
+    WidgetRegistry *reg;
 };

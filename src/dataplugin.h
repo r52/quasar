@@ -3,7 +3,7 @@
 #include <plugin_types.h>
 
 #include <memory>
-#include <QtCore/QObject>
+#include <QObject>
 #include <QSet>
 #include <QMap>
 

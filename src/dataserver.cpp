@@ -1,10 +1,11 @@
 #include "dataserver.h"
+
 #include "dataplugin.h"
 #include "quasar.h"
 #include "webwidget.h"
 #include "widgetdefs.h"
+#include "widgetregistry.h"
 
-#include <QDebug>
 #include <QDir>
 #include <QSettings>
 #include <QtWebSockets/QWebSocketServer>
@@ -120,7 +121,7 @@ void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
         QString sources = req["source"].toString();
 
         // subWidget parameter currently unused
-        WebWidget *subWidget = m_parent->getWidgetRegistry().findWidget(widgetName);
+        WebWidget *subWidget = m_parent->getWidgetRegistry()->findWidget(widgetName);
 
         if (!subWidget)
         {

@@ -2,7 +2,6 @@
 
 #include <plugin_support_internal.h>
 
-#include <QDebug>
 #include <QSettings>
 #include <QLibrary>
 #include <QTimer>

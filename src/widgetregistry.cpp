@@ -1,4 +1,5 @@
 #include "widgetregistry.h"
+
 #include "widgetdefs.h"
 #include "webwidget.h"
 

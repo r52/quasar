@@ -1,7 +1,8 @@
-#include <QtWidgets>
-
 #include "configdialog.h"
+
 #include "configpages.h"
+
+#include <QtWidgets>
 
 ConfigDialog::ConfigDialog(QObject* quasar)
 {

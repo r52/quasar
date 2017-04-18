@@ -1,11 +1,8 @@
 #pragma once
 
-#include <QtCore/QObject>
-#include <QtCore/QList>
-#include <QtCore/QByteArray>
+#include <QObject>
+#include <QList>
 #include <QMap>
-
-#define QUASAR_DATA_SERVER_DEFAULT_PORT 13337
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)

@@ -1,16 +1,22 @@
 #include "quasar.h"
+
 #include "configdialog.h"
 #include "webwidget.h"
+#include "logwindow.h"
+#include "widgetregistry.h"
+#include "dataserver.h"
 
-#include <QDebug>
 #include <QVBoxLayout>
 #include <QTextEdit>
 #include <QMenu>
 #include <QCloseEvent>
 #include <QFileDialog>
 
-Quasar::Quasar(QTextEdit *logWidget, QWidget *parent)
-    : QMainWindow(parent), server(this), reg(this)
+Quasar::Quasar(QWidget *parent) :
+    QMainWindow(parent),
+    logWindow(new LogWindow(this)),
+    server(new DataServer(this)),
+    reg(new WidgetRegistry(this))
 {
     ui.setupUi(this);
 
@@ -27,14 +33,14 @@ Quasar::Quasar(QTextEdit *logWidget, QWidget *parent)
 
     // Setup log widget
     QVBoxLayout *layout = new QVBoxLayout();
-    layout->addWidget(logWidget);
+    layout->addWidget(logWindow->release());
 
     ui.centralWidget->setLayout(layout);
 
     resize(800, 400);
 
     // Load settings
-    reg.loadLoadedWidgets();
+    reg->loadLoadedWidgets();
 }
 
 Quasar::~Quasar()
@@ -47,7 +53,7 @@ void Quasar::openWebWidget()
         QDir::currentPath(),
         tr("Widget Definitions (*.json)"));
 
-    reg.loadWebWidget(fname);
+    reg->loadWebWidget(fname);
 }
 
 void Quasar::openConfigDialog()
@@ -65,7 +71,7 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
             // Regenerate widget list menu
             widgetListMenu->clear();
 
-            WidgetMapType& widgets = reg.getWidgets();
+            WidgetMapType& widgets = reg->getWidgets();
 
             for (WebWidget* widget : widgets)
             {
