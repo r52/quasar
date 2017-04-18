@@ -2,12 +2,12 @@
 
 #include <plugin_support_internal.h>
 
-#include <QSettings>
-#include <QLibrary>
-#include <QTimer>
-#include <QtWebSockets/QWebSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QLibrary>
+#include <QSettings>
+#include <QTimer>
+#include <QtWebSockets/QWebSocket>
 
 uintmax_t DataPlugin::_uid = 0;
 
@@ -34,7 +34,7 @@ DataPlugin::~DataPlugin()
     m_plugin = nullptr;
 }
 
-DataPlugin* DataPlugin::load(QString libpath, QObject *parent /*= Q_NULLPTR*/)
+DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
 {
     QLibrary lib(libpath);
 
@@ -76,10 +76,10 @@ bool DataPlugin::setupPlugin()
         return true;
     }
 
-    m_name = m_plugin->name;
-    m_code = m_plugin->code;
-    m_author = m_plugin->author;
-    m_desc = m_plugin->description;
+    m_name    = m_plugin->name;
+    m_code    = m_plugin->code;
+    m_author  = m_plugin->author;
+    m_desc    = m_plugin->description;
     m_version = m_plugin->version;
 
     QSettings settings;
@@ -97,9 +97,9 @@ bool DataPlugin::setupPlugin()
             qInfo() << "Plugin " << m_code << " registering data source '" << m_plugin->dataSources[i].dataSrc << "'";
 
             DataSource& source = m_datasources[m_plugin->dataSources[i].dataSrc];
-            source.key = m_plugin->dataSources[i].dataSrc;
+            source.key         = m_plugin->dataSources[i].dataSrc;
             source.uid = m_plugin->dataSources[i].uid = ++DataPlugin::_uid;
-            source.refreshmsec = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), m_plugin->dataSources[i].refreshMsec).toUInt();
+            source.refreshmsec                        = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), m_plugin->dataSources[i].refreshMsec).toUInt();
         }
     }
 
@@ -114,7 +114,6 @@ bool DataPlugin::setupPlugin()
         qWarning() << "Invalid plugin name or code in file " << m_libpath;
         return false;
     }
-
 
     if (m_plugin->create_settings)
     {
@@ -151,7 +150,7 @@ bool DataPlugin::setupPlugin()
     return true;
 }
 
-bool DataPlugin::addSubscriber(QString source, QWebSocket *subscriber, QString widgetName)
+bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString widgetName)
 {
     if (subscriber)
     {
@@ -176,7 +175,7 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket *subscriber, QString w
     return false;
 }
 
-void DataPlugin::removeSubscriber(QWebSocket *subscriber)
+void DataPlugin::removeSubscriber(QWebSocket* subscriber)
 {
     // Removes subscriber from all data sources
     if (subscriber)
@@ -214,7 +213,7 @@ void DataPlugin::getAndSendData(DataSource& source)
     if (!source.subscribers.isEmpty())
     {
         char buf[1024] = "";
-        int datatype = QUASAR_TREAT_AS_STRING;
+        int  datatype  = QUASAR_TREAT_AS_STRING;
 
         // Poll plugin for data source
         if (!m_plugin->get_data(source.uid, buf, sizeof(buf), &datatype))
@@ -228,7 +227,7 @@ void DataPlugin::getAndSendData(DataSource& source)
 
         // Craft response
         QJsonObject reply;
-        reply["type"] = "data";
+        reply["type"]   = "data";
         reply["plugin"] = getCode();
         reply["source"] = source.key;
 
@@ -241,7 +240,7 @@ void DataPlugin::getAndSendData(DataSource& source)
             }
             case QUASAR_TREAT_AS_JSON:
             {
-                QString str = QString::fromUtf8(buf);
+                QString str   = QString::fromUtf8(buf);
                 reply["data"] = QJsonDocument::fromJson(str.toUtf8()).object();
                 break;
             }
@@ -258,9 +257,9 @@ void DataPlugin::getAndSendData(DataSource& source)
         }
 
         QJsonDocument doc(reply);
-        QString message(doc.toJson());
+        QString       message(doc.toJson());
 
-        for (QWebSocket *sub : qAsConst(source.subscribers))
+        for (QWebSocket* sub : qAsConst(source.subscribers))
         {
             sub->sendTextMessage(message);
         }
@@ -364,8 +363,8 @@ void DataPlugin::updatePluginSettings()
     }
 }
 
-DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent /*= Q_NULLPTR*/) :
-    QObject(parent), m_plugin(p), m_libpath(path)
+DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject* parent /*= Q_NULLPTR*/)
+    : QObject(parent), m_plugin(p), m_libpath(path)
 {
     if (nullptr == m_plugin)
     {
@@ -376,7 +375,7 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent /*
 void DataPlugin::createTimer(DataSource& data)
 {
     QSettings settings;
-    bool timerEnabled = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + data.key), true).toBool();
+    bool      timerEnabled = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + data.key), true).toBool();
 
     if (timerEnabled)
     {

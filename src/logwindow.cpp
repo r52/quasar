@@ -13,19 +13,18 @@
 * the logedit widget can be maximized and ensure proper clean up
 */
 
-
 namespace
 {
     QTextEdit* s_logEdit = nullptr;
 }
 
-void msg_handler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
+void msg_handler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
     if (nullptr != s_logEdit)
     {
         QSettings setting;
-        int loglevel = setting.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_LOG_INFO).toInt();
-        bool print = false;
+        int       loglevel = setting.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_LOG_INFO).toInt();
+        bool      print    = false;
 
         switch (type)
         {
@@ -66,11 +65,12 @@ LogWindow::~LogWindow()
     }
     else if (nullptr != s_logEdit)
     {
-        delete s_logEdit; s_logEdit = nullptr;
+        delete s_logEdit;
+        s_logEdit = nullptr;
     }
 }
 
-LogWindow::LogWindow(QObject *parent)
+LogWindow::LogWindow(QObject* parent)
     : QObject(parent)
 {
     if (nullptr == parent)

@@ -3,8 +3,8 @@
 #include <cstdio>
 #include <functional>
 #include <map>
-#include <plugin_support.h>
 #include <plugin_api.h>
+#include <plugin_support.h>
 
 const char* pluginName = "Simple Performance Query";
 const char* pluginCode = "win_simple_perf";
@@ -21,28 +21,31 @@ enum PerfDataSources
 };
 
 quasar_data_source_t sources[2] =
-{
-    { "cpu", 5000, 0 },
-    { "ram", 5000, 0 }
-};
+    {
+      { "cpu", 5000, 0 },
+      { "ram", 5000, 0 }
+    };
 
 // From https://stackoverflow.com/questions/23143693/retrieving-cpu-load-percent-total-in-windows-with-c
 static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
 {
     static unsigned long long _previousTotalTicks = 0;
-    static unsigned long long _previousIdleTicks = 0;
+    static unsigned long long _previousIdleTicks  = 0;
 
     unsigned long long totalTicksSinceLastTime = totalTicks - _previousTotalTicks;
-    unsigned long long idleTicksSinceLastTime = idleTicks - _previousIdleTicks;
+    unsigned long long idleTicksSinceLastTime  = idleTicks - _previousIdleTicks;
 
-    float ret = 1.0f - ((totalTicksSinceLastTime > 0) ? ((float)idleTicksSinceLastTime) / totalTicksSinceLastTime : 0);
+    float ret = 1.0f - ((totalTicksSinceLastTime > 0) ? ((float) idleTicksSinceLastTime) / totalTicksSinceLastTime : 0);
 
     _previousTotalTicks = totalTicks;
-    _previousIdleTicks = idleTicks;
+    _previousIdleTicks  = idleTicks;
     return ret;
 }
 
-static unsigned long long FileTimeToInt64(const FILETIME & ft) { return (((unsigned long long)(ft.dwHighDateTime)) << 32) | ((unsigned long long)ft.dwLowDateTime); }
+static unsigned long long FileTimeToInt64(const FILETIME& ft)
+{
+    return (((unsigned long long) (ft.dwHighDateTime)) << 32) | ((unsigned long long) ft.dwLowDateTime);
+}
 
 // Returns 1.0f for "CPU fully pinned", 0.0f for "CPU idle", or somewhere in between
 // You'll need to call this at regular intervals, since it measures the load between
@@ -70,7 +73,7 @@ bool getRAMData(char* buf, size_t bufsz, int* treatDataType)
     memInfo.dwLength = sizeof(MEMORYSTATUSEX);
     GlobalMemoryStatusEx(&memInfo);
     DWORDLONG totalPhysMem = memInfo.ullTotalPhys;
-    DWORDLONG physMemUsed = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
+    DWORDLONG physMemUsed  = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
 
     snprintf(buf, bufsz, "{ \"total\": %lld, \"used\": %lld }", totalPhysMem, physMemUsed);
 
@@ -121,22 +124,22 @@ bool simple_perf_get_data(size_t srcUid, char* buf, size_t bufsz, int* treatData
 }
 
 quasar_plugin_info_t info =
-{
-    "Simple Performance Query",
-    "win_simple_perf",
-    "v1",
-    "me",
-    "Sample plugin that queries basic performance numbers",
+    {
+      "Simple Performance Query",
+      "win_simple_perf",
+      "v1",
+      "me",
+      "Sample plugin that queries basic performance numbers",
 
-    _countof(sources),
-    sources,
+      _countof(sources),
+      sources,
 
-    simple_perf_init,
-    simple_perf_shutdown,
-    simple_perf_get_data,
-    nullptr,
-    nullptr
-};
+      simple_perf_init,
+      simple_perf_shutdown,
+      simple_perf_get_data,
+      nullptr,
+      nullptr
+    };
 
 quasar_plugin_info_t* quasar_plugin_load(void)
 {

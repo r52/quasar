@@ -18,8 +18,8 @@ ConfigDialog::ConfigDialog(QObject* quasar)
     pagesWidget->addWidget(new ConfigurationPage(quasar));
     pagesWidget->addWidget(new PluginPage(quasar));
 
-    QPushButton *okButton = new QPushButton(tr("OK"));
-    QPushButton *closeButton = new QPushButton(tr("Close"));
+    QPushButton* okButton    = new QPushButton(tr("OK"));
+    QPushButton* closeButton = new QPushButton(tr("Close"));
 
     createIcons();
     contentsWidget->setCurrentRow(0);
@@ -27,16 +27,16 @@ ConfigDialog::ConfigDialog(QObject* quasar)
     connect(okButton, &QAbstractButton::clicked, this, &ConfigDialog::saveSettings);
     connect(closeButton, &QAbstractButton::clicked, this, &QWidget::close);
 
-    QHBoxLayout *horizontalLayout = new QHBoxLayout;
+    QHBoxLayout* horizontalLayout = new QHBoxLayout;
     horizontalLayout->addWidget(contentsWidget);
     horizontalLayout->addWidget(pagesWidget, 1);
 
-    QHBoxLayout *buttonsLayout = new QHBoxLayout;
+    QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->addStretch(1);
     buttonsLayout->addWidget(okButton);
     buttonsLayout->addWidget(closeButton);
 
-    QVBoxLayout *mainLayout = new QVBoxLayout;
+    QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addLayout(horizontalLayout);
     mainLayout->addStretch(1);
     mainLayout->addSpacing(12);
@@ -48,12 +48,12 @@ ConfigDialog::ConfigDialog(QObject* quasar)
 
 void ConfigDialog::createIcons()
 {
-    QListWidgetItem *generalButton = new QListWidgetItem(contentsWidget);
+    QListWidgetItem* generalButton = new QListWidgetItem(contentsWidget);
     generalButton->setText(tr("General"));
     generalButton->setTextAlignment(Qt::AlignHCenter);
     generalButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
-    QListWidgetItem *pluginButton = new QListWidgetItem(contentsWidget);
+    QListWidgetItem* pluginButton = new QListWidgetItem(contentsWidget);
     pluginButton->setText(tr("Plugins"));
     pluginButton->setTextAlignment(Qt::AlignHCenter);
     pluginButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
@@ -61,7 +61,7 @@ void ConfigDialog::createIcons()
     connect(contentsWidget, &QListWidget::currentItemChanged, this, &ConfigDialog::changePage);
 }
 
-void ConfigDialog::changePage(QListWidgetItem *current, QListWidgetItem *previous)
+void ConfigDialog::changePage(QListWidgetItem* current, QListWidgetItem* previous)
 {
     if (!current)
         current = previous;
@@ -72,7 +72,7 @@ void ConfigDialog::changePage(QListWidgetItem *current, QListWidgetItem *previou
 void ConfigDialog::saveSettings()
 {
     QSettings settings;
-    bool restartNeeded = false;
+    bool      restartNeeded = false;
 
     auto pages = pagesWidget->children();
 

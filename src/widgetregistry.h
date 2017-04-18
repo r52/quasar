@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QObject>
 #include <QMap>
+#include <QObject>
 
 QT_FORWARD_DECLARE_CLASS(WebWidget);
 
@@ -12,7 +12,7 @@ class WidgetRegistry : public QObject
     Q_OBJECT
 
 public:
-    WidgetRegistry(QObject *parent = Q_NULLPTR);
+    WidgetRegistry(QObject* parent = Q_NULLPTR);
     ~WidgetRegistry();
 
     void loadLoadedWidgets();

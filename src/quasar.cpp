@@ -1,22 +1,19 @@
 #include "quasar.h"
 
 #include "configdialog.h"
-#include "webwidget.h"
-#include "logwindow.h"
-#include "widgetregistry.h"
 #include "dataserver.h"
+#include "logwindow.h"
+#include "webwidget.h"
+#include "widgetregistry.h"
 
-#include <QVBoxLayout>
-#include <QTextEdit>
-#include <QMenu>
 #include <QCloseEvent>
 #include <QFileDialog>
+#include <QMenu>
+#include <QTextEdit>
+#include <QVBoxLayout>
 
-Quasar::Quasar(QWidget *parent) :
-    QMainWindow(parent),
-    logWindow(new LogWindow(this)),
-    server(new DataServer(this)),
-    reg(new WidgetRegistry(this))
+Quasar::Quasar(QWidget* parent)
+    : QMainWindow(parent), logWindow(new LogWindow(this)), server(new DataServer(this)), reg(new WidgetRegistry(this))
 {
     ui.setupUi(this);
 
@@ -32,7 +29,7 @@ Quasar::Quasar(QWidget *parent) :
     trayIcon->show();
 
     // Setup log widget
-    QVBoxLayout *layout = new QVBoxLayout();
+    QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(logWindow->release());
 
     ui.centralWidget->setLayout(layout);
@@ -49,9 +46,7 @@ Quasar::~Quasar()
 
 void Quasar::openWebWidget()
 {
-    QString fname = QFileDialog::getOpenFileName(this, tr("Load Widget"),
-        QDir::currentPath(),
-        tr("Widget Definitions (*.json)"));
+    QString fname = QFileDialog::getOpenFileName(this, tr("Load Widget"), QDir::currentPath(), tr("Widget Definitions (*.json)"));
 
     reg->loadWebWidget(fname);
 }
@@ -126,10 +121,11 @@ QString Quasar::getConfigKey(QString key)
     return "global/" + key;
 }
 
-void Quasar::closeEvent(QCloseEvent *event)
+void Quasar::closeEvent(QCloseEvent* event)
 {
 #ifdef Q_OS_OSX
-    if (!event->spontaneous() || !isVisible()) {
+    if (!event->spontaneous() || !isVisible())
+    {
         return;
     }
 #endif

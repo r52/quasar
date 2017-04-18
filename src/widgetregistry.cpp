@@ -1,9 +1,9 @@
 #include "widgetregistry.h"
 
-#include "widgetdefs.h"
 #include "webwidget.h"
+#include "widgetdefs.h"
 
-WidgetRegistry::WidgetRegistry(QObject *parent)
+WidgetRegistry::WidgetRegistry(QObject* parent)
     : QObject(parent)
 {
 }
@@ -29,10 +29,10 @@ WidgetRegistry::~WidgetRegistry()
 
 void WidgetRegistry::loadLoadedWidgets()
 {
-    QSettings settings;
+    QSettings   settings;
     QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();
 
-    foreach(const QString &f, loadedList)
+    foreach (const QString& f, loadedList)
     {
         loadWebWidget(f, false);
     }
@@ -50,10 +50,10 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
             return false;
         }
 
-        QByteArray wgtDat = wgtFile.readAll();
+        QByteArray    wgtDat = wgtFile.readAll();
         QJsonDocument loadDoc(QJsonDocument::fromJson(wgtDat));
 
-        QJsonObject dat = loadDoc.object();
+        QJsonObject dat       = loadDoc.object();
         dat[WGT_DEF_FULLPATH] = filename;
 
         if (!WebWidget::validateWidgetDefinition(dat))
@@ -67,9 +67,9 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
         else
         {
             // Generate unique widget name
-            QString defName = dat[WGT_DEF_NAME].toString();
+            QString defName    = dat[WGT_DEF_NAME].toString();
             QString widgetName = defName;
-            int idx = 2;
+            int     idx        = 2;
 
             while (m_widgetMap.count(widgetName) > 0)
             {
@@ -78,7 +78,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
 
             qInfo() << "Loading widget " << widgetName << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
 
-            WebWidget *widget = new WebWidget(widgetName, dat);
+            WebWidget* widget = new WebWidget(widgetName, dat);
 
             m_widgetMap.insert(widgetName, widget);
 
@@ -108,7 +108,7 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
 {
     // Remove from loaded list
     QJsonObject data = widget->getData();
-    QString name = widget->getName();
+    QString     name = widget->getName();
 
     qInfo() << "Closing widget " << name << " (" << data[WGT_DEF_FULLPATH].toString() << ")";
 

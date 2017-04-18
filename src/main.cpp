@@ -1,10 +1,9 @@
 #include "quasar.h"
 
-#include <QtWidgets/QApplication>
 #include <QSettings>
+#include <QtWidgets/QApplication>
 
-
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);

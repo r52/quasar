@@ -5,14 +5,14 @@
 #include <QAction>
 #include <QMenu>
 #include <QMessageBox>
-#include <QtWebEngineWidgets/QWebEngineSettings>
-#include <QtWebEngineWidgets/QWebEngineView>
 #include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
+#include <QtWebEngineWidgets/QWebEngineSettings>
+#include <QtWebEngineWidgets/QWebEngineView>
 
 QString WebWidget::PageGlobalTemp;
 
-WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent)
+WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent)
     : QWidget(parent), m_Name(widgetName)
 {
     if (m_Name.isEmpty())
@@ -29,7 +29,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent
     webview = new QWebEngineView(this);
 
     QString startFilePath = QFileInfo(data[WGT_DEF_FULLPATH].toString()).canonicalPath().append("/");
-    QUrl startFile = QUrl::fromLocalFile(startFilePath.append(data[WGT_DEF_STARTFILE].toString()));
+    QUrl    startFile     = QUrl::fromLocalFile(startFilePath.append(data[WGT_DEF_STARTFILE].toString()));
 
     webview->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, false);
 
@@ -48,7 +48,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent
     }
 
     // Overlay for catching drag and drop events
-    OverlayWidget *overlay = new OverlayWidget(this);
+    OverlayWidget* overlay = new OverlayWidget(this);
 
     // Create context menu
     createContextMenuActions();
@@ -100,7 +100,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject &dat, QWidget *parent
     setWindowTitle(m_Name);
 }
 
-bool WebWidget::validateWidgetDefinition(const QJsonObject &dat)
+bool WebWidget::validateWidgetDefinition(const QJsonObject& dat)
 {
     if (!dat.isEmpty() &&
         dat.contains(WGT_DEF_NAME) && !dat[WGT_DEF_NAME].toString().isNull() &&
@@ -115,7 +115,7 @@ bool WebWidget::validateWidgetDefinition(const QJsonObject &dat)
     return false;
 }
 
-bool WebWidget::acceptSecurityWarnings(const QJsonObject &dat)
+bool WebWidget::acceptSecurityWarnings(const QJsonObject& dat)
 {
     bool accept = true;
 
@@ -123,8 +123,10 @@ bool WebWidget::acceptSecurityWarnings(const QJsonObject &dat)
     {
         accept = false;
 
-        auto reply = QMessageBox::warning(nullptr, tr("Remote Access"),
-            tr("This widget requires remote access to external URLs. This may pose a security risk.\n\nContinue loading?"), QMessageBox::Ok | QMessageBox::Cancel);
+        auto reply = QMessageBox::warning(nullptr,
+                                          tr("Remote Access"),
+                                          tr("This widget requires remote access to external URLs. This may pose a security risk.\n\nContinue loading?"),
+                                          QMessageBox::Ok | QMessageBox::Cancel);
 
         if (reply == QMessageBox::Ok)
         {
@@ -149,7 +151,7 @@ void WebWidget::saveSettings()
 
 void WebWidget::createContextMenuActions()
 {
-    rName = new QAction(m_Name, this);
+    rName   = new QAction(m_Name, this);
     QFont f = rName->font();
     f.setBold(true);
     rName->setFont(f);
@@ -176,28 +178,30 @@ void WebWidget::createContextMenu()
     m_Menu->addAction(rClose);
 }
 
-void WebWidget::mousePressEvent(QMouseEvent *evt)
+void WebWidget::mousePressEvent(QMouseEvent* evt)
 {
-    if (evt->button() == Qt::LeftButton) {
+    if (evt->button() == Qt::LeftButton)
+    {
         dragPosition = evt->globalPos() - frameGeometry().topLeft();
         evt->accept();
     }
 }
 
-void WebWidget::mouseMoveEvent(QMouseEvent *evt)
+void WebWidget::mouseMoveEvent(QMouseEvent* evt)
 {
-    if (evt->buttons() & Qt::LeftButton) {
+    if (evt->buttons() & Qt::LeftButton)
+    {
         move(evt->globalPos() - dragPosition);
         evt->accept();
     }
 }
 
-void WebWidget::contextMenuEvent(QContextMenuEvent *event)
+void WebWidget::contextMenuEvent(QContextMenuEvent* event)
 {
     m_Menu->exec(event->globalPos());
 }
 
-void WebWidget::closeEvent(QCloseEvent *event)
+void WebWidget::closeEvent(QCloseEvent* event)
 {
     saveSettings();
 

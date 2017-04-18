@@ -7,16 +7,14 @@
 #include "widgetregistry.h"
 
 #include <QDir>
-#include <QSettings>
-#include <QtWebSockets/QWebSocketServer>
-#include <QtWebSockets/QWebSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSettings>
+#include <QtWebSockets/QWebSocket>
+#include <QtWebSockets/QWebSocketServer>
 
-DataServer::DataServer(QObject *parent) :
-    QObject(parent),
-    m_parent(qobject_cast<Quasar*>(parent)),
-    m_pWebSocketServer(nullptr)
+DataServer::DataServer(QObject* parent)
+    : QObject(parent), m_parent(qobject_cast<Quasar*>(parent)), m_pWebSocketServer(nullptr)
 {
     if (nullptr == m_parent)
     {
@@ -24,17 +22,16 @@ DataServer::DataServer(QObject *parent) :
     }
 
     m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"),
-        QWebSocketServer::NonSecureMode,
-        this);
+                                              QWebSocketServer::NonSecureMode,
+                                              this);
 
     QSettings settings;
-    quint16 port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+    quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
     if (m_pWebSocketServer->listen(QHostAddress::LocalHost, port))
     {
         qInfo() << "Data server running locally on port" << port;
-        connect(m_pWebSocketServer, &QWebSocketServer::newConnection,
-            this, &DataServer::onNewConnection);
+        connect(m_pWebSocketServer, &QWebSocketServer::newConnection, this, &DataServer::onNewConnection);
 
         loadDataPlugins();
     }
@@ -57,8 +54,11 @@ DataServer::~DataServer()
 
 void DataServer::loadDataPlugins()
 {
-    QDir dir("plugins/");
-    QFileInfoList list = dir.entryInfoList(QStringList() << "*.dll" << "*.so" << "*.dylib", QDir::Files);
+    QDir          dir("plugins/");
+    QFileInfoList list = dir.entryInfoList(QStringList() << "*.dll"
+                                                         << "*.so"
+                                                         << "*.dylib",
+                                           QDir::Files);
 
     if (list.count() == 0)
     {
@@ -66,7 +66,7 @@ void DataServer::loadDataPlugins()
         return;
     }
 
-    for (QFileInfo &file : list)
+    for (QFileInfo& file : list)
     {
         QString libpath = file.path() + "/" + file.fileName();
 
@@ -94,7 +94,7 @@ void DataServer::loadDataPlugins()
         {
             qInfo() << "Plugin " << plugin->getCode() << " loaded.";
             m_plugins[plugin->getCode()] = plugin;
-            plugin = nullptr;
+            plugin                       = nullptr;
         }
 
         if (plugin != nullptr)
@@ -104,7 +104,7 @@ void DataServer::loadDataPlugins()
     }
 }
 
-void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
+void DataServer::handleRequest(const QJsonObject& req, QWebSocket* sender)
 {
     if (req.isEmpty())
     {
@@ -117,11 +117,11 @@ void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
     if (type == "subscribe")
     {
         QString widgetName = req["widget"].toString();
-        QString plugin = req["plugin"].toString();
-        QString sources = req["source"].toString();
+        QString plugin     = req["plugin"].toString();
+        QString sources    = req["source"].toString();
 
         // subWidget parameter currently unused
-        WebWidget *subWidget = m_parent->getWidgetRegistry()->findWidget(widgetName);
+        WebWidget* subWidget = m_parent->getWidgetRegistry()->findWidget(widgetName);
 
         if (!subWidget)
         {
@@ -157,7 +157,7 @@ void DataServer::handleRequest(const QJsonObject &req, QWebSocket *sender)
 
 void DataServer::onNewConnection()
 {
-    QWebSocket *pSocket = m_pWebSocketServer->nextPendingConnection();
+    QWebSocket* pSocket = m_pWebSocketServer->nextPendingConnection();
 
     connect(pSocket, &QWebSocket::textMessageReceived, this, &DataServer::processMessage);
     connect(pSocket, &QWebSocket::disconnected, this, &DataServer::socketDisconnected);
@@ -167,7 +167,7 @@ void DataServer::onNewConnection()
 
 void DataServer::processMessage(QString message)
 {
-    QWebSocket *pSender = qobject_cast<QWebSocket *>(sender());
+    QWebSocket* pSender = qobject_cast<QWebSocket*>(sender());
 
     if (pSender)
     {
@@ -186,12 +186,12 @@ void DataServer::processMessage(QString message)
 
 void DataServer::socketDisconnected()
 {
-    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
+    QWebSocket* pClient = qobject_cast<QWebSocket*>(sender());
     if (pClient)
     {
         m_clients.removeAll(pClient);
 
-        for (DataPlugin *plugin : m_plugins)
+        for (DataPlugin* plugin : m_plugins)
         {
             plugin->removeSubscriber(pClient);
         }

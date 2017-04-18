@@ -1,8 +1,8 @@
 #pragma once
 
-#include <QObject>
 #include <QList>
 #include <QMap>
+#include <QObject>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
@@ -17,14 +17,14 @@ class DataServer : public QObject
     Q_OBJECT;
 
 public:
-    explicit DataServer(QObject *parent);
+    explicit DataServer(QObject* parent);
     ~DataServer();
 
     DataPluginMapType& getPlugins() { return m_plugins; };
 
 private:
     void loadDataPlugins();
-    void handleRequest(const QJsonObject &req, QWebSocket *sender);
+    void handleRequest(const QJsonObject& req, QWebSocket* sender);
 
 private slots:
     void onNewConnection();
@@ -32,8 +32,8 @@ private slots:
     void socketDisconnected();
 
 private:
-    Quasar *m_parent;
-    QWebSocketServer *m_pWebSocketServer;
-    QList<QWebSocket *> m_clients;
-    DataPluginMapType m_plugins;
+    Quasar*            m_parent;
+    QWebSocketServer*  m_pWebSocketServer;
+    QList<QWebSocket*> m_clients;
+    DataPluginMapType  m_plugins;
 };

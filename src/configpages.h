@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QWidget>
 #include <QSettings>
+#include <QWidget>
 
 QT_FORWARD_DECLARE_CLASS(Quasar)
 QT_FORWARD_DECLARE_CLASS(DataPlugin)
@@ -14,9 +14,10 @@ class PageWidget : public QWidget
     Q_OBJECT
 
 public:
-    PageWidget(QWidget *parent = 0) : QWidget(parent) {}
+    PageWidget(QWidget* parent = 0)
+        : QWidget(parent) {}
 
-    virtual void saveSettings(QSettings &settings, bool &restartNeeded) = 0;
+    virtual void saveSettings(QSettings& settings, bool& restartNeeded) = 0;
 };
 
 class ConfigurationPage : public PageWidget
@@ -24,23 +25,23 @@ class ConfigurationPage : public PageWidget
     Q_OBJECT
 
 public:
-    ConfigurationPage(QObject *quasar, QWidget *parent = 0);
+    ConfigurationPage(QObject* quasar, QWidget* parent = 0);
 
-    virtual void saveSettings(QSettings &settings, bool &restartNeeded) override;
+    virtual void saveSettings(QSettings& settings, bool& restartNeeded) override;
 
 private slots:
-    void pluginListClicked(QListWidgetItem *item);
+    void pluginListClicked(QListWidgetItem* item);
 
 private:
     bool m_settingsModified = false;
 
-    Quasar *m_quasar;
+    Quasar* m_quasar;
 
-    QLabel *plugName;
-    QLabel *plugCode;
-    QLabel *plugVersion;
-    QLabel *plugAuthor;
-    QLabel *plugDesc;
+    QLabel* plugName;
+    QLabel* plugCode;
+    QLabel* plugVersion;
+    QLabel* plugAuthor;
+    QLabel* plugDesc;
 };
 
 class PluginPage : public PageWidget
@@ -48,14 +49,14 @@ class PluginPage : public PageWidget
     Q_OBJECT
 
 public:
-    PluginPage(QObject *quasar, QWidget *parent = 0);
+    PluginPage(QObject* quasar, QWidget* parent = 0);
 
-    virtual void saveSettings(QSettings &settings, bool &restartNeeded) override;
+    virtual void saveSettings(QSettings& settings, bool& restartNeeded) override;
 
 private:
-    Quasar *m_quasar;
+    Quasar* m_quasar;
 
-    QStackedWidget *pagesWidget;
+    QStackedWidget* pagesWidget;
 };
 
 class DataPluginPage : public PageWidget
@@ -63,13 +64,13 @@ class DataPluginPage : public PageWidget
     Q_OBJECT
 
 public:
-    DataPluginPage(DataPlugin *p, QWidget *parent = 0);
+    DataPluginPage(DataPlugin* p, QWidget* parent = 0);
 
-    virtual void saveSettings(QSettings &settings, bool & restartNeeded) override;
+    virtual void saveSettings(QSettings& settings, bool& restartNeeded) override;
 
 private:
     bool m_dataSettingsModified = false;
     bool m_plugSettingsModified = false;
 
-    DataPlugin *plugin;
+    DataPlugin* plugin;
 };

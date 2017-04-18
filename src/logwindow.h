@@ -14,7 +14,7 @@ public:
     ~LogWindow();
 
 private:
-    LogWindow(QObject *parent = nullptr);
+    LogWindow(QObject* parent = nullptr);
 
     QTextEdit* release();
 

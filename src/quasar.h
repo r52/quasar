@@ -15,11 +15,11 @@ class Quasar : public QMainWindow
     Q_OBJECT
 
 public:
-    Quasar(QWidget *parent = Q_NULLPTR);
+    Quasar(QWidget* parent = Q_NULLPTR);
     ~Quasar();
 
     WidgetRegistry* getWidgetRegistry() { return reg; };
-    DataServer* getDataServer() { return server; };
+    DataServer*     getDataServer() { return server; };
 
 private slots:
     void openWebWidget();
@@ -27,7 +27,7 @@ private slots:
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 
 protected:
-    virtual void closeEvent(QCloseEvent *event) Q_DECL_OVERRIDE;
+    virtual void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
 
 private:
     void createTrayIcon();
@@ -39,22 +39,22 @@ private:
     Ui::QuasarClass ui;
 
     // Log Window
-    LogWindow *logWindow;
+    LogWindow* logWindow;
 
     // Tray
-    QSystemTrayIcon *trayIcon;
-    QMenu *trayIconMenu;
+    QSystemTrayIcon* trayIcon;
+    QMenu*           trayIconMenu;
 
     // Actions/menus
-    QMenu *widgetListMenu;
-    QAction *loadAction;
-    QAction *settingsAction;
-    QAction *logAction;
-    QAction *quitAction;
+    QMenu*   widgetListMenu;
+    QAction* loadAction;
+    QAction* settingsAction;
+    QAction* logAction;
+    QAction* quitAction;
 
     // Data server
-    DataServer *server;
+    DataServer* server;
 
     // Widget registry
-    WidgetRegistry *reg;
+    WidgetRegistry* reg;
 };

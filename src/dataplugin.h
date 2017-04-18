@@ -2,25 +2,25 @@
 
 #include <plugin_types.h>
 
-#include <memory>
+#include <QMap>
 #include <QObject>
 #include <QSet>
-#include <QMap>
+#include <memory>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 QT_FORWARD_DECLARE_CLASS(QTimer)
 
 #define QUASAR_DP_ENABLED_PREFIX "enabled_"
 #define QUASAR_DP_REFRESH_PREFIX "refresh_"
-#define QUASAR_DP_CUSTOM_PREFIX  "custom_"
+#define QUASAR_DP_CUSTOM_PREFIX "custom_"
 
 struct DataSource
 {
-    QString key;
-    size_t uid;
-    uint32_t refreshmsec;
-    QTimer *timer = nullptr;
-    QSet<QWebSocket *> subscribers;
+    QString           key;
+    size_t            uid;
+    uint32_t          refreshmsec;
+    QTimer*           timer = nullptr;
+    QSet<QWebSocket*> subscribers;
 };
 
 using DataSourceMapType = QMap<QString, DataSource>;
@@ -36,12 +36,12 @@ public:
 
     static uintmax_t _uid;
 
-    static DataPlugin* load(QString libpath, QObject *parent = Q_NULLPTR);
+    static DataPlugin* load(QString libpath, QObject* parent = Q_NULLPTR);
 
     bool setupPlugin();
 
-    bool addSubscriber(QString source, QWebSocket *subscriber, QString widgetName);
-    void removeSubscriber(QWebSocket *subscriber);
+    bool addSubscriber(QString source, QWebSocket* subscriber, QString widgetName);
+    void removeSubscriber(QWebSocket* subscriber);
 
     QString getLibPath() { return m_libpath; };
     QString getName() { return m_name; };
@@ -69,7 +69,7 @@ private slots:
     void getAndSendData(DataSource& source);
 
 private:
-    DataPlugin(quasar_plugin_info_t* p, QString path, QObject *parent = Q_NULLPTR);
+    DataPlugin(quasar_plugin_info_t* p, QString path, QObject* parent = Q_NULLPTR);
 
     void createTimer(DataSource& data);
 

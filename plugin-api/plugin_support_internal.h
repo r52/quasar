@@ -12,7 +12,7 @@ enum QuasarSettingEntryType
 struct quasar_setting_def_t
 {
     QuasarSettingEntryType type;
-    QString description;
+    QString                description;
 
     union
     {
