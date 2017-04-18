@@ -58,16 +58,14 @@ void msg_handler(QtMsgType type, const QMessageLogContext& context, const QStrin
 
 LogWindow::~LogWindow()
 {
-    if (m_released)
-    {
-        // not owned anymore
-        s_logEdit = nullptr;
-    }
-    else if (nullptr != s_logEdit)
+    // if released, s_logEdit is not owned anymore
+    // otherwise it needs to be cleaned
+    if (!m_released && nullptr != s_logEdit)
     {
         delete s_logEdit;
-        s_logEdit = nullptr;
     }
+
+    s_logEdit = nullptr;
 }
 
 LogWindow::LogWindow(QObject* parent)

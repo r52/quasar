@@ -2,6 +2,7 @@
 
 #include <QSettings>
 #include <QtWidgets/QApplication>
+#include <QtWebEngineWidgets/QWebEngineProfile>
 
 int main(int argc, char* argv[])
 {
@@ -12,6 +13,8 @@ int main(int argc, char* argv[])
     QApplication::setApplicationName("Quasar");
     QApplication::setOrganizationName("Quasar");
     QSettings::setDefaultFormat(QSettings::IniFormat);
+
+    QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
 
     Quasar w;
     w.hide();
