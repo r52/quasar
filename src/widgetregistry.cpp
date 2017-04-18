@@ -3,9 +3,29 @@
 #include "webwidget.h"
 #include "widgetdefs.h"
 
+#include <QNetworkCookie>
+#include <QtWebEngineCore/QWebEngineCookieStore>
+#include <QtWebEngineWidgets/QWebEngineProfile>
+
+namespace
+{
+    enum NetscapeCookieFormat
+    {
+        NETSCAPE_COOKIE_DOMAIN = 0,
+        NETSCAPE_COOKIE_FLAG,
+        NETSCAPE_COOKIE_PATH,
+        NETSCAPE_COOKIE_SECURE,
+        NETSCAPE_COOKIE_EXP,
+        NETSCAPE_COOKIE_NAME,
+        NETSCAPE_COOKIE_VALUE,
+        NETSCAPE_COOKIE_MAX
+    };
+}
+
 WidgetRegistry::WidgetRegistry(QObject* parent)
     : QObject(parent)
 {
+    loadCookies();
 }
 
 WidgetRegistry::~WidgetRegistry()
@@ -102,6 +122,62 @@ WebWidget* WidgetRegistry::findWidget(QString widgetName)
     }
 
     return nullptr;
+}
+
+void WidgetRegistry::loadCookies()
+{
+    QSettings settings;
+    QString   cookiesfile = settings.value(QUASAR_CONFIG_COOKIES).toString();
+
+    if (!cookiesfile.isEmpty())
+    {
+        QFile file(cookiesfile);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            qWarning() << "Failed to load cookies file " << cookiesfile;
+        }
+        else
+        {
+            QWebEngineCookieStore* store = QWebEngineProfile::defaultProfile()->cookieStore();
+
+            // parse netscape format cookies file
+            QTextStream in(&file);
+
+            while (!in.atEnd())
+            {
+                QString line = in.readLine();
+
+                if (line.at(0) == '#')
+                {
+                    // skip comments
+                    continue;
+                }
+
+                QStringList vals = line.split('\t');
+
+                if (vals.count() != NETSCAPE_COOKIE_MAX)
+                {
+                    // ill formatted line
+                    qDebug() << "Ill formatted cookie \"" << line << "\"";
+                    continue;
+                }
+
+                QNetworkCookie cookie(vals[NETSCAPE_COOKIE_NAME].toUtf8(), vals[NETSCAPE_COOKIE_VALUE].toUtf8());
+                cookie.setDomain(vals[NETSCAPE_COOKIE_DOMAIN]);
+                cookie.setExpirationDate(QDateTime::fromSecsSinceEpoch(vals[NETSCAPE_COOKIE_EXP].toLongLong()));
+                cookie.setPath(vals[NETSCAPE_COOKIE_PATH]);
+                cookie.setSecure(vals[NETSCAPE_COOKIE_SECURE] == "TRUE");
+
+                store->setCookie(cookie);
+            }
+
+            qInfo() << "Cookies file " << cookiesfile << "loaded";
+        }
+    }
+    else
+    {
+        qInfo() << "No cookies loaded";
+    }
 }
 
 void WidgetRegistry::closeWebWidget(WebWidget* widget)

@@ -22,6 +22,9 @@ public:
 
     WebWidget* findWidget(QString widgetName);
 
+private:
+    void loadCookies();
+
 public slots:
     void closeWebWidget(WebWidget* widget);
 
