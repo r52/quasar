@@ -11,8 +11,9 @@
 namespace
 {
     // setting names
-    QString QUASAR_SETTING_PORT = "portSpin";
-    QString QUASAR_SETTING_LOG  = "logCombo";
+    QString QUASAR_SETTING_PORT   = "portSpin";
+    QString QUASAR_SETTING_LOG    = "logCombo";
+    QString QUASAR_SETTING_COOKIE = "cookieEdit";
 }
 
 ConfigurationPage::ConfigurationPage(QObject* quasar, QWidget* parent)
@@ -58,9 +59,32 @@ ConfigurationPage::ConfigurationPage(QObject* quasar, QWidget* parent)
     logLayout->addWidget(logLabel);
     logLayout->addWidget(logCombo);
 
+    QLabel* cookieLabel = new QLabel(tr("cookies.txt:"));
+
+    QLineEdit* cookieEdit = new QLineEdit;
+    cookieEdit->setObjectName(QUASAR_SETTING_COOKIE);
+    cookieEdit->setText(settings.value(QUASAR_CONFIG_COOKIES).toString());
+
+    connect(cookieEdit, &QLineEdit::textChanged, [=] {
+        this->m_settingsModified = true;
+    });
+
+    QPushButton* cookieBrowse = new QPushButton(tr("Browse"));
+
+    connect(cookieBrowse, &QPushButton::clicked, [=] {
+        QString fname = QFileDialog::getOpenFileName(this, tr("Cookie File"), QDir::currentPath(), tr("Cookie File (cookies.txt)"));
+        cookieEdit->setText(fname);
+    });
+
+    QHBoxLayout* cookieLayout = new QHBoxLayout;
+    cookieLayout->addWidget(cookieLabel);
+    cookieLayout->addWidget(cookieEdit);
+    cookieLayout->addWidget(cookieBrowse);
+
     QVBoxLayout* configLayout = new QVBoxLayout;
     configLayout->addLayout(generalLayout);
     configLayout->addLayout(logLayout);
+    configLayout->addLayout(cookieLayout);
     configGroup->setLayout(configLayout);
 
     // plugin group
@@ -174,8 +198,16 @@ void ConfigurationPage::saveSettings(QSettings& settings, bool& restartNeeded)
         if (portspin)
         {
             settings.setValue(QUASAR_CONFIG_PORT, portspin->value());
-            restartNeeded = true;
         }
+
+        auto cookieEdit = findChild<QLineEdit*>(QUASAR_SETTING_COOKIE);
+
+        if (cookieEdit)
+        {
+            settings.setValue(QUASAR_CONFIG_COOKIES, cookieEdit->text());
+        }
+
+        restartNeeded = true;
     }
 
     auto logcombo = findChild<QComboBox*>(QUASAR_SETTING_LOG);
