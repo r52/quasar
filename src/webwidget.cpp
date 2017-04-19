@@ -58,6 +58,9 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     QSettings settings;
     restoreGeometry(settings.value(getWidgetConfigKey("geometry")).toByteArray());
     bool ontop = settings.value(getWidgetConfigKey("alwaysOnTop")).toBool();
+    m_fixedposition = settings.value(getWidgetConfigKey("fixedPosition")).toBool();
+
+    rFixedPos->setChecked(m_fixedposition);
 
     if (ontop)
     {
@@ -147,6 +150,7 @@ void WebWidget::saveSettings()
     QSettings settings;
     settings.setValue(getWidgetConfigKey("geometry"), saveGeometry());
     settings.setValue(getWidgetConfigKey("alwaysOnTop"), rOnTop->isChecked());
+    settings.setValue(getWidgetConfigKey("fixedPosition"), m_fixedposition);
 }
 
 void WebWidget::createContextMenuActions()
@@ -159,9 +163,20 @@ void WebWidget::createContextMenuActions()
     rReload = new QAction(tr("&Reload"), this);
     connect(rReload, &QAction::triggered, webview, &QWebEngineView::reload);
 
+    rResetPos = new QAction(tr("Re&set Position"), this);
+    connect(rResetPos, &QAction::triggered, [=](bool e) {
+        this->move(0, 0);
+    });
+
     rOnTop = new QAction(tr("&Always on Top"), this);
     rOnTop->setCheckable(true);
     connect(rOnTop, &QAction::triggered, this, &WebWidget::toggleOnTop);
+
+    rFixedPos = new QAction(tr("&Fixed Position"), this);
+    rFixedPos->setCheckable(true);
+    connect(rFixedPos, &QAction::triggered, [=](bool enabled) {
+        this->m_fixedposition = enabled;
+    });
 
     rClose = new QAction(tr("&Close"), this);
     connect(rClose, &QAction::triggered, this, &WebWidget::close);
@@ -173,14 +188,17 @@ void WebWidget::createContextMenu()
     m_Menu->addAction(rName);
     m_Menu->addSeparator();
     m_Menu->addAction(rReload);
+    m_Menu->addAction(rResetPos);
+    m_Menu->addSeparator();
     m_Menu->addAction(rOnTop);
+    m_Menu->addAction(rFixedPos);
     m_Menu->addSeparator();
     m_Menu->addAction(rClose);
 }
 
 void WebWidget::mousePressEvent(QMouseEvent* evt)
 {
-    if (evt->button() == Qt::LeftButton)
+    if (!m_fixedposition && evt->button() == Qt::LeftButton)
     {
         dragPosition = evt->globalPos() - frameGeometry().topLeft();
         evt->accept();
@@ -189,7 +207,7 @@ void WebWidget::mousePressEvent(QMouseEvent* evt)
 
 void WebWidget::mouseMoveEvent(QMouseEvent* evt)
 {
-    if (evt->buttons() & Qt::LeftButton)
+    if (!m_fixedposition && evt->buttons() & Qt::LeftButton)
     {
         move(evt->globalPos() - dragPosition);
         evt->accept();

@@ -99,6 +99,8 @@ private:
 private:
     static QString PageGlobalTemp;
 
+    bool m_fixedposition = false;
+
     QString m_Name;
 
     // Web engine widget
@@ -114,6 +116,8 @@ private:
     QMenu*   m_Menu;
     QAction* rName;
     QAction* rReload;
+    QAction* rResetPos;
     QAction* rOnTop;
+    QAction* rFixedPos;
     QAction* rClose;
 };
