@@ -301,30 +301,36 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
     {
         bool sourceEnabled = settings.value(plugin->getSettingsCode(QUASAR_DP_ENABLED_PREFIX + it.key()), true).toBool();
 
+        QHBoxLayout* dataLayout = new QHBoxLayout;
+
         // create data source rate settings
         QCheckBox* sourceCheckBox = new QCheckBox(it.key());
         sourceCheckBox->setObjectName(QUASAR_DP_ENABLED_PREFIX + it.key());
         sourceCheckBox->setChecked(sourceEnabled);
 
-        QSpinBox* upSpin = new QSpinBox;
-        upSpin->setObjectName(QUASAR_DP_REFRESH_PREFIX + it.key());
-        upSpin->setMinimum(0);
-        upSpin->setMaximum(INT_MAX);
-        upSpin->setSingleStep(1);
-        upSpin->setValue(it.value().refreshmsec);
-        upSpin->setSuffix("ms");
-        upSpin->setEnabled(sourceEnabled);
-
-        connect(sourceCheckBox, &QCheckBox::toggled, [this, upSpin](bool state) {
-            this->m_dataSettingsModified = true;
-            upSpin->setEnabled(state);
-        });
-
-        connect(upSpin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int i) { this->m_dataSettingsModified = true; });
-
-        QHBoxLayout* dataLayout = new QHBoxLayout;
         dataLayout->addWidget(sourceCheckBox);
-        dataLayout->addWidget(upSpin);
+
+        // Only create refresh setting if the data source is subscription based
+        if (it->refreshmsec > 0)
+        {
+            QSpinBox* upSpin = new QSpinBox;
+            upSpin->setObjectName(QUASAR_DP_REFRESH_PREFIX + it.key());
+            upSpin->setMinimum(1);
+            upSpin->setMaximum(INT_MAX);
+            upSpin->setSingleStep(1);
+            upSpin->setValue(it.value().refreshmsec);
+            upSpin->setSuffix("ms");
+            upSpin->setEnabled(sourceEnabled);
+
+            connect(sourceCheckBox, &QCheckBox::toggled, [this, upSpin](bool state) {
+                this->m_dataSettingsModified = true;
+                upSpin->setEnabled(state);
+            });
+
+            connect(upSpin, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int i) { this->m_dataSettingsModified = true; });
+
+            dataLayout->addWidget(upSpin);
+        }
 
         sourceLayout->addLayout(dataLayout);
 

@@ -16,9 +16,10 @@ QT_FORWARD_DECLARE_CLASS(QTimer)
 
 struct DataSource
 {
+    bool              enabled;
     QString           key;
     size_t            uid;
-    uint32_t          refreshmsec;
+    int64_t           refreshmsec;
     QTimer*           timer = nullptr;
     QSet<QWebSocket*> subscribers;
 };
@@ -43,6 +44,8 @@ public:
     bool addSubscriber(QString source, QWebSocket* subscriber, QString widgetName);
     void removeSubscriber(QWebSocket* subscriber);
 
+    void pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName);
+
     QString getLibPath() { return m_libpath; };
     QString getName() { return m_name; };
     QString getCode() { return m_code; };
@@ -57,7 +60,7 @@ public:
 
     void setDataSourceEnabled(QString source, bool enabled);
 
-    void setDataSourceRefresh(QString source, uint32_t msec);
+    void setDataSourceRefresh(QString source, int64_t msec);
 
     void setCustomSetting(QString name, int val);
     void setCustomSetting(QString name, double val);
@@ -66,12 +69,13 @@ public:
     void updatePluginSettings();
 
 private slots:
-    void getAndSendData(DataSource& source);
+    void sendDataToSubscribers(DataSource& source);
 
 private:
     DataPlugin(quasar_plugin_info_t* p, QString path, QObject* parent = Q_NULLPTR);
 
-    void createTimer(DataSource& data);
+    void    createTimer(DataSource& data);
+    QString craftDataMessage(DataSource& data);
 
     quasar_plugin_info_t* m_plugin;
 

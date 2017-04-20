@@ -3,6 +3,7 @@
 #include <QList>
 #include <QMap>
 #include <QObject>
+#include <functional>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
@@ -16,6 +17,8 @@ class DataServer : public QObject
 {
     Q_OBJECT;
 
+    using HandleReqCallMap = QMap<QString, std::function<void(const QJsonObject&, QWebSocket*)>>;
+
 public:
     explicit DataServer(QObject* parent);
     ~DataServer();
@@ -26,12 +29,17 @@ private:
     void loadDataPlugins();
     void handleRequest(const QJsonObject& req, QWebSocket* sender);
 
+    void handleSubscribeReq(const QJsonObject& req, QWebSocket* sender);
+    void handlePollReq(const QJsonObject& req, QWebSocket* sender);
+
 private slots:
     void onNewConnection();
     void processMessage(QString message);
     void socketDisconnected();
 
 private:
+    HandleReqCallMap   m_reqcallmap;
+
     Quasar*            m_parent;
     QWebSocketServer*  m_pWebSocketServer;
     QList<QWebSocket*> m_clients;

@@ -37,9 +37,9 @@ struct quasar_settings_t;
 
 struct quasar_data_source_t
 {
-    char     dataSrc[32]; // codename of this data source
-    uint32_t refreshMsec; // default rate of refresh for this data source (0 means never; populated once and never changed)
-    size_t   uid;         // uid assigned to this data source by quasar
+    char    dataSrc[32]; // codename of this data source
+    int64_t refreshMsec; // default rate of refresh for this data source (0 means data is polled by the client instead)
+    size_t  uid;         // uid assigned to this data source by quasar
 };
 
 struct quasar_plugin_info_t

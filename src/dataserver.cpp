@@ -39,6 +39,10 @@ DataServer::DataServer(QObject* parent)
     {
         qWarning() << "Data server failed to bind port" << port;
     }
+
+    using namespace std::placeholders;
+    m_reqcallmap["subscribe"] = std::bind(&DataServer::handleSubscribeReq, this, _1, _2);
+    m_reqcallmap["poll"]      = std::bind(&DataServer::handlePollReq, this, _1, _2);
 }
 
 DataServer::~DataServer()
@@ -114,45 +118,65 @@ void DataServer::handleRequest(const QJsonObject& req, QWebSocket* sender)
 
     QString type = req["type"].toString();
 
-    if (type == "subscribe")
-    {
-        QString widgetName = req["widget"].toString();
-        QString plugin     = req["plugin"].toString();
-        QString sources    = req["source"].toString();
-
-        // subWidget parameter currently unused
-        WebWidget* subWidget = m_parent->getWidgetRegistry()->findWidget(widgetName);
-
-        if (!subWidget)
-        {
-            qWarning() << "Unidentified widget name " << widgetName;
-            return;
-        }
-
-        if (!m_plugins.contains(plugin))
-        {
-            qWarning() << "Unknown plugin " << plugin;
-            return;
-        }
-
-        QStringList srclist = sources.split(',', QString::SkipEmptyParts);
-
-        for (QString& src : srclist)
-        {
-            if (m_plugins[plugin]->addSubscriber(src, sender, subWidget->getName()))
-            {
-                qInfo() << "Widget " << widgetName << " subscribed to plugin " << plugin << " source " << src;
-            }
-            else
-            {
-                qWarning() << "Widget " << widgetName << " failed to subscribed to plugin " << plugin << " source " << src;
-            }
-        }
-    }
-    else
+    if (!m_reqcallmap.contains(type))
     {
         qWarning() << "Unknown request type";
     }
+    else
+    {
+        m_reqcallmap[type](req, sender);
+    }
+}
+
+void DataServer::handleSubscribeReq(const QJsonObject& req, QWebSocket* sender)
+{
+    QString widgetName = req["widget"].toString();
+    QString plugin     = req["plugin"].toString();
+    QString sources    = req["source"].toString();
+
+    // subWidget parameter currently unused
+    WebWidget* subWidget = m_parent->getWidgetRegistry()->findWidget(widgetName);
+
+    if (!subWidget)
+    {
+        qWarning() << "Unidentified widget name " << widgetName;
+        return;
+    }
+
+    if (!m_plugins.contains(plugin))
+    {
+        qWarning() << "Unknown plugin " << plugin;
+        return;
+    }
+
+    QStringList srclist = sources.split(',', QString::SkipEmptyParts);
+
+    for (QString& src : srclist)
+    {
+        if (m_plugins[plugin]->addSubscriber(src, sender, subWidget->getName()))
+        {
+            qInfo() << "Widget " << widgetName << " subscribed to plugin " << plugin << " source " << src;
+        }
+        else
+        {
+            qWarning() << "Widget " << widgetName << " failed to subscribed to plugin " << plugin << " source " << src;
+        }
+    }
+}
+
+void DataServer::handlePollReq(const QJsonObject& req, QWebSocket* sender)
+{
+    QString widgetName = req["widget"].toString();
+    QString plugin     = req["plugin"].toString();
+    QString source     = req["source"].toString();
+
+    if (!m_plugins.contains(plugin))
+    {
+        qWarning() << "Unknown plugin " << plugin;
+        return;
+    }
+
+    m_plugins[plugin]->pollAndSendData(source, sender, widgetName);
 }
 
 void DataServer::onNewConnection()
