@@ -8,12 +8,6 @@
 #include <stdint.h>
 #endif
 
-#if defined(WIN32)
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT __attribute__((visibility("default")))
-#endif
-
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -40,7 +34,7 @@ typedef void* quasar_plugin_handle;
 struct quasar_data_source_t
 {
     char    dataSrc[32]; // codename of this data source
-    int64_t refreshMsec; // default rate of refresh for this data source (0 means data is polled by the client instead)
+    int64_t refreshMsec; // default rate of refresh for this data source (0 = data is polled by the client; -1 = plugin responsible for signaling data send)
     size_t  uid;         // uid assigned to this data source by quasar
 };
 

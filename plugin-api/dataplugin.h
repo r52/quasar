@@ -5,7 +5,15 @@
 #include <QMap>
 #include <QObject>
 #include <QSet>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
+
+#ifdef PLUGINAPI_LIB
+#define PAPI_EXPORT Q_DECL_EXPORT
+#else
+#define PAPI_EXPORT Q_DECL_IMPORT
+#endif // PLUGINAPI_LIB
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 QT_FORWARD_DECLARE_CLASS(QTimer)
@@ -13,6 +21,14 @@ QT_FORWARD_DECLARE_CLASS(QTimer)
 #define QUASAR_DP_ENABLED_PREFIX "enabled_"
 #define QUASAR_DP_REFRESH_PREFIX "refresh_"
 #define QUASAR_DP_CUSTOM_PREFIX "custom_"
+
+struct DataLock
+{
+    std::mutex              mutex;
+    std::condition_variable cv;
+    bool                    ready     = false;
+    bool                    processed = false;
+};
 
 struct DataSource
 {
@@ -22,11 +38,12 @@ struct DataSource
     int64_t           refreshmsec;
     QTimer*           timer = nullptr;
     QSet<QWebSocket*> subscribers;
+    DataLock*         locks = nullptr;
 };
 
 using DataSourceMapType = QMap<QString, DataSource>;
 
-class DataPlugin : public QObject
+class PAPI_EXPORT DataPlugin : public QObject
 {
     Q_OBJECT;
 
@@ -67,6 +84,13 @@ public:
     void setCustomSetting(QString name, bool val);
 
     void updatePluginSettings();
+
+    void emitDataReady(QString source);
+    void waitDataProcessed(QString source);
+    void cancelDataWait(QString source);
+
+signals:
+    void dataReady(DataSource& source);
 
 private slots:
     void sendDataToSubscribers(DataSource& source);

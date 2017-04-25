@@ -1,6 +1,7 @@
 #include "plugin_support.h"
-
 #include "plugin_support_internal.h"
+
+#include "dataplugin.h"
 
 #include <QDebug>
 
@@ -127,4 +128,34 @@ double quasar_get_double(quasar_settings_t* settings, const char* name)
     }
 
     return 0.0;
+}
+
+void quasar_signal_data_ready(quasar_plugin_handle handle, const char* source)
+{
+    DataPlugin* plugin = (DataPlugin*) handle;
+
+    if (plugin)
+    {
+        plugin->emitDataReady(source);
+    }
+}
+
+void quasar_signal_wait_processed(quasar_plugin_handle handle, const char* source)
+{
+    DataPlugin* plugin = (DataPlugin*) handle;
+
+    if (plugin)
+    {
+        plugin->waitDataProcessed(source);
+    }
+}
+
+void quasar_signal_cancel_wait(quasar_plugin_handle handle, const char* source)
+{
+    DataPlugin* plugin = (DataPlugin*) handle;
+
+    if (plugin)
+    {
+        plugin->cancelDataWait(source);
+    }
 }

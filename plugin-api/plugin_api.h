@@ -2,6 +2,12 @@
 
 #include "plugin_types.h"
 
+#if defined(WIN32)
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#endif
+
 #if defined(__cplusplus)
 extern "C" {
 #endif

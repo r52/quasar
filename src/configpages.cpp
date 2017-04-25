@@ -308,6 +308,12 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
         sourceCheckBox->setObjectName(QUASAR_DP_ENABLED_PREFIX + it.key());
         sourceCheckBox->setChecked(sourceEnabled);
 
+        // Signaled sources cannot be disabled
+        if (it->refreshmsec < 0)
+        {
+            sourceCheckBox->setEnabled(false);
+        }
+
         dataLayout->addWidget(sourceCheckBox);
 
         // Only create refresh setting if the data source is subscription based

@@ -62,6 +62,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(SolutionDir)build\$(Platform)\$(Configuration)\plugins\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalLibraryDirectories>$(SolutionDir)build\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>plugin-api.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -81,15 +83,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(SolutionDir)build\$(Platform)\$(Configuration)\plugins\$(TargetName)$(TargetExt)</OutputFile>
+      <AdditionalLibraryDirectories>$(SolutionDir)build\$(Platform)\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>plugin-api.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="win_simple_perf.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\plugin-api\plugin-api.vcxproj">
-      <Project>{dfcec467-6147-4df6-98ff-bd7ae8e17e52}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

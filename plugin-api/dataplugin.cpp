@@ -13,6 +13,11 @@ uintmax_t DataPlugin::_uid = 0;
 
 DataPlugin::~DataPlugin()
 {
+    if (nullptr != m_plugin->shutdown)
+    {
+        m_plugin->shutdown(this);
+    }
+
     // Do some explicit cleanup
     for (DataSource& src : m_datasources)
     {
@@ -22,12 +27,13 @@ DataPlugin::~DataPlugin()
             src.timer = nullptr;
         }
 
-        src.subscribers.clear();
-    }
+        if (nullptr != src.locks)
+        {
+            delete src.locks;
+            src.locks = nullptr;
+        }
 
-    if (nullptr != m_plugin->shutdown)
-    {
-        m_plugin->shutdown(this);
+        src.subscribers.clear();
     }
 
     // plugin is responsible for cleanup of quasar_plugin_info_t*
@@ -101,6 +107,13 @@ bool DataPlugin::setupPlugin()
             source.uid = m_plugin->dataSources[i].uid = ++DataPlugin::_uid;
             source.refreshmsec                        = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), m_plugin->dataSources[i].refreshMsec).toLongLong();
             source.enabled                            = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source.key), true).toBool();
+
+            // If data source is plugin signaled
+            if (source.refreshmsec < 0)
+            {
+                source.locks = new DataLock;
+                connect(this, &DataPlugin::dataReady, this, &DataPlugin::sendDataToSubscribers);
+            }
         }
     }
 
@@ -164,11 +177,14 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString w
         // TODO maybe needs locks
         DataSource& data = m_datasources[source];
 
-        if (data.refreshmsec > 0)
+        if (data.refreshmsec != 0)
         {
             data.subscribers << subscriber;
 
-            createTimer(data);
+            if (data.refreshmsec > 0)
+            {
+                createTimer(data);
+            }
 
             return true;
         }
@@ -252,6 +268,17 @@ void DataPlugin::sendDataToSubscribers(DataSource& source)
             {
                 sub->sendTextMessage(message);
             }
+        }
+
+        // Signal data processed
+        if (nullptr != source.locks)
+        {
+            {
+                std::lock_guard<std::mutex> lk(source.locks->mutex);
+                source.locks->processed = true;
+            }
+
+            source.locks->cv.notify_one();
         }
     }
 }
@@ -349,6 +376,65 @@ void DataPlugin::updatePluginSettings()
     if (m_settings && m_plugin->update)
     {
         m_plugin->update(m_settings.get());
+    }
+}
+
+void DataPlugin::emitDataReady(QString source)
+{
+    if (!m_datasources.contains(source))
+    {
+        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        return;
+    }
+
+    DataSource& data = m_datasources[source];
+
+    if (nullptr != data.locks)
+    {
+        data.locks->ready = true;
+
+        emit dataReady(data);
+    }
+}
+
+void DataPlugin::waitDataProcessed(QString source)
+{
+    if (!m_datasources.contains(source))
+    {
+        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        return;
+    }
+
+    DataSource& data = m_datasources[source];
+
+    if (nullptr != data.locks)
+    {
+        std::unique_lock<std::mutex> lk(data.locks->mutex);
+        data.locks->cv.wait(lk, [&data] { return data.locks->processed; });
+
+        data.locks->ready     = false;
+        data.locks->processed = false;
+    }
+}
+
+void DataPlugin::cancelDataWait(QString source)
+{
+    if (!m_datasources.contains(source))
+    {
+        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        return;
+    }
+
+    DataSource& data = m_datasources[source];
+
+    if (nullptr != data.locks)
+    {
+        {
+            std::lock_guard<std::mutex> lk(data.locks->mutex);
+            data.locks->processed = true;
+        }
+
+        data.locks->cv.notify_one();
     }
 }
 
