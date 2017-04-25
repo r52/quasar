@@ -427,7 +427,7 @@ void DataPlugin::cancelDataWait(QString source)
 
     DataSource& data = m_datasources[source];
 
-    if (nullptr != data.locks)
+    if (nullptr != data.locks && data.locks->ready == true)
     {
         {
             std::lock_guard<std::mutex> lk(data.locks->mutex);
