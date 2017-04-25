@@ -118,6 +118,9 @@
     <ClCompile Include="GeneratedFiles\Release\moc_logwindow.cpp">
       <Filter>Generated Files\Release</Filter>
     </ClCompile>
+    <ClCompile Include="src\runguard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="quasar.ui">
@@ -156,6 +159,9 @@
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="src\widgetdefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\runguard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
