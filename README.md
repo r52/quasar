@@ -8,7 +8,7 @@ An OS and computer capable of running Chrome.
 
 ## Build Dependencies##
 
-[Qt 5.8 or higher](http://www.qt.io/) and Visual Studio 2015 is required. Should be compile-able on Linux and Mac as well, untested.
+[Qt 5.9 or higher](http://www.qt.io/) and Visual Studio 2017 is required. Should be compile-able on Linux and Mac as well, untested.
 
 ## Usage
 
