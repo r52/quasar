@@ -27,7 +27,7 @@ DataPlugin::~DataPlugin()
 
     if (nullptr != m_plugin->shutdown)
     {
-        m_plugin->shutdown(m_plugin);
+        m_plugin->shutdown(this);
     }
 
     // plugin is responsible for cleanup of quasar_plugin_info_t*
@@ -104,7 +104,7 @@ bool DataPlugin::setupPlugin()
         }
     }
 
-    if (!m_plugin->init(m_plugin))
+    if (!m_plugin->init(this))
     {
         qWarning() << "Failed to initialize plugin" << m_libpath;
         return false;
@@ -367,7 +367,7 @@ void DataPlugin::createTimer(DataSource& data)
     {
         // Initialize timer not done so
         data.timer = new QTimer(this);
-        connect(data.timer, &QTimer::timeout, [this, &data] { DataPlugin::sendDataToSubscribers(data); });
+        connect(data.timer, &QTimer::timeout, [this, &data] { sendDataToSubscribers(data); });
 
         data.timer->start(data.refreshmsec);
     }

@@ -35,6 +35,8 @@ enum quasar_return_data_t
 
 struct quasar_settings_t;
 
+typedef void* quasar_plugin_handle;
+
 struct quasar_data_source_t
 {
     char    dataSrc[32]; // codename of this data source
@@ -44,7 +46,7 @@ struct quasar_data_source_t
 
 struct quasar_plugin_info_t
 {
-    typedef bool (*plugin_info_call_t)(quasar_plugin_info_t*);
+    typedef bool (*plugin_info_call_t)(quasar_plugin_handle);
     typedef quasar_settings_t* (*plugin_create_settings_call_t)();
     typedef void (*plugin_settings_call_t)(quasar_settings_t*);
     typedef bool (*plugin_get_data_call_t)(size_t, char*, size_t, int*);
@@ -61,7 +63,7 @@ struct quasar_plugin_info_t
 
     // calls
 
-    // init(quasar_plugin_info_t* info), required
+    // init(quasar_plugin_handle handle), required
     //
     // This function should save data source uids assigned by Quasar
     // as well as initialize anything else needed
@@ -69,7 +71,7 @@ struct quasar_plugin_info_t
     // returns true if success, false otherwise
     plugin_info_call_t init;
 
-    // shutdown(quasar_plugin_info_t* info), required
+    // shutdown(quasar_plugin_handle handle), required
     //
     // This function should cleanup anything initialized
     //

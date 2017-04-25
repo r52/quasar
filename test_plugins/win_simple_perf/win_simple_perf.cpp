@@ -85,7 +85,7 @@ bool getRAMData(char* buf, size_t bufsz, int* treatDataType)
     return true;
 }
 
-bool simple_perf_init(quasar_plugin_info_t* info)
+bool simple_perf_init(quasar_plugin_handle handle)
 {
     // Process uid entries.
     if (sources[PERF_SRC_CPU].uid != 0)
@@ -101,7 +101,7 @@ bool simple_perf_init(quasar_plugin_info_t* info)
     return true;
 }
 
-bool simple_perf_shutdown(quasar_plugin_info_t* info)
+bool simple_perf_shutdown(quasar_plugin_handle handle)
 {
     // nothing to do. no dynamic allocations
     return true;
