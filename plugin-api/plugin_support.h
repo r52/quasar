@@ -28,9 +28,6 @@ SAPI_EXPORT double    quasar_get_double(quasar_settings_t* settings, const char*
 SAPI_EXPORT void quasar_signal_data_ready(quasar_plugin_handle handle, const char* source);
 SAPI_EXPORT void quasar_signal_wait_processed(quasar_plugin_handle handle, const char* source);
 
-// Used for shutdown when the thread is blocking on wait. Stop thread loop before calling this.
-SAPI_EXPORT void quasar_signal_cancel_wait(quasar_plugin_handle handle, const char* source);
-
 #if defined(__cplusplus)
 }
 #endif

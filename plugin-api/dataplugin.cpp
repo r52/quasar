@@ -269,17 +269,17 @@ void DataPlugin::sendDataToSubscribers(DataSource& source)
                 sub->sendTextMessage(message);
             }
         }
+    }
 
-        // Signal data processed
-        if (nullptr != source.locks)
+    // Signal data processed
+    if (nullptr != source.locks)
+    {
         {
-            {
-                std::lock_guard<std::mutex> lk(source.locks->mutex);
-                source.locks->processed = true;
-            }
-
-            source.locks->cv.notify_one();
+            std::lock_guard<std::mutex> lk(source.locks->mutex);
+            source.locks->processed = true;
         }
+
+        source.locks->cv.notify_one();
     }
 }
 
@@ -414,27 +414,6 @@ void DataPlugin::waitDataProcessed(QString source)
 
         data.locks->ready     = false;
         data.locks->processed = false;
-    }
-}
-
-void DataPlugin::cancelDataWait(QString source)
-{
-    if (!m_datasources.contains(source))
-    {
-        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
-        return;
-    }
-
-    DataSource& data = m_datasources[source];
-
-    if (nullptr != data.locks && data.locks->ready == true)
-    {
-        {
-            std::lock_guard<std::mutex> lk(data.locks->mutex);
-            data.locks->processed = true;
-        }
-
-        data.locks->cv.notify_one();
     }
 }
 

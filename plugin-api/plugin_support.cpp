@@ -149,13 +149,3 @@ void quasar_signal_wait_processed(quasar_plugin_handle handle, const char* sourc
         plugin->waitDataProcessed(source);
     }
 }
-
-void quasar_signal_cancel_wait(quasar_plugin_handle handle, const char* source)
-{
-    DataPlugin* plugin = (DataPlugin*) handle;
-
-    if (plugin)
-    {
-        plugin->cancelDataWait(source);
-    }
-}

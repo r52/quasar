@@ -87,7 +87,6 @@ public:
 
     void emitDataReady(QString source);
     void waitDataProcessed(QString source);
-    void cancelDataWait(QString source);
 
 signals:
     void dataReady(DataSource& source);
