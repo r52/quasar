@@ -16,9 +16,9 @@ SAPI_EXPORT void quasar_log(quasar_log_level_t level, const char* msg);
 
 SAPI_EXPORT quasar_settings_t* quasar_create_settings(void);
 
-SAPI_EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int default);
-SAPI_EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name, const char* description, bool default);
-SAPI_EXPORT quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double default);
+SAPI_EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt);
+SAPI_EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name, const char* description, bool dflt);
+SAPI_EXPORT quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt);
 
 SAPI_EXPORT intmax_t quasar_get_int(quasar_settings_t* settings, const char* name);
 SAPI_EXPORT uintmax_t quasar_get_uint(quasar_settings_t* settings, const char* name);

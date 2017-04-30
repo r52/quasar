@@ -30,7 +30,7 @@ quasar_settings_t* quasar_create_settings(void)
     return new quasar_settings_t;
 }
 
-quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int default)
+quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt)
 {
     if (settings)
     {
@@ -41,7 +41,7 @@ quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name,
         entry.inttype.min  = min;
         entry.inttype.max  = max;
         entry.inttype.step = step;
-        entry.inttype.def = entry.inttype.val = default;
+        entry.inttype.def = entry.inttype.val = dflt;
 
         settings->map.insert(name, entry);
 
@@ -51,7 +51,7 @@ quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name,
     return nullptr;
 }
 
-quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name, const char* description, bool default)
+quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name, const char* description, bool dflt)
 {
     if (settings)
     {
@@ -59,7 +59,7 @@ quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name
 
         entry.type         = QUASAR_SETTING_ENTRY_BOOL;
         entry.description  = description;
-        entry.booltype.def = entry.booltype.val = default;
+        entry.booltype.def = entry.booltype.val = dflt;
 
         settings->map.insert(name, entry);
 
@@ -69,7 +69,7 @@ quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name
     return nullptr;
 }
 
-quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double default)
+quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt)
 {
     if (settings)
     {
@@ -80,7 +80,7 @@ quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* na
         entry.doubletype.min  = min;
         entry.doubletype.max  = max;
         entry.doubletype.step = step;
-        entry.doubletype.def = entry.doubletype.val = default;
+        entry.doubletype.def = entry.doubletype.val = dflt;
 
         settings->map.insert(name, entry);
 
