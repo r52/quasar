@@ -20,16 +20,10 @@ enum quasar_log_level_t
     QUASAR_LOG_CRITICAL
 };
 
-enum quasar_return_data_t
-{
-    QUASAR_TREAT_AS_STRING = 0,
-    QUASAR_TREAT_AS_JSON,
-    QUASAR_TREAT_AS_BINARY
-};
-
 struct quasar_settings_t;
 
 typedef void* quasar_plugin_handle;
+typedef void* quasar_data_handle;
 
 struct quasar_data_source_t
 {
@@ -43,7 +37,7 @@ struct quasar_plugin_info_t
     typedef bool (*plugin_info_call_t)(quasar_plugin_handle);
     typedef quasar_settings_t* (*plugin_create_settings_call_t)();
     typedef void (*plugin_settings_call_t)(quasar_settings_t*);
-    typedef bool (*plugin_get_data_call_t)(size_t, char*, size_t, int*);
+    typedef bool (*plugin_get_data_call_t)(size_t, quasar_data_handle);
 
     // static info
     char name[64];         // name of this plugin
@@ -72,12 +66,11 @@ struct quasar_plugin_info_t
     // Should always return true
     plugin_info_call_t shutdown;
 
-    // get_data(size_t uid, char* buf, size_t bufSz, int* treatDataType), required
+    // get_data(size_t uid, quasar_data_handle handle), required
     //
     // Retrieves the data of a specific data entry
     //
-    // treatDataType specifies the type this piece of data should be
-    // treated as (default string)
+    // Use functions in plugin_support.h to populate data
     //
     // returns true if success, false otherwise
     //

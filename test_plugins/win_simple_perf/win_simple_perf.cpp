@@ -3,13 +3,25 @@
 #include <cstdio>
 #include <functional>
 #include <map>
+#include <sstream>
+
 #include <plugin_api.h>
 #include <plugin_support.h>
 
-const char* pluginName = "Simple Performance Query";
-const char* pluginCode = "win_simple_perf";
+#define PLUGIN_NAME "Simple Performance Query"
+#define PLUGIN_CODE "win_simple_perf"
 
-using GetDataFnType = std::function<bool(char*, size_t, int*)>;
+#define qlog(l, f, ...)                                              \
+    {                                                                \
+        char msg[256];                                               \
+        snprintf(msg, sizeof(msg), PLUGIN_CODE ": " f, __VA_ARGS__); \
+        quasar_log(l, msg);                                          \
+    }
+
+#define info(f, ...) qlog(QUASAR_LOG_INFO, f, __VA_ARGS__)
+#define warn(f, ...) qlog(QUASAR_LOG_WARNING, f, __VA_ARGS__)
+
+using GetDataFnType = std::function<bool(quasar_data_handle hData)>;
 using DataCallTable = std::map<size_t, GetDataFnType>;
 
 static DataCallTable calltable;
@@ -56,16 +68,16 @@ float GetCPULoad()
     return GetSystemTimes(&idleTime, &kernelTime, &userTime) ? CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime) + FileTimeToInt64(userTime)) : -1.0f;
 }
 
-bool getCPUData(char* buf, size_t bufsz, int* treatDataType)
+bool getCPUData(quasar_data_handle hData)
 {
     double cpu = GetCPULoad() * 100.0;
 
-    snprintf(buf, bufsz, "%d", (int) cpu);
+    quasar_set_data_string(hData, std::to_string((int) cpu).c_str());
 
     return true;
 }
 
-bool getRAMData(char* buf, size_t bufsz, int* treatDataType)
+bool getRAMData(quasar_data_handle hData)
 {
     // https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
     // collect ram
@@ -75,12 +87,10 @@ bool getRAMData(char* buf, size_t bufsz, int* treatDataType)
     DWORDLONG totalPhysMem = memInfo.ullTotalPhys;
     DWORDLONG physMemUsed  = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
 
-    snprintf(buf, bufsz, "{ \"total\": %lld, \"used\": %lld }", totalPhysMem, physMemUsed);
+    std::stringstream ss;
+    ss << "{ \"total\": " << totalPhysMem << ", \"used\": " << physMemUsed << " }";
 
-    if (nullptr != treatDataType)
-    {
-        *treatDataType = QUASAR_TREAT_AS_JSON;
-    }
+    quasar_set_data_json(hData, ss.str().c_str());
 
     return true;
 }
@@ -107,17 +117,15 @@ bool simple_perf_shutdown(quasar_plugin_handle handle)
     return true;
 }
 
-bool simple_perf_get_data(size_t srcUid, char* buf, size_t bufsz, int* treatDataType)
+bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData)
 {
     if (calltable.count(srcUid) == 0)
     {
-        char msg[256];
-        snprintf(msg, sizeof(msg), "Plugin '%s' - Unknown source %Iu", pluginCode, srcUid);
-        quasar_log(QUASAR_LOG_WARNING, msg);
+        warn("Unknown source %Iu", srcUid);
     }
     else
     {
-        return calltable[srcUid](buf, bufsz, treatDataType);
+        return calltable[srcUid](hData);
     }
 
     return false;
@@ -125,8 +133,8 @@ bool simple_perf_get_data(size_t srcUid, char* buf, size_t bufsz, int* treatData
 
 quasar_plugin_info_t info =
     {
-      "Simple Performance Query",
-      "win_simple_perf",
+      PLUGIN_NAME,
+      PLUGIN_CODE,
       "v1",
       "me",
       "Sample plugin that queries basic performance numbers",

@@ -4,6 +4,10 @@
 #include "dataplugin.h"
 
 #include <QDebug>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QJsonArray>
 
 void quasar_log(quasar_log_level_t level, const char* msg)
 {
@@ -28,6 +32,112 @@ void quasar_log(quasar_log_level_t level, const char* msg)
 quasar_settings_t* quasar_create_settings(void)
 {
     return new quasar_settings_t;
+}
+
+quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* data)
+{
+    QJsonValueRef* ref = (QJsonValueRef*) hData;
+
+    if (ref)
+    {
+        (*ref) = QString::fromUtf8(data);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_json(quasar_data_handle hData, const char* data)
+{
+    QJsonValueRef* ref = (QJsonValueRef*) hData;
+
+    if (ref)
+    {
+        QString str = QString::fromUtf8(data);
+        (*ref) = QJsonDocument::fromJson(str.toUtf8()).object();
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, const char* data, size_t len)
+{
+    QJsonValueRef* ref = (QJsonValueRef*) hData;
+
+    if (ref)
+    {
+        (*ref) = QJsonDocument::fromRawData(data, len).object();
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char** arr, size_t len)
+{
+    QJsonValueRef* ref = (QJsonValueRef*) hData;
+
+    if (ref)
+    {
+        QJsonArray jarr;
+
+        for (size_t i = 0; i < len; i++)
+        {
+            jarr.append(QString(arr[i]));
+        }
+
+        (*ref) = jarr;
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_int_array(quasar_data_handle hData, int* arr, size_t len)
+{
+    QJsonValueRef* ref = (QJsonValueRef*) hData;
+
+    if (ref)
+    {
+        QJsonArray jarr;
+
+        for (size_t i = 0; i < len; i++)
+        {
+            jarr.append(arr[i]);
+        }
+
+        (*ref) = jarr;
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double* arr, size_t len)
+{
+    QJsonValueRef* ref = (QJsonValueRef*) hData;
+
+    if (ref)
+    {
+        QJsonArray jarr;
+
+        for (size_t i = 0; i < len; i++)
+        {
+            jarr.append(arr[i]);
+        }
+
+        (*ref) = jarr;
+
+        return ref;
+    }
+
+    return nullptr;
 }
 
 quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt)

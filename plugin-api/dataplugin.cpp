@@ -442,49 +442,20 @@ void DataPlugin::createTimer(DataSource& data)
 
 QString DataPlugin::craftDataMessage(const DataSource& data)
 {
-    char buf[1024] = "";
-    int  datatype  = QUASAR_TREAT_AS_STRING;
+    QJsonObject reply;
 
     // Poll plugin for data source
-    if (!m_plugin->get_data(data.uid, buf, sizeof(buf), &datatype))
+    if (!m_plugin->get_data(data.uid, &reply["data"]))
     {
         qWarning() << "getData(" << getCode() << ", " << data.key << ") failed";
         return QString();
     }
 
-    // Make sure it is null terminated
-    buf[sizeof(buf) - 1] = 0;
 
     // Craft response
-    QJsonObject reply;
     reply["type"]   = "data";
     reply["plugin"] = getCode();
     reply["source"] = data.key;
-
-    switch (datatype)
-    {
-        case QUASAR_TREAT_AS_STRING:
-        {
-            reply["data"] = QString::fromUtf8(buf);
-            break;
-        }
-        case QUASAR_TREAT_AS_JSON:
-        {
-            QString str   = QString::fromUtf8(buf);
-            reply["data"] = QJsonDocument::fromJson(str.toUtf8()).object();
-            break;
-        }
-        case QUASAR_TREAT_AS_BINARY:
-        {
-            reply["data"] = QJsonDocument::fromRawData(buf, sizeof(buf)).object();
-            break;
-        }
-        default:
-        {
-            qWarning() << "Undefined return data type " << datatype;
-            break;
-        }
-    }
 
     QJsonDocument doc(reply);
 
