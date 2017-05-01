@@ -41,6 +41,8 @@ struct DataSource
     DataLock*         locks = nullptr;
 };
 
+Q_DECLARE_METATYPE(DataSource);
+
 using DataSourceMapType = QMap<QString, DataSource>;
 
 class PAPI_EXPORT DataPlugin : public QObject
@@ -89,16 +91,16 @@ public:
     void waitDataProcessed(QString source);
 
 signals:
-    void dataReady(DataSource& source);
+    void dataReady(const DataSource& source);
 
 private slots:
-    void sendDataToSubscribers(DataSource& source);
+    void sendDataToSubscribers(const DataSource& source);
 
 private:
     DataPlugin(quasar_plugin_info_t* p, QString path, QObject* parent = Q_NULLPTR);
 
     void    createTimer(DataSource& data);
-    QString craftDataMessage(DataSource& data);
+    QString craftDataMessage(const DataSource& data);
 
     quasar_plugin_info_t* m_plugin;
 

@@ -253,7 +253,7 @@ void DataPlugin::pollAndSendData(QString source, QWebSocket* subscriber, QString
     }
 }
 
-void DataPlugin::sendDataToSubscribers(DataSource& source)
+void DataPlugin::sendDataToSubscribers(const DataSource& source)
 {
     // TODO maybe needs locks
 
@@ -424,6 +424,8 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject* parent /*
     {
         throw std::invalid_argument("null plugin struct");
     }
+
+    qRegisterMetaType<DataSource>("DataSource");
 }
 
 void DataPlugin::createTimer(DataSource& data)
@@ -438,7 +440,7 @@ void DataPlugin::createTimer(DataSource& data)
     }
 }
 
-QString DataPlugin::craftDataMessage(DataSource& data)
+QString DataPlugin::craftDataMessage(const DataSource& data)
 {
     char buf[1024] = "";
     int  datatype  = QUASAR_TREAT_AS_STRING;
