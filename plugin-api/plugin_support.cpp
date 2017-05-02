@@ -11,20 +11,21 @@
 
 void quasar_log(quasar_log_level_t level, const char* msg)
 {
+    QString lg = QString::fromUtf8(msg);
     switch (level)
     {
         case QUASAR_LOG_DEBUG:
-            qDebug() << msg;
+            qDebug() << lg;
             break;
         case QUASAR_LOG_INFO:
         default:
-            qInfo() << msg;
+            qInfo() << lg;
             break;
         case QUASAR_LOG_WARNING:
-            qWarning() << msg;
+            qWarning() << lg;
             break;
         case QUASAR_LOG_CRITICAL:
-            qCritical() << msg;
+            qCritical() << lg;
             break;
     }
 }

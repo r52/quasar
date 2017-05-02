@@ -6,6 +6,8 @@
 #include <QSettings>
 #include <QTextEdit>
 
+#include <mutex>
+
 /*
 * This is a fake singleton unique pointer hybrid monster thing
 * designed to work around the fact that Qt widget parents take
@@ -15,6 +17,7 @@
 
 namespace
 {
+    std::mutex s_logMutex;
     QTextEdit* s_logEdit = nullptr;
 }
 
@@ -51,6 +54,7 @@ void msg_handler(QtMsgType type, const QMessageLogContext& context, const QStrin
 
         if (print)
         {
+            std::unique_lock<std::mutex> lock(s_logMutex);
             s_logEdit->append(qFormatLogMessage(type, context, msg));
         }
     }
@@ -82,11 +86,6 @@ LogWindow::LogWindow(QObject* parent)
     }
 
     s_logEdit = new QTextEdit();
-
-    if (nullptr == s_logEdit)
-    {
-        throw std::exception("failed to create log window");
-    }
 
     s_logEdit->setReadOnly(true);
     s_logEdit->setAcceptRichText(true);
