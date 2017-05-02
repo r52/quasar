@@ -22,6 +22,7 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, 
 
 SAPI_EXPORT quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char** arr, size_t len);
 SAPI_EXPORT quasar_data_handle quasar_set_data_int_array(quasar_data_handle hData, int* arr, size_t len);
+SAPI_EXPORT quasar_data_handle quasar_set_data_float_array(quasar_data_handle hData, float* arr, size_t len);
 SAPI_EXPORT quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double* arr, size_t len);
 
 SAPI_EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt);

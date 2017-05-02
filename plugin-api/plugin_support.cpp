@@ -120,6 +120,27 @@ quasar_data_handle quasar_set_data_int_array(quasar_data_handle hData, int* arr,
     return nullptr;
 }
 
+quasar_data_handle quasar_set_data_float_array(quasar_data_handle hData, float* arr, size_t len)
+{
+    QJsonValueRef* ref = (QJsonValueRef*) hData;
+
+    if (ref)
+    {
+        QJsonArray jarr;
+
+        for (size_t i = 0; i < len; i++)
+        {
+            jarr.append((double)arr[i]);
+        }
+
+        (*ref) = jarr;
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
 quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double* arr, size_t len)
 {
     QJsonValueRef* ref = (QJsonValueRef*) hData;
