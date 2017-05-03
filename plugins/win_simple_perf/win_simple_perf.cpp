@@ -14,12 +14,12 @@
 #define qlog(l, f, ...)                                              \
     {                                                                \
         char msg[256];                                               \
-        snprintf(msg, sizeof(msg), PLUGIN_CODE ": " f, __VA_ARGS__); \
+        snprintf(msg, sizeof(msg), PLUGIN_CODE ": " f, ##__VA_ARGS__); \
         quasar_log(l, msg);                                          \
     }
 
-#define info(f, ...) qlog(QUASAR_LOG_INFO, f, __VA_ARGS__)
-#define warn(f, ...) qlog(QUASAR_LOG_WARNING, f, __VA_ARGS__)
+#define info(f, ...) qlog(QUASAR_LOG_INFO, f, ##__VA_ARGS__)
+#define warn(f, ...) qlog(QUASAR_LOG_WARNING, f, ##__VA_ARGS__)
 
 using GetDataFnType = std::function<bool(quasar_data_handle hData)>;
 using DataCallTable = std::map<size_t, GetDataFnType>;

@@ -4,6 +4,7 @@
 #include <limits>
 #include <mutex>
 #include <shared_mutex>
+#include <vector>
 
 #define NOMINMAX
 #include <audioclient.h>
@@ -26,11 +27,6 @@
 // Process once every 10 buffers (~100ms)
 #define VIZ_BUFFER_LIMIT 10
 
-#define VIZ_SENSITIVITY 50.0
-#define VIZ_FFT_SIZE 256
-#define VIZ_BANDS 32
-#define VIZ_FREQ_MIN 20.0
-#define VIZ_FREQ_MAX 20000.0
 #define VIZ_MAX_CHANNELS 8
 
 #define qlog(l, f, ...)                                                \
@@ -70,15 +66,21 @@ namespace
     HANDLE     hStopEvent    = nullptr;
     HRESULT    threadResult  = S_OK;
 
-    std::array<double, VIZ_BANDS>                               spectrumFreqs;
-    std::array<std::array<double, VIZ_BANDS>, VIZ_MAX_CHANNELS> spectrum;
-    std::shared_mutex                                           spectrumMutex;
+    size_t m_fftsize     = 256;
+    double m_sensitivity = 50.0;
+    double m_freqmin     = 20.0;
+    double m_freqmax     = 20000.0;
+    size_t m_numbands    = 32;
+
+    std::vector<double>                               spectrumFreqs;
+    std::array<std::vector<double>, VIZ_MAX_CHANNELS> spectrum;
+    std::shared_mutex                                 spectrumMutex;
 
     WaveFormat s_format = FORMAT_INV;
 
-    univector<complex<double>>      fftIn[VIZ_MAX_CHANNELS];
-    univector<complex<double>>      fftOut[VIZ_MAX_CHANNELS];
-    univector<double, VIZ_FFT_SIZE> fftMag[VIZ_MAX_CHANNELS];
+    std::array<univector<complex<double>>, VIZ_MAX_CHANNELS> fftIn;
+    std::array<univector<complex<double>>, VIZ_MAX_CHANNELS> fftOut;
+    std::array<univector<double>, VIZ_MAX_CHANNELS>          fftMag;
 }
 
 HRESULT LoopbackCapture(
@@ -237,6 +239,18 @@ HRESULT LoopbackCapture(
 
     debug("Audio capture thread running");
 
+    // reserve memory
+    for (size_t chan = 0; chan < pwfx->nChannels; chan++)
+    {
+        // fill default
+        spectrum[chan].resize(m_numbands, 0.0);
+        fftMag[chan].resize(m_fftsize, 0.0);
+
+        // reserve only
+        fftIn[chan].reserve(m_fftsize);
+        fftOut[chan].reserve(m_fftsize);
+    }
+
     // loopback capture loop
     HANDLE waitArray[2] = { stopEvent, hWakeUp };
     DWORD  dwWaitResult;
@@ -265,7 +279,7 @@ HRESULT LoopbackCapture(
         {
             float*       sF32   = (float*) pData;
             INT16*       sI16   = (INT16*) pData;
-            const double scalar = (double) (1.0 / kfr::sqrt(VIZ_FFT_SIZE));
+            const double scalar = (double) (1.0 / kfr::sqrt(m_fftsize));
 
             for (size_t frame = 0; frame < nNumFramesToRead; frame++)
             {
@@ -274,9 +288,9 @@ HRESULT LoopbackCapture(
                     fftIn[chan].push_back(make_complex(s_format == FORMAT_FL32 ? (double) *sF32++ : (double) *sI16++ * 1.0 / 0x7fff, 0.0));
                 }
 
-                if (fftIn[0].size() == VIZ_FFT_SIZE)
+                if (fftIn[0].size() == m_fftsize)
                 {
-                    auto window = to_pointer(window_hann<double>(VIZ_FFT_SIZE));
+                    auto window = to_pointer(window_hann<double>(m_fftsize));
 
                     for (size_t chan = 0; chan < pwfx->nChannels; chan++)
                     {
@@ -288,10 +302,10 @@ HRESULT LoopbackCapture(
                         }
                         else
                         {
-                            std::fill_n(fftOut[chan].begin(), VIZ_FFT_SIZE, 0.0);
+                            std::fill_n(fftOut[chan].begin(), m_fftsize, 0.0);
                         }
 
-                        for (size_t b = 0; b < VIZ_FFT_SIZE; b++)
+                        for (size_t b = 0; b < m_fftsize; b++)
                         {
                             fftMag[chan][b] = (kfr::sqr(fftOut[chan][b].real()) + kfr::sqr(fftOut[chan][b].imag())) * scalar;
                         }
@@ -303,7 +317,7 @@ HRESULT LoopbackCapture(
         }
 
         {
-            const double df     = (double) pwfx->nSamplesPerSec / VIZ_FFT_SIZE;
+            const double df     = (double) pwfx->nSamplesPerSec / m_fftsize;
             const double scalar = 2.0f / (double) pwfx->nSamplesPerSec;
 
             std::unique_lock<std::shared_mutex> lock(spectrumMutex);
@@ -316,7 +330,7 @@ HRESULT LoopbackCapture(
                 size_t band = 0;
                 double f0   = 0.0;
 
-                while (bin <= (VIZ_FFT_SIZE / 2) && band < VIZ_BANDS)
+                while (bin <= (m_fftsize / 2) && band < m_numbands)
                 {
                     double  fLin1 = ((double) bin + 0.5) * df;
                     double  fLog1 = spectrumFreqs[band];
@@ -340,7 +354,7 @@ HRESULT LoopbackCapture(
 
             // scale
             double maxMag = 0.0;
-            for (size_t b = 0; b < VIZ_BANDS; b++)
+            for (size_t b = 0; b < m_numbands; b++)
             {
                 double x = spectrum[0][b];
 
@@ -351,7 +365,7 @@ HRESULT LoopbackCapture(
                 }
 
                 x              = CLAMP01(x);
-                spectrum[0][b] = kfr::max(0.0, 10.0 / VIZ_SENSITIVITY * kfr::log10(x) + 1.0);
+                spectrum[0][b] = kfr::max(0.0, 10.0 / m_sensitivity * kfr::log10(x) + 1.0);
 
                 if (spectrum[0][b] > maxMag)
                 {
@@ -456,13 +470,16 @@ bool win_audio_viz_init(quasar_plugin_handle handle)
 {
     plugHandle = handle;
 
-    // calculate band frequencies
-    const double step = (kfr::log(VIZ_FREQ_MAX / VIZ_FREQ_MIN) / spectrumFreqs.size()) / kfr::log(2.0);
-    spectrumFreqs[0]  = (float) (VIZ_FREQ_MIN * kfr::pow(2.0, step / 2.0));
+    // reserver memory
+    spectrumFreqs.resize(m_numbands, 0.0);
 
-    for (size_t i = 1; i < spectrumFreqs.size(); ++i)
+    // calculate band frequencies
+    const double step = (kfr::log(m_freqmax / m_freqmin) / m_numbands) / kfr::log(2.0);
+    spectrumFreqs[0]  = (double) (m_freqmin * kfr::pow(2.0, step / 2.0));
+
+    for (size_t i = 1; i < m_numbands; ++i)
     {
-        spectrumFreqs[i] = (float) (spectrumFreqs[i - 1] * kfr::pow(2.0, step));
+        spectrumFreqs[i] = (double) (spectrumFreqs[i - 1] * kfr::pow(2.0, step));
     }
 
     // Get default device
@@ -586,6 +603,28 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
     return false;
 }
 
+quasar_settings_t* win_audio_viz_create_settings()
+{
+    quasar_settings_t* settings = quasar_create_settings();
+
+    quasar_add_int(settings, "fftsize", "FFT Size", 0, 8192, 1, 256);
+    quasar_add_double(settings, "sensitivity", "Sensitivity", 0.0, 10000.0, 0.1, 50.0);
+    quasar_add_double(settings, "freqmin", "Minimum Frequency (band)", 0.0, 20000.0, 0.1, 20.0);
+    quasar_add_double(settings, "freqmax", "Maximum Frequency (band)", 0.0, 20000.0, 0.1, 20000.0);
+    quasar_add_int(settings, "numbands", "Bands", 0, 1024, 1, 32);
+
+    return settings;
+}
+
+void win_audio_viz_update_settings(quasar_settings_t* settings)
+{
+    m_fftsize     = quasar_get_uint(settings, "fftsize");
+    m_sensitivity = quasar_get_double(settings, "sensitivity");
+    m_freqmin     = quasar_get_double(settings, "freqmin");
+    m_freqmax     = quasar_get_double(settings, "freqmax");
+    m_numbands    = quasar_get_uint(settings, "numbands");
+}
+
 quasar_plugin_info_t info =
     {
       PLUGIN_NAME,
@@ -597,11 +636,11 @@ quasar_plugin_info_t info =
       _countof(sources),
       sources,
 
-      win_audio_viz_init,     //init
-      win_audio_viz_shutdown, //shutdown
-      win_audio_viz_get_data, //data
-      nullptr,                //create setting
-      nullptr                 // update setting
+      win_audio_viz_init,            //init
+      win_audio_viz_shutdown,        //shutdown
+      win_audio_viz_get_data,        //data
+      win_audio_viz_create_settings, //create setting
+      win_audio_viz_update_settings  // update setting
     };
 
 quasar_plugin_info_t* quasar_plugin_load(void)
