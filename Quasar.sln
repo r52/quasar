@@ -5,31 +5,52 @@ VisualStudioVersion = 15.0.26403.7
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Quasar", "Quasar.vcxproj", "{B12702AD-ABFB-343A-A199-8E24837244A3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win_simple_perf", "test_plugins\win_simple_perf\win_simple_perf.vcxproj", "{0AA860FA-E76C-4AD9-B473-D564D8C73327}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin-api", "plugin-api\plugin-api.vcxproj", "{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win_simple_perf", "plugins\win_simple_perf\win_simple_perf.vcxproj", "{0AA860FA-E76C-4AD9-B473-D564D8C73327}"
 	ProjectSection(ProjectDependencies) = postProject
 		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52} = {DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin-api", "plugin-api\plugin-api.vcxproj", "{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win_audio_viz", "plugins\win_audio_viz\win_audio_viz.vcxproj", "{6775782B-1D7A-46EA-A741-C8032936CA1E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52} = {DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x64.ActiveCfg = Debug|x64
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x64.Build.0 = Debug|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x86.ActiveCfg = Debug|x64
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x64.ActiveCfg = Release|x64
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x64.Build.0 = Release|x64
-		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Debug|x64.ActiveCfg = Debug|x64
-		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Debug|x64.Build.0 = Debug|x64
-		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Release|x64.ActiveCfg = Release|x64
-		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Release|x64.Build.0 = Release|x64
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x86.ActiveCfg = Release|x64
 		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}.Debug|x64.ActiveCfg = Debug|x64
 		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}.Debug|x64.Build.0 = Debug|x64
+		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}.Debug|x86.ActiveCfg = Debug|x64
 		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}.Release|x64.ActiveCfg = Release|x64
 		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}.Release|x64.Build.0 = Release|x64
+		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}.Release|x86.ActiveCfg = Release|x64
+		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Debug|x64.ActiveCfg = Debug|x64
+		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Debug|x64.Build.0 = Debug|x64
+		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Debug|x86.ActiveCfg = Debug|x64
+		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Release|x64.ActiveCfg = Release|x64
+		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Release|x64.Build.0 = Release|x64
+		{0AA860FA-E76C-4AD9-B473-D564D8C73327}.Release|x86.ActiveCfg = Release|x64
+		{6775782B-1D7A-46EA-A741-C8032936CA1E}.Debug|x64.ActiveCfg = Debug|x64
+		{6775782B-1D7A-46EA-A741-C8032936CA1E}.Debug|x64.Build.0 = Debug|x64
+		{6775782B-1D7A-46EA-A741-C8032936CA1E}.Debug|x86.ActiveCfg = Debug|Win32
+		{6775782B-1D7A-46EA-A741-C8032936CA1E}.Debug|x86.Build.0 = Debug|Win32
+		{6775782B-1D7A-46EA-A741-C8032936CA1E}.Release|x64.ActiveCfg = Release|x64
+		{6775782B-1D7A-46EA-A741-C8032936CA1E}.Release|x64.Build.0 = Release|x64
+		{6775782B-1D7A-46EA-A741-C8032936CA1E}.Release|x86.ActiveCfg = Release|Win32
+		{6775782B-1D7A-46EA-A741-C8032936CA1E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
