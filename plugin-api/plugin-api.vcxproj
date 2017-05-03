@@ -47,9 +47,16 @@
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).dll</OutputFile>
       <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
       <AdditionalDependencies>qtmain.lib;Qt5Core.lib;Qt5WebSockets.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy plugin_api.h $(OutDir)api\ /Y /I
+xcopy plugin_support.h $(OutDir)api\ /Y /I
+xcopy plugin_types.h $(OutDir)api\ /Y /I
+move /Y $(OutDir)$(TargetName).exp $(OutDir)api\
+xcopy $(OutDir)$(TargetName).lib $(OutDir)api\ /Y /I
+del /Q $(OutDir)$(TargetName).ilk</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -64,9 +71,16 @@
       <SubSystem>Windows</SubSystem>
       <OutputFile>$(OutDir)\$(ProjectName).dll</OutputFile>
       <AdditionalLibraryDirectories>$(QTDIR)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>qtmaind.lib;Qt5Cored.lib;Qt5WebSocketsd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy plugin_api.h $(OutDir)api\ /Y /I
+xcopy plugin_support.h $(OutDir)api\ /Y /I
+xcopy plugin_types.h $(OutDir)api\ /Y /I
+move /Y $(OutDir)$(TargetName).exp $(OutDir)api\
+xcopy $(OutDir)$(TargetName).lib $(OutDir)api\ /Y /I
+del /Q $(OutDir)$(TargetName).ilk</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <CustomBuild Include="dataplugin.h">
