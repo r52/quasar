@@ -1,6 +1,11 @@
 $(document).ready(function() {
     var websocket = null;
 
+    var prop = {
+        height: '100%',
+        backgroundColor: '#ffffff'
+    };
+
     var bars = $('.wav> div> i');
 
     function subscribe() {
@@ -17,11 +22,6 @@ $(document).ready(function() {
     function parseMsg(msg) {
         var data = JSON.parse(msg);
 
-        var prop = {
-            height: '100%',
-            backgroundColor: '#ffffff'
-        };
-
         bars.each(function(index, element) {
             var hp = (data["data"][index] * 100.0).toFixed(0);
             var php = Math.min((255 * hp / 100.0).toFixed(0), 255);
@@ -33,7 +33,7 @@ $(document).ready(function() {
 
             $(this).velocity("stop")
                 .velocity(prop, {
-                    duration: 30,
+                    duration: 55,
                     easing: [0.95, 0.05, 0.795, 0.035]
                 });
         });

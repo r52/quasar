@@ -1,5 +1,5 @@
 main {
-  height: 100px;
+  height: 180px;
   left: 50%;
   overflow: hidden;
   position: absolute;
@@ -22,6 +22,7 @@ main {
   bottom: 0;
   position: absolute;
   width: 100%;
+  will-change: height, background-color;
 }
 
 .wav>div>i:before {

@@ -1,7 +1,7 @@
 {
     "name": "win_visualizer",
     "width": 500,
-    "height": 120,
+    "height": 200,
     "startFile": "index.html",
     "transparentBg": true
 }
