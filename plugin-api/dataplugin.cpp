@@ -88,8 +88,15 @@ bool DataPlugin::setupPlugin()
     m_desc    = m_plugin->description;
     m_version = m_plugin->version;
 
+    if (m_code.isEmpty() || m_name.isEmpty())
+    {
+        qWarning() << "Invalid plugin name or code in file " << m_libpath;
+        return false;
+    }
+
     QSettings settings;
 
+    // register data sources
     if (nullptr != m_plugin->dataSources)
     {
         for (unsigned int i = 0; i < m_plugin->numDataSources; i++)
@@ -117,18 +124,7 @@ bool DataPlugin::setupPlugin()
         }
     }
 
-    if (!m_plugin->init(this))
-    {
-        qWarning() << "Failed to initialize plugin" << m_libpath;
-        return false;
-    }
-
-    if (m_code.isEmpty() || m_name.isEmpty())
-    {
-        qWarning() << "Invalid plugin name or code in file " << m_libpath;
-        return false;
-    }
-
+    // create settings
     if (m_plugin->create_settings)
     {
         m_settings.reset(m_plugin->create_settings());
@@ -157,10 +153,20 @@ bool DataPlugin::setupPlugin()
 
                 ++it;
             }
+
+            updatePluginSettings();
         }
     }
 
+    // initialize the plugin
+    if (!m_plugin->init(this))
+    {
+        qWarning() << "Failed to initialize plugin" << m_libpath;
+        return false;
+    }
+
     m_Initialized = true;
+
     return true;
 }
 
