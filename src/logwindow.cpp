@@ -90,6 +90,9 @@ LogWindow::LogWindow(QObject* parent)
     s_logEdit->setReadOnly(true);
     s_logEdit->setAcceptRichText(true);
 
+    // max lines in log viewer
+    s_logEdit->document()->setMaximumBlockCount(250);
+
     qInstallMessageHandler(msg_handler);
     qSetMessagePattern("[%{time}] - %{type} - %{function} - %{message}");
 }
