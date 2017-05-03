@@ -94,7 +94,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
 
     QWebEngineScript script;
     script.setName("PageGlobals");
-    script.setInjectionPoint(QWebEngineScript::DocumentReady);
+    script.setInjectionPoint(QWebEngineScript::DocumentCreation);
     script.setWorldId(0);
     script.setSourceCode(pageGlobals);
 
