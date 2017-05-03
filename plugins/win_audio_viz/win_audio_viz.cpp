@@ -1,22 +1,22 @@
 // Adapted from the Rainmeter AudioLevel plugin
 
 #include <array>
+#include <limits>
 #include <mutex>
 #include <shared_mutex>
-#include <limits>
 
 #define NOMINMAX
-#include <windows.h>
 #include <audioclient.h>
 #include <avrt.h>
 #include <mmdeviceapi.h>
+#include <windows.h>
 
 #include <plugin_api.h>
 #include <plugin_support.h>
 
-#include <kfr/math.hpp>
 #include <kfr/dft.hpp>
 #include <kfr/dsp.hpp>
+#include <kfr/math.hpp>
 
 #define CLAMP01(x) kfr::max(0.0, kfr::min(1.0, (x)))
 

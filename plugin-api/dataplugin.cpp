@@ -451,7 +451,6 @@ QString DataPlugin::craftDataMessage(const DataSource& data)
         return QString();
     }
 
-
     // Craft response
     reply["type"]   = "data";
     reply["plugin"] = getCode();

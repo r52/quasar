@@ -4,10 +4,10 @@
 #include "dataplugin.h"
 
 #include <QDebug>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
-#include <QJsonArray>
 
 void quasar_log(quasar_log_level_t level, const char* msg)
 {
@@ -56,7 +56,7 @@ quasar_data_handle quasar_set_data_json(quasar_data_handle hData, const char* da
     if (ref)
     {
         QString str = QString::fromUtf8(data);
-        (*ref) = QJsonDocument::fromJson(str.toUtf8()).object();
+        (*ref)      = QJsonDocument::fromJson(str.toUtf8()).object();
 
         return ref;
     }
@@ -130,7 +130,7 @@ quasar_data_handle quasar_set_data_float_array(quasar_data_handle hData, float* 
 
         for (size_t i = 0; i < len; i++)
         {
-            jarr.append((double)arr[i]);
+            jarr.append((double) arr[i]);
         }
 
         (*ref) = jarr;

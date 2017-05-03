@@ -57,7 +57,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     // Restore settings
     QSettings settings;
     restoreGeometry(settings.value(getWidgetConfigKey("geometry")).toByteArray());
-    bool ontop = settings.value(getWidgetConfigKey("alwaysOnTop")).toBool();
+    bool ontop      = settings.value(getWidgetConfigKey("alwaysOnTop")).toBool();
     m_fixedposition = settings.value(getWidgetConfigKey("fixedPosition")).toBool();
 
     rFixedPos->setChecked(m_fixedposition);
