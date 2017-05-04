@@ -134,15 +134,6 @@ void DataServer::handleSubscribeReq(const QJsonObject& req, QWebSocket* sender)
     QString plugin     = req["plugin"].toString();
     QString sources    = req["source"].toString();
 
-    // subWidget parameter currently unused
-    WebWidget* subWidget = m_parent->getWidgetRegistry()->findWidget(widgetName);
-
-    if (!subWidget)
-    {
-        qWarning() << "Unidentified widget name " << widgetName;
-        return;
-    }
-
     if (!m_plugins.contains(plugin))
     {
         qWarning() << "Unknown plugin " << plugin;
@@ -153,7 +144,7 @@ void DataServer::handleSubscribeReq(const QJsonObject& req, QWebSocket* sender)
 
     for (QString& src : srclist)
     {
-        if (m_plugins[plugin]->addSubscriber(src, sender, subWidget->getName()))
+        if (m_plugins[plugin]->addSubscriber(src, sender, widgetName))
         {
             qInfo() << "Widget " << widgetName << " subscribed to plugin " << plugin << " source " << src;
         }
