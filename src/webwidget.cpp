@@ -159,6 +159,10 @@ void WebWidget::createContextMenuActions()
     QFont f = rName->font();
     f.setBold(true);
     rName->setFont(f);
+    connect(rName, &QAction::triggered, [=](bool e) {
+        QFileInfo info(this->getFullPath());
+        QDesktopServices::openUrl(QUrl(info.absolutePath()));
+    });
 
     rReload = new QAction(tr("&Reload"), this);
     connect(rReload, &QAction::triggered, webview, &QWebEngineView::reload);
