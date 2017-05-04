@@ -45,11 +45,9 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\plugins\</OutDir>
-    <PostBuildEventUseInBuild>false</PostBuildEventUseInBuild>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)build\$(Platform)\$(Configuration)\plugins\</OutDir>
-    <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -65,12 +63,7 @@
       <AdditionalLibraryDirectories>$(SolutionDir)build\$(Platform)\$(Configuration)\api\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>plugin-api.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>del /q $(OutDir)$(TargetName).exp
-del /q $(OutDir)$(TargetName).iobj
-del /q $(OutDir)$(TargetName).ipdb
-del /q $(OutDir)$(TargetName).lib</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -90,12 +83,7 @@ del /q $(OutDir)$(TargetName).lib</Command>
       <AdditionalLibraryDirectories>$(SolutionDir)build\$(Platform)\$(Configuration)\api\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>plugin-api.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>del /q $(OutDir)$(TargetName).exp
-del /q $(OutDir)$(TargetName).iobj
-del /q $(OutDir)$(TargetName).ipdb
-del /q $(OutDir)$(TargetName).lib</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="win_simple_perf.cpp" />
