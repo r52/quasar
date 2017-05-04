@@ -24,7 +24,7 @@
 #define PLUGIN_NAME "Audio Visualization Data"
 #define PLUGIN_CODE "win_audio_viz"
 
-// Process once every 10 buffers (~100ms)
+// Process once every 10 buffers (~50-100ms)
 #define VIZ_BUFFER_LIMIT 10
 
 #define VIZ_MAX_CHANNELS 8
@@ -71,6 +71,7 @@ namespace
     double m_freqmin     = 20.0;
     double m_freqmax     = 20000.0;
     size_t m_numbands    = 32;
+    size_t m_nchannels   = VIZ_MAX_CHANNELS;
 
     std::vector<double>                               spectrumFreqs;
     std::array<std::vector<double>, VIZ_MAX_CHANNELS> spectrum;
@@ -154,6 +155,7 @@ HRESULT LoopbackCapture(
 
     // Process once every 10 buffers
     size_t samplePass = 0;
+    m_nchannels       = pwfx->nChannels;
 
     // create a periodic waitable timer
     HANDLE hWakeUp = CreateWaitableTimer(NULL, FALSE, NULL);
@@ -248,7 +250,6 @@ HRESULT LoopbackCapture(
 
         // reserve only
         fftIn[chan].reserve(m_fftsize);
-        fftOut[chan].reserve(m_fftsize);
     }
 
     // loopback capture loop
@@ -277,103 +278,105 @@ HRESULT LoopbackCapture(
         }
 
         {
-            float*       sF32   = (float*) pData;
-            INT16*       sI16   = (INT16*) pData;
-            const double scalar = (double) (1.0 / kfr::sqrt(m_fftsize));
+            std::unique_lock<std::shared_mutex> lock(spectrumMutex);
 
-            for (size_t frame = 0; frame < nNumFramesToRead; frame++)
             {
-                for (size_t chan = 0; chan < pwfx->nChannels; chan++)
-                {
-                    fftIn[chan].push_back(make_complex(s_format == FORMAT_FL32 ? (double) *sF32++ : (double) *sI16++ * 1.0 / 0x7fff, 0.0));
-                }
+                float*       sF32   = (float*) pData;
+                INT16*       sI16   = (INT16*) pData;
+                const double scalar = (double) (1.0 / kfr::sqrt(m_fftsize));
 
-                if (fftIn[0].size() == m_fftsize)
+                for (size_t frame = 0; frame < nNumFramesToRead; frame++)
                 {
-                    auto window = to_pointer(window_hann<double>(m_fftsize));
-
                     for (size_t chan = 0; chan < pwfx->nChannels; chan++)
                     {
-                        if (!(dwFlags & AUDCLNT_BUFFERFLAGS_SILENT))
-                        {
-                            fftIn[chan] = fftIn[chan] * window;
+                        fftIn[chan].push_back(make_complex(s_format == FORMAT_FL32 ? (double) *sF32++ : (double) *sI16++ * 1.0 / 0x7fff, 0.0));
+                    }
 
-                            fftOut[chan] = dft(fftIn[chan]);
+                    if (fftIn[0].size() >= m_fftsize)
+                    {
+                        auto window = to_pointer(window_hann<double>(m_fftsize));
+
+                        for (size_t chan = 0; chan < pwfx->nChannels; chan++)
+                        {
+                            if (!(dwFlags & AUDCLNT_BUFFERFLAGS_SILENT))
+                            {
+                                fftIn[chan] = fftIn[chan] * window;
+
+                                fftOut[chan] = dft(fftIn[chan]);
+                            }
+                            else
+                            {
+                                fftOut[chan].resize(m_fftsize, 0.0);
+                            }
+
+                            for (size_t b = 0; b < m_fftsize; b++)
+                            {
+                                fftMag[chan][b] = (kfr::sqr(fftOut[chan][b].real()) + kfr::sqr(fftOut[chan][b].imag())) * scalar;
+                            }
+
+                            fftIn[chan].clear();
+                        }
+                    }
+                }
+            }
+
+            {
+                const double df     = (double) pwfx->nSamplesPerSec / m_fftsize;
+                const double scalar = 2.0f / (double) pwfx->nSamplesPerSec;
+
+                for (size_t chan = 0; chan < pwfx->nChannels; chan++)
+                {
+                    std::fill(spectrum[chan].begin(), spectrum[chan].end(), 0.0);
+
+                    size_t bin  = 0;
+                    size_t band = 0;
+                    double f0   = 0.0;
+
+                    while (bin <= (m_fftsize / 2) && band < m_numbands)
+                    {
+                        double  fLin1 = ((double) bin + 0.5) * df;
+                        double  fLog1 = spectrumFreqs[band];
+                        double  x     = fftMag[chan][bin];
+                        double& y     = (spectrum[chan])[band];
+
+                        if (fLin1 <= fLog1)
+                        {
+                            y += (fLin1 - f0) * x * scalar;
+                            f0 = fLin1;
+                            bin += 1;
                         }
                         else
                         {
-                            std::fill_n(fftOut[chan].begin(), m_fftsize, 0.0);
+                            y += (fLog1 - f0) * x * scalar;
+                            f0 = fLog1;
+                            band += 1;
                         }
-
-                        for (size_t b = 0; b < m_fftsize; b++)
-                        {
-                            fftMag[chan][b] = (kfr::sqr(fftOut[chan][b].real()) + kfr::sqr(fftOut[chan][b].imag())) * scalar;
-                        }
-
-                        fftIn[chan].clear();
                     }
                 }
-            }
-        }
 
-        {
-            const double df     = (double) pwfx->nSamplesPerSec / m_fftsize;
-            const double scalar = 2.0f / (double) pwfx->nSamplesPerSec;
-
-            std::unique_lock<std::shared_mutex> lock(spectrumMutex);
-
-            for (size_t chan = 0; chan < pwfx->nChannels; chan++)
-            {
-                std::fill(spectrum[chan].begin(), spectrum[chan].end(), 0.0);
-
-                size_t bin  = 0;
-                size_t band = 0;
-                double f0   = 0.0;
-
-                while (bin <= (m_fftsize / 2) && band < m_numbands)
+                // scale
+                double maxMag = 0.0;
+                for (size_t b = 0; b < m_numbands; b++)
                 {
-                    double  fLin1 = ((double) bin + 0.5) * df;
-                    double  fLog1 = spectrumFreqs[band];
-                    double  x     = fftMag[chan][bin];
-                    double& y     = (spectrum[chan])[band];
+                    double x = spectrum[0][b];
 
-                    if (fLin1 <= fLog1)
+                    if (pwfx->nChannels >= 2)
                     {
-                        y += (fLin1 - f0) * x * scalar;
-                        f0 = fLin1;
-                        bin += 1;
+                        // combine channels
+                        x = (spectrum[0][b] + spectrum[1][b]) * 0.5;
                     }
-                    else
+
+                    x              = CLAMP01(x);
+                    spectrum[0][b] = kfr::max(0.0, 10.0 / m_sensitivity * kfr::log10(x) + 1.0);
+
+                    if (spectrum[0][b] > maxMag)
                     {
-                        y += (fLog1 - f0) * x * scalar;
-                        f0 = fLog1;
-                        band += 1;
+                        maxMag = spectrum[0][b];
                     }
                 }
+
+                silentPacket = (maxMag == 0.0);
             }
-
-            // scale
-            double maxMag = 0.0;
-            for (size_t b = 0; b < m_numbands; b++)
-            {
-                double x = spectrum[0][b];
-
-                if (pwfx->nChannels >= 2)
-                {
-                    // combine channels
-                    x = (spectrum[0][b] + spectrum[1][b]) * 0.5;
-                }
-
-                x              = CLAMP01(x);
-                spectrum[0][b] = kfr::max(0.0, 10.0 / m_sensitivity * kfr::log10(x) + 1.0);
-
-                if (spectrum[0][b] > maxMag)
-                {
-                    maxMag = spectrum[0][b];
-                }
-            }
-
-            silentPacket = (maxMag == 0.0);
         }
 
         samplePass++;
@@ -443,6 +446,21 @@ DWORD WINAPI LoopbackCaptureThreadFunction(LPVOID pContext)
     return 0;
 }
 
+void calculate_freq_bands()
+{
+    // reserver memory
+    spectrumFreqs.resize(m_numbands, 0.0);
+
+    // calculate band frequencies
+    const double step = (kfr::log(m_freqmax / m_freqmin) / m_numbands) / kfr::log(2.0);
+    spectrumFreqs[0]  = (double) (m_freqmin * kfr::pow(2.0, step / 2.0));
+
+    for (size_t i = 1; i < m_numbands; ++i)
+    {
+        spectrumFreqs[i] = (double) (spectrumFreqs[i - 1] * kfr::pow(2.0, step));
+    }
+}
+
 void win_audio_viz_cleanup()
 {
     if (nullptr != pMMDevice)
@@ -470,17 +488,7 @@ bool win_audio_viz_init(quasar_plugin_handle handle)
 {
     plugHandle = handle;
 
-    // reserver memory
-    spectrumFreqs.resize(m_numbands, 0.0);
-
-    // calculate band frequencies
-    const double step = (kfr::log(m_freqmax / m_freqmin) / m_numbands) / kfr::log(2.0);
-    spectrumFreqs[0]  = (double) (m_freqmin * kfr::pow(2.0, step / 2.0));
-
-    for (size_t i = 1; i < m_numbands; ++i)
-    {
-        spectrumFreqs[i] = (double) (spectrumFreqs[i - 1] * kfr::pow(2.0, step));
-    }
+    calculate_freq_bands();
 
     // Get default device
     HRESULT              hr = S_OK;
@@ -618,11 +626,46 @@ quasar_settings_t* win_audio_viz_create_settings()
 
 void win_audio_viz_update_settings(quasar_settings_t* settings)
 {
-    m_fftsize     = quasar_get_uint(settings, "fftsize");
-    m_sensitivity = quasar_get_double(settings, "sensitivity");
-    m_freqmin     = quasar_get_double(settings, "freqmin");
-    m_freqmax     = quasar_get_double(settings, "freqmax");
-    m_numbands    = quasar_get_uint(settings, "numbands");
+    bool recalc = false;
+
+    double fftsize     = quasar_get_uint(settings, "fftsize");
+    double sensitivity = quasar_get_double(settings, "sensitivity");
+    double freqmin     = quasar_get_double(settings, "freqmin");
+    double freqmax     = quasar_get_double(settings, "freqmax");
+    double numbands    = quasar_get_uint(settings, "numbands");
+
+    std::unique_lock<std::shared_mutex> lock(spectrumMutex);
+
+    m_sensitivity = sensitivity;
+
+    if (fftsize != m_fftsize)
+    {
+        for (size_t chan = 0; chan < m_nchannels; chan++)
+        {
+            fftMag[chan].resize(m_fftsize, 0.0);
+            fftIn[chan].reserve(m_fftsize);
+        }
+    }
+
+    if (numbands != m_numbands)
+    {
+        recalc = true;
+
+        for (size_t chan = 0; chan < m_nchannels; chan++)
+        {
+            spectrum[chan].resize(m_numbands, 0.0);
+        }
+    }
+
+    if (freqmin != m_freqmin || freqmax != m_freqmax)
+    {
+        recalc = true;
+    }
+
+    if (recalc)
+    {
+        calculate_freq_bands();
+    }
 }
 
 quasar_plugin_info_t info =

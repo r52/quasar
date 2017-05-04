@@ -106,7 +106,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
             widget->show();
 
             // Add to loaded
-            QSettings settings;
+            QSettings   settings;
             QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
             loaded.append(widget->getFullPath());
             settings.setValue(QUASAR_CONFIG_LOADED, loaded);
@@ -197,7 +197,7 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
     widget->saveSettings();
 
     // Remove from loaded
-    QSettings settings;
+    QSettings   settings;
     QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
     loaded.removeAll(widget->getFullPath());
     settings.setValue(QUASAR_CONFIG_LOADED, loaded);

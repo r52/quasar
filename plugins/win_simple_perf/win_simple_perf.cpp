@@ -11,11 +11,11 @@
 #define PLUGIN_NAME "Simple Performance Query"
 #define PLUGIN_CODE "win_simple_perf"
 
-#define qlog(l, f, ...)                                              \
-    {                                                                \
-        char msg[256];                                               \
+#define qlog(l, f, ...)                                                \
+    {                                                                  \
+        char msg[256];                                                 \
         snprintf(msg, sizeof(msg), PLUGIN_CODE ": " f, ##__VA_ARGS__); \
-        quasar_log(l, msg);                                          \
+        quasar_log(l, msg);                                            \
     }
 
 #define info(f, ...) qlog(QUASAR_LOG_INFO, f, ##__VA_ARGS__)
