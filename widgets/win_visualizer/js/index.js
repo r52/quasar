@@ -27,7 +27,8 @@ $(document).ready(function() {
 
             $(this).velocity("stop")
                 .velocity(prop, {
-                    duration: 55
+                    duration: 50,
+                    easing: "linear"
                 });
         });
     }
