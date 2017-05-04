@@ -2,8 +2,7 @@ $(document).ready(function() {
     var websocket = null;
 
     var prop = {
-        height: '100%',
-        backgroundColor: '#ffffff'
+        height: '100%'
     };
 
     var bars = $('.wav> div> i');
@@ -24,17 +23,11 @@ $(document).ready(function() {
 
         bars.each(function(index, element) {
             var hp = (data["data"][index] * 100.0).toFixed(0);
-            var php = Math.min((255 * hp / 100.0).toFixed(0), 255);
-            var ihp = 255 - php;
             prop["height"] = hp + '%';
-            prop["backgroundColor"] = '#' + php.toString(16) + ihp.toString(16) + '60';
-
-            console.log(prop["backgroundColor"]);
 
             $(this).velocity("stop")
                 .velocity(prop, {
-                    duration: 55,
-                    easing: [0.95, 0.05, 0.795, 0.035]
+                    duration: 55
                 });
         });
     }

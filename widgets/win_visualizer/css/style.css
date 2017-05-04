@@ -22,7 +22,9 @@ main {
   bottom: 0;
   position: absolute;
   width: 100%;
-  will-change: height, background-color;
+  background: #ffffff;
+  opacity: 0.5;
+  will-change: height;
 }
 
 .wav>div>i:before {
