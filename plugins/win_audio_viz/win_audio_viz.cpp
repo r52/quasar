@@ -615,11 +615,11 @@ quasar_settings_t* win_audio_viz_create_settings()
 {
     quasar_settings_t* settings = quasar_create_settings();
 
-    quasar_add_int(settings, "fftsize", "FFT Size", 0, 8192, 1, 256);
+    quasar_add_int(settings, "fftsize", "FFT Size", 0, 8192, 2, 256);
     quasar_add_double(settings, "sensitivity", "Sensitivity", 0.0, 10000.0, 0.1, 50.0);
-    quasar_add_double(settings, "freqmin", "Minimum Frequency (band)", 0.0, 20000.0, 0.1, 20.0);
-    quasar_add_double(settings, "freqmax", "Maximum Frequency (band)", 0.0, 20000.0, 0.1, 20000.0);
-    quasar_add_int(settings, "numbands", "Bands", 0, 1024, 1, 32);
+    quasar_add_double(settings, "freqmin", "Band Frequency Min (Hz)", 0.0, 20000.0, 0.1, 20.0);
+    quasar_add_double(settings, "freqmax", "Band Frequency Band Max (Hz)", 0.0, 20000.0, 0.1, 20000.0);
+    quasar_add_int(settings, "numbands", "Number of Bands", 0, 1024, 1, 32);
 
     return settings;
 }
