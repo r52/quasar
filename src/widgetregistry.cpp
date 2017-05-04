@@ -105,6 +105,12 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
             connect(widget, &WebWidget::WebWidgetClosed, this, &WidgetRegistry::closeWebWidget);
             widget->show();
 
+            // Add to loaded
+            QSettings settings;
+            QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
+            loaded.append(widget->getFullPath());
+            settings.setValue(QUASAR_CONFIG_LOADED, loaded);
+
             return true;
         }
     }
@@ -187,6 +193,14 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
     QString     name = widget->getName();
 
     qInfo() << "Closing widget " << name << " (" << data[WGT_DEF_FULLPATH].toString() << ")";
+
+    widget->saveSettings();
+
+    // Remove from loaded
+    QSettings settings;
+    QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
+    loaded.removeAll(widget->getFullPath());
+    settings.setValue(QUASAR_CONFIG_LOADED, loaded);
 
     // Remove from registry
     auto it = m_widgetMap.find(name);
