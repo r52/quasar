@@ -227,6 +227,12 @@ void WebWidget::closeEvent(QCloseEvent* event)
 {
     saveSettings();
 
+    // Remove from loaded
+    QSettings   settings;
+    QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
+    loaded.removeOne(getFullPath());
+    settings.setValue(QUASAR_CONFIG_LOADED, loaded);
+
     emit WebWidgetClosed(this);
     event->accept();
 }

@@ -194,14 +194,6 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
 
     qInfo() << "Closing widget " << name << " (" << data[WGT_DEF_FULLPATH].toString() << ")";
 
-    widget->saveSettings();
-
-    // Remove from loaded
-    QSettings   settings;
-    QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
-    loaded.removeAll(widget->getFullPath());
-    settings.setValue(QUASAR_CONFIG_LOADED, loaded);
-
     // Remove from registry
     auto it = m_widgetMap.find(name);
 
