@@ -14,7 +14,7 @@
     <ProjectGuid>{0AA860FA-E76C-4AD9-B473-D564D8C73327}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>win_cpu_test</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
     <ProjectName>win_simple_perf</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
