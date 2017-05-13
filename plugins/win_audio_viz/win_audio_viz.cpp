@@ -628,11 +628,11 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 {
     bool recalc = false;
 
-    double fftsize     = quasar_get_uint(settings, "fftsize");
+    size_t fftsize     = quasar_get_uint(settings, "fftsize");
     double sensitivity = quasar_get_double(settings, "sensitivity");
     double freqmin     = quasar_get_double(settings, "freqmin");
     double freqmax     = quasar_get_double(settings, "freqmax");
-    double numbands    = quasar_get_uint(settings, "numbands");
+    size_t numbands    = quasar_get_uint(settings, "numbands");
 
     std::unique_lock<std::shared_mutex> lock(spectrumMutex);
 
