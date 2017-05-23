@@ -8,7 +8,6 @@
 #include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineSettings>
-#include <QtWebEngineWidgets/QWebEngineView>
 
 QString WebWidget::PageGlobalTemp;
 
@@ -26,13 +25,14 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     // No frame/border, no taskbar button
     Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::SubWindow;
 
-    webview = new QWebEngineView(this);
+    webview = new QuasarWebView(this);
 
     QString startFilePath = QFileInfo(data[WGT_DEF_FULLPATH].toString()).canonicalPath().append("/");
     QUrl    startFile     = QUrl::fromLocalFile(startFilePath.append(data[WGT_DEF_STARTFILE].toString()));
 
     webview->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, false);
 
+    // Remote access permission
     if (data[WGT_DEF_REMOTEACCESS].toBool())
     {
         webview->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
@@ -48,7 +48,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     }
 
     // Overlay for catching drag and drop events
-    OverlayWidget* overlay = new OverlayWidget(this);
+    overlay = new OverlayWidget(this);
 
     // Create context menu
     createContextMenuActions();
@@ -56,17 +56,27 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
 
     // Restore settings
     QSettings settings;
-    restoreGeometry(settings.value(getWidgetConfigKey("geometry")).toByteArray());
-    bool ontop      = settings.value(getWidgetConfigKey("alwaysOnTop")).toBool();
-    m_fixedposition = settings.value(getWidgetConfigKey("fixedPosition")).toBool();
+    restoreGeometry(settings.value(getSettingKey("geometry")).toByteArray());
+    bool ontop      = settings.value(getSettingKey("alwaysOnTop")).toBool();
+    m_fixedposition = settings.value(getSettingKey("fixedPosition")).toBool();
+    bool clickable  = settings.value(getSettingKey("clickable"), data[WGT_DEF_CLICKABLE].toBool()).toBool();
 
     rFixedPos->setChecked(m_fixedposition);
+    rClickable->setChecked(clickable);
+
+    overlay->setVisible(!clickable);
 
     if (ontop)
     {
         flags |= Qt::WindowStaysOnTopHint;
         rOnTop->setChecked(true);
     }
+
+    // Custom context menu
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, &QWidget::customContextMenuRequested, [=](const QPoint& pos) {
+        m_Menu->exec(mapToGlobal(pos));
+    });
 
     // Set flags
     setWindowFlags(flags);
@@ -148,9 +158,10 @@ QString WebWidget::getFullPath()
 void WebWidget::saveSettings()
 {
     QSettings settings;
-    settings.setValue(getWidgetConfigKey("geometry"), saveGeometry());
-    settings.setValue(getWidgetConfigKey("alwaysOnTop"), rOnTop->isChecked());
-    settings.setValue(getWidgetConfigKey("fixedPosition"), m_fixedposition);
+    settings.setValue(getSettingKey("geometry"), saveGeometry());
+    settings.setValue(getSettingKey("alwaysOnTop"), rOnTop->isChecked());
+    settings.setValue(getSettingKey("fixedPosition"), m_fixedposition);
+    settings.setValue(getSettingKey("clickable"), rClickable->isChecked());
 }
 
 void WebWidget::createContextMenuActions()
@@ -182,6 +193,12 @@ void WebWidget::createContextMenuActions()
         this->m_fixedposition = enabled;
     });
 
+    rClickable = new QAction(tr("&Clickable"), this);
+    rClickable->setCheckable(true);
+    connect(rClickable, &QAction::triggered, [=](bool enabled) {
+        overlay->setVisible(!enabled);
+    });
+
     rClose = new QAction(tr("&Close"), this);
     connect(rClose, &QAction::triggered, this, &WebWidget::close);
 }
@@ -196,6 +213,7 @@ void WebWidget::createContextMenu()
     m_Menu->addSeparator();
     m_Menu->addAction(rOnTop);
     m_Menu->addAction(rFixedPos);
+    m_Menu->addAction(rClickable);
     m_Menu->addSeparator();
     m_Menu->addAction(rClose);
 }
@@ -216,11 +234,6 @@ void WebWidget::mouseMoveEvent(QMouseEvent* evt)
         move(evt->globalPos() - dragPosition);
         evt->accept();
     }
-}
-
-void WebWidget::contextMenuEvent(QContextMenuEvent* event)
-{
-    m_Menu->exec(event->globalPos());
 }
 
 void WebWidget::closeEvent(QCloseEvent* event)
@@ -258,7 +271,7 @@ void WebWidget::toggleOnTop(bool ontop)
     show();
 }
 
-QString WebWidget::getWidgetConfigKey(QString key)
+QString WebWidget::getSettingKey(QString key)
 {
     return m_Name + "/" + key;
 }

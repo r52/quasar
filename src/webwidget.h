@@ -2,44 +2,44 @@
 
 #include <QWidget>
 #include <QtGui>
+#include <QtWebEngineWidgets/QWebEngineView>
 
-QT_FORWARD_DECLARE_CLASS(QWebEngineView);
 QT_FORWARD_DECLARE_CLASS(QMenu);
 
 // From https://stackoverflow.com/questions/19362455/dark-transparent-layer-over-a-qmainwindow-in-qt
 class OverlayWidget : public QWidget
 {
-public:
-    explicit OverlayWidget(QWidget* parent = 0)
-        : QWidget(parent)
+    void newParent()
     {
-        if (parent)
-        {
-            parent->installEventFilter(this);
-            raise();
-        }
+        if (!parent())
+            return;
+        parent()->installEventFilter(this);
+        raise();
+    }
+
+public:
+    explicit OverlayWidget(QWidget* parent = {})
+        : QWidget{ parent }
+    {
+        setAttribute(Qt::WA_NoSystemBackground);
+        newParent();
     }
 
 protected:
     //! Catches resize and child events from the parent widget
-    bool eventFilter(QObject* obj, QEvent* ev)
+    bool eventFilter(QObject* obj, QEvent* ev) override
     {
         if (obj == parent())
         {
             if (ev->type() == QEvent::Resize)
-            {
-                QResizeEvent* rev = static_cast<QResizeEvent*>(ev);
-                resize(rev->size());
-            }
+                resize(static_cast<QResizeEvent*>(ev)->size());
             else if (ev->type() == QEvent::ChildAdded)
-            {
                 raise();
-            }
         }
         return QWidget::eventFilter(obj, ev);
     }
     //! Tracks parent widget changes
-    bool event(QEvent* ev)
+    bool event(QEvent* ev) override
     {
         if (ev->type() == QEvent::ParentAboutToChange)
         {
@@ -47,14 +47,29 @@ protected:
                 parent()->removeEventFilter(this);
         }
         else if (ev->type() == QEvent::ParentChange)
-        {
-            if (parent())
-            {
-                parent()->installEventFilter(this);
-                raise();
-            }
-        }
+            newParent();
         return QWidget::event(ev);
+    }
+};
+
+class QuasarWebView : public QWebEngineView
+{
+public:
+    QuasarWebView(QWidget* parent = Q_NULLPTR)
+        : QWebEngineView{ parent }
+    {
+    }
+
+protected:
+    virtual void contextMenuEvent(QContextMenuEvent* event) override
+    {
+        // Block default context menu and send to parent if exist
+        if (parent())
+        {
+            parent()->event(event);
+        }
+
+        event->accept();
     }
 };
 
@@ -86,7 +101,6 @@ protected:
     // Overrides
     virtual void mousePressEvent(QMouseEvent* evt) override;
     virtual void mouseMoveEvent(QMouseEvent* evt) override;
-    virtual void contextMenuEvent(QContextMenuEvent* event) override;
 
     virtual void closeEvent(QCloseEvent* event) override;
 
@@ -94,7 +108,7 @@ protected slots:
     void toggleOnTop(bool ontop);
 
 private:
-    QString getWidgetConfigKey(QString key);
+    QString getSettingKey(QString key);
 
 private:
     static QString PageGlobalTemp;
@@ -104,7 +118,10 @@ private:
     QString m_Name;
 
     // Web engine widget
-    QWebEngineView* webview;
+    QuasarWebView* webview;
+
+    // Widget overlay
+    OverlayWidget* overlay;
 
     // Widget data
     QJsonObject data;
@@ -119,5 +136,6 @@ private:
     QAction* rResetPos;
     QAction* rOnTop;
     QAction* rFixedPos;
+    QAction* rClickable;
     QAction* rClose;
 };
