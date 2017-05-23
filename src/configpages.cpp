@@ -16,7 +16,7 @@ namespace
     QString QUASAR_SETTING_COOKIE = "cookieEdit";
 }
 
-ConfigurationPage::ConfigurationPage(QObject* quasar, QWidget* parent)
+GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     : PageWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
 {
     if (nullptr == m_quasar)
@@ -105,7 +105,7 @@ ConfigurationPage::ConfigurationPage(QObject* quasar, QWidget* parent)
         item->setData(Qt::UserRole, QVariant::fromValue(plugin));
     }
 
-    connect(pluginList, &QListWidget::itemClicked, this, &ConfigurationPage::pluginListClicked);
+    connect(pluginList, &QListWidget::itemClicked, this, &GeneralPage::pluginListClicked);
 
     QVBoxLayout* loadedLayout = new QVBoxLayout;
     loadedLayout->addWidget(pluginList);
@@ -189,7 +189,7 @@ ConfigurationPage::ConfigurationPage(QObject* quasar, QWidget* parent)
     setLayout(mainLayout);
 }
 
-void ConfigurationPage::saveSettings(QSettings& settings, bool& restartNeeded)
+void GeneralPage::saveSettings(QSettings& settings, bool& restartNeeded)
 {
     if (m_settingsModified)
     {
@@ -218,7 +218,7 @@ void ConfigurationPage::saveSettings(QSettings& settings, bool& restartNeeded)
     }
 }
 
-void ConfigurationPage::pluginListClicked(QListWidgetItem* item)
+void GeneralPage::pluginListClicked(QListWidgetItem* item)
 {
     DataPlugin* plugin = qvariant_cast<DataPlugin*>(item->data(Qt::UserRole));
 

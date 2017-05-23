@@ -15,7 +15,7 @@ ConfigDialog::ConfigDialog(QObject* quasar)
     contentsWidget->setSpacing(12);
 
     pagesWidget = new QStackedWidget;
-    pagesWidget->addWidget(new ConfigurationPage(quasar));
+    pagesWidget->addWidget(new GeneralPage(quasar));
     pagesWidget->addWidget(new PluginPage(quasar));
 
     QPushButton* okButton    = new QPushButton(tr("OK"));

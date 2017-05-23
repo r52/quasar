@@ -20,12 +20,12 @@ public:
     virtual void saveSettings(QSettings& settings, bool& restartNeeded) = 0;
 };
 
-class ConfigurationPage : public PageWidget
+class GeneralPage : public PageWidget
 {
     Q_OBJECT
 
 public:
-    ConfigurationPage(QObject* quasar, QWidget* parent = 0);
+    GeneralPage(QObject* quasar, QWidget* parent = 0);
 
     virtual void saveSettings(QSettings& settings, bool& restartNeeded) override;
 
