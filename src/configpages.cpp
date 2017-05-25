@@ -1,5 +1,6 @@
 #include "configpages.h"
 
+#include "applauncher.h"
 #include "dataplugin.h"
 #include "dataserver.h"
 #include "plugin_support_internal.h"
@@ -240,7 +241,7 @@ PluginPage::PluginPage(QObject* quasar, QWidget* parent)
         throw std::invalid_argument("Quasar window required");
     }
 
-    QLabel*    pluginLabel = new QLabel(tr("Plugin:"));
+    QLabel*    pluginLabel = new QLabel(tr("Plugins:"));
     QComboBox* pluginCombo = new QComboBox;
     pagesWidget            = new QStackedWidget;
 
@@ -481,5 +482,132 @@ void DataPluginPage::saveSettings(QSettings& settings, bool& restartNeeded)
         }
 
         plugin->updatePluginSettings();
+    }
+}
+
+LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
+    : PageWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
+{
+    if (nullptr == m_quasar)
+    {
+        throw std::invalid_argument("Quasar window required");
+    }
+
+    QLabel* label = new QLabel(tr("Registered Apps:"));
+
+    QTableWidget* table = new QTableWidget;
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
+    table->setColumnCount(2);
+    table->setHorizontalHeaderLabels(QStringList() << "Command"
+                                                   << "File Location");
+    table->horizontalHeader()->setStretchLastSection(true);
+
+    auto appmap = m_quasar->getAppLauncher()->getMapForRead();
+    auto it     = appmap->cbegin();
+    int  row    = 0;
+
+    while (it != appmap->cend())
+    {
+        table->insertRow(row);
+        QTableWidgetItem* cmditem  = new QTableWidgetItem(it.key());
+        QTableWidgetItem* fileitem = new QTableWidgetItem(it.value().toString());
+
+        table->setItem(row, 0, cmditem);
+        table->setItem(row, 1, fileitem);
+
+        ++row;
+        ++it;
+    }
+
+    m_quasar->getAppLauncher()->releaseMap(appmap);
+
+    QPushButton* deleteButton = new QPushButton(tr("Delete"));
+
+    connect(deleteButton, &QPushButton::clicked, [=](bool checked) {
+        int row = table->currentRow();
+        if (row >= 0)
+        {
+            table->removeRow(table->currentRow());
+        }
+    });
+
+    QPushButton* editButton = new QPushButton(tr("Edit"));
+
+    connect(editButton, &QPushButton::clicked, [=](bool checked) {
+        bool ok;
+        int  row = table->currentRow();
+
+        if (row >= 0)
+        {
+            QTableWidgetItem* cmditem  = table->item(row, 0);
+            QTableWidgetItem* fileitem = table->item(row, 1);
+
+            QString cmd = QInputDialog::getText(this, tr("Edit App"), tr("Command:"), QLineEdit::Normal, cmditem->text(), &ok);
+            if (ok && !cmd.isEmpty())
+            {
+                QString filename = QFileDialog::getOpenFileName(this, tr("Choose Application"), fileitem->text(), tr("Executables (*.*)"));
+                if (!filename.isEmpty())
+                {
+                    cmditem->setText(cmd);
+                    fileitem->setText(filename);
+                }
+            }
+        }
+    });
+
+    QPushButton* addButton = new QPushButton(tr("Add"));
+
+    connect(addButton, &QPushButton::clicked, [=](bool checked) {
+        bool    ok;
+        QString cmd = QInputDialog::getText(this, tr("New App"), tr("Command:"), QLineEdit::Normal, QString(), &ok);
+        if (ok && !cmd.isEmpty())
+        {
+            QString filename = QFileDialog::getOpenFileName(this, tr("Choose Application"), QString(), tr("Executables (*.*)"));
+            if (!filename.isEmpty())
+            {
+                int row = table->rowCount();
+                table->insertRow(row);
+
+                QTableWidgetItem* cmditem  = new QTableWidgetItem(cmd);
+                QTableWidgetItem* fileitem = new QTableWidgetItem(filename);
+
+                table->setItem(row, 0, cmditem);
+                table->setItem(row, 1, fileitem);
+            }
+        }
+    });
+
+    QHBoxLayout* buttonLayout = new QHBoxLayout;
+    buttonLayout->addWidget(deleteButton);
+    buttonLayout->addWidget(editButton);
+    buttonLayout->addWidget(addButton);
+
+    QVBoxLayout* layout = new QVBoxLayout;
+    layout->addWidget(label);
+    layout->addWidget(table);
+    layout->addLayout(buttonLayout);
+    layout->addStretch(1);
+    setLayout(layout);
+}
+
+void LauncherPage::saveSettings(QSettings& settings, bool& restartNeeded)
+{
+    auto table = findChild<QTableWidget*>();
+
+    if (table)
+    {
+        QVariantMap newmap;
+
+        int rows = table->rowCount();
+
+        for (int i = 0; i < rows; i++)
+        {
+            QTableWidgetItem* cmditem  = table->item(i, 0);
+            QTableWidgetItem* fileitem = table->item(i, 1);
+
+            newmap[cmditem->text()] = fileitem->text();
+        }
+
+        m_quasar->getAppLauncher()->writeMap(newmap);
     }
 }

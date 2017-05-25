@@ -74,3 +74,14 @@ private:
 
     DataPlugin* plugin;
 };
+
+class LauncherPage : public PageWidget
+{
+public:
+    LauncherPage(QObject* quasar, QWidget* parent = 0);
+
+    virtual void saveSettings(QSettings& settings, bool& restartNeeded) override;
+
+private:
+    Quasar* m_quasar;
+};

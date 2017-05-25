@@ -17,6 +17,7 @@ ConfigDialog::ConfigDialog(QObject* quasar)
     pagesWidget = new QStackedWidget;
     pagesWidget->addWidget(new GeneralPage(quasar));
     pagesWidget->addWidget(new PluginPage(quasar));
+    pagesWidget->addWidget(new LauncherPage(quasar));
 
     QPushButton* okButton    = new QPushButton(tr("OK"));
     QPushButton* closeButton = new QPushButton(tr("Close"));
@@ -44,6 +45,7 @@ ConfigDialog::ConfigDialog(QObject* quasar)
     setLayout(mainLayout);
 
     setWindowTitle(tr("Settings"));
+    setMinimumWidth(600);
 }
 
 void ConfigDialog::createIcons()
@@ -57,6 +59,11 @@ void ConfigDialog::createIcons()
     pluginButton->setText(tr("Plugins"));
     pluginButton->setTextAlignment(Qt::AlignHCenter);
     pluginButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+    QListWidgetItem* launcherButton = new QListWidgetItem(contentsWidget);
+    launcherButton->setText(tr("Launcher"));
+    launcherButton->setTextAlignment(Qt::AlignHCenter);
+    launcherButton->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
     connect(contentsWidget, &QListWidget::currentItemChanged, this, &ConfigDialog::changePage);
 }

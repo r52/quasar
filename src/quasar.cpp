@@ -1,5 +1,6 @@
 #include "quasar.h"
 
+#include "applauncher.h"
 #include "configdialog.h"
 #include "dataserver.h"
 #include "logwindow.h"
@@ -13,7 +14,7 @@
 #include <QVBoxLayout>
 
 Quasar::Quasar(QWidget* parent)
-    : QMainWindow(parent), logWindow(new LogWindow(this)), server(new DataServer(this)), reg(new WidgetRegistry(this))
+    : QMainWindow(parent), logWindow(new LogWindow(this)), server(new DataServer(this)), reg(new WidgetRegistry(this)), launcher(new AppLauncher(this))
 {
     ui.setupUi(this);
 

@@ -7,6 +7,7 @@
 
 QT_FORWARD_DECLARE_CLASS(WidgetRegistry)
 QT_FORWARD_DECLARE_CLASS(DataServer)
+QT_FORWARD_DECLARE_CLASS(AppLauncher)
 QT_FORWARD_DECLARE_CLASS(LogWindow)
 QT_FORWARD_DECLARE_CLASS(WebWidget)
 
@@ -20,6 +21,7 @@ public:
 
     WidgetRegistry* getWidgetRegistry() { return reg; };
     DataServer*     getDataServer() { return server; };
+    AppLauncher*    getAppLauncher() { return launcher; };
 
 private slots:
     void openWebWidget();
@@ -57,4 +59,7 @@ private:
 
     // Widget registry
     WidgetRegistry* reg;
+
+    // App launcher
+    AppLauncher* launcher;
 };

@@ -47,13 +47,32 @@ DataServer::DataServer(QObject* parent)
 
 DataServer::~DataServer()
 {
+    m_reqcallmap.clear();
+
     qDeleteAll(m_plugins);
     m_plugins.clear();
 
     m_pWebSocketServer->close();
 
+    // This is needed to prevent iterator invalidation in qDeleteAll
+    // since deleting QWebSocket objects trigger DataServer::socketDisconnected()
+    // which tries to remove instances of clients on disconnect
+    m_done = true;
     qDeleteAll(m_clients);
     m_clients.clear();
+}
+
+bool DataServer::addHandler(QString type, HandlerFuncType handler)
+{
+    if (m_reqcallmap.contains(type))
+    {
+        qWarning() << "Handler for request type " << type << " already exists";
+        return false;
+    }
+
+    m_reqcallmap[type] = handler;
+
+    return true;
 }
 
 void DataServer::loadDataPlugins()
@@ -204,13 +223,15 @@ void DataServer::socketDisconnected()
     QWebSocket* pClient = qobject_cast<QWebSocket*>(sender());
     if (pClient)
     {
-        m_clients.removeAll(pClient);
-
         for (DataPlugin* plugin : m_plugins)
         {
             plugin->removeSubscriber(pClient);
         }
 
-        pClient->deleteLater();
+        if (!m_done)
+        {
+            m_clients.removeAll(pClient);
+            pClient->deleteLater();
+        }
     }
 }

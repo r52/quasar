@@ -112,6 +112,15 @@
     <ClCompile Include="src\runguard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\applauncher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_applauncher.cpp">
+      <Filter>Generated Files\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_applauncher.cpp">
+      <Filter>Generated Files\Release</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="quasar.ui">
@@ -139,6 +148,9 @@
       <Filter>Header Files</Filter>
     </CustomBuild>
     <CustomBuild Include="src\logwindow.h">
+      <Filter>Header Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="src\applauncher.h">
       <Filter>Header Files</Filter>
     </CustomBuild>
   </ItemGroup>

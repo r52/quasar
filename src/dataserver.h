@@ -12,18 +12,21 @@ QT_FORWARD_DECLARE_CLASS(Quasar)
 class DataPlugin;
 
 using DataPluginMapType = QMap<QString, DataPlugin*>;
+using HandlerFuncType   = std::function<void(const QJsonObject&, QWebSocket*)>;
 
 class DataServer : public QObject
 {
     Q_OBJECT;
 
-    using HandleReqCallMap = QMap<QString, std::function<void(const QJsonObject&, QWebSocket*)>>;
+    using HandleReqCallMap = QMap<QString, HandlerFuncType>;
 
 public:
     explicit DataServer(QObject* parent);
     ~DataServer();
 
     DataPluginMapType& getPlugins() { return m_plugins; };
+
+    bool addHandler(QString type, HandlerFuncType handler);
 
 private:
     void loadDataPlugins();
@@ -38,8 +41,8 @@ private slots:
     void socketDisconnected();
 
 private:
+    bool               m_done = false;
     HandleReqCallMap   m_reqcallmap;
-
     Quasar*            m_parent;
     QWebSocketServer*  m_pWebSocketServer;
     QList<QWebSocket*> m_clients;
