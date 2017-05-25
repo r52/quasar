@@ -13,6 +13,9 @@
 AppLauncher::AppLauncher(QObject* parent)
     : QObject(parent), m_parent(qobject_cast<Quasar*>(parent))
 {
+    qRegisterMetaType<AppLauncherData>("AppLauncherData");
+    qRegisterMetaTypeStreamOperators<AppLauncherData>("AppLauncherData");
+
     if (nullptr == m_parent)
     {
         throw std::invalid_argument("Parent must be a Quasar window");
@@ -70,10 +73,19 @@ void AppLauncher::handleCommand(const QJsonObject& req, QWebSocket* sender)
         return;
     }
 
-    QString   cmd = m_map[app].toString();
-    QFileInfo info(cmd);
+    AppLauncherData d;
 
-    qInfo() << "Launching " << info.absoluteFilePath();
+    QVariant& v = m_map[app];
 
-    bool res = QProcess::startDetached(info.absoluteFilePath(), QStringList(), info.absolutePath());
+    if (v.canConvert<AppLauncherData>())
+    {
+        d = v.value<AppLauncherData>();
+
+        QString   cmd = d.file;
+        QFileInfo info(cmd);
+
+        qInfo() << "Launching " << info.canonicalFilePath();
+
+        QProcess::startDetached(info.canonicalFilePath(), QStringList() << d.arguments, d.startpath);
+    }
 }

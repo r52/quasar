@@ -7,6 +7,31 @@
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 QT_FORWARD_DECLARE_CLASS(Quasar)
 
+struct AppLauncherData
+{
+    QString file;
+    QString startpath;
+    QString arguments;
+
+    friend QDataStream& operator<<(QDataStream& s, const AppLauncherData& o)
+    {
+        s << o.file;
+        s << o.startpath;
+        s << o.arguments;
+        return s;
+    }
+
+    friend QDataStream& operator>>(QDataStream& s, AppLauncherData& o)
+    {
+        s >> o.file;
+        s >> o.startpath;
+        s >> o.arguments;
+        return s;
+    }
+};
+
+Q_DECLARE_METATYPE(AppLauncherData);
+
 class AppLauncher : public QObject
 {
     Q_OBJECT;

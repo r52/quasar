@@ -485,6 +485,110 @@ void DataPluginPage::saveSettings(QSettings& settings, bool& restartNeeded)
     }
 }
 
+class LauncherEditDialog : public QDialog
+{
+public:
+    LauncherEditDialog(QString title, QWidget* parent = Q_NULLPTR, QString command = QString(), AppLauncherData data = AppLauncherData())
+        : QDialog(parent)
+    {
+        setMinimumWidth(400);
+        setWindowTitle(title);
+
+        QLabel*    cmdLabel = new QLabel(tr("Command:"));
+        QLineEdit* cmdEdit  = new QLineEdit;
+        cmdEdit->setText(command);
+
+        QHBoxLayout* cmdlayout = new QHBoxLayout;
+        cmdlayout->addWidget(cmdLabel);
+        cmdlayout->addWidget(cmdEdit);
+
+        QLabel*      fileLabel = new QLabel(tr("File:"));
+        QLineEdit*   fileEdit  = new QLineEdit;
+        QPushButton* fileBtn   = new QPushButton(tr("Browse"));
+        fileEdit->setText(data.file);
+
+        QHBoxLayout* filelayout = new QHBoxLayout;
+        filelayout->addWidget(fileLabel);
+        filelayout->addWidget(fileEdit);
+        filelayout->addWidget(fileBtn);
+
+        QLabel*    pathLabel = new QLabel(tr("Start Path:"));
+        QLineEdit* pathEdit  = new QLineEdit;
+        pathEdit->setText(data.startpath);
+
+        QHBoxLayout* pathlayout = new QHBoxLayout;
+        pathlayout->addWidget(pathLabel);
+        pathlayout->addWidget(pathEdit);
+
+        QLabel*    argLabel = new QLabel(tr("Arguments:"));
+        QLineEdit* argEdit  = new QLineEdit;
+        argEdit->setText(data.arguments);
+
+        QHBoxLayout* arglayout = new QHBoxLayout;
+        arglayout->addWidget(argLabel);
+        arglayout->addWidget(argEdit);
+
+        QPushButton* okBtn     = new QPushButton(tr("OK"));
+        QPushButton* cancelBtn = new QPushButton(tr("Cancel"));
+
+        okBtn->setDefault(true);
+
+        QHBoxLayout* btnlayout = new QHBoxLayout;
+        btnlayout->addWidget(okBtn);
+        btnlayout->addWidget(cancelBtn);
+
+        QVBoxLayout* layout = new QVBoxLayout;
+        layout->addLayout(cmdlayout);
+        layout->addLayout(filelayout);
+        layout->addLayout(pathlayout);
+        layout->addLayout(arglayout);
+        layout->addLayout(btnlayout);
+
+        // browse button
+        connect(fileBtn, &QPushButton::clicked, [=](bool checked) {
+            QString filename = QFileDialog::getOpenFileName(this, tr("Choose Application"), QString(), tr("Executables (*.*)"));
+            if (!filename.isEmpty())
+            {
+                QFileInfo info(filename);
+
+                fileEdit->setText(info.canonicalFilePath());
+                pathEdit->setText(info.canonicalPath());
+            }
+        });
+
+        // cancel button
+        connect(cancelBtn, &QPushButton::clicked, [=](bool checked) {
+            close();
+        });
+
+        // ok button
+        connect(okBtn, &QPushButton::clicked, [=](bool checked) {
+            // validate
+            if (cmdEdit->text().isEmpty() || fileEdit->text().isEmpty())
+            {
+                QMessageBox::warning(this, title, "Command and File Path must be filled out.");
+            }
+            else
+            {
+                m_command        = cmdEdit->text();
+                m_data.file      = fileEdit->text();
+                m_data.startpath = pathEdit->text();
+                m_data.arguments = argEdit->text();
+                accept();
+            }
+        });
+
+        setLayout(layout);
+    };
+
+    QString&         getCommand() { return m_command; };
+    AppLauncherData& getData() { return m_data; };
+
+private:
+    QString         m_command;
+    AppLauncherData m_data;
+};
+
 LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
     : PageWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
 {
@@ -508,14 +612,24 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
 
     while (it != appmap->cend())
     {
-        table->insertRow(row);
-        QTableWidgetItem* cmditem  = new QTableWidgetItem(it.key());
-        QTableWidgetItem* fileitem = new QTableWidgetItem(it.value().toString());
+        AppLauncherData d;
 
-        table->setItem(row, 0, cmditem);
-        table->setItem(row, 1, fileitem);
+        if (it.value().canConvert<AppLauncherData>())
+        {
+            d = it.value().value<AppLauncherData>();
 
-        ++row;
+            table->insertRow(row);
+            QTableWidgetItem* cmditem = new QTableWidgetItem(it.key());
+
+            QTableWidgetItem* fileitem = new QTableWidgetItem(d.file);
+            fileitem->setData(Qt::UserRole, it.value());
+
+            table->setItem(row, 0, cmditem);
+            table->setItem(row, 1, fileitem);
+
+            ++row;
+        }
+
         ++it;
     }
 
@@ -542,15 +656,19 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
             QTableWidgetItem* cmditem  = table->item(row, 0);
             QTableWidgetItem* fileitem = table->item(row, 1);
 
-            QString cmd = QInputDialog::getText(this, tr("Edit App"), tr("Command:"), QLineEdit::Normal, cmditem->text(), &ok);
-            if (ok && !cmd.isEmpty())
+            QString         cmd = cmditem->text();
+            AppLauncherData d   = fileitem->data(Qt::UserRole).value<AppLauncherData>();
+
+            LauncherEditDialog editdialog("Edit App", this, cmd, d);
+
+            if (editdialog.exec() == QDialog::Accepted)
             {
-                QString filename = QFileDialog::getOpenFileName(this, tr("Choose Application"), fileitem->text(), tr("Executables (*.*)"));
-                if (!filename.isEmpty())
-                {
-                    cmditem->setText(cmd);
-                    fileitem->setText(filename);
-                }
+                cmd = editdialog.getCommand();
+                d   = editdialog.getData();
+
+                cmditem->setText(cmd);
+                fileitem->setText(d.file);
+                fileitem->setData(Qt::UserRole, QVariant::fromValue(d));
             }
         }
     });
@@ -558,22 +676,23 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
     QPushButton* addButton = new QPushButton(tr("Add"));
 
     connect(addButton, &QPushButton::clicked, [=](bool checked) {
-        bool    ok;
-        QString cmd = QInputDialog::getText(this, tr("New App"), tr("Command:"), QLineEdit::Normal, QString(), &ok);
-        if (ok && !cmd.isEmpty())
+
+        LauncherEditDialog editdialog("New App", this);
+
+        if (editdialog.exec() == QDialog::Accepted)
         {
-            QString filename = QFileDialog::getOpenFileName(this, tr("Choose Application"), QString(), tr("Executables (*.*)"));
-            if (!filename.isEmpty())
-            {
-                int row = table->rowCount();
-                table->insertRow(row);
+            QString         cmd = editdialog.getCommand();
+            AppLauncherData d   = editdialog.getData();
 
-                QTableWidgetItem* cmditem  = new QTableWidgetItem(cmd);
-                QTableWidgetItem* fileitem = new QTableWidgetItem(filename);
+            int row = table->rowCount();
+            table->insertRow(row);
 
-                table->setItem(row, 0, cmditem);
-                table->setItem(row, 1, fileitem);
-            }
+            QTableWidgetItem* cmditem  = new QTableWidgetItem(cmd);
+            QTableWidgetItem* fileitem = new QTableWidgetItem(d.file);
+            fileitem->setData(Qt::UserRole, QVariant::fromValue(d));
+
+            table->setItem(row, 0, cmditem);
+            table->setItem(row, 1, fileitem);
         }
     });
 
@@ -605,7 +724,7 @@ void LauncherPage::saveSettings(QSettings& settings, bool& restartNeeded)
             QTableWidgetItem* cmditem  = table->item(i, 0);
             QTableWidgetItem* fileitem = table->item(i, 1);
 
-            newmap[cmditem->text()] = fileitem->text();
+            newmap[cmditem->text()] = fileitem->data(Qt::UserRole);
         }
 
         m_quasar->getAppLauncher()->writeMap(newmap);
