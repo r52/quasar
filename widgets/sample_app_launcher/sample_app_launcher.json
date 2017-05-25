@@ -1,7 +1,7 @@
 {
-    "name": "txt_app_launcher",
-    "width": 150,
-    "height": 150,
+    "name": "sample_app_launcher",
+    "width": 60,
+    "height": 200,
     "startFile": "index.html",
     "transparentBg": true,
     "clickable": true

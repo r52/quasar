@@ -1,0 +1,1 @@
+A simple app launcher sample widget
