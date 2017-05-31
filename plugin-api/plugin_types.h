@@ -8,6 +8,8 @@
 #include <stdint.h>
 #endif
 
+#define QUASAR_API_VERSION 1
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -40,6 +42,7 @@ struct quasar_plugin_info_t
     typedef bool (*plugin_get_data_call_t)(size_t, quasar_data_handle);
 
     // static info
+    int  api_version;      // API version. Should always be initialized to QUASAR_API_VERSION
     char name[64];         // name of this plugin
     char code[16];         // unique short code for widgets to identify and subscribe to this plugin
     char version[64];      // version string

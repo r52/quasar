@@ -670,6 +670,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 
 quasar_plugin_info_t info =
     {
+      QUASAR_API_VERSION,
       PLUGIN_NAME,
       PLUGIN_CODE,
       "v1",
@@ -689,4 +690,9 @@ quasar_plugin_info_t info =
 quasar_plugin_info_t* quasar_plugin_load(void)
 {
     return &info;
+}
+
+void quasar_plugin_destroy(quasar_plugin_info_t* info)
+{
+    // does nothing; info is on stack
 }

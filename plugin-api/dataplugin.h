@@ -50,7 +50,8 @@ class PAPI_EXPORT DataPlugin : public QObject
     Q_OBJECT;
 
 public:
-    using plugin_load = std::add_pointer_t<quasar_plugin_info_t*(void)>;
+    using plugin_load    = std::add_pointer_t<quasar_plugin_info_t*(void)>;
+    using plugin_destroy = std::add_pointer_t<void(quasar_plugin_info_t*)>;
 
     ~DataPlugin();
 
@@ -74,11 +75,9 @@ public:
     QString getSettingsCode(QString key) { return "plugin_" + getCode() + "/" + key; };
 
     quasar_settings_t* getSettings() { return m_settings.get(); };
-
     DataSourceMapType& getDataSources() { return m_datasources; };
 
     void setDataSourceEnabled(QString source, bool enabled);
-
     void setDataSourceRefresh(QString source, int64_t msec);
 
     void setCustomSetting(QString name, int val);
@@ -97,12 +96,13 @@ private slots:
     void sendDataToSubscribers(const DataSource& source);
 
 private:
-    DataPlugin(quasar_plugin_info_t* p, QString path, QObject* parent = Q_NULLPTR);
+    DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QString path, QObject* parent = Q_NULLPTR);
 
     void    createTimer(DataSource& data);
     QString craftDataMessage(const DataSource& data);
 
     quasar_plugin_info_t* m_plugin;
+    plugin_destroy        m_destroyfunc;
 
     std::unique_ptr<quasar_settings_t> m_settings;
 

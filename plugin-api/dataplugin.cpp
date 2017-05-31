@@ -37,6 +37,7 @@ DataPlugin::~DataPlugin()
     }
 
     // plugin is responsible for cleanup of quasar_plugin_info_t*
+    m_destroyfunc(m_plugin);
     m_plugin = nullptr;
 }
 
@@ -50,15 +51,16 @@ DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
         return nullptr;
     }
 
-    plugin_load loadfunc = (plugin_load) lib.resolve("quasar_plugin_load");
+    plugin_load    loadfunc    = (plugin_load) lib.resolve("quasar_plugin_load");
+    plugin_destroy destroyfunc = (plugin_destroy) lib.resolve("quasar_plugin_destroy");
 
-    if (loadfunc)
+    if (loadfunc && destroyfunc)
     {
         quasar_plugin_info_t* p = loadfunc();
 
         if (p && p->init && p->shutdown && p->get_data)
         {
-            DataPlugin* plugin = new DataPlugin(p, libpath, parent);
+            DataPlugin* plugin = new DataPlugin(p, destroyfunc, libpath, parent);
             return plugin;
         }
         else
@@ -423,8 +425,8 @@ void DataPlugin::waitDataProcessed(QString source)
     }
 }
 
-DataPlugin::DataPlugin(quasar_plugin_info_t* p, QString path, QObject* parent /*= Q_NULLPTR*/)
-    : QObject(parent), m_plugin(p), m_libpath(path)
+DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QString path, QObject* parent /*= Q_NULLPTR*/)
+    : QObject(parent), m_plugin(p), m_destroyfunc(destroyfunc), m_libpath(path)
 {
     if (nullptr == m_plugin)
     {
