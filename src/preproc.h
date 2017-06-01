@@ -10,5 +10,5 @@
 #elif defined(__GNUC__)
 #define COMPILER_STRING "g++ " __STR__(__VERSION__)
 #elif defined(_MSC_VER)
-#define COMPILER_STRING __STR__(__VERSION__)
+#define COMPILER_STRING "MSVC "__STR__(_MSC_VER)
 #endif

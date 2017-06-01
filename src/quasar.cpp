@@ -129,8 +129,6 @@ void Quasar::createActions()
             "DEBUG BUILD<br/>"
 #endif
             "<br/>"
-            "Third-party licenses included where applicable<br/>"
-            "<br/>"
             "Compiled on: " __DATE__ "<br/>"
             "Compiler: " COMPILER_STRING "<br/>"
             "Qt version: " QT_VERSION_STR "<br/>"

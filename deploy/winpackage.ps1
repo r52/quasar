@@ -28,7 +28,7 @@ Copy-Item LICENSE.txt .\quasar\
 
 & 7z a -t7z $pkgname .\quasar\
 
-Remove-Item .\quasar\
+Remove-Item .\quasar -Force -Recurse
 
 if ($env:APPVEYOR -eq $true)
 {
