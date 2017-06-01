@@ -52,6 +52,8 @@ private:
     QAction* loadAction;
     QAction* settingsAction;
     QAction* logAction;
+    QAction* aboutAction;
+    QAction* aboutQtAction;
     QAction* quitAction;
 
     // Data server

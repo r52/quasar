@@ -1,5 +1,8 @@
 #include "quasar.h"
 
+#include "preproc.h"
+#include "version.h"
+
 #include "applauncher.h"
 #include "configdialog.h"
 #include "dataserver.h"
@@ -10,6 +13,7 @@
 #include <QCloseEvent>
 #include <QFileDialog>
 #include <QMenu>
+#include <QMessageBox>
 #include <QTextEdit>
 #include <QVBoxLayout>
 
@@ -92,6 +96,9 @@ void Quasar::createTrayIcon()
     trayIconMenu->addAction(settingsAction);
     trayIconMenu->addAction(logAction);
     trayIconMenu->addSeparator();
+    trayIconMenu->addAction(aboutAction);
+    trayIconMenu->addAction(aboutQtAction);
+    trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 
     trayIcon = new QSystemTrayIcon(this);
@@ -112,6 +119,32 @@ void Quasar::createActions()
 
     logAction = new QAction(tr("L&og"), this);
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);
+
+    aboutAction = new QAction(tr("&About"), this);
+
+    connect(aboutAction, &QAction::triggered, [=](bool checked) {
+        static QString aboutMsg =
+            "Quasar " GIT_VER_STRING "<br/>"
+#ifndef NDEBUG
+            "DEBUG BUILD<br/>"
+#endif
+            "<br/>"
+            "Third-party licenses included where applicable<br/>"
+            "<br/>"
+            "Compiled on: " __DATE__ "<br/>"
+            "Compiler: " COMPILER_STRING "<br/>"
+            "Qt version: " QT_VERSION_STR "<br/>"
+            "<br/>"
+            "Licensed under GPLv3<br/>"
+            "Source code available at <a href='https://github.com/r52/quasar'>GitHub</a>";
+
+        QMessageBox::about(this, tr("About Quasar"), aboutMsg);
+    });
+
+    aboutQtAction = new QAction(tr("About &Qt"), this);
+    connect(aboutQtAction, &QAction::triggered, [=](bool checked) {
+        QMessageBox::aboutQt(this, "About Qt");
+    });
 
     quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);

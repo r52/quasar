@@ -164,6 +164,9 @@
     <ClInclude Include="src\runguard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\preproc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="quasar.rc">
