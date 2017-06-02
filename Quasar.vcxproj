@@ -185,6 +185,7 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="GeneratedFiles\version.h" />
     <ClInclude Include="GeneratedFiles\ui_quasar.h" />
     <CustomBuild Include="src\quasar.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>

@@ -243,6 +243,3 @@ ModelManifest.xml
 
 #Qt
 GeneratedFiles/
-
-# Other generated files
-version.h

@@ -158,6 +158,9 @@
     <ClInclude Include="GeneratedFiles\ui_quasar.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
+    <ClInclude Include="GeneratedFiles\version.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\widgetdefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
