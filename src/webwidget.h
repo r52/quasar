@@ -73,6 +73,18 @@ protected:
     }
 };
 
+class QuasarWebPage : public QWebEnginePage
+{
+public:
+    QuasarWebPage(QObject* parent = Q_NULLPTR)
+        : QWebEnginePage{ parent }
+    {
+    }
+
+protected:
+    virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID);
+};
+
 class WebWidget : public QWidget
 {
     Q_OBJECT;

@@ -11,6 +11,24 @@
 
 QString WebWidget::PageGlobalTemp;
 
+void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
+{
+    QString msg = "CONSOLE: " + message + " (" + sourceID + ":" + QString::number(lineNumber) + ")";
+
+    switch (level)
+    {
+        case InfoMessageLevel:
+            qInfo() << msg;
+            break;
+        case WarningMessageLevel:
+            qWarning() << msg;
+            break;
+        case ErrorMessageLevel:
+            qCritical() << msg;
+            break;
+    }
+}
+
 WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent)
     : QWidget(parent), m_Name(widgetName)
 {
@@ -30,6 +48,10 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     QString startFilePath = QFileInfo(data[WGT_DEF_FULLPATH].toString()).canonicalPath().append("/");
     QUrl    startFile     = QUrl::fromLocalFile(startFilePath.append(data[WGT_DEF_STARTFILE].toString()));
 
+    QuasarWebPage* page = new QuasarWebPage(this);
+    page->load(startFile);
+    webview->setPage(page);
+
     webview->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, false);
 
     // Remote access permission
@@ -38,41 +60,12 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
         webview->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     }
 
-    webview->load(startFile);
-
     // Optional background transparency
     if (data[WGT_DEF_TRANSPARENTBG].toBool())
     {
         setAttribute(Qt::WA_TranslucentBackground);
         webview->page()->setBackgroundColor(Qt::transparent);
     }
-
-    // Overlay for catching drag and drop events
-    overlay = new OverlayWidget(this);
-
-    // Create context menu
-    createContextMenuActions();
-    createContextMenu();
-
-    // Restore settings
-    QSettings settings;
-    restoreGeometry(settings.value(getSettingKey("geometry")).toByteArray());
-    bool ontop      = settings.value(getSettingKey("alwaysOnTop")).toBool();
-    m_fixedposition = settings.value(getSettingKey("fixedPosition")).toBool();
-    bool clickable  = settings.value(getSettingKey("clickable"), data[WGT_DEF_CLICKABLE].toBool()).toBool();
-
-    rFixedPos->setChecked(m_fixedposition);
-    rClickable->setChecked(clickable);
-
-    overlay->setVisible(!clickable);
-
-    if (ontop)
-    {
-        flags |= Qt::WindowStaysOnTopHint;
-        rOnTop->setChecked(true);
-    }
-
-    QWebEnginePage* page = webview->page();
 
     // Handle geolocation access permission
     connect(page, &QWebEnginePage::featurePermissionRequested, [=](const QUrl& securityOrigin, QWebEnginePage::Feature feature) {
@@ -115,6 +108,31 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
         allowgeo[data[WGT_DEF_FULLPATH].toString()] = (perm == QWebEnginePage::PermissionGrantedByUser);
         settings.setValue(QUASAR_CONFIG_ALLOWGEO, allowgeo);
     });
+
+    // Overlay for catching drag and drop events
+    overlay = new OverlayWidget(this);
+
+    // Create context menu
+    createContextMenuActions();
+    createContextMenu();
+
+    // Restore settings
+    QSettings settings;
+    restoreGeometry(settings.value(getSettingKey("geometry")).toByteArray());
+    bool ontop      = settings.value(getSettingKey("alwaysOnTop")).toBool();
+    m_fixedposition = settings.value(getSettingKey("fixedPosition")).toBool();
+    bool clickable  = settings.value(getSettingKey("clickable"), data[WGT_DEF_CLICKABLE].toBool()).toBool();
+
+    rFixedPos->setChecked(m_fixedposition);
+    rClickable->setChecked(clickable);
+
+    overlay->setVisible(!clickable);
+
+    if (ontop)
+    {
+        flags |= Qt::WindowStaysOnTopHint;
+        rOnTop->setChecked(true);
+    }
 
     // Custom context menu
     setContextMenuPolicy(Qt::CustomContextMenu);
