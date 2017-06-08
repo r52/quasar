@@ -17,10 +17,8 @@ $(document).ready(function() {
             websocket.close();
         websocket = new WebSocket(qWsServerUrl);
         websocket.onopen = function(evt) {
-            console.log("Connected");
         };
         websocket.onclose = function(evt) {
-            console.log("Disconnected");
         };
         websocket.onmessage = function(evt) {};
         websocket.onerror = function(evt) {
