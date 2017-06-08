@@ -94,7 +94,7 @@ LogWindow::LogWindow(QObject* parent)
     s_logEdit->document()->setMaximumBlockCount(250);
 
     qInstallMessageHandler(msg_handler);
-    qSetMessagePattern("[%{time}] - %{type} - %{function} - %{message}");
+    qSetMessagePattern("[%{time}]    %{type}    %{message} - (%{function}:%{line})");
 }
 
 QTextEdit* LogWindow::release()
