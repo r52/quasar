@@ -67,6 +67,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
         webview->page()->setBackgroundColor(Qt::transparent);
     }
 
+    /*
     // Handle geolocation access permission
     connect(page, &QWebEnginePage::featurePermissionRequested, [=](const QUrl& securityOrigin, QWebEnginePage::Feature feature) {
         if (feature != QWebEnginePage::Geolocation)
@@ -88,7 +89,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
         else
         {
             QMessageBox msgBox(this);
-            msgBox.setText(tr("Widget %1 wants to know your location").arg(this->getName()));
+            msgBox.setText(tr("Widget %1 (%2) wants to know your location").arg(this->getName()).arg(securityOrigin.host()));
             msgBox.setInformativeText(tr("Do you want to send your current location to this widget?"));
             msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
             msgBox.setDefaultButton(QMessageBox::Yes);
@@ -108,6 +109,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
         allowgeo[data[WGT_DEF_FULLPATH].toString()] = (perm == QWebEnginePage::PermissionGrantedByUser);
         settings.setValue(QUASAR_CONFIG_ALLOWGEO, allowgeo);
     });
+    */
 
     // Overlay for catching drag and drop events
     overlay = new OverlayWidget(this);
