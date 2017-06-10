@@ -243,3 +243,10 @@ ModelManifest.xml
 
 #Qt
 GeneratedFiles/
+
+# WiX
+Quasar/
+*.wixobj
+*.wixpdb
+*.msi
+*.7z
