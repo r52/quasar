@@ -10,7 +10,7 @@
         <Feature Id="Complete" Title="Quasar" Description="The complete package." Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR">
             <Feature Id="MainProgram" Title="Quasar" Description="The main application." Level="1">
                 <ComponentGroupRef Id="MainAppComponents"/>
-                <ComponentRef Id="ApplicationShortcut" />
+                <ComponentRef Id="ApplicationShortcut"/>
             </Feature>
 
             <Feature Id="PluginAPI" Title="Plugin API" Description="Plugin API headers and symbols for plugin developers" Level="1000">
@@ -197,17 +197,11 @@
             <Component Id="cmpEDF244351449DCE642762657BEA2E2C1" Directory="dir18F01693559E781AD86D1CA2CA6C98E6" Guid="{DC775438-EDB1-475F-A529-624320A93779}">
                 <File Id="filC80D6E883A191FE65A5C6AD4B1B1E966" KeyPath="yes" Source="$(var.pkgsrc)\resources\qtwebengine_resources_200p.pak"/>
             </Component>
-            <Component Id="cmp35DD45D8BF791FB260F15182EA6DB132" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{07003F6C-3B53-440A-B4B3-F79F6044839B}">
-                <File Id="filBBD3855C116C9EB47E92F139F2137273" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_bg.qm"/>
-            </Component>
             <Component Id="cmp1722F02718AB566348489033725A8257" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{58B5C1A2-6E03-44C1-98B5-D173CAD47E7D}">
                 <File Id="fil1B7B2665FA7D7651AA1781E4D7FD5887" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_ca.qm"/>
             </Component>
             <Component Id="cmp1279C828EDBB886BE6927FC633A4EC25" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{BFF4EAA7-1505-4B0B-A297-340C369B1C62}">
                 <File Id="fil9DD89A04E4600D7020FFEA39E625BF1C" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_cs.qm"/>
-            </Component>
-            <Component Id="cmp6C7C8FF7B091A09BBBFE85DA76CD7E30" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{D317618E-4383-42F8-AAAA-696AC9D43F46}">
-                <File Id="fil12512BB559ED370A19D53650968EE30F" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_da.qm"/>
             </Component>
             <Component Id="cmpBA97BE90BE93E27C354DBFA44D4E8AD7" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{F816E25E-1A36-4AD8-BF20-CBA44B1362DD}">
                 <File Id="fil31E153D0D0B544EF64F9306165942048" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_de.qm"/>
@@ -215,17 +209,11 @@
             <Component Id="cmpF272E874B2C45C5051DC9A51DED91A04" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{C460D349-8D73-42D9-A0C2-D990B78ED00B}">
                 <File Id="fil8EFECFDC543F290C3C2FE3A3B3630261" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_en.qm"/>
             </Component>
-            <Component Id="cmp44FFE89406AF50F2527F34E371A336B2" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{EC523766-E779-4781-8B1E-D22A6B5606F4}">
-                <File Id="fil21E72555FB269C7498A613FCFF728A97" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_es.qm"/>
-            </Component>
             <Component Id="cmp3C1BB4FDAC27FE4E0A519DFDBD783137" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{D7381751-1D46-4E07-9317-8CF43E37238B}">
                 <File Id="fil5459C53BBBE2C4388A71D480DE4E3A99" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_fi.qm"/>
             </Component>
             <Component Id="cmpAFE17F158D49175E80143D2089A85FD8" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{BA831BA8-83D9-4D50-AAFF-BBF63D4E6FCB}">
                 <File Id="filC086D651D07EC7151405704BB23D47DE" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_fr.qm"/>
-            </Component>
-            <Component Id="cmpFC1D489CBDB1261EE1B1CA57A3C01051" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{09F9BAA6-4472-4427-994E-4E3B7CFC48C5}">
-                <File Id="fil9683D7C7A71F37F24F7E37DD1004B9EB" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_gd.qm"/>
             </Component>
             <Component Id="cmpF200BD7717D550BBFC2042A8FE513D7B" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{DE48BB86-DB9C-4350-A19D-D2C2AF2C8973}">
                 <File Id="fil201AD97ECF0685088DA5FD0022BAC287" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_he.qm"/>
@@ -257,6 +245,20 @@
             <Component Id="cmp207D5E680097CF89346CD00DD53828FE" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{2EE0BD18-E9C0-4105-BC12-11F031867E3F}">
                 <File Id="fil0BDA310B43B4E6AB88D99833AE1BEFEB" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_uk.qm"/>
             </Component>
+            <?if $(var.Qtver) > 58 ?>
+            <Component Id="cmp35DD45D8BF791FB260F15182EA6DB132" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{07003F6C-3B53-440A-B4B3-F79F6044839B}">
+                <File Id="filBBD3855C116C9EB47E92F139F2137273" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_bg.qm"/>
+            </Component>
+            <Component Id="cmp6C7C8FF7B091A09BBBFE85DA76CD7E30" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{D317618E-4383-42F8-AAAA-696AC9D43F46}">
+                <File Id="fil12512BB559ED370A19D53650968EE30F" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_da.qm"/>
+            </Component>
+            <Component Id="cmp44FFE89406AF50F2527F34E371A336B2" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{EC523766-E779-4781-8B1E-D22A6B5606F4}">
+                <File Id="fil21E72555FB269C7498A613FCFF728A97" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_es.qm"/>
+            </Component>
+            <Component Id="cmpFC1D489CBDB1261EE1B1CA57A3C01051" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{09F9BAA6-4472-4427-994E-4E3B7CFC48C5}">
+                <File Id="fil9683D7C7A71F37F24F7E37DD1004B9EB" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_gd.qm"/>
+            </Component>
+            <?endif?>
             <Component Id="cmp0562C39CAB4545F043215EF2B6D652AF" Directory="dirAAB1972211132EB8BFA1D99AC067C3C1" Guid="{A26539E4-E779-4885-9DFC-FDA0BB0A03BA}">
                 <File Id="filA1FAA2AA4752CA2E056E77B58D705229" KeyPath="yes" Source="$(var.pkgsrc)\translations\qtwebengine_locales\am.pak"/>
             </Component>
