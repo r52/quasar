@@ -12,9 +12,10 @@
 namespace
 {
     // setting names
-    QString QUASAR_SETTING_PORT   = "portSpin";
-    QString QUASAR_SETTING_LOG    = "logCombo";
-    QString QUASAR_SETTING_COOKIE = "cookieEdit";
+    QString QUASAR_SETTING_PORT    = "portSpin";
+    QString QUASAR_SETTING_LOG     = "logCombo";
+    QString QUASAR_SETTING_COOKIE  = "cookieEdit";
+    QString QUASAR_SETTING_STARTUP = "startUp";
 }
 
 GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
@@ -77,6 +78,15 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
         cookieEdit->setText(fname);
     });
 
+#ifdef WIN32
+    QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
+    QFileInfo lnk(startupFolder + "/Quasar.lnk");
+
+    QCheckBox* startOnStartup = new QCheckBox("Launch Quasar when system starts");
+    startOnStartup->setObjectName(QUASAR_SETTING_STARTUP);
+    startOnStartup->setChecked(lnk.exists());
+#endif
+
     /*
     QPushButton* resetGeoButton = new QPushButton(tr("Reset Geolocation Permissions"));
     connect(resetGeoButton, &QPushButton::clicked, [=] {
@@ -103,6 +113,9 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     configLayout->addLayout(generalLayout);
     configLayout->addLayout(logLayout);
     configLayout->addLayout(cookieLayout);
+#ifdef WIN32
+    configLayout->addWidget(startOnStartup);
+#endif
     //configLayout->addWidget(resetGeoButton);
     configGroup->setLayout(configLayout);
 
@@ -235,6 +248,28 @@ void GeneralPage::saveSettings(QSettings& settings, bool& restartNeeded)
     {
         settings.setValue(QUASAR_CONFIG_LOGLEVEL, logcombo->currentIndex());
     }
+
+#ifdef WIN32
+    auto startCheck = findChild<QCheckBox*>(QUASAR_SETTING_STARTUP);
+
+    if (startCheck)
+    {
+        QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
+        QString   filename      = startupFolder + "/Quasar.lnk";
+        QFileInfo lnk(filename);
+
+        bool checked = startCheck->isChecked();
+
+        if (checked && !lnk.exists())
+        {
+            QFile::link(QCoreApplication::applicationFilePath(), filename);
+        }
+        else if (!checked && lnk.exists())
+        {
+            QFile::remove(filename);
+        }
+    }
+#endif
 }
 
 void GeneralPage::pluginListClicked(QListWidgetItem* item)
