@@ -77,6 +77,7 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
         cookieEdit->setText(fname);
     });
 
+    /*
     QPushButton* resetGeoButton = new QPushButton(tr("Reset Geolocation Permissions"));
     connect(resetGeoButton, &QPushButton::clicked, [=] {
         QMessageBox msgBox(this);
@@ -91,6 +92,7 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
             settings.setValue(QUASAR_CONFIG_ALLOWGEO, QVariantMap());
         }
     });
+    */
 
     QHBoxLayout* cookieLayout = new QHBoxLayout;
     cookieLayout->addWidget(cookieLabel);
@@ -101,7 +103,7 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     configLayout->addLayout(generalLayout);
     configLayout->addLayout(logLayout);
     configLayout->addLayout(cookieLayout);
-    configLayout->addWidget(resetGeoButton);
+    //configLayout->addWidget(resetGeoButton);
     configGroup->setLayout(configLayout);
 
     // plugin group
