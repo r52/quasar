@@ -33,7 +33,7 @@ if ($portable)
 {
     if (Test-Path .\Quasar -pathType container)
     {
-        $pkgname = "$($name)_win_x64.7z"
+        $pkgname = "$($name)_win_x64_portable.7z"
 
         Write-Host "Packaging $($pkgname)..."
 
@@ -54,7 +54,7 @@ if ($installer)
 {
     if (Test-Path .\Quasar -pathType container)
     {
-        $pkgname = "$($name)_win_x64.msi"
+        $pkgname = "$($name)_win_x64_installer.msi"
 
         Write-Host "Packaging $($pkgname)..."
 
