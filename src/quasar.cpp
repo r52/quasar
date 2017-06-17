@@ -8,6 +8,7 @@
 #include "dataserver.h"
 #include "logwindow.h"
 #include "webwidget.h"
+#include "widgetdefs.h"
 #include "widgetregistry.h"
 
 #include <QCloseEvent>
@@ -51,7 +52,17 @@ Quasar::~Quasar()
 
 void Quasar::openWebWidget()
 {
-    QString fname = QFileDialog::getOpenFileName(this, tr("Load Widget"), QDir::currentPath(), tr("Widget Definitions (*.json)"));
+    QSettings settings;
+    QString   lastpath = settings.value(QUASAR_CONFIG_LASTPATH, QDir::currentPath()).toString();
+
+    QString fname = QFileDialog::getOpenFileName(this, tr("Load Widget"), lastpath, tr("Widget Definitions (*.json)"));
+
+    if (!fname.isNull())
+    {
+        QFileInfo info(fname);
+
+        settings.setValue(QUASAR_CONFIG_LASTPATH, info.canonicalPath());
+    }
 
     reg->loadWebWidget(fname);
 }

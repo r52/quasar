@@ -14,5 +14,6 @@
 #define QUASAR_CONFIG_LOGLEVEL "global/loglevel"
 #define QUASAR_CONFIG_COOKIES "global/cookies"
 #define QUASAR_CONFIG_ALLOWGEO "global/allowGeo"
+#define QUASAR_CONFIG_LASTPATH "global/lastpath"
 
 #define QUASAR_DATA_SERVER_DEFAULT_PORT 13337
