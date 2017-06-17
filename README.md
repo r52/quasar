@@ -26,4 +26,6 @@ An OS and computer capable of running Chrome.
 
 ## Build Dependencies
 
+[![Build status](https://ci.appveyor.com/api/projects/status/yd5l7u53ufo4mur1?svg=true)](https://ci.appveyor.com/project/r52/quasar)
+
 [Qt 5.9 or higher](http://www.qt.io/) and Visual Studio 2017 is required. Should be compile-able on Linux and Mac as well, untested.
