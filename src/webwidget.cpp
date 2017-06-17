@@ -45,8 +45,20 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
 
     webview = new QuasarWebView(this);
 
-    QString startFilePath = QFileInfo(data[WGT_DEF_FULLPATH].toString()).canonicalPath().append("/");
-    QUrl    startFile     = QUrl::fromLocalFile(startFilePath.append(data[WGT_DEF_STARTFILE].toString()));
+    QString entryPath = data[WGT_DEF_STARTFILE].toString();
+    QUrl    startFile;
+
+    if (entryPath.startsWith("http"))
+    {
+        // if url, take as is
+        startFile = entryPath;
+    }
+    else
+    {
+        // assume local file
+        QString startFilePath = QFileInfo(data[WGT_DEF_FULLPATH].toString()).canonicalPath().append("/");
+        startFile             = QUrl::fromLocalFile(startFilePath.append(entryPath));
+    }
 
     QuasarWebPage* page = new QuasarWebPage(this);
     page->load(startFile);
