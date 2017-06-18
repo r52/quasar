@@ -24,8 +24,14 @@ An OS and computer capable of running Chrome.
 
 [Microsoft Visual C++ Redistributable for Visual Studio 2017](https://go.microsoft.com/fwlink/?LinkId=746572) may be needed on Windows.
 
-## Build Dependencies
+## Build
+
+### Windows
 
 [![Build status](https://ci.appveyor.com/api/projects/status/yd5l7u53ufo4mur1?svg=true)](https://ci.appveyor.com/project/r52/quasar)
 
-[Qt 5.9 or higher](http://www.qt.io/) and Visual Studio 2017 is required. Should be compile-able on Linux and Mac as well, untested.
+[Qt 5.8 or higher](http://www.qt.io/) and Visual Studio 2015 or higher is required (VS2017 requires Qt 5.9+).
+
+### Mac/Linux
+
+Quasar is written in cross-platform C++ and should be buildable on Linux and Mac as well with minimal changes. However, it is currently untested and unsupported.
