@@ -4,6 +4,7 @@
 #include "quasar.h"
 #include "widgetregistry.h"
 
+#include <QDesktopServices>
 #include <QFileInfo>
 #include <QJsonObject>
 #include <QProcess>
@@ -81,11 +82,29 @@ void AppLauncher::handleCommand(const QJsonObject& req, QWebSocket* sender)
     {
         d = v.value<AppLauncherData>();
 
-        QString   cmd = d.file;
-        QFileInfo info(cmd);
+        QString cmd = d.file;
 
-        qInfo() << "Launching " << info.canonicalFilePath();
+        if (cmd.contains("://"))
+        {
+            // treat as url
+            qInfo() << "Launching URL " << cmd;
+            QDesktopServices::openUrl(QUrl(cmd));
+        }
+        else
+        {
+            // treat as file
+            QFileInfo info(cmd);
 
-        QProcess::startDetached(info.canonicalFilePath(), QStringList() << d.arguments, d.startpath);
+            if (info.exists())
+            {
+                qInfo() << "Launching path " << info.canonicalFilePath();
+
+                QProcess::startDetached(info.canonicalFilePath(), QStringList() << d.arguments, d.startpath);
+            }
+            else
+            {
+                qWarning() << "Path " << cmd << " does not exist.";
+            }
+        }
     }
 }
