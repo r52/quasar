@@ -15,7 +15,6 @@ public:
     WidgetRegistry(QObject* parent = Q_NULLPTR);
     ~WidgetRegistry();
 
-    void loadLoadedWidgets();
     bool loadWebWidget(QString filename, bool warnSecurity = true);
 
     WidgetMapType& getWidgets() { return m_widgetMap; }

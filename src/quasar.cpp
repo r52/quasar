@@ -42,8 +42,14 @@ Quasar::Quasar(QWidget* parent)
 
     resize(800, 400);
 
-    // Load settings
-    reg->loadLoadedWidgets();
+    // Load widgets
+    QSettings   settings;
+    QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();
+
+    foreach (const QString& f, loadedList)
+    {
+        reg->loadWebWidget(f, false);
+    }
 }
 
 Quasar::~Quasar()
@@ -65,12 +71,6 @@ void Quasar::openWebWidget()
     }
 
     reg->loadWebWidget(fname);
-}
-
-void Quasar::openConfigDialog()
-{
-    ConfigDialog dialog(this);
-    dialog.exec();
 }
 
 void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
@@ -126,7 +126,10 @@ void Quasar::createActions()
     widgetListMenu = new QMenu(tr("Widgets"), this);
 
     settingsAction = new QAction(tr("&Settings"), this);
-    connect(settingsAction, &QAction::triggered, this, &Quasar::openConfigDialog);
+    connect(settingsAction, &QAction::triggered, [=] {
+        ConfigDialog dialog(this);
+        dialog.exec();
+    });
 
     logAction = new QAction(tr("L&og"), this);
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);
@@ -157,11 +160,6 @@ void Quasar::createActions()
 
     quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
-}
-
-QString Quasar::getConfigKey(QString key)
-{
-    return "global/" + key;
 }
 
 void Quasar::closeEvent(QCloseEvent* event)

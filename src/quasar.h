@@ -23,11 +23,6 @@ public:
     DataServer*     getDataServer() { return server; };
     AppLauncher*    getAppLauncher() { return launcher; };
 
-private slots:
-    void openWebWidget();
-    void openConfigDialog();
-    void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
-
 protected:
     virtual void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
 
@@ -35,7 +30,9 @@ private:
     void createTrayIcon();
     void createActions();
 
-    QString getConfigKey(QString key);
+private slots:
+    void openWebWidget();
+    void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 
 private:
     Ui::QuasarClass ui;

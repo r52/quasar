@@ -53,13 +53,6 @@ DataServer::~DataServer()
     m_plugins.clear();
 
     m_pWebSocketServer->close();
-
-    // This is needed to prevent iterator invalidation in qDeleteAll
-    // since deleting QWebSocket objects trigger DataServer::socketDisconnected()
-    // which tries to remove instances of clients on disconnect
-    m_done = true;
-    qDeleteAll(m_clients);
-    m_clients.clear();
 }
 
 bool DataServer::addHandler(QString type, HandlerFuncType handler)
@@ -193,10 +186,9 @@ void DataServer::onNewConnection()
 {
     QWebSocket* pSocket = m_pWebSocketServer->nextPendingConnection();
 
+    pSocket->setParent(this);
     connect(pSocket, &QWebSocket::textMessageReceived, this, &DataServer::processMessage);
     connect(pSocket, &QWebSocket::disconnected, this, &DataServer::socketDisconnected);
-
-    m_clients << pSocket;
 }
 
 void DataServer::processMessage(QString message)
@@ -228,10 +220,6 @@ void DataServer::socketDisconnected()
             plugin->removeSubscriber(pClient);
         }
 
-        if (!m_done)
-        {
-            m_clients.removeAll(pClient);
-            pClient->deleteLater();
-        }
+        pClient->deleteLater();
     }
 }

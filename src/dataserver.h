@@ -41,10 +41,8 @@ private slots:
     void socketDisconnected();
 
 private:
-    bool               m_done = false;
-    HandleReqCallMap   m_reqcallmap;
-    Quasar*            m_parent;
-    QWebSocketServer*  m_pWebSocketServer;
-    QList<QWebSocket*> m_clients;
-    DataPluginMapType  m_plugins;
+    HandleReqCallMap  m_reqcallmap;
+    Quasar*           m_parent;
+    QWebSocketServer* m_pWebSocketServer;
+    DataPluginMapType m_plugins;
 };

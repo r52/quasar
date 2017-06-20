@@ -47,17 +47,6 @@ WidgetRegistry::~WidgetRegistry()
     settings.setValue(QUASAR_CONFIG_LOADED, loadedWidgets);
 }
 
-void WidgetRegistry::loadLoadedWidgets()
-{
-    QSettings   settings;
-    QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();
-
-    foreach (const QString& f, loadedList)
-    {
-        loadWebWidget(f, false);
-    }
-}
-
 bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
 {
     if (!filename.isNull())
@@ -189,10 +178,9 @@ void WidgetRegistry::loadCookies()
 void WidgetRegistry::closeWebWidget(WebWidget* widget)
 {
     // Remove from loaded list
-    QJsonObject data = widget->getData();
-    QString     name = widget->getName();
+    QString name = widget->getName();
 
-    qInfo() << "Closing widget " << name << " (" << data[WGT_DEF_FULLPATH].toString() << ")";
+    qInfo() << "Closing widget " << name << " (" << widget->getFullPath() << ")";
 
     // Remove from registry
     auto it = m_widgetMap.find(name);

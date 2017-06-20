@@ -189,6 +189,11 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     setWindowTitle(m_Name);
 }
 
+WebWidget::~WebWidget()
+{
+    saveSettings();
+}
+
 bool WebWidget::validateWidgetDefinition(const QJsonObject& dat)
 {
     if (!dat.isEmpty() &&
@@ -314,8 +319,6 @@ void WebWidget::mouseMoveEvent(QMouseEvent* evt)
 
 void WebWidget::closeEvent(QCloseEvent* event)
 {
-    saveSettings();
-
     // Remove from loaded
     QSettings   settings;
     QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();

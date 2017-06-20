@@ -91,6 +91,7 @@ class WebWidget : public QWidget
 
 public:
     explicit WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent = Q_NULLPTR);
+    ~WebWidget();
 
     static bool validateWidgetDefinition(const QJsonObject& dat);
     static bool acceptSecurityWarnings(const QJsonObject& dat);
