@@ -47,7 +47,7 @@ WidgetRegistry::~WidgetRegistry()
     settings.setValue(QUASAR_CONFIG_LOADED, loadedWidgets);
 }
 
-bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
+bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 {
     if (!filename.isNull())
     {
@@ -69,7 +69,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
         {
             qWarning() << "Invalid widget definition '" << filename << "'";
         }
-        else if (warnSecurity && !WebWidget::acceptSecurityWarnings(dat))
+        else if (userAction && !WebWidget::acceptSecurityWarnings(dat))
         {
             qWarning() << "Denied loading '" << filename << "'";
         }
@@ -94,11 +94,14 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool warnSecurity)
             connect(widget, &WebWidget::WebWidgetClosed, this, &WidgetRegistry::closeWebWidget);
             widget->show();
 
-            // Add to loaded
-            QSettings   settings;
-            QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
-            loaded.append(widget->getFullPath());
-            settings.setValue(QUASAR_CONFIG_LOADED, loaded);
+            if (userAction)
+            {
+                // Add to loaded
+                QSettings   settings;
+                QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
+                loaded.append(widget->getFullPath());
+                settings.setValue(QUASAR_CONFIG_LOADED, loaded);
+            }
 
             return true;
         }

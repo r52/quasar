@@ -46,7 +46,7 @@ Quasar::Quasar(QWidget* parent)
     QSettings   settings;
     QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();
 
-    foreach (const QString& f, loadedList)
+    for (const QString& f : loadedList)
     {
         reg->loadWebWidget(f, false);
     }

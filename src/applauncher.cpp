@@ -31,8 +31,6 @@ AppLauncher::AppLauncher(QObject* parent)
 
 AppLauncher::~AppLauncher()
 {
-    QSettings settings;
-    settings.setValue("launcher/map", m_map);
 }
 
 const QVariantMap* AppLauncher::getMapForRead()
@@ -51,6 +49,9 @@ void AppLauncher::writeMap(QVariantMap& newmap)
 {
     std::unique_lock<std::shared_mutex> lock(m_mutex);
     m_map = newmap;
+
+    QSettings settings;
+    settings.setValue("launcher/map", m_map);
 }
 
 void AppLauncher::handleCommand(const QJsonObject& req, QWebSocket* sender)

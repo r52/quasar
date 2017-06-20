@@ -22,7 +22,7 @@ Need more data? Data available to widgets can be extended through plugins. Refer
 
 An OS and computer capable of running Chrome.
 
-[Microsoft Visual C++ Redistributable for Visual Studio 2017](https://go.microsoft.com/fwlink/?LinkId=746572) may be needed on Windows.
+[Microsoft Visual C++ Redistributable for Visual Studio 2017](https://go.microsoft.com/fwlink/?LinkId=746572) is needed on Windows.
 
 ## Build
 
