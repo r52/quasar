@@ -115,8 +115,6 @@ protected:
     virtual void mousePressEvent(QMouseEvent* evt) override;
     virtual void mouseMoveEvent(QMouseEvent* evt) override;
 
-    virtual void closeEvent(QCloseEvent* event) override;
-
 protected slots:
     void toggleOnTop(bool ontop);
 

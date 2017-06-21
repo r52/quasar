@@ -281,7 +281,16 @@ void WebWidget::createContextMenuActions()
     });
 
     rClose = new QAction(tr("&Close"), this);
-    connect(rClose, &QAction::triggered, this, &WebWidget::close);
+    connect(rClose, &QAction::triggered, [=] {
+        // Remove from loaded
+        QSettings   settings;
+        QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
+        loaded.removeOne(getFullPath());
+        settings.setValue(QUASAR_CONFIG_LOADED, loaded);
+
+        emit WebWidgetClosed(this);
+        close();
+    });
 }
 
 void WebWidget::createContextMenu()
@@ -315,18 +324,6 @@ void WebWidget::mouseMoveEvent(QMouseEvent* evt)
         move(evt->globalPos() - dragPosition);
         evt->accept();
     }
-}
-
-void WebWidget::closeEvent(QCloseEvent* event)
-{
-    // Remove from loaded
-    QSettings   settings;
-    QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
-    loaded.removeOne(getFullPath());
-    settings.setValue(QUASAR_CONFIG_LOADED, loaded);
-
-    emit WebWidgetClosed(this);
-    event->accept();
 }
 
 void WebWidget::toggleOnTop(bool ontop)

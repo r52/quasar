@@ -30,21 +30,8 @@ WidgetRegistry::WidgetRegistry(QObject* parent)
 
 WidgetRegistry::~WidgetRegistry()
 {
-    QStringList loadedWidgets;
-
-    // Delete alive widgets and clear list
-    for (WebWidget* widget : m_widgetMap)
-    {
-        widget->saveSettings();
-        loadedWidgets << widget->getFullPath();
-    }
-
     qDeleteAll(m_widgetMap);
     m_widgetMap.clear();
-
-    // Save loaded list
-    QSettings settings;
-    settings.setValue(QUASAR_CONFIG_LOADED, loadedWidgets);
 }
 
 bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
