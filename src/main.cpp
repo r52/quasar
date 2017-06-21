@@ -2,8 +2,8 @@
 #include "runguard.h"
 
 #include <QSettings>
-#include <QtWidgets/QApplication>
 #include <QtWebEngineWidgets/QWebEngineProfile>
+#include <QtWidgets/QApplication>
 
 int main(int argc, char* argv[])
 {

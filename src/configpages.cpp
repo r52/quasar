@@ -16,6 +16,7 @@ namespace
     QString QUASAR_SETTING_LOG     = "logCombo";
     QString QUASAR_SETTING_COOKIE  = "cookieEdit";
     QString QUASAR_SETTING_STARTUP = "startUp";
+    QString QUASAR_SETTING_LOGFILE = "logFile";
 }
 
 GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
@@ -32,7 +33,9 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     QLabel* portLabel = new QLabel(tr("Data Server port:"));
 
     QSettings settings;
-    int       port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
+
+    // ------------------Port
+    int port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
 
     QSpinBox* portSpin = new QSpinBox;
     portSpin->setObjectName(QUASAR_SETTING_PORT);
@@ -47,6 +50,7 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     generalLayout->addWidget(portLabel);
     generalLayout->addWidget(portSpin);
 
+    // ------------------Log verbosity
     QLabel* logLabel = new QLabel(tr("Log Verbosity:"));
 
     QComboBox* logCombo = new QComboBox;
@@ -61,6 +65,7 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     logLayout->addWidget(logLabel);
     logLayout->addWidget(logCombo);
 
+    // ------------------Cookies.txt
     QLabel* cookieLabel = new QLabel(tr("cookies.txt:"));
 
     QLineEdit* cookieEdit = new QLineEdit;
@@ -78,7 +83,18 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
         cookieEdit->setText(fname);
     });
 
+    QHBoxLayout* cookieLayout = new QHBoxLayout;
+    cookieLayout->addWidget(cookieLabel);
+    cookieLayout->addWidget(cookieEdit);
+    cookieLayout->addWidget(cookieBrowse);
+
+    // ------------------Log to file
+    QCheckBox* logToFile = new QCheckBox("Save log to file");
+    logToFile->setObjectName(QUASAR_SETTING_LOGFILE);
+    logToFile->setChecked(settings.value(QUASAR_CONFIG_LOGFILE, false).toBool());
+
 #ifdef WIN32
+    // ------------------Startup launch
     QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
     QFileInfo lnk(startupFolder + "/Quasar.lnk");
 
@@ -87,6 +103,7 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     startOnStartup->setChecked(lnk.exists());
 #endif
 
+    // ------------------Clear geolocation
     /*
     QPushButton* resetGeoButton = new QPushButton(tr("Reset Geolocation Permissions"));
     connect(resetGeoButton, &QPushButton::clicked, [=] {
@@ -104,15 +121,11 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     });
     */
 
-    QHBoxLayout* cookieLayout = new QHBoxLayout;
-    cookieLayout->addWidget(cookieLabel);
-    cookieLayout->addWidget(cookieEdit);
-    cookieLayout->addWidget(cookieBrowse);
-
     QVBoxLayout* configLayout = new QVBoxLayout;
     configLayout->addLayout(generalLayout);
     configLayout->addLayout(logLayout);
     configLayout->addLayout(cookieLayout);
+    configLayout->addWidget(logToFile);
 #ifdef WIN32
     configLayout->addWidget(startOnStartup);
 #endif
@@ -247,6 +260,13 @@ void GeneralPage::saveSettings(QSettings& settings, bool& restartNeeded)
     if (logcombo)
     {
         settings.setValue(QUASAR_CONFIG_LOGLEVEL, logcombo->currentIndex());
+    }
+
+    auto logCheck = findChild<QCheckBox*>(QUASAR_SETTING_LOGFILE);
+
+    if (logCheck)
+    {
+        settings.setValue(QUASAR_CONFIG_LOGFILE, logCheck->isChecked());
     }
 
 #ifdef WIN32
