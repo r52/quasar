@@ -41,7 +41,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     data = dat;
 
     // No frame/border, no taskbar button
-    Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::SubWindow;
+    Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::SubWindow | Qt::WindowDoesNotAcceptFocus;
 
     webview = new QuasarWebView(this);
 
@@ -146,6 +146,10 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     {
         flags |= Qt::WindowStaysOnTopHint;
         rOnTop->setChecked(true);
+    }
+    else
+    {
+        flags |= Qt::WindowStaysOnBottomHint;
     }
 
     // Custom context menu
@@ -332,11 +336,13 @@ void WebWidget::toggleOnTop(bool ontop)
 
     if (ontop)
     {
+        flags &= ~Qt::WindowStaysOnBottomHint;
         flags |= Qt::WindowStaysOnTopHint;
     }
     else
     {
         flags &= ~Qt::WindowStaysOnTopHint;
+        flags |= Qt::WindowStaysOnBottomHint;
     }
 
     setWindowFlags(flags);
