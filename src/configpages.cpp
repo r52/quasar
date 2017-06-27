@@ -567,7 +567,7 @@ public:
         setMinimumWidth(400);
         setWindowTitle(title);
 
-        QLabel*    cmdLabel = new QLabel(tr("Command:"));
+        QLabel*    cmdLabel = new QLabel(tr("Launcher Command:"));
         QLineEdit* cmdEdit  = new QLineEdit;
         cmdEdit->setText(command);
 
@@ -575,7 +575,7 @@ public:
         cmdlayout->addWidget(cmdLabel);
         cmdlayout->addWidget(cmdEdit);
 
-        QLabel*      fileLabel = new QLabel(tr("File:"));
+        QLabel*      fileLabel = new QLabel(tr("File/Commandline:"));
         QLineEdit*   fileEdit  = new QLineEdit;
         QPushButton* fileBtn   = new QPushButton(tr("Browse"));
         fileEdit->setText(data.file);
@@ -674,10 +674,12 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
 
     QTableWidget* table = new QTableWidget;
     table->setSelectionMode(QAbstractItemView::SingleSelection);
-    table->setColumnCount(2);
+    table->setColumnCount(3);
     table->setHorizontalHeaderLabels(QStringList() << "Command"
-                                                   << "File Location");
-    table->horizontalHeader()->setStretchLastSection(true);
+                                                   << "File/Commandline"
+                                                   << "Arguments");
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     auto appmap = m_quasar->getAppLauncher()->getMapForRead();
     auto it     = appmap->cbegin();
@@ -697,8 +699,11 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
             QTableWidgetItem* fileitem = new QTableWidgetItem(d.file);
             fileitem->setData(Qt::UserRole, it.value());
 
+            QTableWidgetItem* argitem = new QTableWidgetItem(d.arguments);
+
             table->setItem(row, 0, cmditem);
             table->setItem(row, 1, fileitem);
+            table->setItem(row, 2, argitem);
 
             ++row;
         }
@@ -728,6 +733,7 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
         {
             QTableWidgetItem* cmditem  = table->item(row, 0);
             QTableWidgetItem* fileitem = table->item(row, 1);
+            QTableWidgetItem* argitem  = table->item(row, 2);
 
             QString         cmd = cmditem->text();
             AppLauncherData d   = fileitem->data(Qt::UserRole).value<AppLauncherData>();
@@ -742,6 +748,7 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
                 cmditem->setText(cmd);
                 fileitem->setText(d.file);
                 fileitem->setData(Qt::UserRole, QVariant::fromValue(d));
+                argitem->setText(d.arguments);
             }
         }
     });
@@ -762,10 +769,12 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
 
             QTableWidgetItem* cmditem  = new QTableWidgetItem(cmd);
             QTableWidgetItem* fileitem = new QTableWidgetItem(d.file);
+            QTableWidgetItem* argitem  = new QTableWidgetItem(d.arguments);
             fileitem->setData(Qt::UserRole, QVariant::fromValue(d));
 
             table->setItem(row, 0, cmditem);
             table->setItem(row, 1, fileitem);
+            table->setItem(row, 2, argitem);
         }
     });
 

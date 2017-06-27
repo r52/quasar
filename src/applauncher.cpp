@@ -93,18 +93,21 @@ void AppLauncher::handleCommand(const QJsonObject& req, QWebSocket* sender)
         }
         else
         {
-            // treat as file
+            qInfo() << "Launching " << cmd << d.arguments;
+
+            // treat as file/command
             QFileInfo info(cmd);
 
             if (info.exists())
             {
-                qInfo() << "Launching path " << info.canonicalFilePath();
-
-                QProcess::startDetached(info.canonicalFilePath(), QStringList() << d.arguments, d.startpath);
+                cmd = info.canonicalFilePath();
             }
-            else
+
+            bool result = QProcess::startDetached(cmd, QStringList() << d.arguments, d.startpath);
+
+            if (!result)
             {
-                qWarning() << "Path " << cmd << " does not exist.";
+                qWarning() << "Failed to launch " << cmd;
             }
         }
     }
