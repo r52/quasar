@@ -11,6 +11,17 @@
 
 uintmax_t DataPlugin::_uid = 0;
 
+DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QString path, QObject* parent /*= Q_NULLPTR*/)
+    : QObject(parent), m_plugin(p), m_destroyfunc(destroyfunc), m_libpath(path)
+{
+    if (nullptr == m_plugin)
+    {
+        throw std::invalid_argument("null plugin struct");
+    }
+
+    qRegisterMetaType<DataSource>("DataSource");
+}
+
 DataPlugin::~DataPlugin()
 {
     if (nullptr != m_plugin->shutdown)
@@ -121,7 +132,7 @@ bool DataPlugin::setupPlugin()
             if (source.refreshmsec < 0)
             {
                 source.locks = new DataLock;
-                connect(this, &DataPlugin::dataReady, this, &DataPlugin::sendDataToSubscribers);
+                connect(this, &DataPlugin::dataReady, this, &DataPlugin::sendDataToSubscribers, Qt::QueuedConnection);
             }
         }
     }
@@ -399,8 +410,6 @@ void DataPlugin::emitDataReady(QString source)
 
     if (nullptr != data.locks)
     {
-        data.locks->ready = true;
-
         emit dataReady(data);
     }
 }
@@ -419,21 +428,8 @@ void DataPlugin::waitDataProcessed(QString source)
     {
         std::unique_lock<std::mutex> lk(data.locks->mutex);
         data.locks->cv.wait(lk, [&data] { return data.locks->processed; });
-
-        data.locks->ready     = false;
         data.locks->processed = false;
     }
-}
-
-DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QString path, QObject* parent /*= Q_NULLPTR*/)
-    : QObject(parent), m_plugin(p), m_destroyfunc(destroyfunc), m_libpath(path)
-{
-    if (nullptr == m_plugin)
-    {
-        throw std::invalid_argument("null plugin struct");
-    }
-
-    qRegisterMetaType<DataSource>("DataSource");
 }
 
 void DataPlugin::createTimer(DataSource& data)

@@ -41,7 +41,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     data = dat;
 
     // No frame/border, no taskbar button
-    Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::SubWindow | Qt::WindowDoesNotAcceptFocus;
+    Qt::WindowFlags flags = Qt::FramelessWindowHint | Qt::SubWindow;
 
     webview = new QuasarWebView(this);
 

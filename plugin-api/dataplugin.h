@@ -26,7 +26,6 @@ struct DataLock
 {
     std::mutex              mutex;
     std::condition_variable cv;
-    bool                    ready     = false;
     bool                    processed = false;
 };
 

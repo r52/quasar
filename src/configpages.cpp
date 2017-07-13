@@ -59,7 +59,7 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
                                      << "Info"
                                      << "Warning"
                                      << "Critical");
-    logCombo->setCurrentIndex(settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_LOG_INFO).toInt());
+    logCombo->setCurrentIndex(settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt());
 
     QHBoxLayout* logLayout = new QHBoxLayout;
     logLayout->addWidget(logLabel);

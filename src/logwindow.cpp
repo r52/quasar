@@ -50,7 +50,7 @@ void open_log_file()
 void msg_handler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
 {
     QSettings setting;
-    int       loglevel = setting.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_LOG_INFO).toInt();
+    int       loglevel = setting.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
     bool      logFile  = setting.value(QUASAR_CONFIG_LOGFILE, false).toBool();
     bool      print    = false;
 
