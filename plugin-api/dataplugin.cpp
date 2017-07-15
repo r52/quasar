@@ -18,8 +18,6 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
     {
         throw std::invalid_argument("null plugin struct");
     }
-
-    qRegisterMetaType<DataSource>("DataSource");
 }
 
 DataPlugin::~DataPlugin()
@@ -30,21 +28,12 @@ DataPlugin::~DataPlugin()
     }
 
     // Do some explicit cleanup
-    for (DataSource& src : m_datasources)
+    for (auto& src : m_datasources)
     {
-        if (nullptr != src.timer)
-        {
-            delete src.timer;
-            src.timer = nullptr;
-        }
+        src.second.timer.reset();
+        src.second.locks.reset();
 
-        if (nullptr != src.locks)
-        {
-            delete src.locks;
-            src.locks = nullptr;
-        }
-
-        src.subscribers.clear();
+        src.second.subscribers.clear();
     }
 
     // plugin is responsible for cleanup of quasar_plugin_info_t*
@@ -114,7 +103,7 @@ bool DataPlugin::setupPlugin()
     {
         for (unsigned int i = 0; i < m_plugin->numDataSources; i++)
         {
-            if (m_datasources.contains(m_plugin->dataSources[i].dataSrc))
+            if (m_datasources.count(m_plugin->dataSources[i].dataSrc))
             {
                 qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << m_plugin->dataSources[i].dataSrc << "'";
                 continue;
@@ -131,8 +120,8 @@ bool DataPlugin::setupPlugin()
             // If data source is plugin signaled
             if (source.refreshmsec < 0)
             {
-                source.locks = new DataLock;
-                connect(this, &DataPlugin::dataReady, this, &DataPlugin::sendDataToSubscribers, Qt::QueuedConnection);
+                source.locks.reset(new DataLock);
+                connect(this, &DataPlugin::dataReady, this, &DataPlugin::sendDataToSubscribersByName, Qt::QueuedConnection);
             }
         }
     }
@@ -187,7 +176,7 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString w
 {
     if (subscriber)
     {
-        if (!m_datasources.contains(source))
+        if (!m_datasources.count(source))
         {
             qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
             return false;
@@ -230,19 +219,15 @@ void DataPlugin::removeSubscriber(QWebSocket* subscriber)
         while (it != m_datasources.end())
         {
             // Log if unsubscribed succeeded
-            if (it->subscribers.remove(subscriber))
+            if (it->second.subscribers.remove(subscriber))
             {
-                qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it.key();
+                qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it->first;
             }
 
             // Stop timer if no subscribers
-            if (it->subscribers.isEmpty())
+            if (it->second.subscribers.isEmpty())
             {
-                if (nullptr != it->timer)
-                {
-                    delete it->timer;
-                    it->timer = nullptr;
-                }
+                it->second.timer.reset();
             }
 
             ++it;
@@ -254,7 +239,7 @@ void DataPlugin::pollAndSendData(QString source, QWebSocket* subscriber, QString
 {
     if (subscriber)
     {
-        if (!m_datasources.contains(source))
+        if (!m_datasources.count(source))
         {
             qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
             return;
@@ -304,7 +289,7 @@ void DataPlugin::sendDataToSubscribers(const DataSource& source)
 
 void DataPlugin::setDataSourceEnabled(QString source, bool enabled)
 {
-    if (!m_datasources.contains(source))
+    if (!m_datasources.count(source))
     {
         qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
         return;
@@ -323,17 +308,16 @@ void DataPlugin::setDataSourceEnabled(QString source, bool enabled)
         // Create timer if not exist
         createTimer(data);
     }
-    else if (nullptr != data.timer)
+    else if (data.timer)
     {
         // Delete the timer if enabled
-        delete data.timer;
-        data.timer = nullptr;
+        data.timer.reset();
     }
 }
 
 void DataPlugin::setDataSourceRefresh(QString source, int64_t msec)
 {
-    if (!m_datasources.contains(source))
+    if (!m_datasources.count(source))
     {
         qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
         return;
@@ -400,7 +384,7 @@ void DataPlugin::updatePluginSettings()
 
 void DataPlugin::emitDataReady(QString source)
 {
-    if (!m_datasources.contains(source))
+    if (!m_datasources.count(source))
     {
         qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
         return;
@@ -408,15 +392,15 @@ void DataPlugin::emitDataReady(QString source)
 
     DataSource& data = m_datasources[source];
 
-    if (nullptr != data.locks)
+    if (data.locks)
     {
-        emit dataReady(data);
+        emit dataReady(source);
     }
 }
 
 void DataPlugin::waitDataProcessed(QString source)
 {
-    if (!m_datasources.contains(source))
+    if (!m_datasources.count(source))
     {
         qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
         return;
@@ -424,7 +408,7 @@ void DataPlugin::waitDataProcessed(QString source)
 
     DataSource& data = m_datasources[source];
 
-    if (nullptr != data.locks)
+    if (data.locks)
     {
         std::unique_lock<std::mutex> lk(data.locks->mutex);
         data.locks->cv.wait(lk, [&data] { return data.locks->processed; });
@@ -432,13 +416,26 @@ void DataPlugin::waitDataProcessed(QString source)
     }
 }
 
+void DataPlugin::sendDataToSubscribersByName(QString source)
+{
+    if (!m_datasources.count(source))
+    {
+        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        return;
+    }
+
+    DataSource& data = m_datasources[source];
+
+    sendDataToSubscribers(data);
+}
+
 void DataPlugin::createTimer(DataSource& data)
 {
     if (data.enabled && !data.timer)
     {
         // Initialize timer not done so
-        data.timer = new QTimer(this);
-        connect(data.timer, &QTimer::timeout, [this, &data] { sendDataToSubscribers(data); });
+        data.timer.reset(new QTimer(this));
+        connect(data.timer.get(), &QTimer::timeout, [this, &data] { sendDataToSubscribers(data); });
 
         data.timer->start(data.refreshmsec);
     }

@@ -9,6 +9,10 @@
 #include <memory>
 #include <mutex>
 
+#define QUASAR_DP_ENABLED_PREFIX "enabled_"
+#define QUASAR_DP_REFRESH_PREFIX "refresh_"
+#define QUASAR_DP_CUSTOM_PREFIX "custom_"
+
 #ifdef PLUGINAPI_LIB
 #define PAPI_EXPORT Q_DECL_EXPORT
 #else
@@ -17,10 +21,6 @@
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 QT_FORWARD_DECLARE_CLASS(QTimer)
-
-#define QUASAR_DP_ENABLED_PREFIX "enabled_"
-#define QUASAR_DP_REFRESH_PREFIX "refresh_"
-#define QUASAR_DP_CUSTOM_PREFIX "custom_"
 
 struct DataLock
 {
@@ -31,18 +31,16 @@ struct DataLock
 
 struct DataSource
 {
-    bool              enabled;
-    QString           key;
-    size_t            uid;
-    int64_t           refreshmsec;
-    QTimer*           timer = nullptr;
-    QSet<QWebSocket*> subscribers;
-    DataLock*         locks = nullptr;
+    bool                      enabled;
+    QString                   key;
+    size_t                    uid;
+    int64_t                   refreshmsec;
+    std::unique_ptr<QTimer>   timer;
+    QSet<QWebSocket*>         subscribers;
+    std::unique_ptr<DataLock> locks;
 };
 
-Q_DECLARE_METATYPE(DataSource);
-
-using DataSourceMapType = QMap<QString, DataSource>;
+using DataSourceMapType = std::map<QString, DataSource>;
 
 class PAPI_EXPORT DataPlugin : public QObject
 {
@@ -64,6 +62,7 @@ public:
     void removeSubscriber(QWebSocket* subscriber);
 
     void pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName);
+    void sendDataToSubscribers(const DataSource& source);
 
     QString getLibPath() { return m_libpath; };
     QString getName() { return m_name; };
@@ -89,10 +88,10 @@ public:
     void waitDataProcessed(QString source);
 
 signals:
-    void dataReady(const DataSource& source);
+    void dataReady(QString source);
 
 private slots:
-    void sendDataToSubscribers(const DataSource& source);
+    void sendDataToSubscribersByName(QString source);
 
 private:
     DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QString path, QObject* parent = Q_NULLPTR);

@@ -373,17 +373,17 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
 
     while (it != sources.end())
     {
-        bool sourceEnabled = settings.value(plugin->getSettingsCode(QUASAR_DP_ENABLED_PREFIX + it.key()), true).toBool();
+        bool sourceEnabled = settings.value(plugin->getSettingsCode(QUASAR_DP_ENABLED_PREFIX + it->first), true).toBool();
 
         QHBoxLayout* dataLayout = new QHBoxLayout;
 
         // create data source rate settings
-        QCheckBox* sourceCheckBox = new QCheckBox(it.key());
-        sourceCheckBox->setObjectName(QUASAR_DP_ENABLED_PREFIX + it.key());
+        QCheckBox* sourceCheckBox = new QCheckBox(it->first);
+        sourceCheckBox->setObjectName(QUASAR_DP_ENABLED_PREFIX + it->first);
         sourceCheckBox->setChecked(sourceEnabled);
 
         // Signaled sources cannot be disabled
-        if (it->refreshmsec < 0)
+        if (it->second.refreshmsec < 0)
         {
             sourceCheckBox->setEnabled(false);
         }
@@ -391,14 +391,14 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
         dataLayout->addWidget(sourceCheckBox);
 
         // Only create refresh setting if the data source is subscription based
-        if (it->refreshmsec > 0)
+        if (it->second.refreshmsec > 0)
         {
             QSpinBox* upSpin = new QSpinBox;
-            upSpin->setObjectName(QUASAR_DP_REFRESH_PREFIX + it.key());
+            upSpin->setObjectName(QUASAR_DP_REFRESH_PREFIX + it->first);
             upSpin->setMinimum(1);
             upSpin->setMaximum(INT_MAX);
             upSpin->setSingleStep(1);
-            upSpin->setValue(it.value().refreshmsec);
+            upSpin->setValue(it->second.refreshmsec);
             upSpin->setSuffix("ms");
             upSpin->setEnabled(sourceEnabled);
 
