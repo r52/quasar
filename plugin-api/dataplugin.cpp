@@ -18,71 +18,6 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
     {
         throw std::invalid_argument("null plugin struct");
     }
-}
-
-DataPlugin::~DataPlugin()
-{
-    if (nullptr != m_plugin->shutdown)
-    {
-        m_plugin->shutdown(this);
-    }
-
-    // Do some explicit cleanup
-    for (auto& src : m_datasources)
-    {
-        src.second.timer.reset();
-        src.second.locks.reset();
-
-        src.second.subscribers.clear();
-    }
-
-    // plugin is responsible for cleanup of quasar_plugin_info_t*
-    m_destroyfunc(m_plugin);
-    m_plugin = nullptr;
-}
-
-DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
-{
-    QLibrary lib(libpath);
-
-    if (!lib.load())
-    {
-        qWarning() << lib.errorString();
-        return nullptr;
-    }
-
-    plugin_load    loadfunc    = (plugin_load) lib.resolve("quasar_plugin_load");
-    plugin_destroy destroyfunc = (plugin_destroy) lib.resolve("quasar_plugin_destroy");
-
-    if (loadfunc && destroyfunc)
-    {
-        quasar_plugin_info_t* p = loadfunc();
-
-        if (p && p->init && p->shutdown && p->get_data)
-        {
-            DataPlugin* plugin = new DataPlugin(p, destroyfunc, libpath, parent);
-            return plugin;
-        }
-        else
-        {
-            qWarning() << "quasar_plugin_load failed in" << libpath;
-        }
-    }
-    else
-    {
-        qWarning() << "Failed to resolve plugin API in" << libpath;
-    }
-
-    return nullptr;
-}
-
-bool DataPlugin::setupPlugin()
-{
-    if (m_Initialized)
-    {
-        qDebug() << "Plugin '" << m_code << "' already initialized";
-        return true;
-    }
 
     m_name    = m_plugin->name;
     m_code    = m_plugin->code;
@@ -92,8 +27,7 @@ bool DataPlugin::setupPlugin()
 
     if (m_code.isEmpty() || m_name.isEmpty())
     {
-        qWarning() << "Invalid plugin name or code in file " << m_libpath;
-        return false;
+        throw std::runtime_error("Invalid plugin name or code");
     }
 
     QSettings settings;
@@ -163,13 +97,70 @@ bool DataPlugin::setupPlugin()
     // initialize the plugin
     if (!m_plugin->init(this))
     {
-        qWarning() << "Failed to initialize plugin" << m_libpath;
-        return false;
+        throw std::runtime_error("plugin init() failed");
+    }
+}
+
+DataPlugin::~DataPlugin()
+{
+    if (nullptr != m_plugin->shutdown)
+    {
+        m_plugin->shutdown(this);
     }
 
-    m_Initialized = true;
+    // Do some explicit cleanup
+    for (auto& src : m_datasources)
+    {
+        src.second.timer.reset();
+        src.second.locks.reset();
 
-    return true;
+        src.second.subscribers.clear();
+    }
+
+    // plugin is responsible for cleanup of quasar_plugin_info_t*
+    m_destroyfunc(m_plugin);
+    m_plugin = nullptr;
+}
+
+DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
+{
+    QLibrary lib(libpath);
+
+    if (!lib.load())
+    {
+        qWarning() << lib.errorString();
+        return nullptr;
+    }
+
+    plugin_load    loadfunc    = (plugin_load) lib.resolve("quasar_plugin_load");
+    plugin_destroy destroyfunc = (plugin_destroy) lib.resolve("quasar_plugin_destroy");
+
+    if (loadfunc && destroyfunc)
+    {
+        quasar_plugin_info_t* p = loadfunc();
+
+        if (p && p->init && p->shutdown && p->get_data)
+        {
+            try
+            {
+                DataPlugin* plugin = new DataPlugin(p, destroyfunc, libpath, parent);
+                return plugin;
+            } catch (std::exception e)
+            {
+                qWarning() << "Exception: '" << e.what() << "' while initializing " << libpath;
+            }
+        }
+        else
+        {
+            qWarning() << "quasar_plugin_load failed in" << libpath;
+        }
+    }
+    else
+    {
+        qWarning() << "Failed to resolve plugin API in" << libpath;
+    }
+
+    return nullptr;
 }
 
 bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString widgetName)

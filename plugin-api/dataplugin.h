@@ -52,11 +52,9 @@ public:
 
     ~DataPlugin();
 
-    static uintmax_t _uid;
-
+    // statics
+    static uintmax_t   _uid;
     static DataPlugin* load(QString libpath, QObject* parent = Q_NULLPTR);
-
-    bool setupPlugin();
 
     bool addSubscriber(QString source, QWebSocket* subscriber, QString widgetName);
     void removeSubscriber(QWebSocket* subscriber);
@@ -103,8 +101,6 @@ private:
     plugin_destroy        m_destroyfunc;
 
     std::unique_ptr<quasar_settings_t> m_settings;
-
-    bool m_Initialized = false;
 
     QString m_libpath;
     QString m_name;
