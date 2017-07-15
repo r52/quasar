@@ -30,7 +30,6 @@ WidgetRegistry::WidgetRegistry(QObject* parent)
 
 WidgetRegistry::~WidgetRegistry()
 {
-    qDeleteAll(m_widgetMap);
     m_widgetMap.clear();
 }
 
@@ -76,7 +75,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
             WebWidget* widget = new WebWidget(widgetName, dat);
 
-            m_widgetMap.insert(widgetName, widget);
+            m_widgetMap.insert(std::make_pair(widgetName, widget));
 
             connect(widget, &WebWidget::WebWidgetClosed, this, &WidgetRegistry::closeWebWidget);
             widget->show();
@@ -103,7 +102,7 @@ WebWidget* WidgetRegistry::findWidget(QString widgetName)
 
     if (it != m_widgetMap.end())
     {
-        return *it;
+        return it->second.get();
     }
 
     return nullptr;
@@ -177,7 +176,9 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
 
     if (it != m_widgetMap.end())
     {
-        Q_ASSERT((*it) == widget);
+        Q_ASSERT((it->second.get()) == widget);
+        // Release unique_ptr ownership to allow Qt gc to kick in
+        it->second.release();
         m_widgetMap.erase(it);
     }
 

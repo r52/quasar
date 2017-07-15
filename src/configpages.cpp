@@ -143,11 +143,11 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     // build plugin list
     DataPluginMapType& pluginmap = m_quasar->getDataServer()->getPlugins();
 
-    for (DataPlugin* plugin : pluginmap)
+    for (auto& p : pluginmap)
     {
         QListWidgetItem* item = new QListWidgetItem(pluginList);
-        item->setText(plugin->getName());
-        item->setData(Qt::UserRole, QVariant::fromValue(plugin));
+        item->setText(p.second->getName());
+        item->setData(Qt::UserRole, QVariant::fromValue(p.second.get()));
     }
 
     connect(pluginList, &QListWidget::itemClicked, this, &GeneralPage::pluginListClicked);
@@ -321,10 +321,10 @@ PluginPage::PluginPage(QObject* quasar, QWidget* parent)
     // build plugin list
     DataPluginMapType& pluginmap = m_quasar->getDataServer()->getPlugins();
 
-    for (DataPlugin* plugin : pluginmap)
+    for (auto& p : pluginmap)
     {
-        pluginCombo->addItem(plugin->getName(), QVariant::fromValue(plugin));
-        pagesWidget->addWidget(new DataPluginPage(plugin));
+        pluginCombo->addItem(p.second->getName(), QVariant::fromValue(p.second.get()));
+        pagesWidget->addWidget(new DataPluginPage(p.second.get()));
     }
 
     connect(pluginCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](int index) {
@@ -435,19 +435,19 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
             QHBoxLayout* entryLayout = new QHBoxLayout;
 
             QLabel* label = new QLabel;
-            label->setText(it->description);
+            label->setText(it->second.description);
             entryLayout->addWidget(label);
 
-            switch (it->type)
+            switch (it->second.type)
             {
                 case QUASAR_SETTING_ENTRY_INT:
                 {
                     QSpinBox* s = new QSpinBox;
-                    s->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.key());
-                    s->setMinimum(it->inttype.min);
-                    s->setMaximum(it->inttype.max);
-                    s->setSingleStep(it->inttype.step);
-                    s->setValue(it->inttype.val);
+                    s->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it->first);
+                    s->setMinimum(it->second.inttype.min);
+                    s->setMaximum(it->second.inttype.max);
+                    s->setSingleStep(it->second.inttype.step);
+                    s->setValue(it->second.inttype.val);
 
                     connect(s, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int i) { this->m_plugSettingsModified = true; });
 
@@ -458,11 +458,11 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
                 case QUASAR_SETTING_ENTRY_DOUBLE:
                 {
                     QDoubleSpinBox* d = new QDoubleSpinBox;
-                    d->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.key());
-                    d->setMinimum(it->doubletype.min);
-                    d->setMaximum(it->doubletype.max);
-                    d->setSingleStep(it->doubletype.step);
-                    d->setValue(it->doubletype.val);
+                    d->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it->first);
+                    d->setMinimum(it->second.doubletype.min);
+                    d->setMaximum(it->second.doubletype.max);
+                    d->setSingleStep(it->second.doubletype.step);
+                    d->setValue(it->second.doubletype.val);
 
                     connect(d, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](double d) { this->m_plugSettingsModified = true; });
 
@@ -473,8 +473,8 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
                 case QUASAR_SETTING_ENTRY_BOOL:
                 {
                     QCheckBox* b = new QCheckBox;
-                    b->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.key());
-                    b->setChecked(it->booltype.val);
+                    b->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it->first);
+                    b->setChecked(it->second.booltype.val);
 
                     connect(b, &QCheckBox::toggled, [this](bool state) { this->m_plugSettingsModified = true; });
 

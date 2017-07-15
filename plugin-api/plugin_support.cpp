@@ -175,7 +175,7 @@ quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name,
         entry.inttype.step = step;
         entry.inttype.def = entry.inttype.val = dflt;
 
-        settings->map.insert(name, entry);
+        settings->map.insert(std::make_pair(name, entry));
 
         return settings;
     }
@@ -193,7 +193,7 @@ quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name
         entry.description  = description;
         entry.booltype.def = entry.booltype.val = dflt;
 
-        settings->map.insert(name, entry);
+        settings->map.insert(std::make_pair(name, entry));
 
         return settings;
     }
@@ -214,7 +214,7 @@ quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* na
         entry.doubletype.step = step;
         entry.doubletype.def = entry.doubletype.val = dflt;
 
-        settings->map.insert(name, entry);
+        settings->map.insert(std::make_pair(name, entry));
 
         return settings;
     }
@@ -224,7 +224,7 @@ quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* na
 
 intmax_t quasar_get_int(quasar_settings_t* settings, const char* name)
 {
-    if (settings && settings->map.contains(name))
+    if (settings && settings->map.count(name))
     {
         return settings->map[name].inttype.val;
     }
@@ -234,7 +234,7 @@ intmax_t quasar_get_int(quasar_settings_t* settings, const char* name)
 
 uintmax_t quasar_get_uint(quasar_settings_t* settings, const char* name)
 {
-    if (settings && settings->map.contains(name))
+    if (settings && settings->map.count(name))
     {
         return settings->map[name].inttype.val;
     }
@@ -244,7 +244,7 @@ uintmax_t quasar_get_uint(quasar_settings_t* settings, const char* name)
 
 bool quasar_get_bool(quasar_settings_t* settings, const char* name)
 {
-    if (settings && settings->map.contains(name))
+    if (settings && settings->map.count(name))
     {
         return settings->map[name].booltype.val;
     }
@@ -254,7 +254,7 @@ bool quasar_get_bool(quasar_settings_t* settings, const char* name)
 
 double quasar_get_double(quasar_settings_t* settings, const char* name)
 {
-    if (settings && settings->map.contains(name))
+    if (settings && settings->map.count(name))
     {
         return settings->map[name].doubletype.val;
     }

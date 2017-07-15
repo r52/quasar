@@ -1,11 +1,12 @@
 #pragma once
 
-#include <QMap>
 #include <QObject>
+#include <map>
+#include <memory>
 
 QT_FORWARD_DECLARE_CLASS(WebWidget);
 
-using WidgetMapType = QMap<QString, WebWidget*>;
+using WidgetMapType = std::map<QString, std::unique_ptr<WebWidget>>;
 
 class WidgetRegistry : public QObject
 {

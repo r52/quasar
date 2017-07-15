@@ -49,7 +49,6 @@ DataServer::~DataServer()
 {
     m_reqcallmap.clear();
 
-    qDeleteAll(m_plugins);
     m_plugins.clear();
 
     m_pWebSocketServer->close();
@@ -57,7 +56,7 @@ DataServer::~DataServer()
 
 bool DataServer::addHandler(QString type, HandlerFuncType handler)
 {
-    if (m_reqcallmap.contains(type))
+    if (m_reqcallmap.count(type))
     {
         qWarning() << "Handler for request type " << type << " already exists";
         return false;
@@ -98,15 +97,15 @@ void DataServer::loadDataPlugins()
         {
             qWarning() << "The 'global' plugin code is reserved. Unloading" << libpath;
         }
-        else if (m_plugins.contains(plugin->getCode()))
+        else if (m_plugins.count(plugin->getCode()))
         {
             qWarning() << "Plugin with code " << plugin->getCode() << " already loaded. Unloading" << libpath;
         }
         else
         {
             qInfo() << "Plugin " << plugin->getCode() << " loaded.";
-            m_plugins[plugin->getCode()] = plugin;
-            plugin                       = nullptr;
+            m_plugins[plugin->getCode()].reset(plugin);
+            plugin = nullptr;
         }
 
         if (plugin != nullptr)
@@ -126,7 +125,7 @@ void DataServer::handleRequest(const QJsonObject& req, QWebSocket* sender)
 
     QString type = req["type"].toString();
 
-    if (!m_reqcallmap.contains(type))
+    if (!m_reqcallmap.count(type))
     {
         qWarning() << "Unknown request type";
     }
@@ -142,7 +141,7 @@ void DataServer::handleSubscribeReq(const QJsonObject& req, QWebSocket* sender)
     QString plugin     = req["plugin"].toString();
     QString sources    = req["source"].toString();
 
-    if (!m_plugins.contains(plugin))
+    if (!m_plugins.count(plugin))
     {
         qWarning() << "Unknown plugin " << plugin;
         return;
@@ -169,7 +168,7 @@ void DataServer::handlePollReq(const QJsonObject& req, QWebSocket* sender)
     QString plugin     = req["plugin"].toString();
     QString source     = req["source"].toString();
 
-    if (!m_plugins.contains(plugin))
+    if (!m_plugins.count(plugin))
     {
         qWarning() << "Unknown plugin " << plugin;
         return;
@@ -211,9 +210,9 @@ void DataServer::socketDisconnected()
     QWebSocket* pClient = qobject_cast<QWebSocket*>(sender());
     if (pClient)
     {
-        for (DataPlugin* plugin : m_plugins)
+        for (auto& p : m_plugins)
         {
-            plugin->removeSubscriber(pClient);
+            p.second->removeSubscriber(pClient);
         }
 
         pClient->deleteLater();

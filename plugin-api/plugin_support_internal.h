@@ -1,6 +1,7 @@
 #pragma once
 
-#include <QMap>
+#include <QString>
+#include <map>
 
 enum QuasarSettingEntryType
 {
@@ -44,5 +45,5 @@ struct quasar_setting_def_t
 
 struct quasar_settings_t
 {
-    QMap<QString, quasar_setting_def_t> map;
+    std::map<QString, quasar_setting_def_t> map;
 };

@@ -2,12 +2,12 @@
 
 #include <plugin_types.h>
 
-#include <QMap>
 #include <QObject>
-#include <QSet>
 #include <condition_variable>
+#include <map>
 #include <memory>
 #include <mutex>
+#include <set>
 
 #define QUASAR_DP_ENABLED_PREFIX "enabled_"
 #define QUASAR_DP_REFRESH_PREFIX "refresh_"
@@ -36,7 +36,7 @@ struct DataSource
     size_t                    uid;
     int64_t                   refreshmsec;
     std::unique_ptr<QTimer>   timer;
-    QSet<QWebSocket*>         subscribers;
+    std::set<QWebSocket*>     subscribers;
     std::unique_ptr<DataLock> locks;
 };
 

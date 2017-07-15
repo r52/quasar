@@ -72,18 +72,18 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
 
             while (it != m_settings->map.end())
             {
-                switch (it->type)
+                switch (it->second.type)
                 {
                     case QUASAR_SETTING_ENTRY_INT:
-                        it->inttype.val = settings.value(getSettingsCode(it.key()), it->inttype.def).toInt();
+                        it->second.inttype.val = settings.value(getSettingsCode(it->first), it->second.inttype.def).toInt();
                         break;
 
                     case QUASAR_SETTING_ENTRY_DOUBLE:
-                        it->doubletype.val = settings.value(getSettingsCode(it.key()), it->doubletype.def).toDouble();
+                        it->second.doubletype.val = settings.value(getSettingsCode(it->first), it->second.doubletype.def).toDouble();
                         break;
 
                     case QUASAR_SETTING_ENTRY_BOOL:
-                        it->booltype.val = settings.value(getSettingsCode(it.key()), it->booltype.def).toBool();
+                        it->second.booltype.val = settings.value(getSettingsCode(it->first), it->second.booltype.def).toBool();
                         break;
                 }
 
@@ -178,7 +178,7 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString w
 
         if (data.refreshmsec != 0)
         {
-            data.subscribers << subscriber;
+            data.subscribers.insert(subscriber);
 
             if (data.refreshmsec > 0)
             {
@@ -210,13 +210,13 @@ void DataPlugin::removeSubscriber(QWebSocket* subscriber)
         while (it != m_datasources.end())
         {
             // Log if unsubscribed succeeded
-            if (it->second.subscribers.remove(subscriber))
+            if (it->second.subscribers.erase(subscriber))
             {
                 qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it->first;
             }
 
             // Stop timer if no subscribers
-            if (it->second.subscribers.isEmpty())
+            if (it->second.subscribers.empty())
             {
                 it->second.timer.reset();
             }
@@ -253,13 +253,13 @@ void DataPlugin::sendDataToSubscribers(const DataSource& source)
     // TODO maybe needs locks
 
     // Only send if there are subscribers
-    if (!source.subscribers.isEmpty())
+    if (!source.subscribers.empty())
     {
         QString message = craftDataMessage(source);
 
         if (!message.isEmpty())
         {
-            for (QWebSocket* sub : qAsConst(source.subscribers))
+            for (auto sub : source.subscribers)
             {
                 sub->sendTextMessage(message);
             }

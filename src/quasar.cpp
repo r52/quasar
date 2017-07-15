@@ -84,9 +84,9 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 
             WidgetMapType& widgets = reg->getWidgets();
 
-            for (WebWidget* widget : widgets)
+            for (auto& w : widgets)
             {
-                widgetListMenu->addMenu(widget->getMenu());
+                widgetListMenu->addMenu(w.second->getMenu());
             }
             break;
         }
