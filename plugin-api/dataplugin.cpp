@@ -54,7 +54,7 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
             // If data source is plugin signaled
             if (source.refreshmsec < 0)
             {
-                source.locks.reset(new DataLock);
+                source.locks = std::make_unique<DataLock>();
                 connect(this, &DataPlugin::dataReady, this, &DataPlugin::sendDataToSubscribersByName, Qt::QueuedConnection);
             }
         }
@@ -425,7 +425,7 @@ void DataPlugin::createTimer(DataSource& data)
     if (data.enabled && !data.timer)
     {
         // Initialize timer not done so
-        data.timer.reset(new QTimer(this));
+        data.timer = std::make_unique<QTimer>(this);
         connect(data.timer.get(), &QTimer::timeout, [this, &data] { sendDataToSubscribers(data); });
 
         data.timer->start(data.refreshmsec);
