@@ -28,16 +28,16 @@ DataServer::DataServer(QObject* parent)
     QSettings settings;
     quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
-    if (m_pWebSocketServer->listen(QHostAddress::LocalHost, port))
+    if (!m_pWebSocketServer->listen(QHostAddress::LocalHost, port))
+    {
+        qWarning() << "Data server failed to bind port" << port;
+    }
+    else
     {
         qInfo() << "Data server running locally on port" << port;
         connect(m_pWebSocketServer, &QWebSocketServer::newConnection, this, &DataServer::onNewConnection);
 
         loadDataPlugins();
-    }
-    else
-    {
-        qWarning() << "Data server failed to bind port" << port;
     }
 
     using namespace std::placeholders;
@@ -128,11 +128,10 @@ void DataServer::handleRequest(const QJsonObject& req, QWebSocket* sender)
     if (!m_reqcallmap.count(type))
     {
         qWarning() << "Unknown request type";
+        return;
     }
-    else
-    {
-        m_reqcallmap[type](req, sender);
-    }
+
+    m_reqcallmap[type](req, sender);
 }
 
 void DataServer::handleSubscribeReq(const QJsonObject& req, QWebSocket* sender)

@@ -66,11 +66,10 @@ void Quasar::openWebWidget()
     if (!fname.isNull())
     {
         QFileInfo info(fname);
-
         settings.setValue(QUASAR_CONFIG_LASTPATH, info.canonicalPath());
-    }
 
-    reg->loadWebWidget(fname);
+        reg->loadWebWidget(fname);
+    }
 }
 
 void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)

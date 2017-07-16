@@ -135,29 +135,27 @@ DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
     plugin_load    loadfunc    = (plugin_load) lib.resolve("quasar_plugin_load");
     plugin_destroy destroyfunc = (plugin_destroy) lib.resolve("quasar_plugin_destroy");
 
-    if (loadfunc && destroyfunc)
-    {
-        quasar_plugin_info_t* p = loadfunc();
-
-        if (p && p->init && p->shutdown && p->get_data)
-        {
-            try
-            {
-                DataPlugin* plugin = new DataPlugin(p, destroyfunc, libpath, parent);
-                return plugin;
-            } catch (std::exception e)
-            {
-                qWarning() << "Exception: '" << e.what() << "' while initializing " << libpath;
-            }
-        }
-        else
-        {
-            qWarning() << "quasar_plugin_load failed in" << libpath;
-        }
-    }
-    else
+    if (!loadfunc || !destroyfunc)
     {
         qWarning() << "Failed to resolve plugin API in" << libpath;
+        return nullptr;
+    }
+
+    quasar_plugin_info_t* p = loadfunc();
+
+    if (!p || !p->init || !p->shutdown || !p->get_data)
+    {
+        qWarning() << "quasar_plugin_load failed in" << libpath;
+        return nullptr;
+    }
+
+    try
+    {
+        DataPlugin* plugin = new DataPlugin(p, destroyfunc, libpath, parent);
+        return plugin;
+    } catch (std::exception e)
+    {
+        qWarning() << "Exception: '" << e.what() << "' while initializing " << libpath;
     }
 
     return nullptr;
@@ -165,86 +163,88 @@ DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
 
 bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString widgetName)
 {
-    if (subscriber)
-    {
-        if (!m_datasources.count(source))
-        {
-            qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
-            return false;
-        }
-
-        // TODO maybe needs locks
-        DataSource& data = m_datasources[source];
-
-        if (data.refreshmsec != 0)
-        {
-            data.subscribers.insert(subscriber);
-
-            if (data.refreshmsec > 0)
-            {
-                createTimer(data);
-            }
-
-            return true;
-        }
-        else
-        {
-            qWarning() << "Data source " << source << " in plugin " << m_code << " does not support subscriptions";
-        }
-    }
-    else
+    if (!subscriber)
     {
         qCritical() << "Unknown subscriber.";
+        return false;
     }
 
-    return false;
+    if (!m_datasources.count(source))
+    {
+        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
+        return false;
+    }
+
+    // TODO maybe needs locks
+    DataSource& data = m_datasources[source];
+
+    if (data.refreshmsec == 0)
+    {
+        qWarning() << "Data source " << source << " in plugin " << m_code << " does not support subscriptions";
+        return false;
+    }
+
+    data.subscribers.insert(subscriber);
+
+    if (data.refreshmsec > 0)
+    {
+        createTimer(data);
+    }
+
+    return true;
 }
 
 void DataPlugin::removeSubscriber(QWebSocket* subscriber)
 {
-    // Removes subscriber from all data sources
-    if (subscriber)
+    if (!subscriber)
     {
-        auto it = m_datasources.begin();
+        qWarning() << "Null subscriber";
+        return;
+    }
 
-        while (it != m_datasources.end())
+    // Removes subscriber from all data sources
+    auto it = m_datasources.begin();
+
+    while (it != m_datasources.end())
+    {
+        // Log if unsubscribed succeeded
+        if (it->second.subscribers.erase(subscriber))
         {
-            // Log if unsubscribed succeeded
-            if (it->second.subscribers.erase(subscriber))
-            {
-                qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it->first;
-            }
-
-            // Stop timer if no subscribers
-            if (it->second.subscribers.empty())
-            {
-                it->second.timer.reset();
-            }
-
-            ++it;
+            qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it->first;
         }
+
+        // Stop timer if no subscribers
+        if (it->second.subscribers.empty())
+        {
+            it->second.timer.reset();
+        }
+
+        ++it;
     }
 }
 
 void DataPlugin::pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName)
 {
-    if (subscriber)
+    if (!subscriber)
     {
-        if (!m_datasources.count(source))
-        {
-            qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
-            return;
-        }
+        qWarning() << "Null subscriber";
+        return;
+    }
 
-        // TODO maybe needs locks
-        DataSource& data = m_datasources[source];
+    if (!m_datasources.count(source))
+    {
+        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
+        return;
+    }
 
-        QString message = craftDataMessage(data);
+    // TODO maybe needs locks
+    DataSource& data = m_datasources[source];
 
-        if (!message.isEmpty())
-        {
-            subscriber->sendTextMessage(message);
-        }
+    QString message = craftDataMessage(data);
+
+    if (!message.isEmpty())
+    {
+        subscriber->sendTextMessage(message);
     }
 }
 

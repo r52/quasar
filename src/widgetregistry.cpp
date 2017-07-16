@@ -35,65 +35,67 @@ WidgetRegistry::~WidgetRegistry()
 
 bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 {
-    if (!filename.isNull())
+    if (filename.isNull())
     {
-        QFile wgtFile(filename);
-
-        if (!wgtFile.open(QIODevice::ReadOnly))
-        {
-            qWarning() << "Failed to load '" << filename << "'";
-            return false;
-        }
-
-        QByteArray    wgtDat = wgtFile.readAll();
-        QJsonDocument loadDoc(QJsonDocument::fromJson(wgtDat));
-
-        QJsonObject dat       = loadDoc.object();
-        dat[WGT_DEF_FULLPATH] = filename;
-
-        if (!WebWidget::validateWidgetDefinition(dat))
-        {
-            qWarning() << "Invalid widget definition '" << filename << "'";
-        }
-        else if (userAction && !WebWidget::acceptSecurityWarnings(dat))
-        {
-            qWarning() << "Denied loading '" << filename << "'";
-        }
-        else
-        {
-            // Generate unique widget name
-            QString defName    = dat[WGT_DEF_NAME].toString();
-            QString widgetName = defName;
-            int     idx        = 2;
-
-            while (m_widgetMap.count(widgetName) > 0)
-            {
-                widgetName = defName + QString::number(idx++);
-            }
-
-            qInfo() << "Loading widget " << widgetName << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
-
-            WebWidget* widget = new WebWidget(widgetName, dat);
-
-            m_widgetMap.insert(std::make_pair(widgetName, widget));
-
-            connect(widget, &WebWidget::WebWidgetClosed, this, &WidgetRegistry::closeWebWidget);
-            widget->show();
-
-            if (userAction)
-            {
-                // Add to loaded
-                QSettings   settings;
-                QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
-                loaded.append(widget->getFullPath());
-                settings.setValue(QUASAR_CONFIG_LOADED, loaded);
-            }
-
-            return true;
-        }
+        qWarning() << "Null filename";
+        return false;
     }
 
-    return false;
+    QFile wgtFile(filename);
+
+    if (!wgtFile.open(QIODevice::ReadOnly))
+    {
+        qWarning() << "Failed to load '" << filename << "'";
+        return false;
+    }
+
+    QByteArray    wgtDat = wgtFile.readAll();
+    QJsonDocument loadDoc(QJsonDocument::fromJson(wgtDat));
+
+    QJsonObject dat       = loadDoc.object();
+    dat[WGT_DEF_FULLPATH] = filename;
+
+    if (!WebWidget::validateWidgetDefinition(dat))
+    {
+        qWarning() << "Invalid widget definition '" << filename << "'";
+        return false;
+    }
+
+    if (userAction && !WebWidget::acceptSecurityWarnings(dat))
+    {
+        qWarning() << "Denied loading '" << filename << "'";
+        return false;
+    }
+
+    // Generate unique widget name
+    QString defName    = dat[WGT_DEF_NAME].toString();
+    QString widgetName = defName;
+    int     idx        = 2;
+
+    while (m_widgetMap.count(widgetName) > 0)
+    {
+        widgetName = defName + QString::number(idx++);
+    }
+
+    qInfo() << "Loading widget " << widgetName << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
+
+    WebWidget* widget = new WebWidget(widgetName, dat);
+
+    m_widgetMap.insert(std::make_pair(widgetName, widget));
+
+    connect(widget, &WebWidget::WebWidgetClosed, this, &WidgetRegistry::closeWebWidget);
+    widget->show();
+
+    if (userAction)
+    {
+        // Add to loaded
+        QSettings   settings;
+        QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
+        loaded.append(widget->getFullPath());
+        settings.setValue(QUASAR_CONFIG_LOADED, loaded);
+    }
+
+    return true;
 }
 
 WebWidget* WidgetRegistry::findWidget(QString widgetName)
@@ -113,55 +115,53 @@ void WidgetRegistry::loadCookies()
     QSettings settings;
     QString   cookiesfile = settings.value(QUASAR_CONFIG_COOKIES).toString();
 
-    if (!cookiesfile.isEmpty())
-    {
-        QFile file(cookiesfile);
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            qWarning() << "Failed to load cookies file " << cookiesfile;
-        }
-        else
-        {
-            QWebEngineCookieStore* store = QWebEngineProfile::defaultProfile()->cookieStore();
-
-            // parse netscape format cookies file
-            QTextStream in(&file);
-
-            while (!in.atEnd())
-            {
-                QString line = in.readLine();
-
-                if (line.at(0) == '#')
-                {
-                    // skip comments
-                    continue;
-                }
-
-                QStringList vals = line.split('\t');
-
-                if (vals.count() != NETSCAPE_COOKIE_MAX)
-                {
-                    // ill formatted line
-                    qDebug() << "Ill formatted cookie \"" << line << "\"";
-                    continue;
-                }
-
-                QNetworkCookie cookie(vals[NETSCAPE_COOKIE_NAME].toUtf8(), vals[NETSCAPE_COOKIE_VALUE].toUtf8());
-                cookie.setDomain(vals[NETSCAPE_COOKIE_DOMAIN]);
-                cookie.setExpirationDate(QDateTime::fromSecsSinceEpoch(vals[NETSCAPE_COOKIE_EXP].toLongLong()));
-                cookie.setPath(vals[NETSCAPE_COOKIE_PATH]);
-                cookie.setSecure(vals[NETSCAPE_COOKIE_SECURE] == "TRUE");
-
-                store->setCookie(cookie);
-            }
-
-            qInfo() << "Cookies file " << cookiesfile << "loaded";
-        }
-    }
-    else
+    if (cookiesfile.isEmpty())
     {
         qInfo() << "No cookies loaded";
+        return;
     }
+
+    QFile file(cookiesfile);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qWarning() << "Failed to load cookies file " << cookiesfile;
+        return;
+    }
+
+    QWebEngineCookieStore* store = QWebEngineProfile::defaultProfile()->cookieStore();
+
+    // parse netscape format cookies file
+    QTextStream in(&file);
+
+    while (!in.atEnd())
+    {
+        QString line = in.readLine();
+
+        if (line.at(0) == '#')
+        {
+            // skip comments
+            continue;
+        }
+
+        QStringList vals = line.split('\t');
+
+        if (vals.count() != NETSCAPE_COOKIE_MAX)
+        {
+            // ill formatted line
+            qDebug() << "Ill formatted cookie \"" << line << "\"";
+            continue;
+        }
+
+        QNetworkCookie cookie(vals[NETSCAPE_COOKIE_NAME].toUtf8(), vals[NETSCAPE_COOKIE_VALUE].toUtf8());
+        cookie.setDomain(vals[NETSCAPE_COOKIE_DOMAIN]);
+        cookie.setExpirationDate(QDateTime::fromSecsSinceEpoch(vals[NETSCAPE_COOKIE_EXP].toLongLong()));
+        cookie.setPath(vals[NETSCAPE_COOKIE_PATH]);
+        cookie.setSecure(vals[NETSCAPE_COOKIE_SECURE] == "TRUE");
+
+        store->setCookie(cookie);
+    }
+
+    qInfo() << "Cookies file " << cookiesfile << "loaded";
 }
 
 void WidgetRegistry::closeWebWidget(WebWidget* widget)
