@@ -3,8 +3,7 @@ param (
     [switch]$portable = $false,
     [switch]$installer = $false,
     [string]$name = (git describe --tags --always),
-    [switch]$delete = $false,
-    [int]$qtver = 59
+    [switch]$delete = $false
  )
 
 if (!$skipartifact)
@@ -60,7 +59,7 @@ if ($installer)
 
         if ($env:WIX)
         {
-            & $env:WIX\bin\candle.exe -arch x64 "-dQtver=$qtver" .\deploy\quasar.wxs
+            & $env:WIX\bin\candle.exe -arch x64 .\deploy\quasar.wxs
             & $env:WIX\bin\light.exe -ext WixUIExtension -out $pkgname quasar.wixobj
 
             if ($env:APPVEYOR -eq $true)

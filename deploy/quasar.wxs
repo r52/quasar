@@ -245,7 +245,6 @@
             <Component Id="cmp207D5E680097CF89346CD00DD53828FE" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{2EE0BD18-E9C0-4105-BC12-11F031867E3F}">
                 <File Id="fil0BDA310B43B4E6AB88D99833AE1BEFEB" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_uk.qm"/>
             </Component>
-            <?if $(var.Qtver) > 58 ?>
             <Component Id="cmp35DD45D8BF791FB260F15182EA6DB132" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{07003F6C-3B53-440A-B4B3-F79F6044839B}">
                 <File Id="filBBD3855C116C9EB47E92F139F2137273" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_bg.qm"/>
             </Component>
@@ -258,7 +257,6 @@
             <Component Id="cmpFC1D489CBDB1261EE1B1CA57A3C01051" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{09F9BAA6-4472-4427-994E-4E3B7CFC48C5}">
                 <File Id="fil9683D7C7A71F37F24F7E37DD1004B9EB" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_gd.qm"/>
             </Component>
-            <?endif?>
             <Component Id="cmp0562C39CAB4545F043215EF2B6D652AF" Directory="dirAAB1972211132EB8BFA1D99AC067C3C1" Guid="{A26539E4-E779-4885-9DFC-FDA0BB0A03BA}">
                 <File Id="filA1FAA2AA4752CA2E056E77B58D705229" KeyPath="yes" Source="$(var.pkgsrc)\translations\qtwebengine_locales\am.pak"/>
             </Component>

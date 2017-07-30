@@ -30,7 +30,7 @@ An OS and computer capable of running Chrome.
 
 [![Build status](https://ci.appveyor.com/api/projects/status/yd5l7u53ufo4mur1?svg=true)](https://ci.appveyor.com/project/r52/quasar)
 
-[Qt 5.8 or higher](http://www.qt.io/) and Visual Studio 2015 or higher is required (VS2017 requires Qt 5.9+).
+[Qt 5.9 or higher](http://www.qt.io/) and Visual Studio 2017 is required.
 
 ### Mac/Linux
 
