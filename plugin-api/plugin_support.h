@@ -5,7 +5,7 @@
 #ifdef PLUGINAPI_LIB
 #define SAPI_EXPORT __declspec(dllexport)
 #else
-#define SAPI_EXPORT __declspec(dllimport)
+#define SAPI_EXPORT
 #endif // PLUGINAPI_LIB
 
 #if defined(__cplusplus)

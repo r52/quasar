@@ -133,7 +133,7 @@ void Quasar::createActions()
     logAction = new QAction(tr("L&og"), this);
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);
 
-    aboutAction = new QAction(tr("&About"), this);
+    aboutAction = new QAction(tr("&About Quasar"), this);
 
     connect(aboutAction, &QAction::triggered, [=](bool checked) {
         static QString aboutMsg =

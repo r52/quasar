@@ -9,6 +9,12 @@
 #include <QTimer>
 #include <QtWebSockets/QWebSocket>
 
+// Ensure c strings are null terminated
+// and converted to utf8 QString
+#define CHAR_TO_UTF8(d, x) \
+    x[sizeof(x) - 1] = 0;  \
+    d                = QString::fromUtf8(x);
+
 uintmax_t DataPlugin::_uid = 0;
 
 DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QString path, QObject* parent /*= Q_NULLPTR*/)
@@ -19,11 +25,11 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
         throw std::invalid_argument("null plugin struct");
     }
 
-    m_name    = m_plugin->name;
-    m_code    = m_plugin->code;
-    m_author  = m_plugin->author;
-    m_desc    = m_plugin->description;
-    m_version = m_plugin->version;
+    CHAR_TO_UTF8(m_name, m_plugin->name);
+    CHAR_TO_UTF8(m_code, m_plugin->code);
+    CHAR_TO_UTF8(m_author, m_plugin->author);
+    CHAR_TO_UTF8(m_desc, m_plugin->description);
+    CHAR_TO_UTF8(m_version, m_plugin->version);
 
     if (m_code.isEmpty() || m_name.isEmpty())
     {
@@ -37,16 +43,18 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
     {
         for (unsigned int i = 0; i < m_plugin->numDataSources; i++)
         {
-            if (m_datasources.count(m_plugin->dataSources[i].dataSrc))
+            CHAR_TO_UTF8(QString srcname, m_plugin->dataSources[i].dataSrc);
+
+            if (m_datasources.count(srcname))
             {
-                qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << m_plugin->dataSources[i].dataSrc << "'";
+                qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << srcname << "'";
                 continue;
             }
 
-            qInfo() << "Plugin " << m_code << " registering data source '" << m_plugin->dataSources[i].dataSrc << "'";
+            qInfo() << "Plugin " << m_code << " registering data source '" << srcname << "'";
 
-            DataSource& source = m_datasources[m_plugin->dataSources[i].dataSrc];
-            source.key         = m_plugin->dataSources[i].dataSrc;
+            DataSource& source = m_datasources[srcname];
+            source.key         = srcname;
             source.uid = m_plugin->dataSources[i].uid = ++DataPlugin::_uid;
             source.refreshmsec                        = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), m_plugin->dataSources[i].refreshMsec).toLongLong();
             source.enabled                            = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source.key), true).toBool();

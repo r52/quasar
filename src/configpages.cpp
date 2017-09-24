@@ -687,19 +687,17 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
 
     while (it != appmap->cend())
     {
-        AppLauncherData d;
-
         if (it.value().canConvert<AppLauncherData>())
         {
-            d = it.value().value<AppLauncherData>();
+            auto & [file, start, arg] = it.value().value<AppLauncherData>();
 
             table->insertRow(row);
             QTableWidgetItem* cmditem = new QTableWidgetItem(it.key());
 
-            QTableWidgetItem* fileitem = new QTableWidgetItem(d.file);
+            QTableWidgetItem* fileitem = new QTableWidgetItem(file);
             fileitem->setData(Qt::UserRole, it.value());
 
-            QTableWidgetItem* argitem = new QTableWidgetItem(d.arguments);
+            QTableWidgetItem* argitem = new QTableWidgetItem(arg);
 
             table->setItem(row, 0, cmditem);
             table->setItem(row, 1, fileitem);
