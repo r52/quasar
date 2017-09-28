@@ -454,7 +454,7 @@ QString DataPlugin::craftDataMessage(const DataSource& data)
         return QString();
     }
 
-    if (reply["data"].isUndefined())
+    if (reply["data"].isNull())
     {
         // Allow empty return (for async data)
         return QString();
@@ -467,5 +467,5 @@ QString DataPlugin::craftDataMessage(const DataSource& data)
 
     QJsonDocument doc(reply);
 
-    return QString(doc.toJson());
+    return QString::fromUtf8(doc.toJson());
 }
