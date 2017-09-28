@@ -59,8 +59,8 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
             source.refreshmsec                        = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), m_plugin->dataSources[i].refreshMsec).toLongLong();
             source.enabled                            = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source.key), true).toBool();
 
-            // If data source is plugin signaled
-            if (source.refreshmsec < 0)
+            // If data source is plugin signaled or async poll
+            if (source.refreshmsec <= 0)
             {
                 source.locks = std::make_unique<DataLock>();
                 connect(this, &DataPlugin::dataReady, this, &DataPlugin::sendDataToSubscribersByName, Qt::QueuedConnection);
@@ -186,12 +186,6 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString w
     // TODO maybe needs locks
     DataSource& data = m_datasources[source];
 
-    if (data.refreshmsec == 0)
-    {
-        qWarning() << "Data source " << source << " in plugin " << m_code << " does not support subscriptions";
-        return false;
-    }
-
     data.subscribers.insert(subscriber);
 
     if (data.refreshmsec > 0)
@@ -253,10 +247,13 @@ void DataPlugin::pollAndSendData(QString source, QWebSocket* subscriber, QString
     if (!message.isEmpty())
     {
         subscriber->sendTextMessage(message);
+
+        // Pop client from poll queue if data was readily available
+        data.subscribers.erase(subscriber);
     }
 }
 
-void DataPlugin::sendDataToSubscribers(const DataSource& source)
+void DataPlugin::sendDataToSubscribers(DataSource& source)
 {
     // TODO maybe needs locks
 
@@ -272,6 +269,12 @@ void DataPlugin::sendDataToSubscribers(const DataSource& source)
                 sub->sendTextMessage(message);
             }
         }
+    }
+
+    if (source.refreshmsec == 0)
+    {
+        // Clear poll queue
+        source.subscribers.clear();
     }
 
     // Signal data processed
@@ -448,6 +451,12 @@ QString DataPlugin::craftDataMessage(const DataSource& data)
     if (!m_plugin->get_data(data.uid, &reply["data"]))
     {
         qWarning() << "getData(" << getCode() << ", " << data.key << ") failed";
+        return QString();
+    }
+
+    if (reply["data"].isUndefined())
+    {
+        // Allow empty return (for async data)
         return QString();
     }
 

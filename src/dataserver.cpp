@@ -173,7 +173,11 @@ void DataServer::handlePollReq(const QJsonObject& req, QWebSocket* sender)
         return;
     }
 
-    m_plugins[plugin]->pollAndSendData(source, sender, widgetName);
+    // Add client to poll queue
+    if (m_plugins[plugin]->addSubscriber(source, sender, widgetName))
+    {
+        m_plugins[plugin]->pollAndSendData(source, sender, widgetName);
+    }
 }
 
 void DataServer::onNewConnection()

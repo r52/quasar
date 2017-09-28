@@ -60,7 +60,7 @@ public:
     void removeSubscriber(QWebSocket* subscriber);
 
     void pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName);
-    void sendDataToSubscribers(const DataSource& source);
+    void sendDataToSubscribers(DataSource& source);
 
     QString getLibPath() { return m_libpath; };
     QString getName() { return m_name; };
