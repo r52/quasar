@@ -55,6 +55,9 @@
             <Component Id="cmp9278DFE8D773CAD550D2F35AA1B2EE05" Directory="INSTALLDIR" Guid="{222F452D-9CBA-48A4-9F15-AB5018E2B4AC}">
                 <File Id="fil2CB1414274D0868A4E22857631C4C7FD" KeyPath="yes" Source="$(var.pkgsrc)\D3Dcompiler_47.dll"/>
             </Component>
+            <Component Id="cmpECD79D58451AA2B410BD3F36020A6E86" Directory="INSTALLDIR" Guid="{BCF2F748-939D-41A3-BCF7-AB22E8864EBF}">
+                <File Id="fil05BD5C4E3271A092281ABBFF59DD9DF0" KeyPath="yes" Source="$(var.pkgsrc)\libeay32.dll" />
+            </Component>
             <Component Id="cmpF717AA23B646925038ADA8F06E846B45" Directory="INSTALLDIR" Guid="{87BE4E0A-A48B-4C98-BD07-1B6F03DFC827}">
                 <File Id="filB139442E4773537E59395E69C52F46D6" KeyPath="yes" Source="$(var.pkgsrc)\libEGL.dll"/>
             </Component>
@@ -124,6 +127,9 @@
             </Component>
             <Component Id="cmp1F3B33D33FB7B6B62ECC71B67BA7D57F" Directory="INSTALLDIR" Guid="{D59B6CBA-152F-4902-ACDF-C897365086F1}">
                 <File Id="fil3B232AC904DDA267238992B6ECEF9A1F" KeyPath="yes" Source="$(var.pkgsrc)\README.md"/>
+            </Component>
+            <Component Id="cmp88D87EA59434240DD54C45CEE5A0C5D1" Directory="INSTALLDIR" Guid="{8F2F768A-01AC-4FF7-9B53-A7C9AAB79498}">
+                <File Id="fil932B21CE5E1D7CF227E44E7483E5C3AF" KeyPath="yes" Source="$(var.pkgsrc)\ssleay32.dll" />
             </Component>
             <Component Id="cmp79AEE784F948D54234781A8BC666714B" Directory="dir9200357DD8D57FF238E70C308E210E11" Guid="{A84E789A-0122-4CB9-A2F9-7F9DD2DC6754}">
                 <File Id="fil28B3C10A5E90503E375D5D11C917120A" KeyPath="yes" Source="$(var.pkgsrc)\bearer\qgenericbearer.dll"/>

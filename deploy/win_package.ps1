@@ -26,6 +26,12 @@ if (!$skipartifact)
     Copy-Item .\widgets\ .\Quasar\ -recurse
     Copy-Item README.md .\Quasar\
     Copy-Item LICENSE.txt .\Quasar\
+
+    if (($env:OPENSSL) -and (Test-Path $env:OPENSSL -pathType container))
+    {
+        Copy-Item $env:OPENSSL\libeay32.dll .\Quasar\
+        Copy-Item $env:OPENSSL\ssleay32.dll .\Quasar\
+    }
 }
 
 if ($portable)
