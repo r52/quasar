@@ -7,7 +7,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
-#include <set>
+#include <unordered_set>
 
 #define QUASAR_DP_ENABLED_PREFIX "enabled_"
 #define QUASAR_DP_REFRESH_PREFIX "refresh_"
@@ -31,13 +31,13 @@ struct DataLock
 
 struct DataSource
 {
-    bool                      enabled;
-    QString                   key;
-    size_t                    uid;
-    int64_t                   refreshmsec;
-    std::unique_ptr<QTimer>   timer;
-    std::set<QWebSocket*>     subscribers;
-    std::unique_ptr<DataLock> locks;
+    bool                            enabled;
+    QString                         key;
+    size_t                          uid;
+    int64_t                         refreshmsec;
+    std::unique_ptr<QTimer>         timer;
+    std::unordered_set<QWebSocket*> subscribers;
+    std::unique_ptr<DataLock>       locks;
 };
 
 using DataSourceMapType = std::map<QString, DataSource>;
