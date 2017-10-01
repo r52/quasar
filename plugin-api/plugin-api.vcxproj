@@ -103,6 +103,7 @@ xcopy $(OutDir)$(TargetName).lib $(OutDir)api\ /Y /I</Command>
     <CustomBuildStep />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="qstring_hash_impl.h" />
     <CustomBuild Include="dataplugin.h">
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR)\bin\moc.exe;%(FullPath)</AdditionalInputs>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Moc%27ing dataplugin.h...</Message>

@@ -1,13 +1,17 @@
 #pragma once
 
+#include <qstring_hash_impl.h>
+
 #include <plugin_types.h>
 
-#include <QObject>
 #include <condition_variable>
-#include <map>
 #include <memory>
 #include <mutex>
-#include <unordered_set>
+#include <set>
+#include <unordered_map>
+
+#include <QObject>
+#include <QTimer>
 
 #define QUASAR_DP_ENABLED_PREFIX "enabled_"
 #define QUASAR_DP_REFRESH_PREFIX "refresh_"
@@ -20,7 +24,6 @@
 #endif // PLUGINAPI_LIB
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
-QT_FORWARD_DECLARE_CLASS(QTimer)
 
 struct DataLock
 {
@@ -31,16 +34,16 @@ struct DataLock
 
 struct DataSource
 {
-    bool                            enabled;
-    QString                         key;
-    size_t                          uid;
-    int64_t                         refreshmsec;
-    std::unique_ptr<QTimer>         timer;
-    std::unordered_set<QWebSocket*> subscribers;
-    std::unique_ptr<DataLock>       locks;
+    bool                      enabled;
+    QString                   key;
+    size_t                    uid;
+    int64_t                   refreshmsec;
+    std::unique_ptr<QTimer>   timer;
+    std::set<QWebSocket*>     subscribers;
+    std::unique_ptr<DataLock> locks;
 };
 
-using DataSourceMapType = std::map<QString, DataSource>;
+using DataSourceMapType = std::unordered_map<QString, DataSource>;
 
 class PAPI_EXPORT DataPlugin : public QObject
 {

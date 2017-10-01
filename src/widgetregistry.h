@@ -1,12 +1,14 @@
 #pragma once
 
+#include <qstring_hash_impl.h>
+
 #include <QObject>
-#include <map>
 #include <memory>
+#include <unordered_map>
 
 QT_FORWARD_DECLARE_CLASS(WebWidget);
 
-using WidgetMapType = std::map<QString, std::unique_ptr<WebWidget>>;
+using WidgetMapType = std::unordered_map<QString, std::unique_ptr<WebWidget>>;
 
 class WidgetRegistry : public QObject
 {

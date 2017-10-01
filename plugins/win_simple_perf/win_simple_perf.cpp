@@ -2,8 +2,8 @@
 
 #include <cstdio>
 #include <functional>
-#include <map>
 #include <sstream>
+#include <unordered_map>
 
 #include <plugin_api.h>
 #include <plugin_support.h>
@@ -22,7 +22,7 @@
 #define warn(f, ...) qlog(QUASAR_LOG_WARNING, f, ##__VA_ARGS__)
 
 using GetDataFnType = std::function<bool(quasar_data_handle hData)>;
-using DataCallTable = std::map<size_t, GetDataFnType>;
+using DataCallTable = std::unordered_map<size_t, GetDataFnType>;
 
 static DataCallTable calltable;
 
@@ -34,8 +34,8 @@ enum PerfDataSources
 
 quasar_data_source_t sources[2] =
     {
-      { "cpu", 5000, 0 },
-      { "ram", 5000, 0 }
+        { "cpu", 5000, 0 },
+        { "ram", 5000, 0 }
     };
 
 // From https://stackoverflow.com/questions/23143693/retrieving-cpu-load-percent-total-in-windows-with-c
@@ -133,21 +133,21 @@ bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData)
 
 quasar_plugin_info_t info =
     {
-      QUASAR_API_VERSION,
-      PLUGIN_NAME,
-      PLUGIN_CODE,
-      "v1",
-      "me",
-      "Sample plugin that queries basic performance numbers",
+        QUASAR_API_VERSION,
+        PLUGIN_NAME,
+        PLUGIN_CODE,
+        "v1",
+        "me",
+        "Sample plugin that queries basic performance numbers",
 
-      _countof(sources),
-      sources,
+        _countof(sources),
+        sources,
 
-      simple_perf_init,
-      simple_perf_shutdown,
-      simple_perf_get_data,
-      nullptr,
-      nullptr
+        simple_perf_init,
+        simple_perf_shutdown,
+        simple_perf_get_data,
+        nullptr,
+        nullptr
     };
 
 quasar_plugin_info_t* quasar_plugin_load(void)
