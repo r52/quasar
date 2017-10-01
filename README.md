@@ -2,6 +2,8 @@
 
 HTML widgets for your desktop, powered by Qt WebEngine. Licensed under GPLv3.
 
+![](https://i.imgur.com/NX2SNUD.png)
+
 ## Usage
 
 After running the application, right click the application icon in the notification bar to load widgets.
