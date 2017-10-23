@@ -689,7 +689,7 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
     {
         if (it.value().canConvert<AppLauncherData>())
         {
-            auto & [file, start, arg] = it.value().value<AppLauncherData>();
+            auto [file, start, arg] = it.value().value<AppLauncherData>();
 
             table->insertRow(row);
             QTableWidgetItem* cmditem = new QTableWidgetItem(it.key());

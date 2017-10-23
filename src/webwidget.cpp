@@ -171,7 +171,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
         QFile file(":/Resources/pageglobals.js");
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-            throw std::exception("pageglobal script load failure");
+            throw std::runtime_error("pageglobal script load failure");
         }
 
         QTextStream in(&file);

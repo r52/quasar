@@ -124,7 +124,7 @@ LogWindow::LogWindow(QObject* parent)
 
     if (nullptr != s_logEdit)
     {
-        throw std::exception("log window already created");
+        throw std::runtime_error("log window already created");
     }
 
     s_logEdit = new QTextEdit();

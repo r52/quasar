@@ -56,7 +56,7 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
             DataSource& source = m_datasources[srcname];
             source.key         = srcname;
             source.uid = m_plugin->dataSources[i].uid = ++DataPlugin::_uid;
-            source.refreshmsec                        = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), m_plugin->dataSources[i].refreshMsec).toLongLong();
+            source.refreshmsec                        = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), (qlonglong) m_plugin->dataSources[i].refreshMsec).toLongLong();
             source.enabled                            = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source.key), true).toBool();
 
             // If data source is plugin signaled or async poll
@@ -331,7 +331,7 @@ void DataPlugin::setDataSourceRefresh(QString source, int64_t msec)
 
     // Save to file
     QSettings settings;
-    settings.setValue(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source), data.refreshmsec);
+    settings.setValue(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source), (qlonglong) data.refreshmsec);
 
     // Refresh timer if exists
     if (nullptr != data.timer)
@@ -446,15 +446,16 @@ void DataPlugin::createTimer(DataSource& data)
 QString DataPlugin::craftDataMessage(const DataSource& data)
 {
     QJsonObject reply;
+    auto        dat = reply["data"];
 
     // Poll plugin for data source
-    if (!m_plugin->get_data(data.uid, &reply["data"]))
+    if (!m_plugin->get_data(data.uid, &dat))
     {
         qWarning() << "getData(" << getCode() << ", " << data.key << ") failed";
         return QString();
     }
 
-    if (reply["data"].isNull())
+    if (dat.isNull())
     {
         // Allow empty return (for async data)
         return QString();
