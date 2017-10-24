@@ -9,12 +9,12 @@ endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 set(default_build_type "Release")
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
-  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
-      STRING "Choose the type of build." FORCE)
-  # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
-    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+    message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+    set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+        STRING "Choose the type of build." FORCE)
+
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+        "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -40,12 +40,10 @@ execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always
 
 configure_file(src/version.h.in version.h @ONLY)
 
-target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-
 file(GLOB SOURCES "src/*.cpp")
 
 add_executable(quasar ${SOURCES} quasar.qrc)
-
+target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_compile_features(quasar PUBLIC cxx_std_17)
 target_link_libraries(quasar plugin-api)
 target_link_libraries(quasar Threads::Threads)
