@@ -21,6 +21,11 @@
 Quasar::Quasar(QWidget* parent)
     : QMainWindow(parent), logWindow(new LogWindow(this)), server(new DataServer(this)), reg(new WidgetRegistry(this)), launcher(new AppLauncher(this))
 {
+    if (!QSystemTrayIcon::isSystemTrayAvailable())
+    {
+        throw std::runtime_error("System Tray is not supported on the current desktop manager");
+    }
+
     ui.setupUi(this);
 
     // Setup system tray
