@@ -6,6 +6,23 @@ if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     message(FATAL_ERROR "This CMakeLists.txt is not configured for non-Linux machines! Please Use the Visual Studio solution on windows")
 endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
+set(default_build_type "Release")
+
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to '${default_build_type}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${default_build_type}" CACHE
+      STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    message("DEBUG BUILD")
+else()
+    add_definitions(-DNDEBUG)
+endif()
+
 add_subdirectory(plugin-api)
 
 set(CMAKE_AUTOMOC ON)
@@ -13,17 +30,17 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR})
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt5 COMPONENTS Widgets Network WebSockets WebEngine WebEngineWidgets REQUIRED)
+find_package(Qt5 COMPONENTS Widgets Network WebSockets WebEngineCore WebEngineWidgets REQUIRED)
 find_package(Git)
 find_package(Threads REQUIRED)
 
 execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always
-	OUTPUT_VARIABLE QUASAR_GIT_VER
-	OUTPUT_STRIP_TRAILING_WHITESPACE)
+    OUTPUT_VARIABLE QUASAR_GIT_VER
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 configure_file(src/version.h.in version.h @ONLY)
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 
 file(GLOB SOURCES "src/*.cpp")
 
