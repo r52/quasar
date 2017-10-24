@@ -26,7 +26,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 file(GLOB SOURCES "src/*.cpp")
 
-add_executable(quasar ${SOURCES} ../quasar.qrc)
+add_executable(quasar ${SOURCES} quasar.qrc)
 
 target_compile_features(quasar PUBLIC cxx_std_17)
 target_link_libraries(quasar plugin-api)
