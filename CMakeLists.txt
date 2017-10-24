@@ -20,6 +20,7 @@ endif()
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     message("DEBUG BUILD")
 else()
+    add_definitions(-DQT_MESSAGELOGCONTEXT)
     add_definitions(-DNDEBUG)
 endif()
 
