@@ -2,10 +2,6 @@ cmake_minimum_required(VERSION 3.9)
 
 project(quasar)
 
-if(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    message(FATAL_ERROR "This CMakeLists.txt is not configured for non-Linux machines! Please Use the Visual Studio solution on windows")
-endif(NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-
 set(default_build_type "Release")
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
