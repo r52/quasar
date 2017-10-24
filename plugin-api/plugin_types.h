@@ -1,13 +1,13 @@
 #pragma once
 
 #if defined(__cplusplus)
-#include <cstdbool>
-#include <cstddef>
-#include <cstdint>
+#    include <cstdbool>
+#    include <cstddef>
+#    include <cstdint>
 #else
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#    include <stdbool.h>
+#    include <stddef.h>
+#    include <stdint.h>
 #endif
 
 #define QUASAR_API_VERSION 1

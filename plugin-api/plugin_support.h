@@ -3,9 +3,13 @@
 #include "plugin_types.h"
 
 #ifdef PLUGINAPI_LIB
-#define SAPI_EXPORT __declspec(dllexport)
+#    ifdef _WIN32
+#        define SAPI_EXPORT __declspec(dllexport)
+#    else
+#        define SAPI_EXPORT __attribute__((visibility("default")))
+#    endif // _WIN32
 #else
-#define SAPI_EXPORT
+#    define SAPI_EXPORT
 #endif // PLUGINAPI_LIB
 
 #if defined(__cplusplus)
