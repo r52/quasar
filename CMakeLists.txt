@@ -11,6 +11,7 @@ add_subdirectory(plugin-api)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR})
+set(CMAKE_AUTORCC ON)
 
 find_package(Qt5 COMPONENTS Widgets Network WebSockets WebEngine WebEngineWidgets REQUIRED)
 find_package(Git)
