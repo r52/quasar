@@ -34,6 +34,10 @@ An OS and computer capable of running Chrome.
 
 [Qt 5.9 or higher](http://www.qt.io/) and Visual Studio 2017 is required.
 
-### Mac/Linux
+### Linux
 
-Quasar is written in cross-platform C++ and should be buildable on Linux and Mac as well with minimal changes. However, it is currently untested and unsupported.
+[Qt 5.9 or higher](http://www.qt.io/), GCC 7+ or Clang 4+, and CMake 3.9+ is required. Tested on Ubuntu 17.10.
+
+### Mac
+
+Quasar is written in cross-platform C++ and should build on Mac with minimal changes. However, it is currently untested and unsupported.
