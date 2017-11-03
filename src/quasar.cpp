@@ -18,13 +18,32 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-Quasar::Quasar(QWidget* parent)
-    : QMainWindow(parent), logWindow(new LogWindow(this)), server(new DataServer(this)), reg(new WidgetRegistry(this)), launcher(new AppLauncher(this))
+Quasar::Quasar(DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* parent)
+    : QMainWindow(parent), logWindow(new LogWindow(this)), server(s), reg(r), launcher(al)
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
         throw std::runtime_error("System Tray is not supported on the current desktop manager");
     }
+
+    if (nullptr == server)
+    {
+        throw std::invalid_argument("Invalid DataServer");
+    }
+
+    if (nullptr == reg)
+    {
+        throw std::invalid_argument("Invalid WidgetRegistry");
+    }
+
+    if (nullptr == launcher)
+    {
+        throw std::invalid_argument("Invalid AppLauncher");
+    }
+
+    server->setParent(this);
+    reg->setParent(this);
+    al->setParent(this);
 
     ui.setupUi(this);
 

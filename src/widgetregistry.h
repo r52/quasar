@@ -15,7 +15,7 @@ class WidgetRegistry : public QObject
     Q_OBJECT
 
 public:
-    WidgetRegistry(QObject* parent = Q_NULLPTR);
+    explicit WidgetRegistry(QObject* parent = Q_NULLPTR);
     ~WidgetRegistry();
 
     bool loadWebWidget(QString filename, bool userAction = true);

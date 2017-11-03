@@ -1,5 +1,8 @@
+#include "applauncher.h"
+#include "dataserver.h"
 #include "quasar.h"
 #include "runguard.h"
+#include "widgetregistry.h"
 
 #include <QSettings>
 #include <QtWebEngineWidgets/QWebEngineProfile>
@@ -21,7 +24,13 @@ int main(int argc, char* argv[])
 
     QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
 
-    Quasar w;
+    // preload
+    // Quasar takes ownership of these
+    DataServer*     server   = new DataServer();
+    WidgetRegistry* reg      = new WidgetRegistry();
+    AppLauncher*    launcher = new AppLauncher(server, reg);
+
+    Quasar w(server, reg, launcher);
     w.hide();
 
     return a.exec();

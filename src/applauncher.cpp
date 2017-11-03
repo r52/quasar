@@ -11,19 +11,24 @@
 #include <QSettings>
 #include <QtWebSockets/QWebSocket>
 
-AppLauncher::AppLauncher(QObject* parent)
-    : QObject(parent), m_parent(qobject_cast<Quasar*>(parent))
+AppLauncher::AppLauncher(DataServer* s, WidgetRegistry* r, QObject* parent)
+    : QObject(parent), server(s), reg(r)
 {
     qRegisterMetaType<AppLauncherData>("AppLauncherData");
     qRegisterMetaTypeStreamOperators<AppLauncherData>("AppLauncherData");
 
-    if (nullptr == m_parent)
+    if (nullptr == server)
     {
-        throw std::invalid_argument("Parent must be a Quasar window");
+        throw std::invalid_argument("Invalid DataServer");
+    }
+
+    if (nullptr == reg)
+    {
+        throw std::invalid_argument("Invalid WidgetRegistry");
     }
 
     using namespace std::placeholders;
-    m_parent->getDataServer()->addHandler("launcher", std::bind(&AppLauncher::handleCommand, this, _1, _2));
+    server->addHandler("launcher", std::bind(&AppLauncher::handleCommand, this, _1, _2));
 
     QSettings settings;
     m_map = settings.value("launcher/map").toMap();
@@ -59,7 +64,7 @@ void AppLauncher::handleCommand(const QJsonObject& req, QWebSocket* sender)
     QString widgetName = req["widget"].toString();
     QString app        = req["app"].toString();
 
-    WebWidget* subWidget = m_parent->getWidgetRegistry()->findWidget(widgetName);
+    WebWidget* subWidget = reg->findWidget(widgetName);
 
     if (!subWidget)
     {

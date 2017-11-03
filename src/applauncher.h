@@ -5,7 +5,8 @@
 #include <shared_mutex>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
-QT_FORWARD_DECLARE_CLASS(Quasar)
+QT_FORWARD_DECLARE_CLASS(WidgetRegistry)
+QT_FORWARD_DECLARE_CLASS(DataServer)
 
 struct AppLauncherData
 {
@@ -37,7 +38,7 @@ class AppLauncher : public QObject
     Q_OBJECT;
 
 public:
-    explicit AppLauncher(QObject* parent);
+    explicit AppLauncher(DataServer* s, WidgetRegistry* r, QObject* parent = Q_NULLPTR);
     ~AppLauncher();
 
     const QVariantMap* getMapForRead();
@@ -49,8 +50,8 @@ private:
     void handleCommand(const QJsonObject& req, QWebSocket* sender);
 
 private:
-    Quasar*     m_parent;
-    QVariantMap m_map;
-
+    DataServer*       server;
+    WidgetRegistry*   reg;
+    QVariantMap       m_map;
     std::shared_mutex m_mutex;
 };

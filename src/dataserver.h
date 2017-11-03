@@ -9,7 +9,6 @@
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
-QT_FORWARD_DECLARE_CLASS(Quasar)
 
 class DataPlugin;
 
@@ -23,7 +22,7 @@ class DataServer : public QObject
     using HandleReqCallMapType = std::unordered_map<QString, HandlerFuncType>;
 
 public:
-    explicit DataServer(QObject* parent);
+    explicit DataServer(QObject* parent = Q_NULLPTR);
     ~DataServer();
 
     DataPluginMapType& getPlugins() { return m_plugins; };
@@ -44,7 +43,6 @@ private slots:
 
 private:
     HandleReqCallMapType m_reqcallmap;
-    Quasar*              m_parent;
     QWebSocketServer*    m_pWebSocketServer;
     DataPluginMapType    m_plugins;
 };

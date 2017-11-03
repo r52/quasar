@@ -14,13 +14,8 @@
 #include <QtWebSockets/QWebSocketServer>
 
 DataServer::DataServer(QObject* parent)
-    : QObject(parent), m_parent(qobject_cast<Quasar*>(parent)), m_pWebSocketServer(nullptr)
+    : QObject(parent), m_pWebSocketServer(nullptr)
 {
-    if (nullptr == m_parent)
-    {
-        throw std::invalid_argument("Parent must be a Quasar window");
-    }
-
     m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"),
                                               QWebSocketServer::NonSecureMode,
                                               this);

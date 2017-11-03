@@ -16,12 +16,11 @@ class Quasar : public QMainWindow
     Q_OBJECT
 
 public:
-    Quasar(QWidget* parent = Q_NULLPTR);
+    explicit Quasar(DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* parent = Q_NULLPTR);
     ~Quasar();
 
-    WidgetRegistry* getWidgetRegistry() { return reg; };
-    DataServer*     getDataServer() { return server; };
-    AppLauncher*    getAppLauncher() { return launcher; };
+    DataServer*  getDataServer() { return server; };
+    AppLauncher* getAppLauncher() { return launcher; };
 
 protected:
     virtual void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
