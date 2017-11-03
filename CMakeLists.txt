@@ -45,3 +45,5 @@ target_compile_features(quasar PUBLIC cxx_std_17)
 target_link_libraries(quasar plugin-api)
 target_link_libraries(quasar Threads::Threads)
 target_link_libraries(quasar Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::WebSockets Qt5::WebEngineCore Qt5::WebEngineWidgets)
+
+install(TARGETS quasar DESTINATION quasar)

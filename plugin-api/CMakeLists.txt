@@ -16,3 +16,5 @@ target_compile_definitions(plugin-api PRIVATE PLUGINAPI_LIB=1)
 target_compile_features(plugin-api PUBLIC cxx_std_17)
 target_link_libraries(plugin-api Qt5::Core Qt5::WebSockets)
 target_include_directories(plugin-api PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+install(TARGETS plugin-api DESTINATION quasar)
