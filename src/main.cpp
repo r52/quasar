@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 
     QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
 
-    splash.showMessage("Loaded configuration");
+    splash.showMessage("Loaded configuration", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
     a.processEvents();
 
     // preload
@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
     WidgetRegistry* reg      = new WidgetRegistry();
     AppLauncher*    launcher = new AppLauncher(server, reg);
 
-    splash.showMessage("Loaded modules");
+    splash.showMessage("Loaded modules", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
     a.processEvents();
 
     Quasar w(log, server, reg, launcher);
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
         reg->loadWebWidget(f, false);
     }
 
-    splash.showMessage("Loaded widgets");
+    splash.showMessage("Loaded widgets", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
     a.processEvents();
 
     splash.finish(&w);
