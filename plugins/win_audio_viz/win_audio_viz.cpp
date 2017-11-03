@@ -44,7 +44,7 @@
 
 quasar_data_source_t sources[1] =
     {
-      { "viz", -1, 0 }
+        { "viz", -1, 0 }
     };
 
 using namespace kfr;
@@ -670,21 +670,21 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 
 quasar_plugin_info_t info =
     {
-      QUASAR_API_VERSION,
-      PLUGIN_NAME,
-      PLUGIN_CODE,
-      "v1",
-      "me",
-      "Supplies desktop audio frequency data",
+        QUASAR_API_VERSION,
+        PLUGIN_NAME,
+        PLUGIN_CODE,
+        "v1",
+        "me",
+        "Supplies desktop audio frequency data",
 
-      _countof(sources),
-      sources,
+        std::size(sources),
+        sources,
 
-      win_audio_viz_init,            //init
-      win_audio_viz_shutdown,        //shutdown
-      win_audio_viz_get_data,        //data
-      win_audio_viz_create_settings, //create setting
-      win_audio_viz_update_settings  // update setting
+        win_audio_viz_init,            //init
+        win_audio_viz_shutdown,        //shutdown
+        win_audio_viz_get_data,        //data
+        win_audio_viz_create_settings, //create setting
+        win_audio_viz_update_settings  // update setting
     };
 
 quasar_plugin_info_t* quasar_plugin_load(void)

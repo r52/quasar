@@ -140,7 +140,7 @@ quasar_plugin_info_t info =
         "me",
         "Sample plugin that queries basic performance numbers",
 
-        _countof(sources),
+        std::size(sources),
         sources,
 
         simple_perf_init,

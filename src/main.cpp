@@ -25,13 +25,16 @@ int main(int argc, char* argv[])
     QSplashScreen splash(pixmap);
     splash.show();
 
+    splash.showMessage("Loading configuration...", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
+    a.processEvents();
+
     QApplication::setApplicationName("Quasar");
     QApplication::setOrganizationName("Quasar");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
 
-    splash.showMessage("Loaded configuration", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
+    splash.showMessage("Loading modules...", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
     a.processEvents();
 
     // preload
@@ -41,11 +44,11 @@ int main(int argc, char* argv[])
     WidgetRegistry* reg      = new WidgetRegistry();
     AppLauncher*    launcher = new AppLauncher(server, reg);
 
-    splash.showMessage("Loaded modules", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
-    a.processEvents();
-
     Quasar w(log, server, reg, launcher);
     w.hide();
+
+    splash.showMessage("Loading widgets...", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
+    a.processEvents();
 
     // Load widgets
     QSettings   settings;
@@ -55,9 +58,6 @@ int main(int argc, char* argv[])
     {
         reg->loadWebWidget(f, false);
     }
-
-    splash.showMessage("Loaded widgets", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
-    a.processEvents();
 
     splash.finish(&w);
 
