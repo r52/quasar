@@ -16,7 +16,7 @@ class Quasar : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit Quasar(DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* parent = Q_NULLPTR);
+    explicit Quasar(LogWindow* log, DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* parent = Q_NULLPTR);
     ~Quasar();
 
     DataServer*  getDataServer() { return server; };

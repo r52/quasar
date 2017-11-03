@@ -18,12 +18,17 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-Quasar::Quasar(DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* parent)
-    : QMainWindow(parent), logWindow(new LogWindow(this)), server(s), reg(r), launcher(al)
+Quasar::Quasar(LogWindow* log, DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* parent)
+    : QMainWindow(parent), logWindow(log), server(s), reg(r), launcher(al)
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
         throw std::runtime_error("System Tray is not supported on the current desktop manager");
+    }
+
+    if (nullptr == logWindow)
+    {
+        throw std::invalid_argument("Invalid LogWindow");
     }
 
     if (nullptr == server)
@@ -41,6 +46,7 @@ Quasar::Quasar(DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* paren
         throw std::invalid_argument("Invalid AppLauncher");
     }
 
+    logWindow->setParent(this);
     server->setParent(this);
     reg->setParent(this);
     al->setParent(this);
@@ -65,15 +71,6 @@ Quasar::Quasar(DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* paren
     ui.centralWidget->setLayout(layout);
 
     resize(800, 400);
-
-    // Load widgets
-    QSettings   settings;
-    QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();
-
-    for (const QString& f : loadedList)
-    {
-        reg->loadWebWidget(f, false);
-    }
 }
 
 Quasar::~Quasar()

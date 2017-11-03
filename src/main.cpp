@@ -1,10 +1,13 @@
 #include "applauncher.h"
 #include "dataserver.h"
+#include "logwindow.h"
 #include "quasar.h"
 #include "runguard.h"
+#include "widgetdefs.h"
 #include "widgetregistry.h"
 
 #include <QSettings>
+#include <QSplashScreen>
 #include <QtWebEngineWidgets/QWebEngineProfile>
 #include <QtWidgets/QApplication>
 
@@ -18,20 +21,45 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
 
+    QPixmap       pixmap(":/Resources/splash.png");
+    QSplashScreen splash(pixmap);
+    splash.show();
+
     QApplication::setApplicationName("Quasar");
     QApplication::setOrganizationName("Quasar");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
 
+    splash.showMessage("Loaded configuration");
+    a.processEvents();
+
     // preload
     // Quasar takes ownership of these
+    LogWindow*      log      = new LogWindow();
     DataServer*     server   = new DataServer();
     WidgetRegistry* reg      = new WidgetRegistry();
     AppLauncher*    launcher = new AppLauncher(server, reg);
 
-    Quasar w(server, reg, launcher);
+    splash.showMessage("Loaded modules");
+    a.processEvents();
+
+    Quasar w(log, server, reg, launcher);
     w.hide();
+
+    // Load widgets
+    QSettings   settings;
+    QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();
+
+    for (const QString& f : loadedList)
+    {
+        reg->loadWebWidget(f, false);
+    }
+
+    splash.showMessage("Loaded widgets");
+    a.processEvents();
+
+    splash.finish(&w);
 
     return a.exec();
 }

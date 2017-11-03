@@ -117,11 +117,6 @@ LogWindow::~LogWindow()
 LogWindow::LogWindow(QObject* parent)
     : QObject(parent)
 {
-    if (nullptr == parent)
-    {
-        throw std::invalid_argument("null parent");
-    }
-
     if (nullptr != s_logEdit)
     {
         throw std::runtime_error("log window already created");

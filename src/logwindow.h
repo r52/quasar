@@ -8,15 +8,12 @@ class LogWindow : public QObject
 {
     Q_OBJECT
 
-    friend class Quasar;
-
 public:
     ~LogWindow();
-
-private:
-    LogWindow(QObject* parent = nullptr);
+    explicit LogWindow(QObject* parent = nullptr);
 
     QTextEdit* release();
 
+private:
     bool m_released = false;
 };
