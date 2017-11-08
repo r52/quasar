@@ -1,10 +1,7 @@
 #include "dataserver.h"
 
 #include "dataplugin.h"
-#include "quasar.h"
-#include "webwidget.h"
 #include "widgetdefs.h"
-#include "widgetregistry.h"
 
 #include <QDir>
 #include <QJsonDocument>

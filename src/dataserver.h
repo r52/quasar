@@ -17,12 +17,13 @@ using HandlerFuncType   = std::function<void(const QJsonObject&, QWebSocket*)>;
 
 class DataServer : public QObject
 {
-    Q_OBJECT;
+    friend class DataServices;
+
+    Q_OBJECT
 
     using HandleReqCallMapType = std::unordered_map<QString, HandlerFuncType>;
 
 public:
-    explicit DataServer(QObject* parent = Q_NULLPTR);
     ~DataServer();
 
     DataPluginMapType& getPlugins() { return m_plugins; };
@@ -42,6 +43,12 @@ private slots:
     void socketDisconnected();
 
 private:
+    explicit DataServer(QObject* parent = Q_NULLPTR);
+    DataServer(const DataServer&) = delete;
+    DataServer(DataServer&&)      = delete;
+    DataServer& operator=(const DataServer&) = delete;
+    DataServer& operator=(DataServer&&) = delete;
+
     HandleReqCallMapType m_reqcallmap;
     QWebSocketServer*    m_pWebSocketServer;
     DataPluginMapType    m_plugins;

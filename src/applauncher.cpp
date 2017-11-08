@@ -1,7 +1,6 @@
 #include "applauncher.h"
 
 #include "dataserver.h"
-#include "quasar.h"
 #include "widgetregistry.h"
 
 #include <QDesktopServices>
@@ -32,10 +31,6 @@ AppLauncher::AppLauncher(DataServer* s, WidgetRegistry* r, QObject* parent)
 
     QSettings settings;
     m_map = settings.value("launcher/map").toMap();
-}
-
-AppLauncher::~AppLauncher()
-{
 }
 
 const QVariantMap* AppLauncher::getMapForRead()

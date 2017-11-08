@@ -3,8 +3,8 @@
 #include "applauncher.h"
 #include "dataplugin.h"
 #include "dataserver.h"
+#include "dataservices.h"
 #include "plugin_support_internal.h"
-#include "quasar.h"
 #include "widgetdefs.h"
 
 #include <QtWidgets>
@@ -19,12 +19,12 @@ namespace
     QString QUASAR_SETTING_LOGFILE = "logFile";
 }
 
-GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
-    : PageWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
+GeneralPage::GeneralPage(DataServices* service, QWidget* parent)
+    : PageWidget(parent), m_service(service)
 {
-    if (nullptr == m_quasar)
+    if (nullptr == service)
     {
-        throw std::invalid_argument("Quasar window required");
+        throw std::invalid_argument("DataServices required");
     }
 
     // general group
@@ -141,7 +141,7 @@ GeneralPage::GeneralPage(QObject* quasar, QWidget* parent)
     QListWidget* pluginList = new QListWidget;
 
     // build plugin list
-    DataPluginMapType& pluginmap = m_quasar->getDataServer()->getPlugins();
+    DataPluginMapType& pluginmap = m_service->getServer()->getPlugins();
 
     for (auto& p : pluginmap)
     {
@@ -306,12 +306,12 @@ void GeneralPage::pluginListClicked(QListWidgetItem* item)
     }
 }
 
-PluginPage::PluginPage(QObject* quasar, QWidget* parent)
-    : PageWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
+PluginPage::PluginPage(DataServices* service, QWidget* parent)
+    : PageWidget(parent), m_service(service)
 {
-    if (nullptr == m_quasar)
+    if (nullptr == m_service)
     {
-        throw std::invalid_argument("Quasar window required");
+        throw std::invalid_argument("DataServices required");
     }
 
     QLabel*    pluginLabel = new QLabel(tr("Plugins:"));
@@ -319,7 +319,7 @@ PluginPage::PluginPage(QObject* quasar, QWidget* parent)
     pagesWidget            = new QStackedWidget;
 
     // build plugin list
-    DataPluginMapType& pluginmap = m_quasar->getDataServer()->getPlugins();
+    DataPluginMapType& pluginmap = m_service->getServer()->getPlugins();
 
     for (auto& p : pluginmap)
     {
@@ -662,10 +662,10 @@ private:
     AppLauncherData m_data;
 };
 
-LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
-    : PageWidget(parent), m_quasar(qobject_cast<Quasar*>(quasar))
+LauncherPage::LauncherPage(DataServices* service, QWidget* parent)
+    : PageWidget(parent), m_service(service)
 {
-    if (nullptr == m_quasar)
+    if (nullptr == m_service)
     {
         throw std::invalid_argument("Quasar window required");
     }
@@ -681,7 +681,7 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    auto appmap = m_quasar->getAppLauncher()->getMapForRead();
+    auto appmap = m_service->getLauncher()->getMapForRead();
     auto it     = appmap->cbegin();
     int  row    = 0;
 
@@ -709,7 +709,7 @@ LauncherPage::LauncherPage(QObject* quasar, QWidget* parent)
         ++it;
     }
 
-    m_quasar->getAppLauncher()->releaseMap(appmap);
+    m_service->getLauncher()->releaseMap(appmap);
 
     QPushButton* deleteButton = new QPushButton(tr("Delete"));
 
@@ -807,6 +807,6 @@ void LauncherPage::saveSettings(QSettings& settings, bool& restartNeeded)
             newmap[cmditem->text()] = fileitem->data(Qt::UserRole);
         }
 
-        m_quasar->getAppLauncher()->writeMap(newmap);
+        m_service->getLauncher()->writeMap(newmap);
     }
 }

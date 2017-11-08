@@ -3,11 +3,11 @@
 #include <QSettings>
 #include <QWidget>
 
-QT_FORWARD_DECLARE_CLASS(Quasar)
 QT_FORWARD_DECLARE_CLASS(DataPlugin)
 QT_FORWARD_DECLARE_CLASS(QListWidgetItem)
 QT_FORWARD_DECLARE_CLASS(QLabel)
 QT_FORWARD_DECLARE_CLASS(QStackedWidget)
+QT_FORWARD_DECLARE_CLASS(DataServices)
 
 class PageWidget : public QWidget
 {
@@ -25,7 +25,7 @@ class GeneralPage : public PageWidget
     Q_OBJECT
 
 public:
-    GeneralPage(QObject* quasar, QWidget* parent = 0);
+    GeneralPage(DataServices* service, QWidget* parent = 0);
 
     virtual void saveSettings(QSettings& settings, bool& restartNeeded) override;
 
@@ -35,7 +35,7 @@ private slots:
 private:
     bool m_settingsModified = false;
 
-    Quasar* m_quasar;
+    DataServices* m_service;
 
     QLabel* plugName;
     QLabel* plugCode;
@@ -49,12 +49,12 @@ class PluginPage : public PageWidget
     Q_OBJECT
 
 public:
-    PluginPage(QObject* quasar, QWidget* parent = 0);
+    PluginPage(DataServices* service, QWidget* parent = 0);
 
     virtual void saveSettings(QSettings& settings, bool& restartNeeded) override;
 
 private:
-    Quasar* m_quasar;
+    DataServices* m_service;
 
     QStackedWidget* pagesWidget;
 };
@@ -78,10 +78,10 @@ private:
 class LauncherPage : public PageWidget
 {
 public:
-    LauncherPage(QObject* quasar, QWidget* parent = 0);
+    LauncherPage(DataServices* service, QWidget* parent = 0);
 
     virtual void saveSettings(QSettings& settings, bool& restartNeeded) override;
 
 private:
-    Quasar* m_quasar;
+    DataServices* m_service;
 };

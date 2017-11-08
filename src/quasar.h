@@ -5,9 +5,7 @@
 #include <QMainWindow>
 #include <QSystemTrayIcon>
 
-QT_FORWARD_DECLARE_CLASS(WidgetRegistry)
-QT_FORWARD_DECLARE_CLASS(DataServer)
-QT_FORWARD_DECLARE_CLASS(AppLauncher)
+QT_FORWARD_DECLARE_CLASS(DataServices)
 QT_FORWARD_DECLARE_CLASS(LogWindow)
 QT_FORWARD_DECLARE_CLASS(WebWidget)
 
@@ -16,11 +14,11 @@ class Quasar : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit Quasar(LogWindow* log, DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* parent = Q_NULLPTR);
-    ~Quasar();
-
-    DataServer*  getDataServer() { return server; };
-    AppLauncher* getAppLauncher() { return launcher; };
+    explicit Quasar(LogWindow* log, DataServices* s, QWidget* parent = Q_NULLPTR);
+    Quasar(const Quasar&) = delete;
+    Quasar(Quasar&&)      = delete;
+    Quasar& operator=(const Quasar&) = delete;
+    Quasar& operator=(Quasar&&) = delete;
 
 protected:
     virtual void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
@@ -52,12 +50,6 @@ private:
     QAction* aboutQtAction;
     QAction* quitAction;
 
-    // Data server
-    DataServer* server;
-
-    // Widget registry
-    WidgetRegistry* reg;
-
-    // App launcher
-    AppLauncher* launcher;
+    // Services
+    DataServices* service;
 };

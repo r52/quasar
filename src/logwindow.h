@@ -11,6 +11,10 @@ class LogWindow : public QObject
 public:
     ~LogWindow();
     explicit LogWindow(QObject* parent = nullptr);
+    LogWindow(const LogWindow&) = delete;
+    LogWindow(LogWindow&&)      = delete;
+    LogWindow& operator=(const LogWindow&) = delete;
+    LogWindow& operator=(LogWindow&&) = delete;
 
     QTextEdit* release();
 

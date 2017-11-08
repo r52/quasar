@@ -3,9 +3,8 @@
 #include "preproc.h"
 #include "version.h"
 
-#include "applauncher.h"
 #include "configdialog.h"
-#include "dataserver.h"
+#include "dataservices.h"
 #include "logwindow.h"
 #include "webwidget.h"
 #include "widgetdefs.h"
@@ -18,8 +17,8 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-Quasar::Quasar(LogWindow* log, DataServer* s, WidgetRegistry* r, AppLauncher* al, QWidget* parent)
-    : QMainWindow(parent), logWindow(log), server(s), reg(r), launcher(al)
+Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent)
+    : QMainWindow(parent), logWindow(log), service(s)
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
@@ -31,25 +30,13 @@ Quasar::Quasar(LogWindow* log, DataServer* s, WidgetRegistry* r, AppLauncher* al
         throw std::invalid_argument("Invalid LogWindow");
     }
 
-    if (nullptr == server)
+    if (nullptr == service)
     {
-        throw std::invalid_argument("Invalid DataServer");
-    }
-
-    if (nullptr == reg)
-    {
-        throw std::invalid_argument("Invalid WidgetRegistry");
-    }
-
-    if (nullptr == launcher)
-    {
-        throw std::invalid_argument("Invalid AppLauncher");
+        throw std::invalid_argument("Invalid DataServices");
     }
 
     logWindow->setParent(this);
-    server->setParent(this);
-    reg->setParent(this);
-    al->setParent(this);
+    service->setParent(this);
 
     ui.setupUi(this);
 
@@ -73,10 +60,6 @@ Quasar::Quasar(LogWindow* log, DataServer* s, WidgetRegistry* r, AppLauncher* al
     resize(800, 400);
 }
 
-Quasar::~Quasar()
-{
-}
-
 void Quasar::openWebWidget()
 {
     QSettings settings;
@@ -89,7 +72,7 @@ void Quasar::openWebWidget()
         QFileInfo info(fname);
         settings.setValue(QUASAR_CONFIG_LASTPATH, info.canonicalPath());
 
-        reg->loadWebWidget(fname);
+        service->getRegistry()->loadWebWidget(fname);
     }
 }
 
@@ -102,7 +85,7 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
             // Regenerate widget list menu
             widgetListMenu->clear();
 
-            WidgetMapType& widgets = reg->getWidgets();
+            WidgetMapType& widgets = service->getRegistry()->getWidgets();
 
             for (auto& w : widgets)
             {
@@ -147,7 +130,7 @@ void Quasar::createActions()
 
     settingsAction = new QAction(tr("&Settings"), this);
     connect(settingsAction, &QAction::triggered, [=] {
-        ConfigDialog dialog(this);
+        ConfigDialog dialog(service);
         dialog.exec();
     });
 

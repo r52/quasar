@@ -35,12 +35,11 @@ Q_DECLARE_METATYPE(AppLauncherData);
 
 class AppLauncher : public QObject
 {
-    Q_OBJECT;
+    friend class DataServices;
+
+    Q_OBJECT
 
 public:
-    explicit AppLauncher(DataServer* s, WidgetRegistry* r, QObject* parent = Q_NULLPTR);
-    ~AppLauncher();
-
     const QVariantMap* getMapForRead();
     void               releaseMap(const QVariantMap*& map);
 
@@ -50,6 +49,12 @@ private:
     void handleCommand(const QJsonObject& req, QWebSocket* sender);
 
 private:
+    explicit AppLauncher(DataServer* s, WidgetRegistry* r, QObject* parent = Q_NULLPTR);
+    AppLauncher(const AppLauncher&) = delete;
+    AppLauncher(AppLauncher&&)      = delete;
+    AppLauncher& operator=(const AppLauncher&) = delete;
+    AppLauncher& operator=(AppLauncher&&) = delete;
+
     DataServer*       server;
     WidgetRegistry*   reg;
     QVariantMap       m_map;

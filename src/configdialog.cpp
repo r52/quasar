@@ -4,7 +4,7 @@
 
 #include <QtWidgets>
 
-ConfigDialog::ConfigDialog(QObject* quasar)
+ConfigDialog::ConfigDialog(DataServices* service)
 {
     contentsWidget = new QListWidget;
     contentsWidget->setViewMode(QListView::IconMode);
@@ -15,9 +15,9 @@ ConfigDialog::ConfigDialog(QObject* quasar)
     contentsWidget->setSpacing(12);
 
     pagesWidget = new QStackedWidget;
-    pagesWidget->addWidget(new GeneralPage(quasar));
-    pagesWidget->addWidget(new PluginPage(quasar));
-    pagesWidget->addWidget(new LauncherPage(quasar));
+    pagesWidget->addWidget(new GeneralPage(service));
+    pagesWidget->addWidget(new PluginPage(service));
+    pagesWidget->addWidget(new LauncherPage(service));
 
     QPushButton* okButton    = new QPushButton(tr("OK"));
     QPushButton* closeButton = new QPushButton(tr("Close"));

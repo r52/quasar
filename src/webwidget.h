@@ -87,10 +87,11 @@ protected:
 
 class WebWidget : public QWidget
 {
-    Q_OBJECT;
+    friend class WidgetRegistry;
+
+    Q_OBJECT
 
 public:
-    explicit WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent = Q_NULLPTR);
     ~WebWidget();
 
     static bool validateWidgetDefinition(const QJsonObject& dat);
@@ -119,9 +120,12 @@ protected slots:
     void toggleOnTop(bool ontop);
 
 private:
+    explicit WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent = Q_NULLPTR);
+    WebWidget(const WebWidget&) = delete;
+    WebWidget& operator=(const WebWidget&) = delete;
+
     QString getSettingKey(QString key);
 
-private:
     static QString PageGlobalTemp;
 
     bool m_fixedposition = false;

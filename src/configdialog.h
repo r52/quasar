@@ -5,13 +5,14 @@
 QT_FORWARD_DECLARE_CLASS(QListWidget)
 QT_FORWARD_DECLARE_CLASS(QListWidgetItem)
 QT_FORWARD_DECLARE_CLASS(QStackedWidget)
+QT_FORWARD_DECLARE_CLASS(DataServices)
 
 class ConfigDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    ConfigDialog(QObject* quasar);
+    explicit ConfigDialog(DataServices* service);
 
 public slots:
     void changePage(QListWidgetItem* current, QListWidgetItem* previous);

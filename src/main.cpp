@@ -1,5 +1,4 @@
-#include "applauncher.h"
-#include "dataserver.h"
+#include "dataservices.h"
 #include "logwindow.h"
 #include "quasar.h"
 #include "runguard.h"
@@ -21,11 +20,15 @@ int main(int argc, char* argv[])
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
 
+    LogWindow* log = new LogWindow();
+
     QPixmap       pixmap(":/Resources/splash.png");
     QSplashScreen splash(pixmap);
+    auto          align = Qt::AlignHCenter | Qt::AlignBottom;
+    auto          color = Qt::white;
     splash.show();
 
-    splash.showMessage("Loading configuration...", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
+    splash.showMessage("Loading configuration...", align, color);
     a.processEvents();
 
     QApplication::setApplicationName("Quasar");
@@ -34,20 +37,17 @@ int main(int argc, char* argv[])
 
     QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
 
-    splash.showMessage("Loading modules...", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
+    splash.showMessage("Loading services...", align, color);
     a.processEvents();
 
     // preload
-    // Quasar takes ownership of these
-    LogWindow*      log      = new LogWindow();
-    DataServer*     server   = new DataServer();
-    WidgetRegistry* reg      = new WidgetRegistry();
-    AppLauncher*    launcher = new AppLauncher(server, reg);
+    // Quasar takes ownership
+    DataServices* service = new DataServices();
 
-    Quasar w(log, server, reg, launcher);
+    Quasar w(log, service);
     w.hide();
 
-    splash.showMessage("Loading widgets...", Qt::AlignHCenter | Qt::AlignBottom, Qt::white);
+    splash.showMessage("Loading widgets...", align, color);
     a.processEvents();
 
     // Load widgets
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 
     for (const QString& f : loadedList)
     {
-        reg->loadWebWidget(f, false);
+        service->getRegistry()->loadWebWidget(f, false);
     }
 
     splash.finish(&w);

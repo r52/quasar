@@ -12,10 +12,11 @@ using WidgetMapType = std::unordered_map<QString, std::unique_ptr<WebWidget>>;
 
 class WidgetRegistry : public QObject
 {
+    friend class DataServices;
+
     Q_OBJECT
 
 public:
-    explicit WidgetRegistry(QObject* parent = Q_NULLPTR);
     ~WidgetRegistry();
 
     bool loadWebWidget(QString filename, bool userAction = true);
@@ -31,5 +32,11 @@ public slots:
     void closeWebWidget(WebWidget* widget);
 
 private:
+    explicit WidgetRegistry(QObject* parent = Q_NULLPTR);
+    WidgetRegistry(const WidgetRegistry&) = delete;
+    WidgetRegistry(WidgetRegistry&&)      = delete;
+    WidgetRegistry& operator=(const WidgetRegistry&) = delete;
+    WidgetRegistry& operator=(WidgetRegistry&&) = delete;
+
     WidgetMapType m_widgetMap;
 };
