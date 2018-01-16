@@ -1,7 +1,6 @@
 #pragma once
 
 #if defined(__cplusplus)
-#    include <cstdbool>
 #    include <cstddef>
 #    include <cstdint>
 #else
