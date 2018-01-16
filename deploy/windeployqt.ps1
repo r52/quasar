@@ -2,7 +2,7 @@ $qtpath = $env:QTDIR
 
 if ($qtpath -eq $null)
 {
-    $qtpath = "C:\Qt\5.9.1\msvc2017_64"
+    $qtpath = "C:\Qt\5.9.3\msvc2017_64"
 }
 
 $windeploy = "$($qtpath)\bin\windeployqt.exe"
