@@ -252,7 +252,7 @@ HRESULT LoopbackCapture(
         // reserve only
         fftIn[chan].reserve(m_fftsize);
 
-        fftOut[chan].assign(m_fftsize, std::complex<double>(0.0, 0.0));
+        fftOut[chan].resize(m_fftsize, std::complex<double>(0.0, 0.0));
     }
 
     // loopback capture loop
@@ -312,7 +312,7 @@ HRESULT LoopbackCapture(
                             }
                             else
                             {
-                                fftOut[chan].assign(m_fftsize, std::complex<double>(0.0, 0.0));
+                                fftOut[chan].resize(m_fftsize, std::complex<double>(0.0, 0.0));
                             }
 
                             for (size_t b = 0; b < m_fftsize; b++)
