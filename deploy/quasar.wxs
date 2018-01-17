@@ -422,18 +422,6 @@
             <Component Id="cmp15A4E98244C30B97906D2796D0FED5ED" Directory="dirAAB1972211132EB8BFA1D99AC067C3C1" Guid="{08052073-34BF-4FA0-8D75-A38DD58F291C}">
                 <File Id="filDA2D31B872525601E7B0BBF24613DDB5" KeyPath="yes" Source="$(var.pkgsrc)\translations\qtwebengine_locales\zh-TW.pak"/>
             </Component>
-            <Component Id="cmp9283C5FFE3F4A46883DAB866190D5580" Directory="dir7994815B1863D0B90EFDB512D19E6BC5" Guid="{B434DF52-B85A-4ABC-9C87-5BBE92658FB4}">
-                <File Id="filAA184CA07AB89511FCA6DC0C19066505" KeyPath="yes" Source="$(var.pkgsrc)\widgets\cdn_weather\index.html"/>
-            </Component>
-            <Component Id="cmpDBEC0771C87BD58272373B608302FE89" Directory="dir7994815B1863D0B90EFDB512D19E6BC5" Guid="{85BFE8EF-7B21-4EC8-AFE7-875518E2CB32}">
-                <File Id="filB134146C1B9AC7713F55395BAF50BFC5" KeyPath="yes" Source="$(var.pkgsrc)\widgets\cdn_weather\weather.json"/>
-            </Component>
-            <Component Id="cmpA3270E9AF318D57658873E3519E8F243" Directory="dirCEAE94C263E7C40EE3407A26E31985FB" Guid="{179A75B8-A54E-4631-81DF-50B895EF8E2B}">
-                <File Id="filA57844079D34BCB208294E0BBA5FFBEF" KeyPath="yes" Source="$(var.pkgsrc)\widgets\cdn_weather\css\style.css"/>
-            </Component>
-            <Component Id="cmp7B6EE8F000FDFC8B190AA337E8E18D32" Directory="dir1BBC2DF215F81E6DD0504A41D316FE55" Guid="{AA459581-E5C1-4E7E-BBEA-9A0E1AF3DBE4}">
-                <File Id="fil0D014A470D485F497A4A8BC50A431B92" KeyPath="yes" Source="$(var.pkgsrc)\widgets\cdn_weather\js\index.js"/>
-            </Component>
             <Component Id="cmpC5A78E4462CA5D04883C6F0293E582BC" Directory="dirDE9FC083FA89563CD7ECB523C21EECD9" Guid="{22083EBE-17C4-4D80-ACA3-9FF476BCB7EF}">
                 <File Id="fil787409B8691DA28252C2BD2D55965693" KeyPath="yes" Source="$(var.pkgsrc)\widgets\datetime\datetime.json"/>
             </Component>
@@ -568,11 +556,6 @@
     <Fragment>
         <DirectoryRef Id="INSTALLDIR">
             <Directory Id="dir66A7178F0BEB421637AEA04EE6E9FC04" Name="position"/>
-        </DirectoryRef>
-    </Fragment>
-    <Fragment>
-        <DirectoryRef Id="dirBC9CC52BDDD843BDA83777C4708D4598">
-            <Directory Id="dir7994815B1863D0B90EFDB512D19E6BC5" Name="cdn_weather"/>
         </DirectoryRef>
     </Fragment>
     <Fragment>
