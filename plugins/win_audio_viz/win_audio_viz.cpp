@@ -1,12 +1,13 @@
 // Adapted from the Rainmeter AudioLevel plugin
 
+#define _USE_MATH_DEFINES
+
 #include <array>
 #include <limits>
 #include <mutex>
 #include <shared_mutex>
 #include <vector>
 
-#define NOMINMAX
 #include <audioclient.h>
 #include <avrt.h>
 #include <mmdeviceapi.h>
@@ -15,11 +16,9 @@
 #include <plugin_api.h>
 #include <plugin_support.h>
 
-#include <kfr/dft.hpp>
-#include <kfr/dsp.hpp>
-#include <kfr/math.hpp>
+#include "kissfft/kissfft.hh"
 
-#define CLAMP01(x) kfr::max(0.0, kfr::min(1.0, (x)))
+#define CLAMP01(x) max(0.0, min(1.0, (x)))
 
 #define PLUGIN_NAME "Audio Visualization Data"
 #define PLUGIN_CODE "win_audio_viz"
@@ -46,8 +45,6 @@ quasar_data_source_t sources[1] =
     {
         { "viz", -1, 0 }
     };
-
-using namespace kfr;
 
 namespace
 {
@@ -79,9 +76,10 @@ namespace
 
     WaveFormat s_format = FORMAT_INV;
 
-    std::array<univector<complex<double>>, VIZ_MAX_CHANNELS> fftIn;
-    std::array<univector<complex<double>>, VIZ_MAX_CHANNELS> fftOut;
-    std::array<univector<double>, VIZ_MAX_CHANNELS>          fftMag;
+    std::array<std::unique_ptr<kissfft<double>>, VIZ_MAX_CHANNELS>  fftCfg;
+    std::array<std::vector<double>, VIZ_MAX_CHANNELS>               fftIn;
+    std::array<std::vector<std::complex<double>>, VIZ_MAX_CHANNELS> fftOut;
+    std::array<std::vector<double>, VIZ_MAX_CHANNELS>               fftMag;
 }
 
 HRESULT LoopbackCapture(
@@ -244,12 +242,17 @@ HRESULT LoopbackCapture(
     // reserve memory
     for (size_t chan = 0; chan < pwfx->nChannels; chan++)
     {
+        // setup fft
+        fftCfg[chan].reset(new kissfft<double>(m_fftsize, false));
+
         // fill default
         spectrum[chan].resize(m_numbands, 0.0);
         fftMag[chan].resize(m_fftsize, 0.0);
 
         // reserve only
         fftIn[chan].reserve(m_fftsize);
+
+        fftOut[chan].assign(m_fftsize, std::complex<double>(0.0, 0.0));
     }
 
     // loopback capture loop
@@ -283,35 +286,38 @@ HRESULT LoopbackCapture(
             {
                 float*       sF32   = (float*) pData;
                 INT16*       sI16   = (INT16*) pData;
-                const double scalar = (double) (1.0 / kfr::sqrt(m_fftsize));
+                const double scalar = (double) (1.0 / sqrt(m_fftsize));
 
                 for (size_t frame = 0; frame < nNumFramesToRead; frame++)
                 {
                     for (size_t chan = 0; chan < pwfx->nChannels; chan++)
                     {
-                        fftIn[chan].push_back(make_complex(s_format == FORMAT_FL32 ? (double) *sF32++ : (double) *sI16++ * 1.0 / 0x7fff, 0.0));
+                        fftIn[chan].push_back(s_format == FORMAT_FL32 ? (double) *sF32++ : (double) *sI16++ * 1.0 / 0x7fff);
                     }
 
                     if (fftIn[0].size() >= m_fftsize)
                     {
-                        auto window = to_pointer(window_hann<double>(m_fftsize));
-
                         for (size_t chan = 0; chan < pwfx->nChannels; chan++)
                         {
                             if (!(dwFlags & AUDCLNT_BUFFERFLAGS_SILENT))
                             {
-                                fftIn[chan] = fftIn[chan] * window;
+                                // apply hann window
+                                std::transform(fftIn[chan].begin(), fftIn[chan].end(), fftIn[chan].begin(), [idx = 0](double x) mutable -> double {
+                                    double w = x * (0.5 * (1.0 - cos(2 * M_PI * idx / (m_fftsize - 1))));
+                                    ++idx;
+                                    return w;
+                                });
 
-                                fftOut[chan] = dft(fftIn[chan]);
+                                fftCfg[chan]->transform_real(fftIn[chan].data(), fftOut[chan].data());
                             }
                             else
                             {
-                                fftOut[chan].resize(m_fftsize, 0.0);
+                                fftOut[chan].assign(m_fftsize, std::complex<double>(0.0, 0.0));
                             }
 
                             for (size_t b = 0; b < m_fftsize; b++)
                             {
-                                fftMag[chan][b] = (kfr::sqr(fftOut[chan][b].real()) + kfr::sqr(fftOut[chan][b].imag())) * scalar;
+                                fftMag[chan][b] = ((fftOut[chan][b].real() * fftOut[chan][b].real()) + (fftOut[chan][b].imag() * fftOut[chan][b].imag())) * scalar;
                             }
 
                             fftIn[chan].clear();
@@ -367,7 +373,7 @@ HRESULT LoopbackCapture(
                     }
 
                     x              = CLAMP01(x);
-                    spectrum[0][b] = kfr::max(0.0, 10.0 / m_sensitivity * kfr::log10(x) + 1.0);
+                    spectrum[0][b] = max(0.0, 10.0 / m_sensitivity * log10(x) + 1.0);
 
                     if (spectrum[0][b] > maxMag)
                     {
@@ -452,12 +458,12 @@ void calculate_freq_bands()
     spectrumFreqs.resize(m_numbands, 0.0);
 
     // calculate band frequencies
-    const double step = (kfr::log(m_freqmax / m_freqmin) / m_numbands) / kfr::log(2.0);
-    spectrumFreqs[0]  = (double) (m_freqmin * kfr::pow(2.0, step / 2.0));
+    const double step = (log(m_freqmax / m_freqmin) / m_numbands) / log(2.0);
+    spectrumFreqs[0]  = (double) (m_freqmin * pow(2.0, step / 2.0));
 
     for (size_t i = 1; i < m_numbands; ++i)
     {
-        spectrumFreqs[i] = (double) (spectrumFreqs[i - 1] * kfr::pow(2.0, step));
+        spectrumFreqs[i] = (double) (spectrumFreqs[i - 1] * pow(2.0, step));
     }
 }
 
@@ -640,16 +646,21 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 
     if (fftsize != m_fftsize)
     {
+        m_fftsize = fftsize;
+
         for (size_t chan = 0; chan < m_nchannels; chan++)
         {
+            fftCfg[chan].reset(new kissfft<double>(m_fftsize, false));
             fftMag[chan].resize(m_fftsize, 0.0);
             fftIn[chan].reserve(m_fftsize);
+            fftOut[chan].resize(m_fftsize, std::complex<double>(0.0, 0.0));
         }
     }
 
     if (numbands != m_numbands)
     {
-        recalc = true;
+        m_numbands = numbands;
+        recalc     = true;
 
         for (size_t chan = 0; chan < m_nchannels; chan++)
         {
