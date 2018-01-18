@@ -77,7 +77,7 @@ namespace
     WaveFormat s_format = FORMAT_INV;
 
     std::array<std::unique_ptr<kissfft<double>>, VIZ_MAX_CHANNELS>  fftCfg;
-    std::array<std::vector<double>, VIZ_MAX_CHANNELS>               fftIn;
+    std::array<std::vector<std::complex<double>>, VIZ_MAX_CHANNELS> fftIn;
     std::array<std::vector<std::complex<double>>, VIZ_MAX_CHANNELS> fftOut;
     std::array<std::vector<double>, VIZ_MAX_CHANNELS>               fftMag;
 }
@@ -292,7 +292,7 @@ HRESULT LoopbackCapture(
                 {
                     for (size_t chan = 0; chan < pwfx->nChannels; chan++)
                     {
-                        fftIn[chan].push_back(s_format == FORMAT_FL32 ? (double) *sF32++ : (double) *sI16++ * 1.0 / 0x7fff);
+                        fftIn[chan].push_back(std::complex<double>(s_format == FORMAT_FL32 ? (double) *sF32++ : (double) *sI16++ * 1.0 / 0x7fff, 0.0));
                     }
 
                     if (fftIn[0].size() >= m_fftsize)
@@ -302,17 +302,16 @@ HRESULT LoopbackCapture(
                             if (!(dwFlags & AUDCLNT_BUFFERFLAGS_SILENT))
                             {
                                 // apply hann window
-                                std::transform(fftIn[chan].begin(), fftIn[chan].end(), fftIn[chan].begin(), [idx = 0](double x) mutable -> double {
-                                    double w = x * (0.5 * (1.0 - cos(2 * M_PI * idx / (m_fftsize - 1))));
+                                std::for_each(fftIn[chan].begin(), fftIn[chan].end(), [idx = 0](std::complex<double>& x) mutable {
+                                    x.real(x.real() * (0.5 * (1.0 - cos(2 * M_PI * idx / (m_fftsize - 1)))));
                                     ++idx;
-                                    return w;
                                 });
 
-                                fftCfg[chan]->transform_real(fftIn[chan].data(), fftOut[chan].data());
+                                fftCfg[chan]->transform(fftIn[chan].data(), fftOut[chan].data());
                             }
                             else
                             {
-                                fftOut[chan].resize(m_fftsize, std::complex<double>(0.0, 0.0));
+                                fftOut[chan].assign(m_fftsize, std::complex<double>(0.0, 0.0));
                             }
 
                             for (size_t b = 0; b < m_fftsize; b++)
@@ -651,9 +650,9 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
         for (size_t chan = 0; chan < m_nchannels; chan++)
         {
             fftCfg[chan].reset(new kissfft<double>(m_fftsize, false));
-            fftMag[chan].resize(m_fftsize, 0.0);
+            fftMag[chan].assign(m_fftsize, 0.0);
             fftIn[chan].reserve(m_fftsize);
-            fftOut[chan].resize(m_fftsize, std::complex<double>(0.0, 0.0));
+            fftOut[chan].assign(m_fftsize, std::complex<double>(0.0, 0.0));
         }
     }
 
@@ -664,7 +663,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 
         for (size_t chan = 0; chan < m_nchannels; chan++)
         {
-            spectrum[chan].resize(m_numbands, 0.0);
+            spectrum[chan].assign(m_numbands, 0.0);
         }
     }
 
