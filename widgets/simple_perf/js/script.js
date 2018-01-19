@@ -12,20 +12,32 @@ function subscribe() {
 }
 
 function processData(data) {
-    if (data["plugin"] == "win_simple_perf") {
-        var val = data["data"];
+    var val = data["data"];
+    var $elm = null;
 
-        switch (data["source"]) {
-            case "cpu":
-                $('span#cpu_val').text(val);
-                break;
-            case "ram":
-                var pct = Math.round((val["used"] / val["total"]) * 100);
-                $('span#ram_val').text(pct);
-                break;
-            default:
-                console.log("Unknown source type " + data["source"]);
-                break;
+    switch (data["source"]) {
+        case "cpu":
+            $elm = $('#cpu');
+            break;
+        case "ram":
+            val = Math.round((val["used"] / val["total"]) * 100);
+            $elm = $('#ram');
+            break;
+        default:
+            console.log("Unknown source type " + data["source"]);
+            break;
+    }
+
+    if ($elm != null) {
+        $elm.attr("aria-valuenow", val).text(val + "%").width(val + "%");
+        $elm.removeClass("bg-success bg-info bg-warning bg-danger");
+
+        if (val >= 80) {
+            $elm.addClass("bg-danger");
+        } else if (val >= 60) {
+            $elm.addClass("bg-warning");
+        } else {
+            $elm.addClass("bg-success");
         }
     }
 }

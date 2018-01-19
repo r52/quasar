@@ -3,19 +3,25 @@
 
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
     <div>
-        <span id="cpu_label">CPU:</span>
-        <span id="cpu_val">?</span>%
+        <span id="cpu_label">CPU</span>
+    </div>
+    <div class="progress">
+        <div id="cpu" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
     </div>
     <div>
-        <span id="ram_label">RAM:</span>
-        <span id="ram_val">?</span>% used
+        <span id="ram_label">RAM</span>
     </div>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js'></script>
+    <div class="progress">
+        <div id="ram" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
     <script src="js/script.js"></script>
 </body>
+
 </html>
