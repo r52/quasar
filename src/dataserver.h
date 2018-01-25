@@ -29,6 +29,7 @@ public:
     DataPluginMapType& getPlugins() { return m_plugins; };
 
     bool addHandler(QString type, HandlerFuncType handler);
+    bool findPlugin(QString pluginCode);
 
 private:
     void loadDataPlugins();

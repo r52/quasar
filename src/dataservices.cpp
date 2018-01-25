@@ -15,7 +15,7 @@ namespace
 }
 
 DataServices::DataServices(QObject* parent)
-    : QObject(parent), server(new DataServer(this)), reg(new WidgetRegistry(this)), launcher(new AppLauncher(server, reg, this))
+    : QObject(parent), server(new DataServer(this)), reg(new WidgetRegistry(server, this)), launcher(new AppLauncher(server, reg, this))
 {
     if (nullptr != s_service)
     {

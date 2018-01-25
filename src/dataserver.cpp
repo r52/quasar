@@ -59,6 +59,11 @@ bool DataServer::addHandler(QString type, HandlerFuncType handler)
     return true;
 }
 
+bool DataServer::findPlugin(QString pluginCode)
+{
+    return (m_plugins.count(pluginCode) > 0);
+}
+
 void DataServer::loadDataPlugins()
 {
     QDir          dir("plugins/");

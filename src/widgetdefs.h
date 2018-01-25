@@ -8,6 +8,8 @@
 #define WGT_DEF_TRANSPARENTBG "transparentBg"
 #define WGT_DEF_REMOTEACCESS "remoteAccess"
 #define WGT_DEF_CLICKABLE "clickable"
+#define WGT_DEF_REQUIRED "required"
+#define WGT_DEF_OPTIONAL "optional"
 
 #define QUASAR_CONFIG_PORT "global/dataport"
 #define QUASAR_CONFIG_LOADED "global/loaded"

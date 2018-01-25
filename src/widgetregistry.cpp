@@ -1,8 +1,10 @@
 #include "widgetregistry.h"
 
+#include "dataserver.h"
 #include "webwidget.h"
 #include "widgetdefs.h"
 
+#include <QMessageBox>
 #include <QNetworkCookie>
 #include <QtWebEngineCore/QWebEngineCookieStore>
 #include <QtWebEngineWidgets/QWebEngineProfile>
@@ -22,8 +24,8 @@ namespace
     };
 }
 
-WidgetRegistry::WidgetRegistry(QObject* parent)
-    : QObject(parent)
+WidgetRegistry::WidgetRegistry(DataServer* s, QObject* parent)
+    : QObject(parent), server(s)
 {
     loadCookies();
 }
@@ -59,6 +61,36 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
     {
         qWarning() << "Invalid widget definition '" << filename << "'";
         return false;
+    }
+
+    // Verify plugin dependencies
+    if (dat.contains(WGT_DEF_REQUIRED))
+    {
+        bool    pass     = true;
+        QString failplug = "";
+        auto    arr      = dat[WGT_DEF_REQUIRED].toArray();
+
+        for (auto p : arr)
+        {
+            if (!server->findPlugin(p.toString()))
+            {
+                pass     = false;
+                failplug = p.toString();
+                break;
+            }
+        }
+
+        if (!pass)
+        {
+            qWarning() << "Missing plugin '" << failplug << "' for '" << filename << "'";
+
+            QMessageBox::warning(nullptr,
+                                 tr("Missing Plugin"),
+                                 tr("Plugin \"%1\" is required for widget \"%2\". Please install this plugin and try again.").arg(failplug, filename),
+                                 QMessageBox::Ok);
+
+            return false;
+        }
     }
 
     if (userAction && !WebWidget::acceptSecurityWarnings(dat))
