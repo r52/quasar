@@ -1,6 +1,7 @@
 #include "dataplugin.h"
 
 #include <plugin_support_internal.h>
+#include <unordered_set>
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -193,6 +194,14 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString w
         createTimer(data);
     }
 
+    // Send settings if applicable
+    auto payload = craftSettingsMessage();
+
+    if (!payload.isEmpty())
+    {
+        subscriber->sendTextMessage(payload);
+    }
+
     return true;
 }
 
@@ -381,6 +390,8 @@ void DataPlugin::updatePluginSettings()
     if (m_settings && m_plugin->update)
     {
         m_plugin->update(m_settings.get());
+
+        propagateSettingsToAllUniqueSubscribers();
     }
 }
 
@@ -469,4 +480,69 @@ QString DataPlugin::craftDataMessage(const DataSource& data)
     QJsonDocument doc(reply);
 
     return QString::fromUtf8(doc.toJson());
+}
+
+QString DataPlugin::craftSettingsMessage()
+{
+    QString payload;
+
+    if (m_settings)
+    {
+        // Craft the settings message
+        QJsonObject msg;
+        QJsonObject settings;
+
+        msg["type"]   = "settings";
+        msg["plugin"] = getCode();
+
+        for (auto& s : m_settings->map)
+        {
+            switch (s.second.type)
+            {
+                case QUASAR_SETTING_ENTRY_INT:
+                    settings[s.first] = s.second.inttype.val;
+                    break;
+
+                case QUASAR_SETTING_ENTRY_DOUBLE:
+                    settings[s.first] = s.second.doubletype.val;
+                    break;
+
+                case QUASAR_SETTING_ENTRY_BOOL:
+                    settings[s.first] = s.second.booltype.val;
+                    break;
+            }
+        }
+
+        msg["data"] = settings;
+        QJsonDocument doc(msg);
+
+        payload = QString::fromUtf8(doc.toJson());
+    }
+
+    return payload;
+}
+
+void DataPlugin::propagateSettingsToAllUniqueSubscribers()
+{
+    if (m_settings)
+    {
+        std::unordered_set<QWebSocket*> unique_subs;
+
+        // Collect unique subscribers
+        for (auto& source : m_datasources)
+        {
+            unique_subs.insert(source.second.subscribers.begin(), source.second.subscribers.end());
+        }
+
+        auto payload = craftSettingsMessage();
+
+        if (!payload.isEmpty())
+        {
+            // Send the payload
+            for (auto sub : unique_subs)
+            {
+                sub->sendTextMessage(payload);
+            }
+        }
+    }
 }

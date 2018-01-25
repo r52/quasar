@@ -99,6 +99,8 @@ private:
 
     void    createTimer(DataSource& data);
     QString craftDataMessage(const DataSource& data);
+    QString craftSettingsMessage();
+    void    propagateSettingsToAllUniqueSubscribers();
 
     quasar_plugin_info_t* m_plugin;
     plugin_destroy        m_destroyfunc;

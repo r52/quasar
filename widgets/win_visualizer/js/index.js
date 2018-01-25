@@ -18,11 +18,9 @@ $(document).ready(function() {
         websocket.send(JSON.stringify(reg));
     }
 
-    function parseMsg(msg) {
-        var data = JSON.parse(msg);
-
+    function bounce(dat) {
         bars.each(function(index, element) {
-            var hp = (data["data"][index] * 100.0).toFixed(0);
+            var hp = (dat[index] * 100.0).toFixed(0);
             prop["height"] = hp + '%';
 
             $(this).velocity("stop")
@@ -31,6 +29,20 @@ $(document).ready(function() {
                     easing: "linear"
                 });
         });
+    }
+
+    function parseMsg(msg) {
+        var data = JSON.parse(msg);
+
+        switch (data["type"]) {
+            case "data":
+                bounce(data["data"]);
+                break;
+            case "settings":
+                break;
+            default:
+                break;
+        }
     }
 
     try {
