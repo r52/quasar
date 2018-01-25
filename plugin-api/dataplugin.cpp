@@ -77,26 +77,22 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
         if (m_settings)
         {
             // Fill saved settings if any
-            auto it = m_settings->map.begin();
-
-            while (it != m_settings->map.end())
+            for (auto& it : m_settings->map)
             {
-                switch (it->second.type)
+                switch (it.second.type)
                 {
                     case QUASAR_SETTING_ENTRY_INT:
-                        it->second.inttype.val = settings.value(getSettingsCode(it->first), it->second.inttype.def).toInt();
+                        it.second.inttype.val = settings.value(getSettingsCode(it.first), it.second.inttype.def).toInt();
                         break;
 
                     case QUASAR_SETTING_ENTRY_DOUBLE:
-                        it->second.doubletype.val = settings.value(getSettingsCode(it->first), it->second.doubletype.def).toDouble();
+                        it.second.doubletype.val = settings.value(getSettingsCode(it.first), it.second.doubletype.def).toDouble();
                         break;
 
                     case QUASAR_SETTING_ENTRY_BOOL:
-                        it->second.booltype.val = settings.value(getSettingsCode(it->first), it->second.booltype.def).toBool();
+                        it.second.booltype.val = settings.value(getSettingsCode(it.first), it.second.booltype.def).toBool();
                         break;
                 }
-
-                ++it;
             }
 
             updatePluginSettings();
@@ -214,23 +210,19 @@ void DataPlugin::removeSubscriber(QWebSocket* subscriber)
     }
 
     // Removes subscriber from all data sources
-    auto it = m_datasources.begin();
-
-    while (it != m_datasources.end())
+    for (auto& it : m_datasources)
     {
         // Log if unsubscribed succeeded
-        if (it->second.subscribers.erase(subscriber))
+        if (it.second.subscribers.erase(subscriber))
         {
-            qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it->first;
+            qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it.first;
         }
 
         // Stop timer if no subscribers
-        if (it->second.subscribers.empty())
+        if (it.second.subscribers.empty())
         {
-            it->second.timer.reset();
+            it.second.timer.reset();
         }
-
-        ++it;
     }
 }
 

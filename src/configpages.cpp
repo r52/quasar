@@ -369,21 +369,19 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
 
     QSettings settings;
 
-    auto it = sources.begin();
-
-    while (it != sources.end())
+    for (auto& it : sources)
     {
-        bool sourceEnabled = settings.value(plugin->getSettingsCode(QUASAR_DP_ENABLED_PREFIX + it->first), true).toBool();
+        bool sourceEnabled = settings.value(plugin->getSettingsCode(QUASAR_DP_ENABLED_PREFIX + it.first), true).toBool();
 
         QHBoxLayout* dataLayout = new QHBoxLayout;
 
         // create data source rate settings
-        QCheckBox* sourceCheckBox = new QCheckBox(it->first);
-        sourceCheckBox->setObjectName(QUASAR_DP_ENABLED_PREFIX + it->first);
+        QCheckBox* sourceCheckBox = new QCheckBox(it.first);
+        sourceCheckBox->setObjectName(QUASAR_DP_ENABLED_PREFIX + it.first);
         sourceCheckBox->setChecked(sourceEnabled);
 
         // Signaled sources cannot be disabled
-        if (it->second.refreshmsec < 0)
+        if (it.second.refreshmsec < 0)
         {
             sourceCheckBox->setEnabled(false);
         }
@@ -391,14 +389,14 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
         dataLayout->addWidget(sourceCheckBox);
 
         // Only create refresh setting if the data source is subscription based
-        if (it->second.refreshmsec > 0)
+        if (it.second.refreshmsec > 0)
         {
             QSpinBox* upSpin = new QSpinBox;
-            upSpin->setObjectName(QUASAR_DP_REFRESH_PREFIX + it->first);
+            upSpin->setObjectName(QUASAR_DP_REFRESH_PREFIX + it.first);
             upSpin->setMinimum(1);
             upSpin->setMaximum(INT_MAX);
             upSpin->setSingleStep(1);
-            upSpin->setValue(it->second.refreshmsec);
+            upSpin->setValue(it.second.refreshmsec);
             upSpin->setSuffix("ms");
             upSpin->setEnabled(sourceEnabled);
 
@@ -413,8 +411,6 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
         }
 
         sourceLayout->addLayout(dataLayout);
-
-        ++it;
     }
 
     sourceGroup->setLayout(sourceLayout);
@@ -428,26 +424,24 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
         QGroupBox*   plugGroup  = new QGroupBox(tr("Plugin Settings"));
         QVBoxLayout* plugLayout = new QVBoxLayout;
 
-        auto it = s->map.begin();
-
-        while (it != s->map.end())
+        for (auto& it : s->map)
         {
             QHBoxLayout* entryLayout = new QHBoxLayout;
 
             QLabel* label = new QLabel;
-            label->setText(it->second.description);
+            label->setText(it.second.description);
             entryLayout->addWidget(label);
 
-            switch (it->second.type)
+            switch (it.second.type)
             {
                 case QUASAR_SETTING_ENTRY_INT:
                 {
                     QSpinBox* s = new QSpinBox;
-                    s->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it->first);
-                    s->setMinimum(it->second.inttype.min);
-                    s->setMaximum(it->second.inttype.max);
-                    s->setSingleStep(it->second.inttype.step);
-                    s->setValue(it->second.inttype.val);
+                    s->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.first);
+                    s->setMinimum(it.second.inttype.min);
+                    s->setMaximum(it.second.inttype.max);
+                    s->setSingleStep(it.second.inttype.step);
+                    s->setValue(it.second.inttype.val);
 
                     connect(s, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [this](int i) { this->m_plugSettingsModified = true; });
 
@@ -458,11 +452,11 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
                 case QUASAR_SETTING_ENTRY_DOUBLE:
                 {
                     QDoubleSpinBox* d = new QDoubleSpinBox;
-                    d->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it->first);
-                    d->setMinimum(it->second.doubletype.min);
-                    d->setMaximum(it->second.doubletype.max);
-                    d->setSingleStep(it->second.doubletype.step);
-                    d->setValue(it->second.doubletype.val);
+                    d->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.first);
+                    d->setMinimum(it.second.doubletype.min);
+                    d->setMaximum(it.second.doubletype.max);
+                    d->setSingleStep(it.second.doubletype.step);
+                    d->setValue(it.second.doubletype.val);
 
                     connect(d, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [this](double d) { this->m_plugSettingsModified = true; });
 
@@ -473,8 +467,8 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
                 case QUASAR_SETTING_ENTRY_BOOL:
                 {
                     QCheckBox* b = new QCheckBox;
-                    b->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it->first);
-                    b->setChecked(it->second.booltype.val);
+                    b->setObjectName(QUASAR_DP_CUSTOM_PREFIX + it.first);
+                    b->setChecked(it.second.booltype.val);
 
                     connect(b, &QCheckBox::toggled, [this](bool state) { this->m_plugSettingsModified = true; });
 
@@ -484,8 +478,6 @@ DataPluginPage::DataPluginPage(DataPlugin* p, QWidget* parent)
             }
 
             plugLayout->addLayout(entryLayout);
-
-            ++it;
         }
 
         plugGroup->setLayout(plugLayout);
@@ -754,7 +746,6 @@ LauncherPage::LauncherPage(DataServices* service, QWidget* parent)
     QPushButton* addButton = new QPushButton(tr("Add"));
 
     connect(addButton, &QPushButton::clicked, [=](bool checked) {
-
         LauncherEditDialog editdialog("New App", this);
 
         if (editdialog.exec() == QDialog::Accepted)
