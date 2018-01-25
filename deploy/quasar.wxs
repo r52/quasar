@@ -185,14 +185,14 @@
             <Component Id="cmp14B65A2C59AC2AE199ACC946D64484C7" Directory="dir66A7178F0BEB421637AEA04EE6E9FC04" Guid="{58399B28-75DF-4632-A9B7-7F78A1EB198D}">
                 <File Id="fil85D9E0459A18FC5B8D11E6029574E9F9" KeyPath="yes" Source="$(var.pkgsrc)\position\qtposition_serialnmea.dll"/>
             </Component>
-            <Component Id="cmp92EF8D2268235E55481CA2D862F11705" Directory="dir66A7178F0BEB421637AEA04EE6E9FC04" Guid="{8DAE7CCD-9796-4BA7-9A0B-98412DB3C71D}">
-                <File Id="fil93E7532084FC128E72E3213EEEE44904" KeyPath="yes" Source="$(var.pkgsrc)\position\qtposition_winrt.dll"/>
-            </Component>
             <Component Id="cmp21144F3132B08330D42F68776484FD25" Directory="dir1CA2E453F9EDE55E84467EB05F7FF15A" Guid="{FEA6E31D-D546-49F9-A490-FDF5297C323A}">
                 <File Id="fil1E3935F84519C09E7FD03E3B2F50B1A6" KeyPath="yes" Source="$(var.pkgsrc)\printsupport\windowsprintersupport.dll"/>
             </Component>
             <Component Id="cmp6C639CC80D656FDBEA328B590C5A45AA" Directory="dir18F01693559E781AD86D1CA2CA6C98E6" Guid="{89A5A727-3902-4624-AB6A-079112149A95}">
                 <File Id="filC325DF595B4C2A6A063658EBEBDFBA9C" KeyPath="yes" Source="$(var.pkgsrc)\resources\icudtl.dat"/>
+            </Component>
+            <Component Id="cmpD8F258375A834CE39F6A23C24C86586A" Directory="dir18F01693559E781AD86D1CA2CA6C98E6" Guid="{7A64BA32-CF57-4021-83C4-13E763705EB7}">
+                <File Id="fil37FC712380EC46BFBC95F85476755577" KeyPath="yes" Source="$(var.pkgsrc)\resources\qtwebengine_devtools_resources.pak"/>
             </Component>
             <Component Id="cmp8952DB73CF77CE61DBB1B63D284D340B" Directory="dir18F01693559E781AD86D1CA2CA6C98E6" Guid="{F2B5271F-EC30-4DAA-A3EB-06628619F30A}">
                 <File Id="fil9BF73C09A67DDAE031F1B0A7EE48EBD7" KeyPath="yes" Source="$(var.pkgsrc)\resources\qtwebengine_resources.pak"/>
@@ -202,6 +202,9 @@
             </Component>
             <Component Id="cmpEDF244351449DCE642762657BEA2E2C1" Directory="dir18F01693559E781AD86D1CA2CA6C98E6" Guid="{DC775438-EDB1-475F-A529-624320A93779}">
                 <File Id="filC80D6E883A191FE65A5C6AD4B1B1E966" KeyPath="yes" Source="$(var.pkgsrc)\resources\qtwebengine_resources_200p.pak"/>
+            </Component>
+            <Component Id="cmpAA70F85095B9440F942624D287F46A05" Directory="dir090378821A644347884309A763395E70" Guid="{5D17ABE9-0F1A-460B-BD93-58D9F87DAC22}">
+                <File Id="filEB53F3FF7D4D41B1853FE287A558E10C" KeyPath="yes" Source="$(var.pkgsrc)\styles\qwindowsvistastyle.dll"/>
             </Component>
             <Component Id="cmp1722F02718AB566348489033725A8257" Directory="dirC8F29258FEF2D43D5D5233ECF5D7BA28" Guid="{58B5C1A2-6E03-44C1-98B5-D173CAD47E7D}">
                 <File Id="fil1B7B2665FA7D7651AA1781E4D7FD5887" KeyPath="yes" Source="$(var.pkgsrc)\translations\qt_ca.qm"/>
@@ -520,12 +523,12 @@
     </Fragment>
     <Fragment>
         <DirectoryRef Id="INSTALLDIR">
-            <Directory Id="dir18F01693559E781AD86D1CA2CA6C98E6" Name="resources"/>
+            <Directory Id="dir090378821A644347884309A763395E70" Name="styles"/>
         </DirectoryRef>
     </Fragment>
     <Fragment>
-        <DirectoryRef Id="dir7994815B1863D0B90EFDB512D19E6BC5">
-            <Directory Id="dir1BBC2DF215F81E6DD0504A41D316FE55" Name="js"/>
+        <DirectoryRef Id="INSTALLDIR">
+            <Directory Id="dir18F01693559E781AD86D1CA2CA6C98E6" Name="resources"/>
         </DirectoryRef>
     </Fragment>
     <Fragment>
@@ -621,11 +624,6 @@
     <Fragment>
         <DirectoryRef Id="dir35195908ADC97A429D18765E714901D1">
             <Directory Id="dirC9CE17317EAC463ED3137FDBF3B9B1AF" Name="js"/>
-        </DirectoryRef>
-    </Fragment>
-    <Fragment>
-        <DirectoryRef Id="dir7994815B1863D0B90EFDB512D19E6BC5">
-            <Directory Id="dirCEAE94C263E7C40EE3407A26E31985FB" Name="css"/>
         </DirectoryRef>
     </Fragment>
     <Fragment>
