@@ -3,5 +3,6 @@
     "width": 500,
     "height": 200,
     "startFile": "index.html",
-    "transparentBg": true
+    "transparentBg": true,
+    "required": ["win_audio_viz"]
 }

@@ -3,5 +3,6 @@
     "width": 400,
     "height": 120,
     "startFile": "index.html",
-    "transparentBg": true
+    "transparentBg": true,
+    "required": ["win_simple_perf"]
 }
