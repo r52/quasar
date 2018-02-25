@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QHash>
 #include <QString>
 
 namespace std
@@ -11,7 +12,7 @@ namespace std
         typedef std::size_t result_type;
         result_type         operator()(argument_type const& s) const
         {
-            return std::hash<std::string>{}(s.toStdString());
+            return static_cast<result_type>(qHash(s));
         }
     };
 }
