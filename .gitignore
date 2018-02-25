@@ -263,3 +263,7 @@ compile_commands.json
 CTestTestfile.cmake
 build
 CMakeSettings.json
+
+# Doxygen
+docs/_*
+docs/xml/
