@@ -8,12 +8,12 @@ $(document).ready(function() {
     var bars = $('.wav> div> i');
 
     function subscribe() {
-        var reg = {};
-
-        reg["widget"] = qWidgetName;
-        reg["type"] = "subscribe";
-        reg["plugin"] = "win_audio_viz";
-        reg["source"] = "viz";
+        var reg = {
+            widget: qWidgetName,
+            type: "subscribe",
+            plugin: "win_audio_viz",
+            source: "viz"
+        };
 
         websocket.send(JSON.stringify(reg));
     }
@@ -46,8 +46,6 @@ $(document).ready(function() {
     }
 
     try {
-        if (typeof MozWebSocket == 'function')
-            WebSocket = MozWebSocket;
         if (websocket && websocket.readyState == 1)
             websocket.close();
         websocket = new WebSocket(qWsServerUrl);

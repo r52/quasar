@@ -1,12 +1,12 @@
 var websocket = null;
 
 function subscribe() {
-    var reg = {};
-
-    reg["widget"] = qWidgetName;
-    reg["type"] = "subscribe";
-    reg["plugin"] = "win_simple_perf";
-    reg["source"] = "cpu,ram";
+    var reg = {
+        widget: qWidgetName,
+        type: "subscribe",
+        plugin: "win_simple_perf",
+        source: "cpu,ram"
+    };
 
     websocket.send(JSON.stringify(reg));
 }
@@ -57,8 +57,6 @@ function parseMsg(msg) {
 
 $(document).ready(function() {
     try {
-        if (typeof MozWebSocket == 'function')
-            WebSocket = MozWebSocket;
         if (websocket && websocket.readyState == 1)
             websocket.close();
         websocket = new WebSocket(qWsServerUrl);

@@ -1,9 +1,10 @@
 $(document).ready(function() {
     var websocket = null;
 
-    var msg = {};
-    msg["widget"] = qWidgetName;
-    msg["type"] = "launcher";
+    var msg = {
+        widget: qWidgetName,
+        type: "launcher"
+    };
 
     function launch(app) {
         msg["app"] = app;
@@ -11,8 +12,6 @@ $(document).ready(function() {
     }
 
     try {
-        if (typeof MozWebSocket == 'function')
-            WebSocket = MozWebSocket;
         if (websocket && websocket.readyState == 1)
             websocket.close();
         websocket = new WebSocket(qWsServerUrl);
