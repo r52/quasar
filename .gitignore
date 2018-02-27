@@ -265,5 +265,7 @@ build
 CMakeSettings.json
 
 # Doxygen
+docs/Makefile
+docs/make.bat
 docs/_*
 docs/xml/
