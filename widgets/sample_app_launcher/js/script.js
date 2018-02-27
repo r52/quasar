@@ -15,11 +15,6 @@ $(document).ready(function() {
         if (websocket && websocket.readyState == 1)
             websocket.close();
         websocket = new WebSocket(qWsServerUrl);
-        websocket.onopen = function(evt) {
-        };
-        websocket.onclose = function(evt) {
-        };
-        websocket.onmessage = function(evt) {};
         websocket.onerror = function(evt) {
             console.log('ERROR: ' + evt.data);
         };

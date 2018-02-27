@@ -52,9 +52,6 @@ $(document).ready(function() {
         websocket.onopen = function(evt) {
             subscribe();
         };
-        websocket.onclose = function(evt) {
-            console.log("Disconnected");
-        };
         websocket.onmessage = function(evt) {
             parseMsg(evt.data);
         };
