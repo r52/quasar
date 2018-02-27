@@ -1,4 +1,3 @@
-
 Quasar
 ==================================
 
@@ -16,7 +15,7 @@ Quasar
 
 **Quasar** is a cross-platform desktop application that displays web-based widgets on your desktop. Quasar takes full advantage of the Chromium engine to allow even for complex, fully dynamic web apps.
 
-Quasar provides a WebSocket-based Data Server that is extensible using plugins. The Data Server is capable of processing and sending data to client widgets that would otherwise not be available in a purely web-based context, for example, your PC's resource information such as CPU and memory usage, or your `Spotify client's now-playing information <https://github.com/r52/quasar-spotify>`_. See :doc:`plugqs` and :doc:`api` for more information on how to create a Data Server extension plugin, and :doc:`widgetqs` for building widgets.
+Quasar provides a WebSocket-based Data Server that is extensible using plugins. The Data Server is capable of processing and sending data to client widgets that would otherwise not be available in a purely web-based context, for example, your PC's resource information such as CPU and memory usage, or your `Spotify client's now-playing information <https://github.com/r52/quasar-spotify>`_. Refer to Quasar's documentation at https://quasardoc.readthedocs.io for more information on how to build a widget or a Data Server extension plugin.
 
 Quasar is licensed under GPL-3.0.
 
@@ -32,7 +31,7 @@ Getting Started
 
 Both an installer and a portable package is provided for Windows x64 under `GitHub Releases <https://github.com/r52/quasar/releases>`_.
 
-Simply install or extract Quasar and run the application. The Quasar icon will then show up in your desktop's notification bar. Right-click the icon, load your desired widgets, and enjoy! See :doc:`usage` for more details.
+Simply install or extract Quasar and run the application. The Quasar icon will then show up in your desktop's notification bar. Right-click the icon, load your desired widgets, and enjoy! See the `documentation <https://quasardoc.readthedocs.io>`_ for more details.
 
 For developers who wishes to build a Data Server extension plugin, or those who wants to create their own web widget, please refer to Quasar's documentation at https://quasardoc.readthedocs.io. The documentation contains examples and other resources on how to build your first plugin or widget.
 
@@ -62,37 +61,3 @@ Building on Mac
 ~~~~~~~~~~~~~~~
 
 Quasar is written in cross-platform C++ and should build on Mac with minimal changes. However, it is currently untested and unsupported.
-
-Resources
--------------------
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Main
-
-   usage
-   settings
-   launcher
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Guides
-
-   widgetqs
-   plugqs
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Developer References
-
-   api
-   wcp
-   wdef
-   log
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
