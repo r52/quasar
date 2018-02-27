@@ -15,7 +15,9 @@ Quasar
 
 **Quasar** is a cross-platform desktop application that displays web-based widgets on your desktop. Quasar takes full advantage of the Chromium engine to allow even for complex, fully dynamic web apps.
 
-Quasar provides a WebSocket-based Data Server that is extensible using plugins. The Data Server is capable of processing and sending data to client widgets that would otherwise not be available in a purely web-based context, for example, your PC's resource information such as CPU and memory usage, or your `Spotify client's now-playing information <https://github.com/r52/quasar-spotify>`_. Refer to Quasar's documentation at https://quasardoc.readthedocs.io for more information on how to build a widget or a Data Server extension plugin.
+Quasar provides a WebSocket-based Data Server that is extensible using plugins. The Data Server is capable of processing and sending data to client widgets that would otherwise not be available in a purely web-based context, for example, your PC's resource information such as CPU and memory usage, or your `Spotify client's now-playing information <https://github.com/r52/quasar-spotify>`_.
+
+Refer to Quasar's documentation at https://quasardoc.readthedocs.io for more information on how to build a widget or a Data Server extension plugin.
 
 Quasar is licensed under GPL-3.0.
 
