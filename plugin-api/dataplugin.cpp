@@ -10,8 +10,7 @@
 #include <QTimer>
 #include <QtWebSockets/QWebSocket>
 
-// Ensure c strings are null terminated
-// and converted to utf8 QString
+//! Ensure c strings are null terminated and converted to a utf8 QString
 #define CHAR_TO_UTF8(d, x) \
     x[sizeof(x) - 1] = 0;  \
     d                = QString::fromUtf8(x);
