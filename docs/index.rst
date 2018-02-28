@@ -84,6 +84,13 @@ Resources
    plugqs
 
 .. toctree::
+  :maxdepth: 1
+  :caption: Sample Plugins
+
+  win_simple_perf
+  win_audio_viz
+
+.. toctree::
    :maxdepth: 1
    :caption: Developer References
 
