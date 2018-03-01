@@ -85,6 +85,22 @@ Following previous example:
 
 Since the ``quasar_plugin_info_t info`` structure is defined statically in the previous example, it is suffice for ``quasar_plugin_load()`` to simply return the pointer to it.
 
+quasar_plugin_destroy()
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function should deallocate anything that was allocated for the :cpp:class:`quasar_plugin_info_t` structure.
+
+Following previous examples:
+
+.. code-block:: cpp
+
+    void quasar_plugin_destroy(quasar_plugin_info_t* info)
+    {
+        return;
+    }
+
+Since both the ``quasar_data_source_t sources`` as well as the ``quasar_plugin_info_t info`` structure and all of its contents are defined statically in the previous examples, we do not need to deallocate anything for the destruction of the :cpp:class:`quasar_plugin_info_t` structure. Therefore, the function does nothing.
+
 init()
 ~~~~~~~~
 
