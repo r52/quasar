@@ -40,9 +40,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GeneratedFiles\qrc_quasar.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
+    
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -55,121 +53,83 @@
     <ClCompile Include="src\widgetregistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_quasar.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_widgetregistry.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_webwidget.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_widgetregistry.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_quasar.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_webwidget.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_dataserver.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_dataserver.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
+    
+    
+    
+    
+    
+    
     <ClCompile Include="src\dataserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_configdialog.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
+    
     <ClCompile Include="src\configdialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\configpages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_configdialog.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_configpages.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_configpages.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
+    
     <ClCompile Include="src\logwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_logwindow.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_logwindow.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
     <ClCompile Include="src\runguard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\applauncher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_applauncher.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_applauncher.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
     <ClCompile Include="src\dataservices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_dataservices.cpp">
-      <Filter>Generated Files\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_dataservices.cpp">
-      <Filter>Generated Files\Release</Filter>
-    </ClCompile>
+    
+    
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="quasar.ui">
+    <QtUic Include="quasar.ui">
       <Filter>Form Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="quasar.qrc">
+    </QtUic>
+    <QtRcc Include="quasar.qrc">
       <Filter>Resource Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\quasar.h">
+    </QtRcc>
+    <QtMoc Include="src\quasar.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\widgetregistry.h">
+    </QtMoc>
+    <QtMoc Include="src\widgetregistry.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\webwidget.h">
+    </QtMoc>
+    <QtMoc Include="src\webwidget.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\dataserver.h">
+    </QtMoc>
+    <QtMoc Include="src\dataserver.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\configdialog.h">
+    </QtMoc>
+    <QtMoc Include="src\configdialog.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\configpages.h">
+    </QtMoc>
+    <QtMoc Include="src\configpages.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\logwindow.h">
+    </QtMoc>
+    <QtMoc Include="src\logwindow.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\applauncher.h">
+    </QtMoc>
+    <QtMoc Include="src\applauncher.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
-    <CustomBuild Include="src\dataservices.h">
+    </QtMoc>
+    <QtMoc Include="src\dataservices.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneratedFiles\ui_quasar.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
+    
     <ClInclude Include="GeneratedFiles\version.h">
       <Filter>Generated Files</Filter>
     </ClInclude>

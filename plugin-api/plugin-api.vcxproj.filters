@@ -46,16 +46,12 @@
     <ClCompile Include="dataplugin.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GeneratedFiles\Debug\moc_dataplugin.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="GeneratedFiles\Release\moc_dataplugin.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
+    
+    
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="dataplugin.h">
+    <QtMoc Include="dataplugin.h">
       <Filter>Header Files</Filter>
-    </CustomBuild>
+    </QtMoc>
   </ItemGroup>
 </Project>
