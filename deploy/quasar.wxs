@@ -126,7 +126,7 @@
                 <Shortcut Id="AppStartMenuShortcut" Name="Quasar" Description="Quasar" Directory="ApplicationProgramsFolder" WorkingDirectory="INSTALLDIR" Icon="q.ico" Advertise="yes"/>
             </Component>
             <Component Id="cmp1F3B33D33FB7B6B62ECC71B67BA7D57F" Directory="INSTALLDIR" Guid="{D59B6CBA-152F-4902-ACDF-C897365086F1}">
-                <File Id="fil3B232AC904DDA267238992B6ECEF9A1F" KeyPath="yes" Source="$(var.pkgsrc)\README.md"/>
+                <File Id="fil3B232AC904DDA267238992B6ECEF9A1F" KeyPath="yes" Source="$(var.pkgsrc)\README.rst"/>
             </Component>
             <Component Id="cmp88D87EA59434240DD54C45CEE5A0C5D1" Directory="INSTALLDIR" Guid="{8F2F768A-01AC-4FF7-9B53-A7C9AAB79498}">
                 <File Id="fil932B21CE5E1D7CF227E44E7483E5C3AF" KeyPath="yes" Source="$(var.pkgsrc)\ssleay32.dll" />

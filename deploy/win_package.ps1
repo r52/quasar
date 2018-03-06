@@ -24,7 +24,7 @@ if (!$skipartifact)
     Remove-Item .\Quasar\plugins\*.ipdb
 
     Copy-Item .\widgets\ .\Quasar\ -recurse
-    Copy-Item README.md .\Quasar\
+    Copy-Item README.rst .\Quasar\
     Copy-Item LICENSE.txt .\Quasar\
 
     if (($env:OPENSSL) -and (Test-Path $env:OPENSSL -pathType container))
