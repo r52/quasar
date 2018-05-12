@@ -7,6 +7,7 @@
 
 #include <QSettings>
 #include <QSplashScreen>
+#include <QThread>
 #include <QtWebEngineWidgets/QWebEngineProfile>
 #include <QtWidgets/QApplication>
 
@@ -49,6 +50,9 @@ int main(int argc, char* argv[])
 
     splash.showMessage("Loading widgets...", align, color);
     a.processEvents();
+
+    // Add a small delay to ensure all services are up before loading widgets?
+    QThread::sleep(1);
 
     // Load widgets
     QSettings   settings;
