@@ -92,7 +92,7 @@ Where the function ``subscribe()`` can be something like:
         websocket.send(JSON.stringify(reg));
     }
 
-The above example subscribes the widget to Data Source ``cpu`` provided by the plugin `win_simple_perf <https://github.com/r52/quasar/tree/master/plugins/win_simple_perf>`_. The variable ``qWidgetName`` globally defined variable available to widgets loaded in Quasar. It contains the name of your widget as defined in the Widget Definition file.
+The above example subscribes the widget to Data Source ``cpu`` provided by the plugin `win_simple_perf <https://github.com/r52/quasar/tree/master/plugins/win_simple_perf>`_. The variable ``qWidgetName`` is also a globally defined variable available to widgets loaded in Quasar. It contains the name of your widget as defined in the Widget Definition file.
 
 How that we have subscribed to a Data Source, we can begin receiving data from the source. To do that, we start by implementing another handler on the WebSocket connection:
 
