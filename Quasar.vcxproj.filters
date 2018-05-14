@@ -40,7 +40,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -53,45 +52,27 @@
     <ClCompile Include="src\widgetregistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
-    
-    
-    
-    
-    
-    
     <ClCompile Include="src\dataserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
     <ClCompile Include="src\configdialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\configpages.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
-    
     <ClCompile Include="src\logwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
     <ClCompile Include="src\runguard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\applauncher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
     <ClCompile Include="src\dataservices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="quasar.ui">
@@ -129,7 +110,6 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    
     <ClInclude Include="GeneratedFiles\version.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
@@ -140,6 +120,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\preproc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\sharedlocker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

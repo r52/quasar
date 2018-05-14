@@ -61,6 +61,7 @@ bool DataServer::addHandler(QString type, HandlerFuncType handler)
 
 bool DataServer::findPlugin(QString pluginCode)
 {
+    std::shared_lock<std::shared_mutex> lk(m_mutex);
     return (m_plugins.count(pluginCode) > 0);
 }
 
@@ -77,6 +78,10 @@ void DataServer::loadDataPlugins()
         qInfo() << "No data plugins found";
         return;
     }
+
+    // just lock the whole thing while initializing plugins at startup
+    // to prevent out of order reads
+    std::unique_lock<std::shared_mutex> lk(m_mutex);
 
     for (QFileInfo& file : list)
     {
@@ -137,6 +142,8 @@ void DataServer::handleSubscribeReq(const QJsonObject& req, QWebSocket* sender)
     QString plugin     = req["plugin"].toString();
     QString sources    = req["source"].toString();
 
+    std::shared_lock<std::shared_mutex> lk(m_mutex);
+
     if (!m_plugins.count(plugin))
     {
         qWarning() << "Unknown plugin " << plugin;
@@ -163,6 +170,8 @@ void DataServer::handlePollReq(const QJsonObject& req, QWebSocket* sender)
     QString widgetName = req["widget"].toString();
     QString plugin     = req["plugin"].toString();
     QString source     = req["source"].toString();
+
+    std::shared_lock<std::shared_mutex> lk(m_mutex);
 
     if (!m_plugins.count(plugin))
     {
@@ -210,6 +219,7 @@ void DataServer::socketDisconnected()
     QWebSocket* pClient = qobject_cast<QWebSocket*>(sender());
     if (pClient)
     {
+        std::shared_lock<std::shared_mutex> lk(m_mutex);
         for (auto& p : m_plugins)
         {
             p.second->removeSubscriber(pClient);

@@ -33,18 +33,6 @@ AppLauncher::AppLauncher(DataServer* s, WidgetRegistry* r, QObject* parent)
     m_map = settings.value("launcher/map").toMap();
 }
 
-const QVariantMap* AppLauncher::getMapForRead()
-{
-    m_mutex.lock_shared();
-    return &m_map;
-}
-
-void AppLauncher::releaseMap(const QVariantMap*& map)
-{
-    map = nullptr;
-    m_mutex.unlock_shared();
-}
-
 void AppLauncher::writeMap(QVariantMap& newmap)
 {
     std::unique_lock<std::shared_mutex> lock(m_mutex);

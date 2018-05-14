@@ -141,13 +141,15 @@ GeneralPage::GeneralPage(DataServices* service, QWidget* parent)
     QListWidget* pluginList = new QListWidget;
 
     // build plugin list
-    DataPluginMapType& pluginmap = m_service->getServer()->getPlugins();
-
-    for (auto& p : pluginmap)
     {
-        QListWidgetItem* item = new QListWidgetItem(pluginList);
-        item->setText(p.second->getName());
-        item->setData(Qt::UserRole, QVariant::fromValue(p.second.get()));
+        auto pluginmap = m_service->getServer()->getPlugins();
+
+        for (auto& p : *pluginmap)
+        {
+            QListWidgetItem* item = new QListWidgetItem(pluginList);
+            item->setText(p.second->getName());
+            item->setData(Qt::UserRole, QVariant::fromValue(p.second.get()));
+        }
     }
 
     connect(pluginList, &QListWidget::itemClicked, this, &GeneralPage::pluginListClicked);
@@ -319,12 +321,14 @@ PluginPage::PluginPage(DataServices* service, QWidget* parent)
     pagesWidget            = new QStackedWidget;
 
     // build plugin list
-    DataPluginMapType& pluginmap = m_service->getServer()->getPlugins();
-
-    for (auto& p : pluginmap)
     {
-        pluginCombo->addItem(p.second->getName(), QVariant::fromValue(p.second.get()));
-        pagesWidget->addWidget(new DataPluginPage(p.second.get()));
+        auto pluginmap = m_service->getServer()->getPlugins();
+
+        for (auto& p : *pluginmap)
+        {
+            pluginCombo->addItem(p.second->getName(), QVariant::fromValue(p.second.get()));
+            pagesWidget->addWidget(new DataPluginPage(p.second.get()));
+        }
     }
 
     connect(pluginCombo, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), [=](int index) {
@@ -673,35 +677,35 @@ LauncherPage::LauncherPage(DataServices* service, QWidget* parent)
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
-    auto appmap = m_service->getLauncher()->getMapForRead();
-    auto it     = appmap->cbegin();
-    int  row    = 0;
-
-    while (it != appmap->cend())
     {
-        if (it.value().canConvert<AppLauncherData>())
+        auto appmap = m_service->getLauncher()->getMapForRead();
+        auto it     = appmap->cbegin();
+        int  row    = 0;
+
+        while (it != appmap->cend())
         {
-            auto [file, start, arg] = it.value().value<AppLauncherData>();
+            if (it.value().canConvert<AppLauncherData>())
+            {
+                auto [file, start, arg] = it.value().value<AppLauncherData>();
 
-            table->insertRow(row);
-            QTableWidgetItem* cmditem = new QTableWidgetItem(it.key());
+                table->insertRow(row);
+                QTableWidgetItem* cmditem = new QTableWidgetItem(it.key());
 
-            QTableWidgetItem* fileitem = new QTableWidgetItem(file);
-            fileitem->setData(Qt::UserRole, it.value());
+                QTableWidgetItem* fileitem = new QTableWidgetItem(file);
+                fileitem->setData(Qt::UserRole, it.value());
 
-            QTableWidgetItem* argitem = new QTableWidgetItem(arg);
+                QTableWidgetItem* argitem = new QTableWidgetItem(arg);
 
-            table->setItem(row, 0, cmditem);
-            table->setItem(row, 1, fileitem);
-            table->setItem(row, 2, argitem);
+                table->setItem(row, 0, cmditem);
+                table->setItem(row, 1, fileitem);
+                table->setItem(row, 2, argitem);
 
-            ++row;
+                ++row;
+            }
+
+            ++it;
         }
-
-        ++it;
     }
-
-    m_service->getLauncher()->releaseMap(appmap);
 
     QPushButton* deleteButton = new QPushButton(tr("Delete"));
 

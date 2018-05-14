@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sharedlocker.h"
 #include <qstring_hash_impl.h>
 
 #include <QObject>
@@ -26,7 +27,7 @@ class DataServer : public QObject
 public:
     ~DataServer();
 
-    DataPluginMapType& getPlugins() { return m_plugins; };
+    auto getPlugins() { return make_shared_locker<DataPluginMapType>(&m_plugins, &m_mutex); }
 
     bool addHandler(QString type, HandlerFuncType handler);
     bool findPlugin(QString pluginCode);
@@ -50,7 +51,8 @@ private:
     DataServer& operator=(const DataServer&) = delete;
     DataServer& operator=(DataServer&&) = delete;
 
-    HandleReqCallMapType m_reqcallmap;
-    QWebSocketServer*    m_pWebSocketServer;
-    DataPluginMapType    m_plugins;
+    HandleReqCallMapType      m_reqcallmap;
+    QWebSocketServer*         m_pWebSocketServer;
+    DataPluginMapType         m_plugins;
+    mutable std::shared_mutex m_mutex;
 };

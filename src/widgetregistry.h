@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sharedlocker.h"
 #include <qstring_hash_impl.h>
 
 #include <QObject>
@@ -22,7 +23,7 @@ public:
 
     bool loadWebWidget(QString filename, bool userAction = true);
 
-    WidgetMapType& getWidgets() { return m_widgetMap; }
+    auto getWidgets() { return make_shared_locker<WidgetMapType>(&m_widgetMap, &m_mutex); }
 
     WebWidget* findWidget(QString widgetName);
 
@@ -34,12 +35,13 @@ public slots:
 
 private:
     explicit WidgetRegistry(DataServer* s, QObject* parent = Q_NULLPTR);
+    WidgetRegistry()                      = delete;
     WidgetRegistry(const WidgetRegistry&) = delete;
     WidgetRegistry(WidgetRegistry&&)      = delete;
     WidgetRegistry& operator=(const WidgetRegistry&) = delete;
     WidgetRegistry& operator=(WidgetRegistry&&) = delete;
 
-    WidgetMapType m_widgetMap;
-
-    DataServer* server;
+    WidgetMapType             m_widgetMap;
+    mutable std::shared_mutex m_mutex;
+    DataServer*               server;
 };

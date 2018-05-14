@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sharedlocker.h"
 #include <QVariant>
 
 #include <shared_mutex>
@@ -40,9 +41,7 @@ class AppLauncher : public QObject
     Q_OBJECT
 
 public:
-    const QVariantMap* getMapForRead();
-    void               releaseMap(const QVariantMap*& map);
-
+    auto getMapForRead() { return make_shared_locker<QVariantMap>(&m_map, &m_mutex); }
     void writeMap(QVariantMap& newmap);
 
 private:
@@ -50,13 +49,14 @@ private:
 
 private:
     explicit AppLauncher(DataServer* s, WidgetRegistry* r, QObject* parent = Q_NULLPTR);
+    AppLauncher()                   = delete;
     AppLauncher(const AppLauncher&) = delete;
     AppLauncher(AppLauncher&&)      = delete;
     AppLauncher& operator=(const AppLauncher&) = delete;
     AppLauncher& operator=(AppLauncher&&) = delete;
 
-    DataServer*       server;
-    WidgetRegistry*   reg;
-    QVariantMap       m_map;
-    std::shared_mutex m_mutex;
+    DataServer*               server;
+    WidgetRegistry*           reg;
+    QVariantMap               m_map;
+    mutable std::shared_mutex m_mutex;
 };

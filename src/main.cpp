@@ -51,9 +51,6 @@ int main(int argc, char* argv[])
     splash.showMessage("Loading widgets...", align, color);
     a.processEvents();
 
-    // Add a small delay to ensure all services are up before loading widgets?
-    QThread::sleep(1);
-
     // Load widgets
     QSettings   settings;
     QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();

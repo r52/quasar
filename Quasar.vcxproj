@@ -213,6 +213,7 @@
     </QtMoc>
     <ClInclude Include="src\preproc.h" />
     <ClInclude Include="src\runguard.h" />
+    <ClInclude Include="src\sharedlocker.h" />
     <ClInclude Include="src\widgetdefs.h" />
     <QtMoc Include="src\widgetregistry.h">
     </QtMoc>

@@ -85,9 +85,9 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
             // Regenerate widget list menu
             widgetListMenu->clear();
 
-            WidgetMapType& widgets = service->getRegistry()->getWidgets();
+            auto widgets = service->getRegistry()->getWidgets();
 
-            for (auto& w : widgets)
+            for (auto& w : *widgets)
             {
                 widgetListMenu->addMenu(w.second->getMenu());
             }

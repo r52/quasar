@@ -104,6 +104,8 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
     QString widgetName = defName;
     int     idx        = 2;
 
+    std::unique_lock<std::shared_mutex> lk(m_mutex);
+
     while (m_widgetMap.count(widgetName) > 0)
     {
         widgetName = defName + QString::number(idx++);
@@ -132,6 +134,8 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
 WebWidget* WidgetRegistry::findWidget(QString widgetName)
 {
+    std::shared_lock<std::shared_mutex> lk(m_mutex);
+
     auto it = m_widgetMap.find(widgetName);
 
     if (it != m_widgetMap.end())
@@ -202,6 +206,8 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
     QString name = widget->getName();
 
     qInfo() << "Closing widget " << name << " (" << widget->getFullPath() << ")";
+
+    std::unique_lock<std::shared_mutex> lk(m_mutex);
 
     // Remove from registry
     auto it = m_widgetMap.find(name);
