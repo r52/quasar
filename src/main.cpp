@@ -32,8 +32,8 @@ int main(int argc, char* argv[])
     splash.showMessage("Loading configuration...", align, color);
     a.processEvents();
 
-    QApplication::setApplicationName("Quasar");
-    QApplication::setOrganizationName("Quasar");
+    QApplication::setApplicationName("quasar");
+    QApplication::setOrganizationName("quasar");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
