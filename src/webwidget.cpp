@@ -29,6 +29,21 @@ void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level
     }
 }
 
+bool QuasarWebPage::certificateError(const QWebEngineCertificateError& certificateError)
+{
+    auto url = certificateError.url();
+    if (certificateError.error() == QWebEngineCertificateError::CertificateAuthorityInvalid &&
+        url.scheme() == "wss" && url.host() == "localhost")
+    {
+        // Ignore invalid CA for now for localhost due to custom localhost cert and
+        // QWebEngine having no support for local certs
+        return true;
+    }
+
+    qWarning() << "QWebEngineCertificateError(" << (int) certificateError.error() << "): " << certificateError.errorDescription() << " " << url;
+    return false;
+}
+
 WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent)
     : QWidget(parent), m_Name(widgetName)
 {

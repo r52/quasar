@@ -1,2 +1,2 @@
 var qWidgetName = "%1";
-var qWsServerUrl = "ws://localhost:%2";
+var qWsServerUrl = "wss://localhost:%2";

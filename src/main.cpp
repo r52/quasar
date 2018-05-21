@@ -51,6 +51,8 @@ int main(int argc, char* argv[])
     splash.showMessage("Loading widgets...", align, color);
     a.processEvents();
 
+    QThread::sleep(1);
+
     // Load widgets
     QSettings   settings;
     QStringList loadedList = settings.value(QUASAR_CONFIG_LOADED).toStringList();

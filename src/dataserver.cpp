@@ -7,6 +7,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSettings>
+#include <QtNetwork/QSslCertificate>
+#include <QtNetwork/QSslKey>
 #include <QtWebSockets/QWebSocket>
 #include <QtWebSockets/QWebSocketServer>
 
@@ -14,8 +16,23 @@ DataServer::DataServer(QObject* parent)
     : QObject(parent), m_pWebSocketServer(nullptr)
 {
     m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"),
-                                              QWebSocketServer::NonSecureMode,
+                                              QWebSocketServer::SecureMode,
                                               this);
+
+    QSslConfiguration sslConfiguration;
+    QFile             certFile(QStringLiteral(":/Resources/localhost.crt"));
+    QFile             keyFile(QStringLiteral(":/Resources/localhost.key"));
+    certFile.open(QIODevice::ReadOnly);
+    keyFile.open(QIODevice::ReadOnly);
+    QSslCertificate certificate(&certFile, QSsl::Pem);
+    QSslKey         sslKey(&keyFile, QSsl::Rsa, QSsl::Pem);
+    certFile.close();
+    keyFile.close();
+    sslConfiguration.setPeerVerifyMode(QSslSocket::VerifyNone);
+    sslConfiguration.setLocalCertificate(certificate);
+    sslConfiguration.setPrivateKey(sslKey);
+    sslConfiguration.setProtocol(QSsl::TlsV1SslV3);
+    m_pWebSocketServer->setSslConfiguration(sslConfiguration);
 
     QSettings settings;
     quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();

@@ -83,6 +83,7 @@ public:
 
 protected:
     virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID);
+    bool         certificateError(const QWebEngineCertificateError& certificateError);
 };
 
 class WebWidget : public QWidget
