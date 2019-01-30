@@ -1,7 +1,7 @@
-#include "plugin_support.h"
-#include "plugin_support_internal.h"
+#include "extension_support.h"
+#include "extension_support_internal.h"
 
-#include "dataplugin.h"
+#include "dataextension.h"
 
 #include <QDebug>
 #include <QJsonArray>
@@ -262,22 +262,22 @@ double quasar_get_double(quasar_settings_t* settings, const char* name)
     return 0.0;
 }
 
-void quasar_signal_data_ready(quasar_plugin_handle handle, const char* source)
+void quasar_signal_data_ready(quasar_ext_handle handle, const char* source)
 {
-    DataPlugin* plugin = (DataPlugin*) handle;
+    DataExtension* ext = (DataExtension*) handle;
 
-    if (plugin)
+    if (ext)
     {
-        plugin->emitDataReady(source);
+        ext->emitDataReady(source);
     }
 }
 
-void quasar_signal_wait_processed(quasar_plugin_handle handle, const char* source)
+void quasar_signal_wait_processed(quasar_ext_handle handle, const char* source)
 {
-    DataPlugin* plugin = (DataPlugin*) handle;
+    DataExtension* ext = (DataExtension*) handle;
 
-    if (plugin)
+    if (ext)
     {
-        plugin->waitDataProcessed(source);
+        ext->waitDataProcessed(source);
     }
 }

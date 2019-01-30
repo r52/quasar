@@ -63,7 +63,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>UNICODE;WIN32;WIN64;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;QT_WEBSOCKETS_LIB;QT_NETWORK_LIB;QT_WEBENGINECORE_LIB;QT_WEBENGINEWIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\plugin-api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\extension-api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -100,7 +100,7 @@
       <Define>UNICODE;WIN32;WIN64;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;QT_WEBSOCKETS_LIB;QT_NETWORK_LIB;QT_WEBENGINECORE_LIB;QT_WEBENGINEWIDGETS_LIB;_UNICODE</Define>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
       <DynamicSource>output</DynamicSource>
-      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\plugin-api</IncludePath>
+      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\extension-api;%(AdditionalIncludeDirectories)</IncludePath>
     </QtMoc>
     <QtRcc>
       <InputFile>%(FullPath)</InputFile>
@@ -121,7 +121,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;QT_WEBSOCKETS_LIB;QT_MESSAGELOGCONTEXT;QT_NETWORK_LIB;QT_WEBENGINECORE_LIB;QT_WEBENGINEWIDGETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\plugin-api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\extension-api;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
@@ -158,7 +158,7 @@
       <Define>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;QT_GUI_LIB;QT_WIDGETS_LIB;QT_WEBSOCKETS_LIB;QT_MESSAGELOGCONTEXT;QT_NETWORK_LIB;QT_WEBENGINECORE_LIB;QT_WEBENGINEWIDGETS_LIB;_UNICODE</Define>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
       <DynamicSource>output</DynamicSource>
-      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\plugin-api</IncludePath>
+      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\extension-api;%(AdditionalIncludeDirectories)</IncludePath>
     </QtMoc>
     <QtRcc>
       <QTDIR>$(QTDIR)</QTDIR>
@@ -178,14 +178,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\applauncher.cpp" />
-    <ClCompile Include="src\configdialog.cpp" />
-    <ClCompile Include="src\configpages.cpp" />
     <ClCompile Include="src\dataserver.cpp" />
     <ClCompile Include="src\dataservices.cpp" />
     <ClCompile Include="src\logwindow.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\quasar.cpp" />
     <ClCompile Include="src\runguard.cpp" />
+    <ClCompile Include="src\settingsdialog.cpp" />
+    <ClCompile Include="src\webuihandler.cpp" />
     <ClCompile Include="src\webwidget.cpp" />
     <ClCompile Include="src\widgetregistry.cpp" />
   </ItemGroup>
@@ -201,10 +201,6 @@
     </QtMoc>
     <QtMoc Include="src\dataserver.h">
     </QtMoc>
-    <QtMoc Include="src\configdialog.h">
-    </QtMoc>
-    <QtMoc Include="src\configpages.h">
-    </QtMoc>
     <QtMoc Include="src\logwindow.h">
     </QtMoc>
     <QtMoc Include="src\applauncher.h">
@@ -213,7 +209,12 @@
     </QtMoc>
     <ClInclude Include="src\preproc.h" />
     <ClInclude Include="src\runguard.h" />
+    <ClInclude Include="src\settingsdialog.h" />
     <ClInclude Include="src\sharedlocker.h" />
+    <QtMoc Include="src\webuihandler.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\extension-api</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\extension-api</IncludePath>
+    </QtMoc>
     <ClInclude Include="src\widgetdefs.h" />
     <QtMoc Include="src\widgetregistry.h">
     </QtMoc>
@@ -226,7 +227,7 @@
     <ResourceCompile Include="quasar.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="plugin-api\plugin-api.vcxproj">
+    <ProjectReference Include="extension-api\extension-api.vcxproj">
       <Project>{dfcec467-6147-4df6-98ff-bd7ae8e17e52}</Project>
     </ProjectReference>
   </ItemGroup>

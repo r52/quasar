@@ -1,19 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="plugin_api.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="plugin_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="plugin_support.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="plugin_support_internal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="qstring_hash_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="extension_api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="extension_support.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="extension_support_internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="extension_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -40,17 +40,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="plugin_support.cpp">
+    <ClCompile Include="dataextension.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="dataplugin.cpp">
+    <ClCompile Include="extension_support.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    
-    
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="dataplugin.h">
+    <QtMoc Include="dataextension.h">
       <Filter>Header Files</Filter>
     </QtMoc>
   </ItemGroup>

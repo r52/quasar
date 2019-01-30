@@ -55,12 +55,6 @@
     <ClCompile Include="src\dataserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\configdialog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\configpages.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\logwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,6 +65,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\dataservices.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\webuihandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\settingsdialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -91,12 +91,6 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="src\dataserver.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="src\configdialog.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="src\configpages.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="src\logwindow.h">
@@ -125,10 +119,18 @@
     <ClInclude Include="src\sharedlocker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\settingsdialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="quasar.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="src\webuihandler.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

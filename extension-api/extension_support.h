@@ -1,21 +1,21 @@
 /*! \file
-    \brief Plugin API support functionality
+    \brief Extension API support functionality
 
-    This file defines functions that augment plugin functionality
+    This file defines functions that augment extension functionality
 */
 
 #pragma once
 
-#include "plugin_types.h"
+#include "extension_types.h"
 
 #ifdef PLUGINAPI_LIB
-#    ifdef _WIN32
-#        define SAPI_EXPORT __declspec(dllexport)
-#    else
-#        define SAPI_EXPORT __attribute__((visibility("default")))
-#    endif // _WIN32
+#ifdef _WIN32
+#define SAPI_EXPORT __declspec(dllexport)
 #else
-#    define SAPI_EXPORT
+#define SAPI_EXPORT __attribute__((visibility("default")))
+#endif // _WIN32
+#else
+#define SAPI_EXPORT
 #endif // PLUGINAPI_LIB
 
 #if defined(__cplusplus)
@@ -31,8 +31,8 @@ extern "C" {
 SAPI_EXPORT void quasar_log(quasar_log_level_t level, const char* msg);
 
 //! Creates a new instance \ref quasar_settings_t
-/*! Use in \ref quasar_plugin_info_t.create_settings to create plugin settings.
-    Ensure that only a single instance is created and used per plugin.
+/*! Use in \ref quasar_ext_info_t.create_settings to create extension settings.
+    Ensure that only a single instance is created and used per extension.
 
     \return quasar_settings_t instance if successful, nullptr otherwise
 */
@@ -92,9 +92,9 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_float_array(quasar_data_handle hD
 */
 SAPI_EXPORT quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double* arr, size_t len);
 
-//! Creates an integer setting in plugin settings
+//! Creates an integer setting in extension settings
 /*!
-    \param[in]  settings    The plugin settings handle
+    \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
     \param[in]  description Description for the setting
     \param[in]  min         Minimum value
@@ -105,9 +105,9 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_double_array(quasar_data_handle h
 */
 SAPI_EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt);
 
-//! Creates a bool setting in plugin settings
+//! Creates a bool setting in extension settings
 /*!
-    \param[in]  settings    The plugin settings handle
+    \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
     \param[in]  description Description for the setting
     \param[in]  dflt        Default value
@@ -115,9 +115,9 @@ SAPI_EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const
 */
 SAPI_EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name, const char* description, bool dflt);
 
-//! Creates a double setting in plugin settings
+//! Creates a double setting in extension settings
 /*!
-    \param[in]  settings    The plugin settings handle
+    \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
     \param[in]  description Description for the setting
     \param[in]  min         Minimum value
@@ -130,7 +130,7 @@ SAPI_EXPORT quasar_settings_t* quasar_add_double(quasar_settings_t* settings, co
 
 //! Retrieves an integer setting from Quasar
 /*!
-    \param[in]  settings    The plugin settings handle
+    \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
     \return Value of the setting if successful, default value otherwise
 */
@@ -138,7 +138,7 @@ SAPI_EXPORT intmax_t quasar_get_int(quasar_settings_t* settings, const char* nam
 
 //! Retrieves an unsigned integer setting from Quasar
 /*!
-    \param[in]  settings    The plugin settings handle
+    \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
     \return Value of the setting if successful, default value otherwise
 */
@@ -146,7 +146,7 @@ SAPI_EXPORT uintmax_t quasar_get_uint(quasar_settings_t* settings, const char* n
 
 //! Retrieves a bool setting from Quasar
 /*!
-    \param[in]  settings    The plugin settings handle
+    \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
     \return Value of the setting if successful, default value otherwise
 */
@@ -154,7 +154,7 @@ SAPI_EXPORT bool quasar_get_bool(quasar_settings_t* settings, const char* name);
 
 //! Retrieves a double setting from Quasar
 /*!
-    \param[in]  settings    The plugin settings handle
+    \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
     \return Value of the setting if successful, default value otherwise
 */
@@ -165,24 +165,24 @@ SAPI_EXPORT double quasar_get_double(quasar_settings_t* settings, const char* na
     set to 0 or -1. This function signals to Quasar that the data for the specified
     source is ready to be sent.
 
-    \param[in]  handle  Plugin handle
+    \param[in]  handle  Extension handle
     \param[in]  source  Data Source codename
 
     \sa quasar_data_source_t.refreshMsec
 */
-SAPI_EXPORT void quasar_signal_data_ready(quasar_plugin_handle handle, const char* source);
+SAPI_EXPORT void quasar_signal_data_ready(quasar_ext_handle handle, const char* source);
 
 //! Waits for a set of data to be sent to clients before processing the next set
 /*! This function is for Data Sources with \ref quasar_data_source_t.refreshMsec
     set to -1. This function can be used to allow a thread to wait until a set of data
     has been consumed before moving on to processing the next set.
 
-    \param[in]  handle  Plugin handle
+    \param[in]  handle  Extension handle
     \param[in]  source  Data Source codename
 
     \sa quasar_data_source_t.refreshMsec
 */
-SAPI_EXPORT void quasar_signal_wait_processed(quasar_plugin_handle handle, const char* source);
+SAPI_EXPORT void quasar_signal_wait_processed(quasar_ext_handle handle, const char* source);
 
 #if defined(__cplusplus)
 }

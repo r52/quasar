@@ -27,7 +27,7 @@ AppLauncher::AppLauncher(DataServer* s, WidgetRegistry* r, QObject* parent)
     }
 
     using namespace std::placeholders;
-    server->addHandler("launcher", std::bind(&AppLauncher::handleCommand, this, _1, _2));
+    server->addMethodHandler("launcher", std::bind(&AppLauncher::handleCommand, this, _1, _2));
 
     QSettings settings;
     m_map = settings.value("launcher/map").toMap();

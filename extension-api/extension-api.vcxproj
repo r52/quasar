@@ -14,6 +14,7 @@
     <ProjectGuid>{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}</ProjectGuid>
     <Keyword>Qt4VSv1.0</Keyword>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <ProjectName>extension-api</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -87,8 +88,8 @@ xcopy $(OutDir)$(TargetName).lib $(OutDir)api\ /Y /I</Command>
       <QTDIR>$(QTDIR)</QTDIR>
       <InputFile>%(FullPath)</InputFile>
       <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
-      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtWebSockets</IncludePath>
-      <Define>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;QT_MESSAGELOGCONTEXT;_WINDLL</Define>
+      <IncludePath>.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtWebSockets</IncludePath>
+      <Define>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;QT_MESSAGELOGCONTEXT;_WINDLL;_UNICODE</Define>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
       <DynamicSource>output</DynamicSource>
     </QtMoc>
@@ -128,24 +129,24 @@ xcopy $(OutDir)$(TargetName).lib $(OutDir)api\ /Y /I</Command>
       <QTDIR>$(QTDIR)</QTDIR>
       <InputFile>%(FullPath)</InputFile>
       <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
-      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;.\GeneratedFiles\$(ConfigurationName)\.;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtWebSockets</IncludePath>
-      <Define>UNICODE;WIN32;WIN64;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;_WINDLL</Define>
+      <IncludePath>.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtWebSockets</IncludePath>
+      <Define>UNICODE;WIN32;WIN64;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;_WINDLL;_UNICODE</Define>
       <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
       <DynamicSource>output</DynamicSource>
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="qstring_hash_impl.h" />
-    <QtMoc Include="dataplugin.h">
+    <QtMoc Include="dataextension.h">
     </QtMoc>
-    <ClInclude Include="plugin_api.h" />
-    <ClInclude Include="plugin_support.h" />
-    <ClInclude Include="plugin_support_internal.h" />
-    <ClInclude Include="plugin_types.h" />
+    <ClInclude Include="extension_api.h" />
+    <ClInclude Include="extension_support.h" />
+    <ClInclude Include="extension_support_internal.h" />
+    <ClInclude Include="extension_types.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dataplugin.cpp" />
-    <ClCompile Include="plugin_support.cpp" />
+    <ClCompile Include="dataextension.cpp" />
+    <ClCompile Include="extension_support.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

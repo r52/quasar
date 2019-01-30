@@ -1,6 +1,6 @@
-#include "dataplugin.h"
+#include "dataextension.h"
 
-#include <plugin_support_internal.h>
+#include <extension_support_internal.h>
 #include <unordered_set>
 
 #include <QJsonDocument>
@@ -15,63 +15,63 @@
     x[sizeof(x) - 1] = 0;  \
     d                = QString::fromUtf8(x);
 
-uintmax_t DataPlugin::_uid = 0;
+uintmax_t DataExtension::_uid = 0;
 
-DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QString path, QObject* parent /*= Q_NULLPTR*/)
-    : QObject(parent), m_plugin(p), m_destroyfunc(destroyfunc), m_libpath(path)
+DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent /*= Q_NULLPTR*/)
+    : QObject(parent), m_extension(p), m_destroyfunc(destroyfunc), m_libpath(path)
 {
-    if (nullptr == m_plugin)
+    if (nullptr == m_extension)
     {
-        throw std::invalid_argument("null plugin struct");
+        throw std::invalid_argument("null extension struct");
     }
 
-    CHAR_TO_UTF8(m_name, m_plugin->name);
-    CHAR_TO_UTF8(m_code, m_plugin->code);
-    CHAR_TO_UTF8(m_author, m_plugin->author);
-    CHAR_TO_UTF8(m_desc, m_plugin->description);
-    CHAR_TO_UTF8(m_version, m_plugin->version);
+    CHAR_TO_UTF8(m_name, m_extension->name);
+    CHAR_TO_UTF8(m_code, m_extension->code);
+    CHAR_TO_UTF8(m_author, m_extension->author);
+    CHAR_TO_UTF8(m_desc, m_extension->description);
+    CHAR_TO_UTF8(m_version, m_extension->version);
 
     if (m_code.isEmpty() || m_name.isEmpty())
     {
-        throw std::runtime_error("Invalid plugin name or code");
+        throw std::runtime_error("Invalid extension name or code");
     }
 
     QSettings settings;
 
     // register data sources
-    if (nullptr != m_plugin->dataSources)
+    if (nullptr != m_extension->dataSources)
     {
-        for (unsigned int i = 0; i < m_plugin->numDataSources; i++)
+        for (unsigned int i = 0; i < m_extension->numDataSources; i++)
         {
-            CHAR_TO_UTF8(QString srcname, m_plugin->dataSources[i].dataSrc);
+            CHAR_TO_UTF8(QString srcname, m_extension->dataSources[i].dataSrc);
 
             if (m_datasources.count(srcname))
             {
-                qWarning() << "Plugin " << m_code << " tried to register more than one data source '" << srcname << "'";
+                qWarning() << "Extension " << m_code << " tried to register more than one data source '" << srcname << "'";
                 continue;
             }
 
-            qInfo() << "Plugin " << m_code << " registering data source '" << srcname << "'";
+            qInfo() << "Extension " << m_code << " registering data source '" << srcname << "'";
 
             DataSource& source = m_datasources[srcname];
             source.key         = srcname;
-            source.uid = m_plugin->dataSources[i].uid = ++DataPlugin::_uid;
-            source.refreshmsec                        = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), (qlonglong) m_plugin->dataSources[i].refreshMsec).toLongLong();
-            source.enabled                            = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source.key), true).toBool();
+            source.uid = m_extension->dataSources[i].uid = ++DataExtension::_uid;
+            source.refreshmsec                           = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), (qlonglong) m_extension->dataSources[i].refreshMsec).toLongLong();
+            source.enabled                               = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source.key), true).toBool();
 
-            // If data source is plugin signaled or async poll
+            // If data source is extension signaled or async poll
             if (source.refreshmsec <= 0)
             {
                 source.locks = std::make_unique<DataLock>();
-                connect(this, &DataPlugin::dataReady, this, &DataPlugin::sendDataToSubscribersByName, Qt::QueuedConnection);
+                connect(this, &DataExtension::dataReady, this, &DataExtension::sendDataToSubscribersByName, Qt::QueuedConnection);
             }
         }
     }
 
     // create settings
-    if (m_plugin->create_settings)
+    if (m_extension->create_settings)
     {
-        m_settings.reset(m_plugin->create_settings());
+        m_settings.reset(m_extension->create_settings());
 
         if (m_settings)
         {
@@ -94,22 +94,22 @@ DataPlugin::DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QStr
                 }
             }
 
-            updatePluginSettings();
+            updateExtensionSettings();
         }
     }
 
-    // initialize the plugin
-    if (!m_plugin->init(this))
+    // initialize the extension
+    if (!m_extension->init(this))
     {
-        throw std::runtime_error("plugin init() failed");
+        throw std::runtime_error("extension init() failed");
     }
 }
 
-DataPlugin::~DataPlugin()
+DataExtension::~DataExtension()
 {
-    if (nullptr != m_plugin->shutdown)
+    if (nullptr != m_extension->shutdown)
     {
-        m_plugin->shutdown(this);
+        m_extension->shutdown(this);
     }
 
     // Do some explicit cleanup
@@ -121,12 +121,12 @@ DataPlugin::~DataPlugin()
         src.second.subscribers.clear();
     }
 
-    // plugin is responsible for cleanup of quasar_plugin_info_t*
-    m_destroyfunc(m_plugin);
-    m_plugin = nullptr;
+    // extension is responsible for cleanup of quasar_ext_info_t*
+    m_destroyfunc(m_extension);
+    m_extension = nullptr;
 }
 
-DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
+DataExtension* DataExtension::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
 {
     QLibrary lib(libpath);
 
@@ -136,27 +136,27 @@ DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
         return nullptr;
     }
 
-    plugin_load    loadfunc    = (plugin_load) lib.resolve("quasar_plugin_load");
-    plugin_destroy destroyfunc = (plugin_destroy) lib.resolve("quasar_plugin_destroy");
+    extension_load    loadfunc    = (extension_load) lib.resolve("quasar_ext_load");
+    extension_destroy destroyfunc = (extension_destroy) lib.resolve("quasar_ext_destroy");
 
     if (!loadfunc || !destroyfunc)
     {
-        qWarning() << "Failed to resolve plugin API in" << libpath;
+        qWarning() << "Failed to resolve extension API in" << libpath;
         return nullptr;
     }
 
-    quasar_plugin_info_t* p = loadfunc();
+    quasar_ext_info_t* p = loadfunc();
 
     if (!p || !p->init || !p->shutdown || !p->get_data)
     {
-        qWarning() << "quasar_plugin_load failed in" << libpath;
+        qWarning() << "quasar_ext_load failed in" << libpath;
         return nullptr;
     }
 
     try
     {
-        DataPlugin* plugin = new DataPlugin(p, destroyfunc, libpath, parent);
-        return plugin;
+        DataExtension* extension = new DataExtension(p, destroyfunc, libpath, parent);
+        return extension;
     } catch (std::exception e)
     {
         qWarning() << "Exception: '" << e.what() << "' while initializing " << libpath;
@@ -165,7 +165,7 @@ DataPlugin* DataPlugin::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
     return nullptr;
 }
 
-bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString widgetName)
+bool DataExtension::addSubscriber(QString source, QWebSocket* subscriber, QString widgetName)
 {
     if (!subscriber)
     {
@@ -175,7 +175,7 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString w
 
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_code << " by widget " << widgetName;
         return false;
     }
 
@@ -200,7 +200,7 @@ bool DataPlugin::addSubscriber(QString source, QWebSocket* subscriber, QString w
     return true;
 }
 
-void DataPlugin::removeSubscriber(QWebSocket* subscriber)
+void DataExtension::removeSubscriber(QWebSocket* subscriber)
 {
     if (!subscriber)
     {
@@ -214,7 +214,7 @@ void DataPlugin::removeSubscriber(QWebSocket* subscriber)
         // Log if unsubscribed succeeded
         if (it.second.subscribers.erase(subscriber))
         {
-            qInfo() << "Widget unsubscribed from plugin " << m_code << " data source " << it.first;
+            qInfo() << "Widget unsubscribed from extension " << m_code << " data source " << it.first;
         }
 
         // Stop timer if no subscribers
@@ -225,7 +225,7 @@ void DataPlugin::removeSubscriber(QWebSocket* subscriber)
     }
 }
 
-void DataPlugin::pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName)
+void DataExtension::pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName)
 {
     if (!subscriber)
     {
@@ -235,7 +235,7 @@ void DataPlugin::pollAndSendData(QString source, QWebSocket* subscriber, QString
 
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code << " by widget " << widgetName;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_code << " by widget " << widgetName;
         return;
     }
 
@@ -253,7 +253,7 @@ void DataPlugin::pollAndSendData(QString source, QWebSocket* subscriber, QString
     }
 }
 
-void DataPlugin::sendDataToSubscribers(DataSource& source)
+void DataExtension::sendDataToSubscribers(DataSource& source)
 {
     // TODO maybe needs locks
 
@@ -289,11 +289,11 @@ void DataPlugin::sendDataToSubscribers(DataSource& source)
     }
 }
 
-void DataPlugin::setDataSourceEnabled(QString source, bool enabled)
+void DataExtension::setDataSourceEnabled(QString source, bool enabled)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
         return;
     }
 
@@ -317,11 +317,11 @@ void DataPlugin::setDataSourceEnabled(QString source, bool enabled)
     }
 }
 
-void DataPlugin::setDataSourceRefresh(QString source, int64_t msec)
+void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
         return;
     }
 
@@ -340,7 +340,7 @@ void DataPlugin::setDataSourceRefresh(QString source, int64_t msec)
     }
 }
 
-void DataPlugin::setCustomSetting(QString name, int val)
+void DataExtension::setCustomSetting(QString name, int val)
 {
     if (m_settings)
     {
@@ -352,7 +352,7 @@ void DataPlugin::setCustomSetting(QString name, int val)
     }
 }
 
-void DataPlugin::setCustomSetting(QString name, double val)
+void DataExtension::setCustomSetting(QString name, double val)
 {
     if (m_settings)
     {
@@ -364,7 +364,7 @@ void DataPlugin::setCustomSetting(QString name, double val)
     }
 }
 
-void DataPlugin::setCustomSetting(QString name, bool val)
+void DataExtension::setCustomSetting(QString name, bool val)
 {
     if (m_settings)
     {
@@ -376,21 +376,21 @@ void DataPlugin::setCustomSetting(QString name, bool val)
     }
 }
 
-void DataPlugin::updatePluginSettings()
+void DataExtension::updateExtensionSettings()
 {
-    if (m_settings && m_plugin->update)
+    if (m_settings && m_extension->update)
     {
-        m_plugin->update(m_settings.get());
+        m_extension->update(m_settings.get());
 
         propagateSettingsToAllUniqueSubscribers();
     }
 }
 
-void DataPlugin::emitDataReady(QString source)
+void DataExtension::emitDataReady(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
         return;
     }
 
@@ -402,11 +402,11 @@ void DataPlugin::emitDataReady(QString source)
     }
 }
 
-void DataPlugin::waitDataProcessed(QString source)
+void DataExtension::waitDataProcessed(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
         return;
     }
 
@@ -420,11 +420,11 @@ void DataPlugin::waitDataProcessed(QString source)
     }
 }
 
-void DataPlugin::sendDataToSubscribersByName(QString source)
+void DataExtension::sendDataToSubscribersByName(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in plugin " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
         return;
     }
 
@@ -433,7 +433,7 @@ void DataPlugin::sendDataToSubscribersByName(QString source)
     sendDataToSubscribers(data);
 }
 
-void DataPlugin::createTimer(DataSource& data)
+void DataExtension::createTimer(DataSource& data)
 {
     if (data.enabled && !data.timer)
     {
@@ -445,13 +445,13 @@ void DataPlugin::createTimer(DataSource& data)
     }
 }
 
-QString DataPlugin::craftDataMessage(const DataSource& data)
+QString DataExtension::craftDataMessage(const DataSource& data)
 {
-    QJsonObject reply;
-    auto        dat = reply["data"];
+    QJsonObject src;
+    auto        dat = src[data.key];
 
-    // Poll plugin for data source
-    if (!m_plugin->get_data(data.uid, &dat))
+    // Poll extension for data source
+    if (!m_extension->get_data(data.uid, &dat))
     {
         qWarning() << "getData(" << getCode() << ", " << data.key << ") failed";
         return QString();
@@ -464,27 +464,29 @@ QString DataPlugin::craftDataMessage(const DataSource& data)
     }
 
     // Craft response
-    reply["type"]   = "data";
-    reply["plugin"] = getCode();
-    reply["source"] = data.key;
+    QJsonObject ext;
+    QJsonObject reply;
+    ext[getCode()] = src;
+    reply["data"]  = ext;
 
     QJsonDocument doc(reply);
 
     return QString::fromUtf8(doc.toJson());
 }
 
-QString DataPlugin::craftSettingsMessage()
+QString DataExtension::craftSettingsMessage()
 {
     QString payload;
 
     if (m_settings)
     {
+        // TODO: FIX
         // Craft the settings message
         QJsonObject msg;
         QJsonObject settings;
 
-        msg["type"]   = "settings";
-        msg["plugin"] = getCode();
+        msg["type"]      = "settings";
+        msg["extension"] = getCode();
 
         for (auto& s : m_settings->map)
         {
@@ -513,7 +515,7 @@ QString DataPlugin::craftSettingsMessage()
     return payload;
 }
 
-void DataPlugin::propagateSettingsToAllUniqueSubscribers()
+void DataExtension::propagateSettingsToAllUniqueSubscribers()
 {
     if (m_settings)
     {

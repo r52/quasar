@@ -1,2 +1,14 @@
-var qWidgetName = "%1";
-var qWsServerUrl = "wss://localhost:%2";
+function quasar_authenticate(socket) {
+    var auth = {
+        method: "auth",
+        params: {
+            code: "%2"
+        }
+    };
+
+    socket.send(JSON.stringify(auth));
+}
+
+function quasar_create_websocket() {
+    return new WebSocket("wss://localhost:%1");
+}

@@ -3,9 +3,9 @@
 #include "preproc.h"
 #include "version.h"
 
-#include "configdialog.h"
 #include "dataservices.h"
 #include "logwindow.h"
+#include "settingsdialog.h"
 #include "webwidget.h"
 #include "widgetdefs.h"
 #include "widgetregistry.h"
@@ -130,8 +130,8 @@ void Quasar::createActions()
 
     settingsAction = new QAction(tr("&Settings"), this);
     connect(settingsAction, &QAction::triggered, [=] {
-        ConfigDialog dialog(service);
-        dialog.exec();
+        SettingsDialog* dialog = new SettingsDialog;
+        dialog->show();
     });
 
     logAction = new QAction(tr("L&og"), this);

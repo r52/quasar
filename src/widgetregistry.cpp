@@ -63,30 +63,30 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
         return false;
     }
 
-    // Verify plugin dependencies
+    // Verify extension dependencies
     if (dat.contains(WGT_DEF_REQUIRED))
     {
-        bool    pass     = true;
-        QString failplug = "";
-        auto    arr      = dat[WGT_DEF_REQUIRED].toArray();
+        bool    pass    = true;
+        QString failext = "";
+        auto    arr     = dat[WGT_DEF_REQUIRED].toArray();
 
         for (auto p : arr)
         {
-            if (!server->findPlugin(p.toString()))
+            if (!server->findExtension(p.toString()))
             {
-                pass     = false;
-                failplug = p.toString();
+                pass    = false;
+                failext = p.toString();
                 break;
             }
         }
 
         if (!pass)
         {
-            qWarning() << "Missing plugin '" << failplug << "' for '" << filename << "'";
+            qWarning() << "Missing extension '" << failext << "' for '" << filename << "'";
 
             QMessageBox::warning(nullptr,
-                                 tr("Missing Plugin"),
-                                 tr("Plugin \"%1\" is required for widget \"%2\". Please install this plugin and try again.").arg(failplug, filename),
+                                 tr("Missing Extension"),
+                                 tr("Extension \"%1\" is required for widget \"%2\". Please install this extension and try again.").arg(failext, filename),
                                  QMessageBox::Ok);
 
             return false;
@@ -102,6 +102,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
     // Generate unique widget name
     QString defName    = dat[WGT_DEF_NAME].toString();
     QString widgetName = defName;
+    QString authcode   = "";
     int     idx        = 2;
 
     std::unique_lock<std::shared_mutex> lk(m_mutex);
@@ -113,7 +114,12 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
     qInfo() << "Loading widget " << widgetName << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
 
-    WebWidget* widget = new WebWidget(widgetName, dat);
+    if (dat[WGT_DEF_DATASERVER].toBool())
+    {
+        authcode = server->generateAuthCode(widgetName);
+    }
+
+    WebWidget* widget = new WebWidget(widgetName, dat, authcode);
 
     m_widgetMap.insert(std::make_pair(widgetName, widget));
 

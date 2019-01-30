@@ -121,7 +121,7 @@ protected slots:
     void toggleOnTop(bool ontop);
 
 private:
-    explicit WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent = Q_NULLPTR);
+    explicit WebWidget(QString widgetName, const QJsonObject& dat, QString authcode, QWidget* parent = Q_NULLPTR);
     WebWidget(const WebWidget&) = delete;
     WebWidget& operator=(const WebWidget&) = delete;
 

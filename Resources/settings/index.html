@@ -1,0 +1,183 @@
+<!doctype html>
+<html class="h-100">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title></title>
+
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/bootstrap-table.min.css">
+
+    <script src="js/jquery-3.3.1.slim.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/bootstrap-table.min.js"></script>
+
+    <style>
+        img.icon {
+            max-width: 96px;
+            max-height: 96px;
+        }
+
+        .footer {
+            background-color: #f5f5f5;
+        }
+
+        .footer>.container {
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column h-100">
+    <!-- Tab menu -->
+    <ul class="nav nav-pills" id="main_menu" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General</a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" id="extensions-tab" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Extensions</a>
+            <div id="extension-links" class="dropdown-menu">
+                <!-- Extension tab links -->
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="launcher-tab" data-toggle="tab" href="#launcher" role="tab" aria-controls="launcher" aria-selected="false">App Launcher</a>
+        </li>
+    </ul>
+    <!-- Tab content -->
+    <main role="main" class="flex-shrink-0">
+        <div class="tab-content" id="tab_content">
+            <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                <div class="form-group row">
+                    <label for="general/dataport" class="col-sm-2 col-form-label">Data Server Port</label>
+                    <div class="col-sm-10">
+                        <input type="number" class="form-control" id="general/dataport" placeholder="Port" min="1024" max="65535" step="1" value="13337">
+                    </div>
+                </div>
+                <fieldset class="form-group">
+                    <div class="row">
+                        <legend class="col-form-label col-sm-2 pt-0">Log Verbosity</legend>
+                        <div class="col-sm-10">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_debug" value="0">
+                                <label class="form-check-label" for="loglevel_debug">
+                                    Debug
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_info" value="1">
+                                <label class="form-check-label" for="loglevel_info">
+                                    Info
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_warning" value="2" checked>
+                                <label class="form-check-label" for="loglevel_warning">
+                                    Warning
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_critical" value="3">
+                                <label class="form-check-label" for="loglevel_critical">
+                                    Critical
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+                <div class="form-group row">
+                    <div class="col-sm-2">cookies.txt</div>
+                    <div class="col-sm-10">
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="general/cookies">
+                            <label class="custom-file-label" for="general_cookies">Browse</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-2">Save log to file</div>
+                    <div class="col-sm-10">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="general/savelog">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-2">Launch Quasar when system starts (Windows only)</div>
+                    <div class="col-sm-10">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="general/startup">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="launcher" role="tabpanel" aria-labelledby="launcher-tab">
+                <div id="toolbar">
+                    <button id="remove-launch-command" class="btn btn-danger" disabled>
+                        Delete
+                    </button>
+                    <button id="launch-test" class="btn btn-warning">
+                        Debug
+                    </button>
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">Add</button>
+                </div>
+                <table id="launcher-table" class="table table-hover">
+                </table>
+            </div>
+            <!-- Extension tab contents -->
+        </div>
+        <!-- Add Modal -->
+        <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addModalLabel">Add Command</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="command-name" class="col-form-label">Command:</label>
+                                <input type="text" class="form-control" id="command-name">
+                            </div>
+                            <div class="form-group">
+                                <label for="file-name" class="col-form-label">File/Commandline:</label>
+                                <input type="text" class="form-control" id="file-name">
+                            </div>
+                            <div class="form-group">
+                                <label for="start-path" class="col-form-label">Start Path:</label>
+                                <input type="text" class="form-control" id="start-path">
+                            </div>
+                            <div class="form-group">
+                                <label for="arguments" class="col-form-label">Arguments:</label>
+                                <input type="text" class="form-control" id="arguments">
+                            </div>
+                            <div class="form-group">
+                                <label for="launcher-icon" class="col-form-label">Icon:</label>
+                                <input type="file" id="launcher-icon" name="avatar" accept="image/*">
+                                <img class="icon" id="icon-preview" src="" />
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="launcher-save">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="footer mt-auto py-3">
+        <div class="container">
+            <button type="button" class="btn btn-success" id="settings-save">Save</button>
+            <button type="button" class="btn btn-primary" id="settings-close">Close</button>
+        </div>
+    </footer>
+    <script src="js/script.js"></script>
+</body>
+
+</html>

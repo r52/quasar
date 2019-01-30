@@ -5,6 +5,7 @@
 #include <QAction>
 #include <QMenu>
 #include <QMessageBox>
+#include <QtWebEngineWidgets/QWebEngineCertificateError>
 #include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineSettings>
@@ -44,7 +45,7 @@ bool QuasarWebPage::certificateError(const QWebEngineCertificateError& certifica
     return false;
 }
 
-WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent)
+WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QString authcode, QWidget* parent)
     : QWidget(parent), m_Name(widgetName)
 {
     if (m_Name.isEmpty())
@@ -193,17 +194,20 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
         PageGlobalTemp = in.readAll();
     }
 
-    quint16 port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+    if (data[WGT_DEF_DATASERVER].toBool())
+    {
+        quint16 port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
-    QString pageGlobals = PageGlobalTemp.arg(m_Name).arg(port);
+        QString pageGlobals = PageGlobalTemp.arg(port).arg(authcode);
 
-    QWebEngineScript script;
-    script.setName("PageGlobals");
-    script.setInjectionPoint(QWebEngineScript::DocumentCreation);
-    script.setWorldId(0);
-    script.setSourceCode(pageGlobals);
+        QWebEngineScript script;
+        script.setName("PageGlobals");
+        script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+        script.setWorldId(0);
+        script.setSourceCode(pageGlobals);
 
-    webview->page()->scripts().insert(script);
+        webview->page()->scripts().insert(script);
+    }
 
     setWindowTitle(m_Name);
 }
@@ -220,7 +224,8 @@ bool WebWidget::validateWidgetDefinition(const QJsonObject& dat)
         dat.contains(WGT_DEF_WIDTH) && dat[WGT_DEF_WIDTH].toInt() > 0 &&
         dat.contains(WGT_DEF_HEIGHT) && dat[WGT_DEF_HEIGHT].toInt() > 0 &&
         dat.contains(WGT_DEF_STARTFILE) && !dat[WGT_DEF_STARTFILE].toString().isNull() &&
-        dat.contains(WGT_DEF_FULLPATH) && !dat[WGT_DEF_FULLPATH].toString().isNull())
+        dat.contains(WGT_DEF_FULLPATH) && !dat[WGT_DEF_FULLPATH].toString().isNull() &&
+        dat.contains(WGT_DEF_DATASERVER) && dat[WGT_DEF_DATASERVER].isBool())
     {
         return true;
     }

@@ -1,12 +1,12 @@
 /*! \file
-    \brief Defines the DataPlugin class and supporting data structures
+    \brief Defines the DataExtension class and supporting data structures
 */
 
 #pragma once
 
 #include <qstring_hash_impl.h>
 
-#include <plugin_types.h>
+#include <extension_types.h>
 
 #include <condition_variable>
 #include <memory>
@@ -23,19 +23,19 @@
 //! Internal setting prefix for Data Source refresh rate UI
 #define QUASAR_DP_REFRESH_PREFIX "refresh_"
 
-//! Internal setting prefix for custom plugin defined settings
+//! Internal setting prefix for custom extension defined settings
 #define QUASAR_DP_CUSTOM_PREFIX "custom_"
 
 #ifdef PLUGINAPI_LIB
-#    define PAPI_EXPORT Q_DECL_EXPORT
+#define PAPI_EXPORT Q_DECL_EXPORT
 #else
-#    define PAPI_EXPORT Q_DECL_IMPORT
+#define PAPI_EXPORT Q_DECL_IMPORT
 #endif // PLUGINAPI_LIB
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 
 /*! Holds the mutex and accompanying conditional variable for
-    asynchronous or plugin signaled Data Sources.
+    asynchronous or extension signaled Data Sources.
 */
 struct DataLock
 {
@@ -53,37 +53,37 @@ struct DataSource
     int64_t                   refreshmsec; //!< Data Source refresh rate \sa quasar_data_source_t.refreshMsec
     std::unique_ptr<QTimer>   timer;       //!< QTimer for timer based Data Sources
     std::set<QWebSocket*>     subscribers; //!< Set of widgets (its WebSocket connection instance) subscribed to this Data Source
-    std::unique_ptr<DataLock> locks;       //!< Mutex/cv for asynchronous or plugin signaled Data Sources \sa DataLock
+    std::unique_ptr<DataLock> locks;       //!< Mutex/cv for asynchronous or extension signaled Data Sources \sa DataLock
 };
 
 //! Shorthand for m_datasources type
 using DataSourceMapType = std::unordered_map<QString, DataSource>;
 
-//! Class that encapsulates a Quasar plugin library (dll/so)
-class PAPI_EXPORT DataPlugin : public QObject
+//! Class that encapsulates a Quasar extension library (dll/so)
+class PAPI_EXPORT DataExtension : public QObject
 {
     Q_OBJECT;
 
 public:
-    //! Shorthand type for quasar_plugin_load()
-    using plugin_load = std::add_pointer_t<quasar_plugin_info_t*(void)>;
+    //! Shorthand type for quasar_extension_load()
+    using extension_load = std::add_pointer_t<quasar_ext_info_t*(void)>;
 
-    //! Shorthand type for quasar_plugin_destroy()
-    using plugin_destroy = std::add_pointer_t<void(quasar_plugin_info_t*)>;
+    //! Shorthand type for quasar_extension_destroy()
+    using extension_destroy = std::add_pointer_t<void(quasar_ext_info_t*)>;
 
-    //! DataPlugin destructor
-    ~DataPlugin();
+    //! DataExtension destructor
+    ~DataExtension();
 
     //! Data Source uid counter
     static uintmax_t _uid;
 
-    //! Load a plugin
+    //! Load an extension
     /*!
         \param[in]  libpath Path to library file
         \param[in]  parent  Parent element in Qt object tree
-        \return Pointer to a DataPlugin instance if successful, nullptr otherwise
+        \return Pointer to a DataExtension instance if successful, nullptr otherwise
     */
-    static DataPlugin* load(QString libpath, QObject* parent = Q_NULLPTR);
+    static DataExtension* load(QString libpath, QObject* parent = Q_NULLPTR);
 
     //! Adds a subscriber to a Data Source
     /*!
@@ -100,16 +100,16 @@ public:
     */
     void removeSubscriber(QWebSocket* subscriber);
 
-    //! Polls the plugin for data and sends it to the requesting widget
-    /*! Called when the plugin receives a widget "poll" request
+    //! Polls the extension for data and sends it to the requesting widget
+    /*! Called when the extension receives a widget "poll" request
         \param[in]  source      Data Source codename
         \param[in]  subscriber  Requesting widget's websocket connection instance
         \param[in]  widgetName  Widget name
     */
     void pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName);
 
-    //! Retrieves data from the plugin and sends it to all subscribers
-    /*! Called when plugin data is ready to be sent (by both timer and signal)
+    //! Retrieves data from the extension and sends it to all subscribers
+    /*! Called when extension data is ready to be sent (by both timer and signal)
         \param[in]  source  Data Source
     */
     void sendDataToSubscribers(DataSource& source);
@@ -119,43 +119,43 @@ public:
     */
     QString getLibPath() { return m_libpath; };
 
-    /*! Gets plugin name
-        \return plugin name
+    /*! Gets extension name
+        \return extension name
     */
     QString getName() { return m_name; };
 
-    /*! Gets plugin codename
-        \return plugin codename
+    /*! Gets extension codename
+        \return extension codename
     */
     QString getCode() { return m_code; };
 
-    /*! Gets plugin description
-        \return plugin description
+    /*! Gets extension description
+        \return extension description
     */
     QString getDesc() { return m_desc; };
 
-    /*! Gets plugin author
-        \return plugin author
+    /*! Gets extension author
+        \return extension author
     */
     QString getAuthor() { return m_author; };
 
-    /*! Gets plugin version
-        \return plugin version
+    /*! Gets extension version
+        \return extension version
     */
     QString getVersion() { return m_version; };
 
-    /*! Gets plugin settings prefix for use with internal Quasar settings store
-        \return plugin settings prefix
+    /*! Gets extension settings prefix for use with internal Quasar settings store
+        \return extension settings prefix
     */
-    QString getSettingsCode(QString key) { return "plugin_" + getCode() + "/" + key; };
+    QString getSettingsCode(QString key) { return "ext_" + getCode() + "/" + key; };
 
-    /*! Gets plugin custom settings
+    /*! Gets extension custom settings
         \sa quasar_settings_t
-        \return pointer to plugin custom settings
+        \return pointer to extension custom settings
     */
     quasar_settings_t* getSettings() { return m_settings.get(); };
 
-    /*! Gets plugin Data Sources
+    /*! Gets extension Data Sources
         \sa DataSourceMapType, DataSource
         \return reference to map of Data Sources
     */
@@ -175,7 +175,7 @@ public:
     */
     void setDataSourceRefresh(QString source, int64_t msec);
 
-    /*! Sets an integer custom plugin setting.
+    /*! Sets an integer custom extension setting.
         This function is only called by the relevant GUI can should not be used otherwise.
 
         \param[in]  name    Custom setting name
@@ -185,7 +185,7 @@ public:
     */
     void setCustomSetting(QString name, int val);
 
-    /*! Sets a double custom plugin setting.
+    /*! Sets a double custom extension setting.
         This function is only called by the relevant GUI can should not be used otherwise.
 
         \param[in]  name    Custom setting name
@@ -195,7 +195,7 @@ public:
     */
     void setCustomSetting(QString name, double val);
 
-    /*! Sets a bool custom plugin setting.
+    /*! Sets a bool custom extension setting.
         This function is only called by the relevant GUI can should not be used otherwise.
 
         \param[in]  name    Custom setting name
@@ -205,12 +205,12 @@ public:
     */
     void setCustomSetting(QString name, bool val);
 
-    /*! Propagates custom setting value changes to the plugin
+    /*! Propagates custom setting value changes to the extension
         as well as all unique subscribers
 
-        \sa quasar_plugin_info_t.update
+        \sa quasar_ext_info_t.update
     */
-    void updatePluginSettings();
+    void updateExtensionSettings();
 
     /*! Emits the data ready signal
 
@@ -234,23 +234,23 @@ signals:
     void dataReady(QString source);
 
 private slots:
-    //! Retrieves data from the plugin and sends it to all subscribers by name
-    /*! Called when plugin data is ready to be sent (by async and signaled sources)
+    //! Retrieves data from the extension and sends it to all subscribers by name
+    /*! Called when extension data is ready to be sent (by async and signaled sources)
         \param[in]  source  Data Source codename
         \sa sendDataToSubscribers()
     */
     void sendDataToSubscribersByName(QString source);
 
 private:
-    //! DataPlugin constructor
-    /*! DataPlugin::load() should be used to load and create a DataPlugin instance
-        \param[in]  p           Plugin info struct
-        \param[in]  destroyfunc Function pointer to the plugin destroy function
+    //! DataExtension constructor
+    /*! DataExtension::load() should be used to load and create a DataExtension instance
+        \param[in]  p           extension info struct
+        \param[in]  destroyfunc Function pointer to the extension destroy function
         \param[in]  path        Library path
         \param[in]  parent      Qt parent object
-        \sa quasar_plugin_info_t, quasar_plugin_destroy()
+        \sa quasar_ext_info_t, quasar_extension_destroy()
     */
-    DataPlugin(quasar_plugin_info_t* p, plugin_destroy destroyfunc, QString path, QObject* parent = Q_NULLPTR);
+    DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent = Q_NULLPTR);
 
     /*! Creates and initializes the timer for a timer-based source (if it does not exist)
         \param[in,out]  data    Reference to the Data Source object
@@ -266,26 +266,26 @@ private:
 
     /*! Crafts the custom settings message to be sent to subscribers
         \return The settings message
-        \sa updatePluginSettings()
+        \sa updateExtensionSettings()
     */
     QString craftSettingsMessage();
 
     /*! Helper function that propagates custom settings message to all unique subscribers
-        \sa updatePluginSettings()
+        \sa updateExtensionSettings()
     */
     void propagateSettingsToAllUniqueSubscribers();
 
-    quasar_plugin_info_t* m_plugin;      //!< Plugin info data \sa quasar_plugin_info_t
-    plugin_destroy        m_destroyfunc; //!< Plugin destroy function \sa quasar_plugin_destroy()
+    quasar_ext_info_t* m_extension;   //!< Extension info data \sa quasar_ext_info_t
+    extension_destroy  m_destroyfunc; //!< Extension destroy function \sa quasar_ext_destroy()
 
-    std::unique_ptr<quasar_settings_t> m_settings; //!< Plugin settings \sa quasar_settings_t
+    std::unique_ptr<quasar_settings_t> m_settings; //!< Extension settings \sa quasar_settings_t
 
     QString m_libpath; //!< Path to library file
-    QString m_name;    //!< Plugin name
-    QString m_code;    //!< Plugin codename
-    QString m_desc;    //!< Plugin description
-    QString m_author;  //!< Plugin author
-    QString m_version; //!< Plugin version string
+    QString m_name;    //!< extension name
+    QString m_code;    //!< extension codename
+    QString m_desc;    //!< extension description
+    QString m_author;  //!< extension author
+    QString m_version; //!< extension version string
 
-    DataSourceMapType m_datasources; //!< Map of Data Sources provided by this plugin
+    DataSourceMapType m_datasources; //!< Map of Data Sources provided by this extension
 };
