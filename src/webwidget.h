@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <QtGui>
+#include <QtWebEngineWidgets/QWebEngineProfile>
 #include <QtWebEngineWidgets/QWebEngineView>
 
 QT_FORWARD_DECLARE_CLASS(QMenu);
@@ -81,6 +82,11 @@ public:
     {
     }
 
+    QuasarWebPage(QWebEngineProfile* profile, QObject* parent = Q_NULLPTR)
+        : QWebEnginePage{ profile, parent }
+    {
+    }
+
 protected:
     virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID);
     bool         certificateError(const QWebEngineCertificateError& certificateError);
@@ -122,12 +128,10 @@ protected slots:
 
 private:
     explicit WebWidget(QString widgetName, const QJsonObject& dat, QString authcode, QWidget* parent = Q_NULLPTR);
-    WebWidget(const WebWidget&) = delete;
-    WebWidget& operator=(const WebWidget&) = delete;
 
     QString getSettingKey(QString key);
 
-    static QString PageGlobalTemp;
+    static QString PageGlobalScript;
 
     bool m_fixedposition = false;
 
@@ -154,4 +158,6 @@ private:
     QAction* rFixedPos;
     QAction* rClickable;
     QAction* rClose;
+
+    Q_DISABLE_COPY(WebWidget);
 };

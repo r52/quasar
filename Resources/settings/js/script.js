@@ -1,86 +1,5 @@
-var sample_data = {
-    "data": {
-        "settings": {
-            "general": {
-                "dataport": 13337,
-                "loglevel": 2,
-                "cookies": "",
-                "savelog": true,
-                "startup": true
-            },
-            "extensions": [{
-                    "name": "simple_perf",
-                    "fullname": "Simple Performance Query",
-                    "version": "v1",
-                    "author": "me",
-                    "description": "Sample extension providing basic performance metrics",
-                    "website": "https://github.com/r52/quasar",
-                    "rates": [{
-                            "name": "cpu",
-                            "enabled": true,
-                            "rate": 5000
-                        },
-                        {
-                            "name": "ram",
-                            "enabled": true,
-                            "rate": 5000
-                        }
-                    ],
-                    "settings": null
-                },
-                {
-                    "name": "win_audio_viz",
-                    "fullname": "Audio Visualization",
-                    "version": "v1",
-                    "author": "me",
-                    "description": "Provides desktop audio frequency data",
-                    "website": "https://github.com/r52/quasar",
-                    "rates": [{
-                        "name": "viz",
-                        "enabled": true,
-                        "rate": null
-                    }],
-                    "settings": [{
-                            "name": "fftsize",
-                            "desc": "FFT Size",
-                            "type": "int",
-                            "min": 0,
-                            "max": 8192,
-                            "step": 2,
-                            "def": 256,
-                            "val": 256
-                        },
-                        {
-                            "name": "sensitivity",
-                            "desc": "Sensitivity",
-                            "type": "double",
-                            "min": 0.0,
-                            "max": 10000.0,
-                            "step": 0.1,
-                            "def": 50.0,
-                            "val": 50.0
-                        }
-                    ]
-                }
-            ],
-            "launcher": [{
-                    "command": "chrome",
-                    "file": "cmd",
-                    "args": "/c start chrome",
-                    "start": "",
-                    "icon": ""
-                },
-                {
-                    "command": "explorer",
-                    "file": "C:/Windows/explorer.exe",
-                    "args": "",
-                    "start": "",
-                    "icon": ""
-                }
-            ]
-        }
-    }
-};
+var websocket = null;
+var initialized = false;
 
 function getTableSelections(table) {
     return $.map(table.bootstrapTable('getSelections'), function(row) {
@@ -95,7 +14,7 @@ function createExtensionTab(ext) {
 
     // generate rate settings
     var rates = "";
-    ext.rates.forEach(function(r){
+    ext.rates.forEach(function(r) {
         var rinput = "";
         if (r.rate != null) {
             rinput = `<input type="number" class="form-control" id="${ext.name}/${r.name}-rate" placeholder="ms" min="1" max="2147483647" step="1" value="${r.rate}">`
@@ -155,20 +74,23 @@ function createExtensionTab(ext) {
     $('#tab_content').append(t);
 }
 
-function createExtensionPages() {
-    var dat = sample_data["data"]["settings"]["extensions"];
-    dat.forEach(function(e) {
-        createExtensionTab(e);
-    });
+function createExtensionPages(data) {
+    var dat = data["data"]["settings"]["extensions"];
+    if (dat.length > 0) {
+        $('#extension-links').empty();
+        dat.forEach(function(e) {
+            createExtensionTab(e);
+        });
+    }
 }
 
-function createLauncherPage() {
+function createLauncherPage(data) {
     var $ltable = $('#launcher-table');
     var $lremove = $('#remove-launch-command');
 
     // generate bootstrap table
     $ltable.bootstrapTable({
-        data: sample_data["data"]["settings"]["launcher"],
+        data: data["data"]["settings"]["launcher"],
         striped: true,
         clickToSelect: true,
         idField: 'command',
@@ -286,14 +208,67 @@ function createLauncherPage() {
     });
 }
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function query_settings(socket) {
+    var msg = {
+        method: "query",
+        params: {
+            target: "settings",
+            data: "all"
+        }
+    };
+
+    socket.send(JSON.stringify(msg));
+}
+
+async function do_on_connect(socket) {
+    quasar_authenticate(socket);
+    await sleep(100);
+    query_settings(socket);
+}
+
+function initialize_page(dat) {
+    if (!initialized) {
+        createExtensionPages(dat);
+        createLauncherPage(dat);
+
+        // TODO: Save button
+
+        initialized = true;
+    }
+}
+
+function parse_data(msg) {
+    var data = JSON.parse(msg);
+
+    if ("data" in data && "settings" in data["data"]) {
+        initialize_page(data);
+    }
+}
+
 $(function() {
-    createExtensionPages();
-    createLauncherPage();
+    try {
+        if (websocket && websocket.readyState == 1)
+            websocket.close();
+        websocket = quasar_create_websocket();
+        websocket.onopen = function(evt) {
+            do_on_connect(websocket);
+        };
+        websocket.onmessage = function(evt) {
+            parse_data(evt.data);
+        };
+        websocket.onerror = function(evt) {
+            console.log('ERROR: ' + evt.data);
+        };
+    } catch (exception) {
+        console.log('Exception: ' + exception);
+    }
 
     // close button
     $('#settings-close').click(function() {
         close();
     });
-
-    // TODO: Save button
 });

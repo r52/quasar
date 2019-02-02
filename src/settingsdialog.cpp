@@ -1,20 +1,33 @@
 #include "settingsdialog.h"
 
+#include "dataserver.h"
 #include "webuihandler.h"
+#include "webwidget.h"
+#include "widgetdefs.h"
+
+#include <QFile>
+#include <QSettings>
+#include <QtWebEngineWidgets/QWebEngineScript>
+#include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineView>
 
-SettingsDialog::SettingsDialog(QWidget* parent)
+std::atomic_bool SettingsDialog::isOpen = false;
+QString          SettingsDialog::PageGlobalScript;
+
+SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent)
     : QWidget(parent)
 {
+    SettingsDialog::isOpen = true;
+
     setAttribute(Qt::WA_DeleteOnClose);
-    setWindowModality(Qt::ApplicationModal);
+    setWindowModality(Qt::WindowModal);
 
     profile = new QWebEngineProfile;
 
     WebUiHandler* handler = new WebUiHandler(profile);
     profile->installUrlSchemeHandler(WebUiHandler::schemeName, handler);
 
-    QWebEnginePage* page = new QWebEnginePage(profile, this);
+    QuasarWebPage* page = new QuasarWebPage(profile, this);
     page->load(WebUiHandler::settingsUrl);
 
     QWebEngineView* view = new QWebEngineView(this);
@@ -26,10 +39,40 @@ SettingsDialog::SettingsDialog(QWidget* parent)
         this->close();
     });
 
+    QString authcode = server->generateAuthCode(WebUiHandler::settingsUrl.toString(), CAL_SETTINGS);
+
+    if (PageGlobalScript.isEmpty())
+    {
+        QFile file(":/Resources/pageglobals.js");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            throw std::runtime_error("PageGlobal script load failure");
+        }
+
+        QTextStream in(&file);
+        PageGlobalScript = in.readAll();
+    }
+
+    QSettings settings;
+    quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+
+    QString pageGlobals = PageGlobalScript.arg(port).arg(authcode);
+
+    QWebEngineScript script;
+    script.setName("PageGlobals");
+    script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+    script.setWorldId(0);
+    script.setSourceCode(pageGlobals);
+
+    view->page()->scripts().insert(script);
+
+    setWindowTitle("Settings");
     resize(1000, 600);
 }
 
 SettingsDialog::~SettingsDialog()
 {
     profile->deleteLater();
+
+    SettingsDialog::isOpen = false;
 }

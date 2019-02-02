@@ -10,7 +10,7 @@
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineSettings>
 
-QString WebWidget::PageGlobalTemp;
+QString WebWidget::PageGlobalScript;
 
 void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
 {
@@ -182,7 +182,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QString authcod
     resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
 
     // Create page globals
-    if (PageGlobalTemp.isEmpty())
+    if (PageGlobalScript.isEmpty())
     {
         QFile file(":/Resources/pageglobals.js");
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
@@ -191,14 +191,14 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QString authcod
         }
 
         QTextStream in(&file);
-        PageGlobalTemp = in.readAll();
+        PageGlobalScript = in.readAll();
     }
 
     if (data[WGT_DEF_DATASERVER].toBool())
     {
         quint16 port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
-        QString pageGlobals = PageGlobalTemp.arg(port).arg(authcode);
+        QString pageGlobals = PageGlobalScript.arg(port).arg(authcode);
 
         QWebEngineScript script;
         script.setName("PageGlobals");

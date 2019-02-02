@@ -130,8 +130,11 @@ void Quasar::createActions()
 
     settingsAction = new QAction(tr("&Settings"), this);
     connect(settingsAction, &QAction::triggered, [=] {
-        SettingsDialog* dialog = new SettingsDialog;
-        dialog->show();
+        if (!SettingsDialog::isOpen)
+        {
+            SettingsDialog* dialog = new SettingsDialog(service->getServer());
+            dialog->show();
+        }
     });
 
     logAction = new QAction(tr("L&og"), this);

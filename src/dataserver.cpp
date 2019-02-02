@@ -99,13 +99,13 @@ bool DataServer::findExtension(QString extcode)
     return (m_extensions.count(extcode) > 0);
 }
 
-QString DataServer::generateAuthCode(QString ident)
+QString DataServer::generateAuthCode(QString ident, ClientAccessLevel lvl)
 {
     quint64 v  = QRandomGenerator::global()->generate64();
     QString hv = QString::number(v, 16).toUpper();
 
     std::unique_lock<std::mutex> lk(m_codemutex);
-    m_authcodes.insert({ hv, { ident, CAL_WIDGET, system_clock::now() + 10s } });
+    m_authcodes.insert({ hv, { ident, lvl, system_clock::now() + 10s } });
 
     return hv;
 }
@@ -234,7 +234,7 @@ void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sende
 
 void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
 {
-    QString widgetName;
+    client_data_t clidat;
 
     {
         std::shared_lock<std::shared_mutex> lk(m_authmutex);
@@ -246,7 +246,7 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
             return;
         }
 
-        widgetName = it->second.ident;
+        clidat = it->second;
     }
 
     auto parms = req["params"].toObject();
@@ -260,6 +260,20 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
     QString extcode = parms["target"].toString();
     QString extdata = parms["data"].toString();
 
+    if (extcode == "settings")
+    {
+        // TODO: do settings shit
+        if (clidat.access < CAL_SETTINGS)
+        {
+            DS_SEND_WARN(sender, "Insufficient access for query target 'settings'");
+            return;
+        }
+
+        qDebug() << "Not implemented yet";
+
+        return;
+    }
+
     std::shared_lock<std::shared_mutex> lk(m_extmutex);
 
     if (!m_extensions.count(extcode))
@@ -269,9 +283,9 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
     }
 
     // Add client to poll queue
-    if (m_extensions[extcode]->addSubscriber(extdata, sender, widgetName))
+    if (m_extensions[extcode]->addSubscriber(extdata, sender, clidat.ident))
     {
-        m_extensions[extcode]->pollAndSendData(extdata, sender, widgetName);
+        m_extensions[extcode]->pollAndSendData(extdata, sender, clidat.ident);
     }
 }
 

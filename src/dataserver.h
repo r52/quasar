@@ -52,7 +52,7 @@ public:
     bool addMethodHandler(QString type, HandlerFuncType handler);
     bool findExtension(QString extcode);
 
-    QString generateAuthCode(QString ident);
+    QString generateAuthCode(QString ident, ClientAccessLevel lvl = CAL_WIDGET);
 
 private:
     void loadExtensions();
