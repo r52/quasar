@@ -54,10 +54,10 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
             qInfo() << "Extension " << m_code << " registering data source '" << srcname << "'";
 
             DataSource& source = m_datasources[srcname];
-            source.key         = srcname;
+            source.name        = srcname;
             source.uid = m_extension->dataSources[i].uid = ++DataExtension::_uid;
-            source.refreshmsec                           = settings.value(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source.key), (qlonglong) m_extension->dataSources[i].refreshMsec).toLongLong();
-            source.enabled                               = settings.value(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source.key), true).toBool();
+            source.refreshmsec                           = settings.value(getSettingsKey(QUASAR_DP_REFRESH_PREFIX + source.name), (qlonglong) m_extension->dataSources[i].refreshMsec).toLongLong();
+            source.enabled                               = settings.value(getSettingsKey(source.name + QUASAR_DP_ENABLED), true).toBool();
 
             // If data source is extension signaled or async poll
             if (source.refreshmsec <= 0)
@@ -81,15 +81,15 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
                 switch (it.second.type)
                 {
                     case QUASAR_SETTING_ENTRY_INT:
-                        it.second.inttype.val = settings.value(getSettingsCode(it.first), it.second.inttype.def).toInt();
+                        it.second.inttype.val = settings.value(getSettingsKey(it.first), it.second.inttype.def).toInt();
                         break;
 
                     case QUASAR_SETTING_ENTRY_DOUBLE:
-                        it.second.doubletype.val = settings.value(getSettingsCode(it.first), it.second.doubletype.def).toDouble();
+                        it.second.doubletype.val = settings.value(getSettingsKey(it.first), it.second.doubletype.def).toDouble();
                         break;
 
                     case QUASAR_SETTING_ENTRY_BOOL:
-                        it.second.booltype.val = settings.value(getSettingsCode(it.first), it.second.booltype.def).toBool();
+                        it.second.booltype.val = settings.value(getSettingsKey(it.first), it.second.booltype.def).toBool();
                         break;
                 }
             }
@@ -303,7 +303,7 @@ void DataExtension::setDataSourceEnabled(QString source, bool enabled)
 
     // Save to file
     QSettings settings;
-    settings.setValue(getSettingsCode(QUASAR_DP_ENABLED_PREFIX + source), data.enabled);
+    settings.setValue(getSettingsKey(source + QUASAR_DP_ENABLED), data.enabled);
 
     if (data.enabled && data.refreshmsec > 0)
     {
@@ -331,7 +331,7 @@ void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
 
     // Save to file
     QSettings settings;
-    settings.setValue(getSettingsCode(QUASAR_DP_REFRESH_PREFIX + source), (qlonglong) data.refreshmsec);
+    settings.setValue(getSettingsKey(QUASAR_DP_REFRESH_PREFIX + source), (qlonglong) data.refreshmsec);
 
     // Refresh timer if exists
     if (nullptr != data.timer)
@@ -348,7 +348,7 @@ void DataExtension::setCustomSetting(QString name, int val)
 
         // Save to file
         QSettings settings;
-        settings.setValue(getSettingsCode(name), val);
+        settings.setValue(getSettingsKey(name), val);
     }
 }
 
@@ -360,7 +360,7 @@ void DataExtension::setCustomSetting(QString name, double val)
 
         // Save to file
         QSettings settings;
-        settings.setValue(getSettingsCode(name), val);
+        settings.setValue(getSettingsKey(name), val);
     }
 }
 
@@ -372,7 +372,7 @@ void DataExtension::setCustomSetting(QString name, bool val)
 
         // Save to file
         QSettings settings;
-        settings.setValue(getSettingsCode(name), val);
+        settings.setValue(getSettingsKey(name), val);
     }
 }
 
@@ -448,12 +448,12 @@ void DataExtension::createTimer(DataSource& data)
 QString DataExtension::craftDataMessage(const DataSource& data)
 {
     QJsonObject src;
-    auto        dat = src[data.key];
+    auto        dat = src[data.name];
 
     // Poll extension for data source
     if (!m_extension->get_data(data.uid, &dat))
     {
-        qWarning() << "getData(" << getCode() << ", " << data.key << ") failed";
+        qWarning() << "getData(" << getCode() << ", " << data.name << ") failed";
         return QString();
     }
 

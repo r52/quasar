@@ -7,12 +7,12 @@
 #pragma once
 
 #if defined(__cplusplus)
-#include <cstddef>
-#include <cstdint>
+#    include <cstddef>
+#    include <cstdint>
 #else
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#    include <stdbool.h>
+#    include <stddef.h>
+#    include <stdint.h>
 #endif
 
 //! Quasar extension API version.

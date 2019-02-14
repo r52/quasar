@@ -19,6 +19,7 @@
 #define QUASAR_CONFIG_COOKIES "general/cookies"
 #define QUASAR_CONFIG_ALLOWGEO "general/allowGeo"
 #define QUASAR_CONFIG_LASTPATH "general/lastpath"
+#define QUASAR_CONFIG_LAUNCHERMAP "launcher/map"
 
 #define QUASAR_CONFIG_DEFAULT_LOGLEVEL QUASAR_LOG_DEBUG
 

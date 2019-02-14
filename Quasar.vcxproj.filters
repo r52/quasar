@@ -61,9 +61,6 @@
     <ClCompile Include="src\runguard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\applauncher.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\dataservices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -94,9 +91,6 @@
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="src\logwindow.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="src\applauncher.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtMoc Include="src\dataservices.h">

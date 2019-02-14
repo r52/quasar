@@ -9,13 +9,13 @@
 #include "extension_types.h"
 
 #ifdef PLUGINAPI_LIB
-#ifdef _WIN32
-#define SAPI_EXPORT __declspec(dllexport)
+#    ifdef _WIN32
+#        define SAPI_EXPORT __declspec(dllexport)
+#    else
+#        define SAPI_EXPORT __attribute__((visibility("default")))
+#    endif // _WIN32
 #else
-#define SAPI_EXPORT __attribute__((visibility("default")))
-#endif // _WIN32
-#else
-#define SAPI_EXPORT
+#    define SAPI_EXPORT
 #endif // PLUGINAPI_LIB
 
 #if defined(__cplusplus)
@@ -126,7 +126,8 @@ SAPI_EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, cons
     \param[in]  dflt        Default value
     \return The settings handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt);
+SAPI_EXPORT quasar_settings_t*
+            quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt);
 
 //! Retrieves an integer setting from Quasar
 /*!

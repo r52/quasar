@@ -1,10 +1,23 @@
 var websocket = null;
 var initialized = false;
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function getTableSelections(table) {
     return $.map(table.bootstrapTable('getSelections'), function(row) {
         return row.command
     })
+}
+
+function initialize_general(data) {
+    var dat = data["data"]["settings"]["general"];
+    $("input#general\\/dataport").val(dat.dataport);
+    $("input[name='general\\/loglevel']").val([dat.loglevel]);
+    $("input#general\\/cookies").val(dat.cookies);
+    $("input#general\\/savelog").checked = dat.savelog;
+    $("input#general\\/startup").checked = dat.startup;
 }
 
 function createExtensionTab(ext) {
@@ -38,11 +51,17 @@ function createExtensionTab(ext) {
         extsettings += "<h2>Extension Settings</h2>";
 
         ext.settings.forEach(function(s) {
+            var minmax = ""
+
+            if (s.type === "int" || s.type === "double") {
+                minmax = `min="${s.min}" max="${s.max}" step="${s.step}"`;
+            }
+
             var sinput = `
             <div class="form-group">
                 <label for="${ext.name}/${s.name}">${s.desc}</label>
                 <div class="input-group mb-3">
-                    <input type="${(s.type === "int" || s.type === "double") ? 'number' : 'checkbox'}" class="form-control" id="${ext.name}/${s.name}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.val}">
+                    <input type="${(s.type === "int" || s.type === "double") ? 'number' : 'checkbox'}" class="form-control" id="${ext.name}/${s.name}" ${minmax} value="${s.val}">
                 </div>
             </div>
             `
@@ -208,16 +227,12 @@ function createLauncherPage(data) {
     });
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 function query_settings(socket) {
     var msg = {
         method: "query",
         params: {
             target: "settings",
-            data: "all"
+            params: "all"
         }
     };
 
@@ -226,16 +241,20 @@ function query_settings(socket) {
 
 async function do_on_connect(socket) {
     quasar_authenticate(socket);
-    await sleep(100);
+    await sleep(10);
     query_settings(socket);
 }
 
 function initialize_page(dat) {
     if (!initialized) {
+        initialize_general(dat);
+
         createExtensionPages(dat);
         createLauncherPage(dat);
 
-        // TODO: Save button
+        console.log("TODO: Save button");
+
+        $("#cover").hide();
 
         initialized = true;
     }

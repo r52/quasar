@@ -1,13 +1,18 @@
 #include "dataserver.h"
 
 #include "dataextension.h"
+#include "extension_support_internal.h"
 #include "widgetdefs.h"
 
+#include <QDesktopServices>
 #include <QDir>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QProcess>
 #include <QRandomGenerator>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QtNetwork/QSslCertificate>
 #include <QtNetwork/QSslKey>
 #include <QtWebSockets/QWebSocket>
@@ -20,16 +25,22 @@
     sendErrorToClient(c, e); \
     qWarning() << e;
 
-std::unordered_set<QString> g_reservedcodes = {
-    "global", "settings"
-};
+using namespace std::placeholders;
 
-DataServer::DataServer(QObject* parent)
-    : QObject(parent), m_pWebSocketServer(nullptr)
+DataServer::DataServer(QObject* parent) :
+    QObject(parent),
+    m_pWebSocketServer(nullptr),
+    m_Methods{{"subscribe", std::bind(&DataServer::handleMethodSubscribe, this, _1, _2)},
+              {"query", std::bind(&DataServer::handleMethodQuery, this, _1, _2)},
+              {"auth", std::bind(&DataServer::handleMethodAuth, this, _1, _2)},
+              {"mutate", std::bind(&DataServer::handleMethodMutate, this, _1, _2)}},
+    m_InternalTargets{{"settings", std::bind(&DataServer::handleTargetSettings, this, _1, _2, _3)},
+                      {"launcher", std::bind(&DataServer::handleTargetLauncher, this, _1, _2, _3)}}
 {
-    m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"),
-                                              QWebSocketServer::SecureMode,
-                                              this);
+    qRegisterMetaType<AppLauncherData>("AppLauncherData");
+    qRegisterMetaTypeStreamOperators<AppLauncherData>("AppLauncherData");
+
+    m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"), QWebSocketServer::SecureMode, this);
 
     QSslConfiguration sslConfiguration;
     QFile             certFile(QStringLiteral(":/Resources/localhost.crt"));
@@ -61,42 +72,39 @@ DataServer::DataServer(QObject* parent)
         loadExtensions();
     }
 
-    using namespace std::placeholders;
-    m_methodmap["subscribe"] = std::bind(&DataServer::handleMethodSubscribe, this, _1, _2);
-    m_methodmap["query"]     = std::bind(&DataServer::handleMethodQuery, this, _1, _2);
-    m_methodmap["auth"]      = std::bind(&DataServer::handleMethodAuth, this, _1, _2);
+    m_LauncherMap = settings.value(QUASAR_CONFIG_LAUNCHERMAP).toMap();
 }
 
 DataServer::~DataServer()
 {
-    m_methodmap.clear();
+    m_Methods.clear();
 
-    m_extensions.clear();
+    m_Extensions.clear();
 
-    m_authedclients.clear();
+    m_AuthedClientsMap.clear();
 
-    m_authcodes.clear();
+    m_AuthCodeMap.clear();
 
     m_pWebSocketServer->close();
 }
 
-bool DataServer::addMethodHandler(QString type, HandlerFuncType handler)
+bool DataServer::addMethodHandler(QString type, MethodFuncType handler)
 {
-    if (m_methodmap.count(type))
+    if (m_Methods.count(type))
     {
         qWarning() << "Handler for request type " << type << " already exists";
         return false;
     }
 
-    m_methodmap[type] = handler;
+    m_Methods[type] = handler;
 
     return true;
 }
 
 bool DataServer::findExtension(QString extcode)
 {
-    std::shared_lock<std::shared_mutex> lk(m_extmutex);
-    return (m_extensions.count(extcode) > 0);
+    std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
+    return (m_Extensions.count(extcode) > 0);
 }
 
 QString DataServer::generateAuthCode(QString ident, ClientAccessLevel lvl)
@@ -104,8 +112,8 @@ QString DataServer::generateAuthCode(QString ident, ClientAccessLevel lvl)
     quint64 v  = QRandomGenerator::global()->generate64();
     QString hv = QString::number(v, 16).toUpper();
 
-    std::unique_lock<std::mutex> lk(m_codemutex);
-    m_authcodes.insert({ hv, { ident, lvl, system_clock::now() + 10s } });
+    std::unique_lock<std::mutex> lk(m_AuthCodeMtx);
+    m_AuthCodeMap.insert({hv, {ident, lvl, system_clock::now() + 10s}});
 
     return hv;
 }
@@ -126,7 +134,7 @@ void DataServer::loadExtensions()
 
     // just lock the whole thing while initializing extensions at startup
     // to prevent out of order reads
-    std::unique_lock<std::shared_mutex> lk(m_extmutex);
+    std::unique_lock<std::shared_mutex> lk(m_ExtensionsMtx);
 
     for (QFileInfo& file : list)
     {
@@ -140,18 +148,18 @@ void DataServer::loadExtensions()
         {
             qWarning() << "Failed to load extension" << libpath;
         }
-        else if (g_reservedcodes.count(extn->getCode()))
+        else if (m_InternalTargets.count(extn->getCode()))
         {
             qWarning() << "The extension code" << extn->getCode() << " is reserved. Unloading " << libpath;
         }
-        else if (m_extensions.count(extn->getCode()))
+        else if (m_Extensions.count(extn->getCode()))
         {
             qWarning() << "Extension with code " << extn->getCode() << " already loaded. Unloading" << libpath;
         }
         else
         {
             qInfo() << "Extension " << extn->getCode() << " loaded.";
-            m_extensions[extn->getCode()].reset(extn);
+            m_Extensions[extn->getCode()].reset(extn);
             extn = nullptr;
         }
 
@@ -172,13 +180,13 @@ void DataServer::handleRequest(const QJsonObject& req, QWebSocket* sender)
 
     QString mtd = req["method"].toString();
 
-    if (!m_methodmap.count(mtd))
+    if (!m_Methods.count(mtd))
     {
         DS_SEND_WARN(sender, "Unknown method type " + mtd);
         return;
     }
 
-    m_methodmap[mtd](req, sender);
+    m_Methods[mtd](req, sender);
 }
 
 void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sender)
@@ -186,10 +194,10 @@ void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sende
     QString widgetName;
 
     {
-        std::shared_lock<std::shared_mutex> lk(m_authmutex);
+        std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
 
-        auto it = m_authedclients.find(sender);
-        if (it == m_authedclients.end())
+        auto it = m_AuthedClientsMap.find(sender);
+        if (it == m_AuthedClientsMap.end())
         {
             DS_SEND_WARN(sender, "Unauthenticated client");
             return;
@@ -207,21 +215,21 @@ void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sende
     }
 
     QString extcode = parms["target"].toString();
-    QString extdata = parms["data"].toString();
+    QString extparm = parms["params"].toString();
 
-    std::shared_lock<std::shared_mutex> lk(m_extmutex);
+    std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
 
-    if (!m_extensions.count(extcode))
+    if (!m_Extensions.count(extcode))
     {
         DS_SEND_WARN(sender, "Unknown extension code " + extcode);
         return;
     }
 
-    QStringList dlist = extdata.split(',', QString::SkipEmptyParts);
+    QStringList dlist = extparm.split(',', QString::SkipEmptyParts);
 
     for (QString& src : dlist)
     {
-        if (m_extensions[extcode]->addSubscriber(src, sender, widgetName))
+        if (m_Extensions[extcode]->addSubscriber(src, sender, widgetName))
         {
             qInfo() << "Widget " << widgetName << " subscribed to extension " << extcode << " data " << src;
         }
@@ -237,10 +245,10 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
     client_data_t clidat;
 
     {
-        std::shared_lock<std::shared_mutex> lk(m_authmutex);
+        std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
 
-        auto it = m_authedclients.find(sender);
-        if (it == m_authedclients.end())
+        auto it = m_AuthedClientsMap.find(sender);
+        if (it == m_AuthedClientsMap.end())
         {
             DS_SEND_WARN(sender, "Unauthenticated client");
             return;
@@ -258,42 +266,34 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
     }
 
     QString extcode = parms["target"].toString();
-    QString extdata = parms["data"].toString();
+    QString extparm = parms["params"].toString();
 
-    if (extcode == "settings")
+    if (m_InternalTargets.count(extcode))
     {
-        // TODO: do settings shit
-        if (clidat.access < CAL_SETTINGS)
-        {
-            DS_SEND_WARN(sender, "Insufficient access for query target 'settings'");
-            return;
-        }
-
-        qDebug() << "Not implemented yet";
-
+        m_InternalTargets[extcode](extparm, clidat, sender);
         return;
     }
 
-    std::shared_lock<std::shared_mutex> lk(m_extmutex);
+    std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
 
-    if (!m_extensions.count(extcode))
+    if (!m_Extensions.count(extcode))
     {
         DS_SEND_WARN(sender, "Unknown extension code " + extcode);
         return;
     }
 
     // Add client to poll queue
-    if (m_extensions[extcode]->addSubscriber(extdata, sender, clidat.ident))
+    if (m_Extensions[extcode]->addSubscriber(extparm, sender, clidat.ident))
     {
-        m_extensions[extcode]->pollAndSendData(extdata, sender, clidat.ident);
+        m_Extensions[extcode]->pollAndSendData(extparm, sender, clidat.ident);
     }
 }
 
 void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
 {
     {
-        std::shared_lock<std::shared_mutex> lk(m_authmutex);
-        if (m_authedclients.count(sender))
+        std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
+        if (m_AuthedClientsMap.count(sender))
         {
             DS_SEND_WARN(sender, "Client already authenticated.");
             return;
@@ -310,29 +310,234 @@ void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
 
     QString authcode = parms["code"].toString();
 
-    std::unique_lock<std::mutex> lk(m_codemutex);
+    std::unique_lock<std::mutex> lk(m_AuthCodeMtx);
 
-    auto it = m_authcodes.find(authcode);
-    if (it == m_authcodes.end())
+    auto it = m_AuthCodeMap.find(authcode);
+    if (it == m_AuthCodeMap.end())
     {
         DS_SEND_WARN(sender, "Invalid authentication code");
         return;
     }
 
-    std::unique_lock<std::shared_mutex> lkm(m_authmutex);
-    m_authedclients.insert({ sender, it->second });
+    std::unique_lock<std::shared_mutex> lkm(m_AuthedClientsMtx);
+    m_AuthedClientsMap.insert({sender, it->second});
 
     qInfo() << "Widget ident " << it->second.ident << " authenticated.";
 
-    m_authcodes.erase(it);
+    m_AuthCodeMap.erase(it);
+}
+
+void DataServer::handleMethodMutate(const QJsonObject& req, QWebSocket* sender)
+{
+    // TODO THIS SH IT
+}
+
+void DataServer::handleTargetSettings(QString params, client_data_t client, QWebSocket* sender)
+{
+    if (client.access < CAL_SETTINGS)
+    {
+        DS_SEND_WARN(sender, "Insufficient access for query target 'settings'");
+        return;
+    }
+
+    // compile all settings into json
+    QSettings settings;
+
+    QJsonObject sjson;
+
+    // general
+    QJsonObject general;
+
+    general["dataport"] = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
+    general["loglevel"] = settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
+    general["cookies"]  = settings.value(QUASAR_CONFIG_COOKIES).toString();
+    general["savelog"]  = settings.value(QUASAR_CONFIG_LOGFILE, false).toBool();
+
+#ifdef Q_OS_WIN
+    // ------------------Startup launch
+    QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
+    QFileInfo lnk(startupFolder + "/Quasar.lnk");
+
+    general["startup"] = lnk.exists();
+#else
+    general["startup"] = false;
+#endif
+
+    sjson["general"] = general;
+
+    // extensions
+    QJsonArray extensions;
+
+    {
+        std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
+
+        for (auto& iext : m_Extensions)
+        {
+            QJsonObject jext;
+
+            auto& ext = iext.second;
+
+            // ext info
+            jext["name"]        = iext.first;
+            jext["fullname"]    = ext->getName();
+            jext["version"]     = ext->getVersion();
+            jext["author"]      = ext->getAuthor();
+            jext["description"] = ext->getDesc();
+            jext["website"]; // TODO ext web
+
+            // ext rates
+            QJsonArray rates;
+
+            for (auto& isrc : ext->getDataSources())
+            {
+                QJsonObject rate;
+
+                auto& src       = isrc.second;
+                rate["name"]    = src.name;
+                rate["enabled"] = settings.value(ext->getSettingsKey(src.name + QUASAR_DP_ENABLED), true).toBool();
+                rate["rate"]    = src.refreshmsec;
+
+                rates.append(rate);
+            }
+
+            jext["rates"] = rates;
+
+            // ext settings
+            if (auto eset = ext->getSettings())
+            {
+                static const QString entryTypeStrArr[] = {"int", "double", "bool"};
+
+                QJsonArray extsettings;
+
+                for (auto& it : eset->map)
+                {
+                    QJsonObject s;
+
+                    auto& entry = it.second;
+                    s["name"]   = it.first;
+                    s["desc"]   = entry.description;
+                    s["type"]   = entryTypeStrArr[entry.type];
+
+                    switch (entry.type)
+                    {
+                        case QUASAR_SETTING_ENTRY_INT:
+                        {
+                            s["min"]  = entry.inttype.min;
+                            s["max"]  = entry.inttype.max;
+                            s["step"] = entry.inttype.step;
+                            s["def"]  = entry.inttype.def;
+                            s["val"]  = entry.inttype.val;
+                            break;
+                        }
+
+                        case QUASAR_SETTING_ENTRY_DOUBLE:
+                        {
+                            s["min"]  = entry.doubletype.min;
+                            s["max"]  = entry.doubletype.max;
+                            s["step"] = entry.doubletype.step;
+                            s["def"]  = entry.doubletype.def;
+                            s["val"]  = entry.doubletype.val;
+                            break;
+                        }
+
+                        case QUASAR_SETTING_ENTRY_BOOL:
+                        {
+                            s["def"] = entry.booltype.def;
+                            s["val"] = entry.booltype.val;
+                            break;
+                        }
+                    }
+
+                    extsettings.append(s);
+                }
+
+                jext["settings"] = extsettings;
+            }
+            else
+            {
+                jext["settings"] = QJsonValue(QJsonValue::Null);
+            }
+        }
+    }
+
+    sjson["extensions"] = extensions;
+
+    // launcher
+    QJsonObject launcher;
+
+    qDebug() << "TODO implement launcher";
+
+    sjson["launcher"] = launcher;
+
+    auto sdata = QJsonObject{{"data", QJsonObject{{"settings", sjson}}}};
+
+    // send
+    QJsonDocument doc(sdata);
+    sender->sendTextMessage(QString::fromUtf8(doc.toJson()));
+}
+
+void DataServer::handleTargetLauncher(QString params, client_data_t client, QWebSocket* sender)
+{
+    // IIf get, send data
+    if (params == "get")
+    {
+        // TODO THIS STUFF
+        return;
+    }
+
+    // Otherwise launch code
+    std::unique_lock<std::shared_mutex> lock(m_LauncherMtx);
+
+    if (!m_LauncherMap.contains(params))
+    {
+        qWarning() << "Launcher command " << params << " not defined";
+        return;
+    }
+
+    AppLauncherData d;
+
+    QVariant& v = m_LauncherMap[params];
+
+    if (v.canConvert<AppLauncherData>())
+    {
+        d = v.value<AppLauncherData>();
+
+        QString cmd = d.file;
+
+        if (cmd.contains("://"))
+        {
+            // treat as url
+            qInfo() << "Launching URL " << cmd;
+            QDesktopServices::openUrl(QUrl(cmd));
+        }
+        else
+        {
+            qInfo() << "Launching " << cmd << d.arguments;
+
+            // treat as file/command
+            QFileInfo info(cmd);
+
+            if (info.exists())
+            {
+                cmd = info.canonicalFilePath();
+            }
+
+            bool result = QProcess::startDetached(cmd, QStringList() << d.arguments, d.startpath);
+
+            if (!result)
+            {
+                qWarning() << "Failed to launch " << cmd;
+            }
+        }
+    }
 }
 
 void DataServer::checkAuth(QWebSocket* client)
 {
     {
         // Check auth
-        std::shared_lock<std::shared_mutex> lk(m_authmutex);
-        if (!m_authedclients.count(client))
+        std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
+        if (!m_AuthedClientsMap.count(client))
         {
             // unauthenticated client, cut the connection
             DS_SEND_WARN(client, "Unauthenticated client, disconnecting");
@@ -342,12 +547,12 @@ void DataServer::checkAuth(QWebSocket* client)
 
     {
         // Clean expired auth codes
-        std::unique_lock<std::mutex> lk(m_codemutex);
-        for (auto it = m_authcodes.begin(); it != m_authcodes.end();)
+        std::unique_lock<std::mutex> lk(m_AuthCodeMtx);
+        for (auto it = m_AuthCodeMap.begin(); it != m_AuthCodeMap.end();)
         {
             if (it->second.expiry > system_clock::now())
             {
-                it = m_authcodes.erase(it);
+                it = m_AuthCodeMap.erase(it);
             }
             else
             {
@@ -375,9 +580,16 @@ void DataServer::onNewConnection()
     pSocket->setParent(this);
     connect(pSocket, &QWebSocket::textMessageReceived, this, &DataServer::processMessage);
     connect(pSocket, &QWebSocket::disconnected, this, &DataServer::socketDisconnected);
-    QTimer::singleShot(10000, this, [this, pSocket] {
+
+    QTimer* authtimer = new QTimer(pSocket);
+    authtimer->setSingleShot(true);
+
+    connect(authtimer, &QTimer::timeout, this, [this, pSocket, authtimer] {
         checkAuth(pSocket);
+        authtimer->deleteLater();
     });
+
+    authtimer->start(10000);
 }
 
 void DataServer::processMessage(QString message)
@@ -405,16 +617,16 @@ void DataServer::socketDisconnected()
     if (pClient)
     {
         {
-            std::shared_lock<std::shared_mutex> lk(m_extmutex);
-            for (auto& p : m_extensions)
+            std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
+            for (auto& p : m_Extensions)
             {
                 p.second->removeSubscriber(pClient);
             }
         }
 
         {
-            std::unique_lock<std::shared_mutex> lkm(m_authmutex);
-            m_authedclients.erase(pClient);
+            std::unique_lock<std::shared_mutex> lkm(m_AuthedClientsMtx);
+            m_AuthedClientsMap.erase(pClient);
         }
 
         pClient->deleteLater();

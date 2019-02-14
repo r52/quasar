@@ -18,7 +18,7 @@
 #include <QTimer>
 
 //! Internal setting prefix for Data Source enabled UI toggle
-#define QUASAR_DP_ENABLED_PREFIX "enabled_"
+#define QUASAR_DP_ENABLED "/enabled"
 
 //! Internal setting prefix for Data Source refresh rate UI
 #define QUASAR_DP_REFRESH_PREFIX "refresh_"
@@ -27,9 +27,9 @@
 #define QUASAR_DP_CUSTOM_PREFIX "custom_"
 
 #ifdef PLUGINAPI_LIB
-#define PAPI_EXPORT Q_DECL_EXPORT
+#    define PAPI_EXPORT Q_DECL_EXPORT
 #else
-#define PAPI_EXPORT Q_DECL_IMPORT
+#    define PAPI_EXPORT Q_DECL_IMPORT
 #endif // PLUGINAPI_LIB
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
@@ -48,7 +48,7 @@ struct DataLock
 struct DataSource
 {
     bool                      enabled;     //!< Whether this data source is enabled
-    QString                   key;         //!< Data Source codename
+    QString                   name;        //!< Data Source codename
     size_t                    uid;         //!< Data Source uid
     int64_t                   refreshmsec; //!< Data Source refresh rate \sa quasar_data_source_t.refreshMsec
     std::unique_ptr<QTimer>   timer;       //!< QTimer for timer based Data Sources
@@ -147,7 +147,7 @@ public:
     /*! Gets extension settings prefix for use with internal Quasar settings store
         \return extension settings prefix
     */
-    QString getSettingsCode(QString key) { return "ext_" + getCode() + "/" + key; };
+    QString getSettingsKey(QString name) { return getCode() + "/" + name; };
 
     /*! Gets extension custom settings
         \sa quasar_settings_t

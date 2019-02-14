@@ -14,8 +14,7 @@
 std::atomic_bool SettingsDialog::isOpen = false;
 QString          SettingsDialog::PageGlobalScript;
 
-SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent)
-    : QWidget(parent)
+SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(parent)
 {
     SettingsDialog::isOpen = true;
 
@@ -33,11 +32,9 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent)
     QWebEngineView* view = new QWebEngineView(this);
     view->setPage(page);
     view->setContextMenuPolicy(Qt::NoContextMenu);
-    view->resize(1000, 600);
+    view->resize(1100, 600);
 
-    connect(page, &QWebEnginePage::windowCloseRequested, [=] {
-        this->close();
-    });
+    connect(page, &QWebEnginePage::windowCloseRequested, [=] { this->close(); });
 
     QString authcode = server->generateAuthCode(WebUiHandler::settingsUrl.toString(), CAL_SETTINGS);
 
@@ -67,7 +64,7 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent)
     view->page()->scripts().insert(script);
 
     setWindowTitle("Settings");
-    resize(1000, 600);
+    resize(1100, 600);
 }
 
 SettingsDialog::~SettingsDialog()

@@ -14,6 +14,16 @@
     <script src="qrc:/js/bootstrap-table.min.js"></script>
 
     <style>
+        #cover {
+            position: fixed;
+            height: 100%;
+            width: 100%;
+            top:0;
+            left: 0;
+            background: #000;
+            z-index:9999;
+         }
+
         img.icon {
             max-width: 96px;
             max-height: 96px;
@@ -31,6 +41,7 @@
 </head>
 
 <body class="d-flex flex-column h-100">
+    <div id="cover"></div>
     <!-- Tab menu -->
     <ul class="nav nav-pills" id="main_menu" role="tablist">
         <li class="nav-item">
