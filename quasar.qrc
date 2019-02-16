@@ -16,5 +16,6 @@
     <qresource prefix="/css">
         <file alias="bootstrap.min.css">Resources/settings/css/bootstrap.min.css</file>
         <file alias="bootstrap-table.min.css">Resources/settings/css/bootstrap-table.min.css</file>
+        <file alias="style.css">Resources/settings/css/style.css</file>
     </qresource>
 </RCC>

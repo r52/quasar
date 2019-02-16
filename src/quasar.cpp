@@ -17,8 +17,7 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent)
-    : QMainWindow(parent), logWindow(log), service(s)
+Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(parent), logWindow(log), service(s)
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
@@ -143,26 +142,23 @@ void Quasar::createActions()
     aboutAction = new QAction(tr("&About Quasar"), this);
 
     connect(aboutAction, &QAction::triggered, [=](bool checked) {
-        static QString aboutMsg =
-            "Quasar " GIT_VER_STRING "<br/>"
+        static QString aboutMsg = "Quasar " GIT_VER_STRING "<br/>"
 #ifndef NDEBUG
-            "DEBUG BUILD<br/>"
+                                  "DEBUG BUILD<br/>"
 #endif
-            "<br/>"
-            "Compiled on: " __DATE__ "<br/>"
-            "Compiler: " COMPILER_STRING "<br/>"
-            "Qt version: " QT_VERSION_STR "<br/>"
-            "<br/>"
-            "Licensed under GPLv3<br/>"
-            "Source code available at <a href='https://github.com/r52/quasar'>GitHub</a>";
+                                  "<br/>"
+                                  "Compiled on: " __DATE__ "<br/>"
+                                  "Compiler: " COMPILER_STRING "<br/>"
+                                  "Qt version: " QT_VERSION_STR "<br/>"
+                                  "<br/>"
+                                  "Licensed under GPLv3<br/>"
+                                  "Source code available at <a href='https://github.com/r52/quasar'>GitHub</a>";
 
         QMessageBox::about(this, tr("About Quasar"), aboutMsg);
     });
 
     aboutQtAction = new QAction(tr("About &Qt"), this);
-    connect(aboutQtAction, &QAction::triggered, [=](bool checked) {
-        QMessageBox::aboutQt(this, "About Qt");
-    });
+    connect(aboutQtAction, &QAction::triggered, [=](bool checked) { QMessageBox::aboutQt(this, "About Qt"); });
 
     quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);

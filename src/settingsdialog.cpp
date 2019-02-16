@@ -32,7 +32,7 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(pa
     QWebEngineView* view = new QWebEngineView(this);
     view->setPage(page);
     view->setContextMenuPolicy(Qt::NoContextMenu);
-    view->resize(1100, 600);
+    view->resize(1100, 700);
 
     connect(page, &QWebEnginePage::windowCloseRequested, [=] { this->close(); });
 
@@ -64,7 +64,7 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(pa
     view->page()->scripts().insert(script);
 
     setWindowTitle("Settings");
-    resize(1100, 600);
+    resize(1100, 700);
 }
 
 SettingsDialog::~SettingsDialog()

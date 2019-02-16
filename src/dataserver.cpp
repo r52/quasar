@@ -17,6 +17,7 @@
 #include <QtNetwork/QSslKey>
 #include <QtWebSockets/QWebSocket>
 #include <QtWebSockets/QWebSocketServer>
+#include <QtWidgets/QApplication>
 
 #include <unordered_set>
 
@@ -35,7 +36,8 @@ DataServer::DataServer(QObject* parent) :
               {"auth", std::bind(&DataServer::handleMethodAuth, this, _1, _2)},
               {"mutate", std::bind(&DataServer::handleMethodMutate, this, _1, _2)}},
     m_InternalTargets{{"settings", std::bind(&DataServer::handleTargetSettings, this, _1, _2, _3)},
-                      {"launcher", std::bind(&DataServer::handleTargetLauncher, this, _1, _2, _3)}}
+                      {"launcher", std::bind(&DataServer::handleTargetLauncher, this, _1, _2, _3)}},
+    m_MutateTargets{{"settings", std::bind(&DataServer::handleMutateSettings, this, _1, _2)}}
 {
     qRegisterMetaType<AppLauncherData>("AppLauncherData");
     qRegisterMetaTypeStreamOperators<AppLauncherData>("AppLauncherData");
@@ -329,7 +331,44 @@ void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
 
 void DataServer::handleMethodMutate(const QJsonObject& req, QWebSocket* sender)
 {
-    // TODO THIS SH IT
+    client_data_t clidat;
+
+    {
+        std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
+
+        auto it = m_AuthedClientsMap.find(sender);
+        if (it == m_AuthedClientsMap.end())
+        {
+            DS_SEND_WARN(sender, "Unauthenticated client");
+            return;
+        }
+
+        clidat = it->second;
+    }
+
+    if (clidat.access < CAL_SETTINGS)
+    {
+        DS_SEND_WARN(sender, "Insufficient access for mutate method");
+        return;
+    }
+
+    auto parms = req["params"].toObject();
+
+    if (parms.count() != 2)
+    {
+        DS_SEND_WARN(sender, "Invalid parameters for method 'mutate'");
+        return;
+    }
+
+    QString targ = parms["target"].toString();
+
+    if (!m_MutateTargets.count(targ))
+    {
+        DS_SEND_WARN(sender, "Unknown mutate target " + targ);
+        return;
+    }
+
+    m_MutateTargets[targ](parms["params"], sender);
 }
 
 void DataServer::handleTargetSettings(QString params, client_data_t client, QWebSocket* sender)
@@ -463,9 +502,29 @@ void DataServer::handleTargetSettings(QString params, client_data_t client, QWeb
     sjson["extensions"] = extensions;
 
     // launcher
-    QJsonObject launcher;
+    QJsonArray launcher;
 
-    qDebug() << "TODO implement launcher";
+    {
+        std::shared_lock<std::shared_mutex> lock(m_LauncherMtx);
+
+        // need to convert to table format...
+        for (auto& e : m_LauncherMap)
+        {
+            if (e.canConvert<AppLauncherData>())
+            {
+                auto [command, file, start, args, icon] = e.value<AppLauncherData>();
+
+                QJsonObject entry;
+                entry["command"] = command;
+                entry["file"]    = file;
+                entry["args"]    = args;
+                entry["start"]   = start;
+                entry["icon"]    = icon;
+
+                launcher.append(entry);
+            }
+        }
+    }
 
     sjson["launcher"] = launcher;
 
@@ -481,12 +540,40 @@ void DataServer::handleTargetLauncher(QString params, client_data_t client, QWeb
     // IIf get, send data
     if (params == "get")
     {
-        // TODO THIS STUFF
+        QJsonArray launcher;
+
+        {
+            std::shared_lock<std::shared_mutex> lock(m_LauncherMtx);
+
+            // need to convert to table format...
+            for (auto& e : m_LauncherMap)
+            {
+                if (e.canConvert<AppLauncherData>())
+                {
+                    auto [command, file, start, args, icon] = e.value<AppLauncherData>();
+
+                    QJsonObject entry;
+                    entry["command"] = command;
+                    entry["file"]    = file;
+                    entry["args"]    = args;
+                    entry["start"]   = start;
+                    entry["icon"]    = icon;
+
+                    launcher.append(entry);
+                }
+            }
+        }
+
+        auto sdata = QJsonObject{{"data", QJsonObject{{"launcher", launcher}}}};
+
+        // send
+        QJsonDocument doc(sdata);
+        sender->sendTextMessage(QString::fromUtf8(doc.toJson()));
         return;
     }
 
     // Otherwise launch code
-    std::unique_lock<std::shared_mutex> lock(m_LauncherMtx);
+    std::shared_lock<std::shared_mutex> lock(m_LauncherMtx);
 
     if (!m_LauncherMap.contains(params))
     {
@@ -527,6 +614,78 @@ void DataServer::handleTargetLauncher(QString params, client_data_t client, QWeb
             if (!result)
             {
                 qWarning() << "Failed to launch " << cmd;
+            }
+        }
+    }
+}
+
+void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
+{
+    QJsonObject data = val.toObject();
+
+    if (data.isEmpty())
+    {
+        qWarning() << "No mutation data";
+        return;
+    }
+
+    QSettings settings;
+
+    for (auto& key : data.keys())
+    {
+        if (key == "launcher")
+        {
+            QVariantMap newmap;
+
+            // deal with launcher table
+            auto ltab = data["launcher"].toArray();
+            for (auto& e : ltab)
+            {
+                QJsonObject eobj = e.toObject();
+                if (!eobj.isEmpty())
+                {
+                    AppLauncherData ldat;
+                    ldat.command   = eobj["command"].toString();
+                    ldat.file      = eobj["file"].toString();
+                    ldat.arguments = eobj["args"].toString();
+                    ldat.startpath = eobj["start"].toString();
+                    ldat.icon      = eobj["icon"].toString();
+
+                    newmap[ldat.command] = QVariant::fromValue(ldat);
+                }
+            }
+
+            std::unique_lock<std::shared_mutex> lock(m_LauncherMtx);
+            m_LauncherMap = newmap;
+
+            settings.setValue(QUASAR_CONFIG_LAUNCHERMAP, m_LauncherMap);
+        }
+        else
+        {
+            if (key == "general/startup")
+            {
+                // windows only
+#ifdef Q_OS_WIN
+
+                QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
+                QString   filename      = startupFolder + "/Quasar.lnk";
+                QFileInfo lnk(filename);
+
+                bool checked = data[key].toBool();
+
+                if (checked && !lnk.exists())
+                {
+                    QFile::link(QCoreApplication::applicationFilePath(), filename);
+                }
+                else if (!checked && lnk.exists())
+                {
+                    QFile::remove(filename);
+                }
+#endif
+            }
+            else
+            {
+                settings.setValue(key, data[key].toVariant());
             }
         }
     }

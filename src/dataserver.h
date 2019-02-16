@@ -21,23 +21,29 @@ using namespace std::chrono;
 
 struct AppLauncherData
 {
+    QString command;
     QString file;
     QString startpath;
     QString arguments;
+    QString icon;
 
     friend QDataStream& operator<<(QDataStream& s, const AppLauncherData& o)
     {
+        s << o.command;
         s << o.file;
         s << o.startpath;
         s << o.arguments;
+        s << o.icon;
         return s;
     }
 
     friend QDataStream& operator>>(QDataStream& s, AppLauncherData& o)
     {
+        s >> o.command;
         s >> o.file;
         s >> o.startpath;
         s >> o.arguments;
+        s >> o.icon;
         return s;
     }
 };
@@ -71,6 +77,8 @@ class DataServer : public QObject
     using AuthCodesMapType       = std::unordered_map<QString, client_data_t>;
     using InternalTargetFuncType = std::function<void(QString, client_data_t, QWebSocket*)>;
     using InternalTargetMapType  = std::unordered_map<QString, InternalTargetFuncType>;
+    using MutateTargetFuncType   = std::function<void(QJsonValue, QWebSocket*)>;
+    using MutateTargetMapType    = std::unordered_map<QString, MutateTargetFuncType>;
 
 public:
     ~DataServer();
@@ -93,6 +101,9 @@ private:
     // Internal data targets
     void handleTargetSettings(QString params, client_data_t client, QWebSocket* sender);
     void handleTargetLauncher(QString params, client_data_t client, QWebSocket* sender);
+
+    // Mutate targets
+    void handleMutateSettings(QJsonValue val, QWebSocket* sender);
 
     // Helpers
     void checkAuth(QWebSocket* client);
@@ -117,6 +128,9 @@ private:
 
     // Internal data targets
     InternalTargetMapType m_InternalTargets;
+
+    // Mutate targets
+    MutateTargetMapType m_MutateTargets;
 
     // App launcher
     QVariantMap               m_LauncherMap;

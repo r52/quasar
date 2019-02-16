@@ -8,40 +8,33 @@
 
     <link rel="stylesheet" href="qrc:/css/bootstrap.min.css" />
     <link rel="stylesheet" href="qrc:/css/bootstrap-table.min.css">
+    <link rel="stylesheet" href="qrc:/css/style.css">
 
     <script src="qrc:/js/jquery-3.3.1.slim.min.js"></script>
     <script src="qrc:/js/bootstrap.bundle.min.js"></script>
     <script src="qrc:/js/bootstrap-table.min.js"></script>
 
-    <style>
-        #cover {
-            position: fixed;
-            height: 100%;
-            width: 100%;
-            top:0;
-            left: 0;
-            background: #000;
-            z-index:9999;
-         }
-
-        img.icon {
-            max-width: 96px;
-            max-height: 96px;
-        }
-
-        .footer {
-            background-color: #f5f5f5;
-        }
-
-        .footer>.container {
-            padding-right: 15px;
-            padding-left: 15px;
-        }
-    </style>
 </head>
 
 <body class="d-flex flex-column h-100">
-    <div id="cover"></div>
+    <div id="cover">
+        <div id="lds-pos">
+            <div class="lds-default">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
     <!-- Tab menu -->
     <ul class="nav nav-pills" id="main_menu" role="tablist">
         <li class="nav-item">
@@ -130,9 +123,11 @@
                     <button id="remove-launch-command" class="btn btn-danger" disabled>
                         Delete
                     </button>
+                    <!--
                     <button id="launch-test" class="btn btn-warning">
                         Debug
                     </button>
+                -->
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">Add</button>
                 </div>
                 <table id="launcher-table" class="table table-hover">

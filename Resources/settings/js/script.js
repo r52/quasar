@@ -227,6 +227,52 @@ function createLauncherPage(data) {
     });
 }
 
+function save_settings() {
+    var dat = {};
+
+    // general/extension tabs
+    $("div[aria-labelledby='general-tab'] :input, div[aria-labelledby='extensions-tab'] :input").each(function() {
+        var input = $(this);
+        var key = input.attr("name");
+
+        if (key == undefined) {
+            key = input.attr("id");
+        }
+
+        var type = input.attr("type");
+
+        if (type == "checkbox") {
+            dat[key] = input.prop("checked");
+        } else if (type == "radio") {
+            if (input.prop("checked") == true) {
+                dat[key] = input.val();
+            }
+            // else do nothing
+        } else {
+            dat[key] = input.val();
+        }
+    });
+
+    // do launcher table
+    var tab = $('#launcher-table').bootstrapTable('getData')
+    tab.forEach(function(e) {
+        delete e.state;
+    });
+
+    dat["launcher"] = tab;
+
+    // send it
+    var msg = {
+        method: "mutate",
+        params: {
+            target: "settings",
+            params: dat
+        }
+    };
+
+    websocket.send(JSON.stringify(msg));
+}
+
 function query_settings(socket) {
     var msg = {
         method: "query",
@@ -251,8 +297,6 @@ function initialize_page(dat) {
 
         createExtensionPages(dat);
         createLauncherPage(dat);
-
-        console.log("TODO: Save button");
 
         $("#cover").hide();
 
@@ -285,6 +329,11 @@ $(function() {
     } catch (exception) {
         console.log('Exception: ' + exception);
     }
+
+    // save button
+    $('#settings-save').click(function() {
+        save_settings();
+    });
 
     // close button
     $('#settings-close').click(function() {
