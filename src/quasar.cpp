@@ -17,7 +17,7 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(parent), logWindow(log), service(s)
+Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(parent), logWindow(log), service(s), setdlg(nullptr)
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
@@ -57,6 +57,18 @@ Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(p
     ui.centralWidget->setLayout(layout);
 
     resize(800, 400);
+}
+
+Quasar::~Quasar()
+{
+    if (setdlg != nullptr)
+    {
+        setdlg->close();
+        // hard delete here because Qt resource management has already
+        // run its course at this point
+        delete setdlg;
+        setdlg = nullptr;
+    }
 }
 
 void Quasar::openWebWidget()
@@ -129,10 +141,12 @@ void Quasar::createActions()
 
     settingsAction = new QAction(tr("&Settings"), this);
     connect(settingsAction, &QAction::triggered, [=] {
-        if (!SettingsDialog::isOpen)
+        if (setdlg == nullptr)
         {
-            SettingsDialog* dialog = new SettingsDialog(service->getServer());
-            dialog->show();
+            setdlg = new SettingsDialog(service->getServer());
+            connect(setdlg, &QObject::destroyed, [=] { this->setdlg = nullptr; });
+
+            setdlg->show();
         }
     });
 

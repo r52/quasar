@@ -13,8 +13,6 @@ public:
     SettingsDialog(DataServer* server, QWidget* parent = nullptr);
     ~SettingsDialog();
 
-    static std::atomic_bool isOpen;
-
 private:
     static QString PageGlobalScript;
 

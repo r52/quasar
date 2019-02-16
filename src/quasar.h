@@ -8,6 +8,7 @@
 QT_FORWARD_DECLARE_CLASS(DataServices)
 QT_FORWARD_DECLARE_CLASS(LogWindow)
 QT_FORWARD_DECLARE_CLASS(WebWidget)
+QT_FORWARD_DECLARE_CLASS(SettingsDialog)
 
 class Quasar : public QMainWindow
 {
@@ -15,10 +16,7 @@ class Quasar : public QMainWindow
 
 public:
     explicit Quasar(LogWindow* log, DataServices* s, QWidget* parent = Q_NULLPTR);
-    Quasar(const Quasar&) = delete;
-    Quasar(Quasar&&)      = delete;
-    Quasar& operator=(const Quasar&) = delete;
-    Quasar& operator=(Quasar&&) = delete;
+    ~Quasar();
 
 protected:
     virtual void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
@@ -32,6 +30,11 @@ private slots:
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 
 private:
+    Quasar(const Quasar&) = delete;
+    Quasar(Quasar&&)      = delete;
+    Quasar& operator=(const Quasar&) = delete;
+    Quasar& operator=(Quasar&&) = delete;
+
     Ui::QuasarClass ui;
 
     // Log Window
@@ -52,4 +55,7 @@ private:
 
     // Services
     DataServices* service;
+
+    // Settings
+    SettingsDialog* setdlg;
 };

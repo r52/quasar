@@ -7,17 +7,15 @@
 
 #include <QFile>
 #include <QSettings>
+#include <QVBoxLayout>
 #include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineView>
 
-std::atomic_bool SettingsDialog::isOpen = false;
-QString          SettingsDialog::PageGlobalScript;
+QString SettingsDialog::PageGlobalScript;
 
 SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(parent)
 {
-    SettingsDialog::isOpen = true;
-
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowModality(Qt::WindowModal);
 
@@ -32,7 +30,10 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(pa
     QWebEngineView* view = new QWebEngineView(this);
     view->setPage(page);
     view->setContextMenuPolicy(Qt::NoContextMenu);
-    view->resize(1100, 700);
+
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->addWidget(view);
+    setLayout(layout);
 
     connect(page, &QWebEnginePage::windowCloseRequested, [=] { this->close(); });
 
@@ -70,6 +71,4 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(pa
 SettingsDialog::~SettingsDialog()
 {
     profile->deleteLater();
-
-    SettingsDialog::isOpen = false;
 }
