@@ -19,8 +19,7 @@ class OverlayWidget : public QWidget
     }
 
 public:
-    explicit OverlayWidget(QWidget* parent = {})
-        : QWidget{ parent }
+    explicit OverlayWidget(QWidget* parent = {}) : QWidget{parent}
     {
         setAttribute(Qt::WA_NoSystemBackground);
         newParent();
@@ -56,10 +55,7 @@ protected:
 class QuasarWebView : public QWebEngineView
 {
 public:
-    QuasarWebView(QWidget* parent = Q_NULLPTR)
-        : QWebEngineView{ parent }
-    {
-    }
+    QuasarWebView(QWidget* parent = Q_NULLPTR) : QWebEngineView{parent} {}
 
 protected:
     virtual void contextMenuEvent(QContextMenuEvent* event) override
@@ -77,15 +73,9 @@ protected:
 class QuasarWebPage : public QWebEnginePage
 {
 public:
-    QuasarWebPage(QObject* parent = Q_NULLPTR)
-        : QWebEnginePage{ parent }
-    {
-    }
+    QuasarWebPage(QObject* parent = Q_NULLPTR) : QWebEnginePage{parent} {}
 
-    QuasarWebPage(QWebEngineProfile* profile, QObject* parent = Q_NULLPTR)
-        : QWebEnginePage{ profile, parent }
-    {
-    }
+    QuasarWebPage(QWebEngineProfile* profile, QObject* parent = Q_NULLPTR) : QWebEnginePage{profile, parent} {}
 
 protected:
     virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID);
@@ -101,8 +91,9 @@ class WebWidget : public QWidget
 public:
     ~WebWidget();
 
-    static bool validateWidgetDefinition(const QJsonObject& dat);
-    static bool acceptSecurityWarnings(const QJsonObject& dat);
+    static bool    validateWidgetDefinition(const QJsonObject& dat);
+    static bool    acceptSecurityWarnings(const QJsonObject& dat);
+    static QString getGlobalScript();
 
     QJsonObject getData() { return data; }
     QString     getName() { return m_Name; }

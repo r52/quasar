@@ -12,8 +12,6 @@
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineView>
 
-QString SettingsDialog::PageGlobalScript;
-
 SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
@@ -39,22 +37,12 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(pa
 
     QString authcode = server->generateAuthCode(WebUiHandler::settingsUrl.toString(), CAL_SETTINGS);
 
-    if (PageGlobalScript.isEmpty())
-    {
-        QFile file(":/Resources/pageglobals.js");
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            throw std::runtime_error("PageGlobal script load failure");
-        }
-
-        QTextStream in(&file);
-        PageGlobalScript = in.readAll();
-    }
+    QString gscript = WebWidget::getGlobalScript();
 
     QSettings settings;
     quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
-    QString pageGlobals = PageGlobalScript.arg(port).arg(authcode);
+    QString pageGlobals = gscript.arg(port).arg(authcode);
 
     QWebEngineScript script;
     script.setName("PageGlobals");

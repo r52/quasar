@@ -14,8 +14,6 @@ public:
     ~SettingsDialog();
 
 private:
-    static QString PageGlobalScript;
-
     QWebEngineProfile* profile;
 
     Q_DISABLE_COPY(SettingsDialog);
