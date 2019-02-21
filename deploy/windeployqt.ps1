@@ -15,7 +15,7 @@ if ($debug)
 
 if ($qtpath -eq $null)
 {
-    $qtpath = "C:\Qt\5.12.0\msvc2017_64"
+    $qtpath = "C:\Qt\5.12.1\msvc2017_64"
 }
 
 $windeploy = "$($qtpath)\bin\windeployqt.exe"
