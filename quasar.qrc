@@ -5,17 +5,17 @@
         <file>Resources/splash.png</file>
         <file>Resources/localhost.crt</file>
         <file>Resources/localhost.key</file>
-        <file>Resources/settings/index.html</file>
+        <file>Resources/settings/settings.html</file>
     </qresource>
     <qresource prefix="/js">
         <file alias="bootstrap.bundle.min.js">Resources/settings/js/bootstrap.bundle.min.js</file>
         <file alias="bootstrap-table.min.js">Resources/settings/js/bootstrap-table.min.js</file>
         <file alias="jquery-3.3.1.slim.min.js">Resources/settings/js/jquery-3.3.1.slim.min.js</file>
-        <file alias="script.js">Resources/settings/js/script.js</file>
+        <file alias="settings.js">Resources/settings/js/settings.js</file>
     </qresource>
     <qresource prefix="/css">
         <file alias="bootstrap.min.css">Resources/settings/css/bootstrap.min.css</file>
         <file alias="bootstrap-table.min.css">Resources/settings/css/bootstrap-table.min.css</file>
-        <file alias="style.css">Resources/settings/css/style.css</file>
+        <file alias="settings.css">Resources/settings/css/settings.css</file>
     </qresource>
 </RCC>
