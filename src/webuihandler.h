@@ -14,4 +14,5 @@ public:
 
     const static QByteArray schemeName;
     const static QUrl       settingsUrl;
+    const static QUrl       consoleUrl;
 };

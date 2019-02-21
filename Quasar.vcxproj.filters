@@ -67,7 +67,7 @@
     <ClCompile Include="src\webuihandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\settingsdialog.cpp">
+    <ClCompile Include="src\webuidialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -113,7 +113,7 @@
     <ClInclude Include="src\sharedlocker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\settingsdialog.h">
+    <ClInclude Include="src\webuidialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

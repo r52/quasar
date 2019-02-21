@@ -1,4 +1,4 @@
-#include "settingsdialog.h"
+#include "webuidialog.h"
 
 #include "dataserver.h"
 #include "webuihandler.h"
@@ -12,7 +12,7 @@
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineView>
 
-SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(parent)
+WebUiDialog::WebUiDialog(DataServer* server, QString title, QUrl url, ClientAccessLevel lvl, QSize size, QWidget* parent) : QWidget(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowModality(Qt::WindowModal);
@@ -23,7 +23,7 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(pa
     profile->installUrlSchemeHandler(WebUiHandler::schemeName, handler);
 
     QuasarWebPage* page = new QuasarWebPage(profile, this);
-    page->load(WebUiHandler::settingsUrl);
+    page->load(url);
 
     QWebEngineView* view = new QWebEngineView(this);
     view->setPage(page);
@@ -35,7 +35,7 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(pa
 
     connect(page, &QWebEnginePage::windowCloseRequested, [=] { this->close(); });
 
-    QString authcode = server->generateAuthCode(WebUiHandler::settingsUrl.toString(), CAL_SETTINGS);
+    QString authcode = server->generateAuthCode(WebUiHandler::settingsUrl.toString(), lvl);
 
     QString gscript = WebWidget::getGlobalScript();
 
@@ -52,11 +52,11 @@ SettingsDialog::SettingsDialog(DataServer* server, QWidget* parent) : QWidget(pa
 
     view->page()->scripts().insert(script);
 
-    setWindowTitle("Settings");
-    resize(1100, 700);
+    setWindowTitle(title);
+    resize(size);
 }
 
-SettingsDialog::~SettingsDialog()
+WebUiDialog::~WebUiDialog()
 {
     profile->deleteLater();
 }

@@ -183,7 +183,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\quasar.cpp" />
     <ClCompile Include="src\runguard.cpp" />
-    <ClCompile Include="src\settingsdialog.cpp" />
+    <ClCompile Include="src\webuidialog.cpp" />
     <ClCompile Include="src\webuihandler.cpp" />
     <ClCompile Include="src\webwidget.cpp" />
     <ClCompile Include="src\widgetregistry.cpp" />
@@ -206,12 +206,12 @@
     </QtMoc>
     <ClInclude Include="src\preproc.h" />
     <ClInclude Include="src\runguard.h" />
-    <ClInclude Include="src\settingsdialog.h" />
     <ClInclude Include="src\sharedlocker.h" />
     <QtMoc Include="src\webuihandler.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\extension-api</IncludePath>
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\$(ConfigurationName)\.;.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebSockets;$(QTDIR)\include\QtNetwork;.\extension-api</IncludePath>
     </QtMoc>
+    <ClInclude Include="src\webuidialog.h" />
     <ClInclude Include="src\widgetdefs.h" />
     <QtMoc Include="src\widgetregistry.h">
     </QtMoc>

@@ -9,11 +9,9 @@
 
 const QByteArray WebUiHandler::schemeName  = QByteArrayLiteral(SCHEMENAME);
 const QUrl       WebUiHandler::settingsUrl = QUrl(QStringLiteral(SCHEMENAME ":settings"));
+const QUrl       WebUiHandler::consoleUrl  = QUrl(QStringLiteral(SCHEMENAME ":console"));
 
-WebUiHandler::WebUiHandler(QObject* parent)
-    : QWebEngineUrlSchemeHandler(parent)
-{
-}
+WebUiHandler::WebUiHandler(QObject* parent) : QWebEngineUrlSchemeHandler(parent) {}
 
 void WebUiHandler::requestStarted(QWebEngineUrlRequestJob* job)
 {
@@ -27,7 +25,13 @@ void WebUiHandler::requestStarted(QWebEngineUrlRequestJob* job)
 
     if (method == GET && url == settingsUrl)
     {
-        QFile* file = new QFile(QStringLiteral(":/Resources/settings/index.html"), job);
+        QFile* file = new QFile(QStringLiteral(":/Resources/settings/settings.html"), job);
+        file->open(QIODevice::ReadOnly);
+        job->reply(QByteArrayLiteral("text/html"), file);
+    }
+    else if (method == GET && url == consoleUrl)
+    {
+        QFile* file = new QFile(QStringLiteral(":/Resources/console/console.html"), job);
         file->open(QIODevice::ReadOnly);
         job->reply(QByteArrayLiteral("text/html"), file);
     }
@@ -46,8 +50,6 @@ void WebUiHandler::requestStarted(QWebEngineUrlRequestJob* job)
 void WebUiHandler::registerUrlScheme()
 {
     QWebEngineUrlScheme webUiScheme(schemeName);
-    webUiScheme.setFlags(QWebEngineUrlScheme::SecureScheme |
-                         QWebEngineUrlScheme::LocalScheme |
-                         QWebEngineUrlScheme::LocalAccessAllowed);
+    webUiScheme.setFlags(QWebEngineUrlScheme::SecureScheme | QWebEngineUrlScheme::LocalScheme | QWebEngineUrlScheme::LocalAccessAllowed);
     QWebEngineUrlScheme::registerScheme(webUiScheme);
 }

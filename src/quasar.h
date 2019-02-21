@@ -8,7 +8,7 @@
 QT_FORWARD_DECLARE_CLASS(DataServices)
 QT_FORWARD_DECLARE_CLASS(LogWindow)
 QT_FORWARD_DECLARE_CLASS(WebWidget)
-QT_FORWARD_DECLARE_CLASS(SettingsDialog)
+QT_FORWARD_DECLARE_CLASS(WebUiDialog)
 
 class Quasar : public QMainWindow
 {
@@ -49,6 +49,7 @@ private:
     QAction* loadAction;
     QAction* settingsAction;
     QAction* logAction;
+    QAction* consoleAction;
     QAction* aboutAction;
     QAction* aboutQtAction;
     QAction* quitAction;
@@ -56,6 +57,7 @@ private:
     // Services
     DataServices* service;
 
-    // Settings
-    SettingsDialog* setdlg;
+    // WebUI dialogs
+    WebUiDialog* setdlg;
+    WebUiDialog* condlg;
 };

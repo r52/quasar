@@ -5,7 +5,8 @@
 
 #include "dataservices.h"
 #include "logwindow.h"
-#include "settingsdialog.h"
+#include "webuidialog.h"
+#include "webuihandler.h"
 #include "webwidget.h"
 #include "widgetdefs.h"
 #include "widgetregistry.h"
@@ -17,7 +18,7 @@
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(parent), logWindow(log), service(s), setdlg(nullptr)
+Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(parent), logWindow(log), service(s), setdlg(nullptr), condlg(nullptr)
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
@@ -61,13 +62,21 @@ Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(p
 
 Quasar::~Quasar()
 {
+    // hard deletes required here because Qt resource management has already
+    // run its course at this point
+
     if (setdlg != nullptr)
     {
         setdlg->close();
-        // hard delete here because Qt resource management has already
-        // run its course at this point
         delete setdlg;
         setdlg = nullptr;
+    }
+
+    if (condlg != nullptr)
+    {
+        condlg->close();
+        delete condlg;
+        condlg = nullptr;
     }
 }
 
@@ -120,6 +129,7 @@ void Quasar::createTrayIcon()
     trayIconMenu->addMenu(widgetListMenu);
     trayIconMenu->addAction(settingsAction);
     trayIconMenu->addAction(logAction);
+    trayIconMenu->addAction(consoleAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(aboutAction);
     trayIconMenu->addAction(aboutQtAction);
@@ -143,7 +153,7 @@ void Quasar::createActions()
     connect(settingsAction, &QAction::triggered, [=] {
         if (setdlg == nullptr)
         {
-            setdlg = new SettingsDialog(service->getServer());
+            setdlg = new WebUiDialog(service->getServer(), tr("Settings"), WebUiHandler::settingsUrl, CAL_SETTINGS);
             connect(setdlg, &QObject::destroyed, [=] { this->setdlg = nullptr; });
 
             setdlg->show();
@@ -152,6 +162,17 @@ void Quasar::createActions()
 
     logAction = new QAction(tr("L&og"), this);
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);
+
+    consoleAction = new QAction(tr("&Console"), this);
+    connect(consoleAction, &QAction::triggered, [=] {
+        if (condlg == nullptr)
+        {
+            condlg = new WebUiDialog(service->getServer(), tr("Console"), WebUiHandler::consoleUrl, CAL_DEBUG);
+            connect(condlg, &QObject::destroyed, [=] { this->condlg = nullptr; });
+
+            condlg->show();
+        }
+    });
 
     aboutAction = new QAction(tr("&About Quasar"), this);
 
