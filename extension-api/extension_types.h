@@ -31,6 +31,16 @@ enum quasar_log_level_t
     QUASAR_LOG_CRITICAL //!< Critical level.
 };
 
+//! Defines valid polling type values.
+/*! Positive values determine extension timed data refresh rate
+    \sa quasar_data_source_t.refreshMsec
+*/
+enum quasar_polling_type_t
+{
+    QUASAR_POLLING_SIGNALED = -1, //!< Extension is responsible for signaling data send when data is ready.
+    QUASAR_POLLING_CLIENT   = 0   //!< Data is polled on-demand by the client
+};
+
 //! Struct for creating and storing extension settings.
 /*! This struct is opaque to the front facing API.
     \sa extension_support.h, extension_support_internal.h
@@ -53,8 +63,8 @@ struct quasar_data_source_t
     char dataSrc[32]; //!< Codename of a Data Source.
 
     int64_t refreshMsec; //!< Default rate of refresh for this Data Source (in milliseconds).
-                         //!< 0 = data is polled on-demand by the client, -1 = extension is responsible for signaling data send when data is ready.
-                         //!< \sa quasar_signal_data_ready(), quasar_signal_wait_processed()
+                         //!< See \ref quasar_polling_type_t for additional polling options.
+                         //!< \sa quasar_signal_data_ready(), quasar_signal_wait_processed(), quasar_polling_type_t
 
     size_t uid; //!< uid assigned to this Data Source by Quasar.
                 //!< An integer uid is assigned to each Data Source by Quasar to reduce
@@ -87,7 +97,7 @@ struct quasar_ext_info_t
 
     int  api_version;      //!< API version. Should always be initialized to #QUASAR_API_VERSION.
     char name[64];         //!< Name of this extension.
-    char code[16];         //!< A unique short code identifier for widgets to identify and subscribe to this extension.
+    char code[16];         //!< A unique short identifier for widgets to identify and subscribe to this extension.
     char version[64];      //!< Version string.
     char author[64];       //!< Author.
     char description[256]; //!< Extension description.

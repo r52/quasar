@@ -21,7 +21,7 @@
 #define QUASAR_DP_ENABLED "/enabled"
 
 //! Internal setting prefix for Data Source refresh rate UI
-#define QUASAR_DP_REFRESH_PREFIX "refresh_"
+#define QUASAR_DP_RATE_PREFIX "/rate"
 
 //! Internal setting prefix for custom extension defined settings
 #define QUASAR_DP_CUSTOM_PREFIX "custom_"
@@ -83,7 +83,7 @@ public:
         \param[in]  parent  Parent element in Qt object tree
         \return Pointer to a DataExtension instance if successful, nullptr otherwise
     */
-    static DataExtension* load(QString libpath, QObject* parent = Q_NULLPTR);
+    static DataExtension* load(QString libpath, QObject* parent = nullptr);
 
     //! Adds a subscriber to a Data Source
     /*!
@@ -250,7 +250,7 @@ private:
         \param[in]  parent      Qt parent object
         \sa quasar_ext_info_t, quasar_extension_destroy()
     */
-    DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent = Q_NULLPTR);
+    DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent = nullptr);
 
     /*! Creates and initializes the timer for a timer-based source (if it does not exist)
         \param[in,out]  data    Reference to the Data Source object

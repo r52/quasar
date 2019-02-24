@@ -17,8 +17,11 @@
 
 uintmax_t DataExtension::_uid = 0;
 
-DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent /*= Q_NULLPTR*/)
-    : QObject(parent), m_extension(p), m_destroyfunc(destroyfunc), m_libpath(path)
+DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent) :
+    QObject(parent),
+    m_extension(p),
+    m_destroyfunc(destroyfunc),
+    m_libpath(path)
 {
     if (nullptr == m_extension)
     {
@@ -56,8 +59,9 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
             DataSource& source = m_datasources[srcname];
             source.name        = srcname;
             source.uid = m_extension->dataSources[i].uid = ++DataExtension::_uid;
-            source.refreshmsec                           = settings.value(getSettingsKey(QUASAR_DP_REFRESH_PREFIX + source.name), (qlonglong) m_extension->dataSources[i].refreshMsec).toLongLong();
-            source.enabled                               = settings.value(getSettingsKey(source.name + QUASAR_DP_ENABLED), true).toBool();
+            source.refreshmsec =
+                settings.value(getSettingsKey(source.name + QUASAR_DP_RATE_PREFIX), (qlonglong) m_extension->dataSources[i].refreshMsec).toLongLong();
+            source.enabled = settings.value(getSettingsKey(source.name + QUASAR_DP_ENABLED), true).toBool();
 
             // If data source is extension signaled or async poll
             if (source.refreshmsec <= 0)
@@ -126,7 +130,7 @@ DataExtension::~DataExtension()
     m_extension = nullptr;
 }
 
-DataExtension* DataExtension::load(QString libpath, QObject* parent /*= Q_NULLPTR*/)
+DataExtension* DataExtension::load(QString libpath, QObject* parent)
 {
     QLibrary lib(libpath);
 
@@ -331,7 +335,7 @@ void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
 
     // Save to file
     QSettings settings;
-    settings.setValue(getSettingsKey(QUASAR_DP_REFRESH_PREFIX + source), (qlonglong) data.refreshmsec);
+    settings.setValue(getSettingsKey(source + QUASAR_DP_RATE_PREFIX), (qlonglong) data.refreshmsec);
 
     // Refresh timer if exists
     if (nullptr != data.timer)

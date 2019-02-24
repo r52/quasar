@@ -15,7 +15,7 @@ class Quasar : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit Quasar(LogWindow* log, DataServices* s, QWidget* parent = Q_NULLPTR);
+    explicit Quasar(LogWindow* log, DataServices* s, QWidget* parent = nullptr);
     ~Quasar();
 
 protected:

@@ -15,7 +15,7 @@ function initialize_general(data) {
     var dat = data["data"]["settings"]["general"];
     $("input#general\\/dataport").val(dat.dataport);
     $("input[name='general\\/loglevel']").val([dat.loglevel]);
-    $("input#general\\/cookies").val(dat.cookies);
+    $("textarea#general\\/cookies").val(dat.cookies);
     $("input#general\\/savelog").checked = dat.savelog;
     $("input#general\\/startup").checked = dat.startup;
 }
@@ -29,15 +29,15 @@ function createExtensionTab(ext) {
     var rates = "";
     ext.rates.forEach(function(r) {
         var rinput = "";
-        if (r.rate != null) {
-            rinput = `<input type="number" class="form-control" id="${ext.name}/${r.name}-rate" placeholder="ms" min="1" max="2147483647" step="1" value="${r.rate}">`
+        if (r.rate > 0) {
+            rinput = `<input type="number" class="form-control" id="${ext.name}/${r.name}/rate" placeholder="ms" min="1" max="2147483647" step="1" value="${r.rate}">`
         }
         var rgroup = `
         <div class="form-group">
             <label for="${ext.name}/${r.name}-rate">${r.name}</label>
             <div class="custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" id="${ext.name}/${r.name}-enabled" ${r.enabled ? 'checked' : ''}>
-                <label class="custom-control-label" for="${ext.name}/${r.name}-enabled">Enabled</label>
+                <input type="checkbox" class="custom-control-input" id="${ext.name}/${r.name}/enabled" ${r.enabled ? 'checked' : ''} ${r.rate < 0 ? 'disabled' : ''}>
+                <label class="custom-control-label" for="${ext.name}/${r.name}/enabled">Enabled</label>
             </div>
             ${rinput}
         </div>
@@ -230,8 +230,8 @@ function createLauncherPage(data) {
 function save_settings() {
     var dat = {};
 
-    // general/extension tabs
-    $("div[aria-labelledby='general-tab'] :input, div[aria-labelledby='extensions-tab'] :input").each(function() {
+    // general tab
+    $("div[aria-labelledby='general-tab'] :input, textarea").each(function() {
         var input = $(this);
         var key = input.attr("name");
 
@@ -250,6 +250,38 @@ function save_settings() {
             // else do nothing
         } else {
             dat[key] = input.val();
+        }
+    });
+
+    // extension tabs
+    dat["extensions"] = {};
+    $("div[aria-labelledby='extensions-tab'] :input").each(function() {
+        var input = $(this);
+        var key = input.attr("name");
+
+        if (key == undefined) {
+            key = input.attr("id");
+        }
+
+        var parts = key.split("/");
+        var extname = parts[0];
+
+        if (!(extname in dat["extensions"])) {
+            // create key if not exist
+            dat["extensions"][extname] = {};
+        }
+
+        var type = input.attr("type");
+
+        if (type == "checkbox") {
+            dat["extensions"][extname][key] = input.prop("checked");
+        } else if (type == "radio") {
+            if (input.prop("checked") == true) {
+                dat["extensions"][extname][key] = input.val();
+            }
+            // else do nothing
+        } else {
+            dat["extensions"][extname][key] = input.val();
         }
     });
 

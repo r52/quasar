@@ -38,17 +38,20 @@
     <!-- Tab menu -->
     <ul class="nav nav-pills" id="main_menu" role="tablist">
         <li class="nav-item">
-            <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general" aria-selected="true">General</a>
+            <a class="nav-link active" id="general-tab" data-toggle="tab" href="#general" role="tab" aria-controls="general"
+                aria-selected="true">General</a>
         </li>
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" id="extensions-tab" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Extensions</a>
+            <a class="nav-link dropdown-toggle" id="extensions-tab" data-toggle="dropdown" href="#" role="button"
+                aria-haspopup="true" aria-expanded="false">Extensions</a>
             <div id="extension-links" class="dropdown-menu">
                 <!-- Extension tab links -->
                 <span>No extensions loaded</span>
             </div>
         </li>
         <li class="nav-item">
-            <a class="nav-link" id="launcher-tab" data-toggle="tab" href="#launcher" role="tab" aria-controls="launcher" aria-selected="false">App Launcher</a>
+            <a class="nav-link" id="launcher-tab" data-toggle="tab" href="#launcher" role="tab" aria-controls="launcher"
+                aria-selected="false">App Launcher</a>
         </li>
     </ul>
     <!-- Tab content -->
@@ -56,9 +59,10 @@
         <div class="tab-content" id="tab_content">
             <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
                 <div class="form-group row">
-                    <label for="general/dataport" class="col-sm-2 col-form-label">Data Server Port</label>
+                    <label for="general/dataport" class="col-sm-2 col-form-label">Data Server Port (restart required)</label>
                     <div class="col-sm-10">
-                        <input type="number" class="form-control" id="general/dataport" placeholder="Port" min="1024" max="65535" step="1" value="13337">
+                        <input type="number" class="form-control" id="general/dataport" placeholder="Port" min="1024"
+                            max="65535" step="1" value="13337">
                     </div>
                 </div>
                 <fieldset class="form-group">
@@ -66,25 +70,29 @@
                         <legend class="col-form-label col-sm-2 pt-0">Log Verbosity</legend>
                         <div class="col-sm-10">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_debug" value="0">
+                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_debug"
+                                    value="0">
                                 <label class="form-check-label" for="loglevel_debug">
                                     Debug
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_info" value="1">
+                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_info"
+                                    value="1">
                                 <label class="form-check-label" for="loglevel_info">
                                     Info
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_warning" value="2" checked>
+                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_warning"
+                                    value="2" checked>
                                 <label class="form-check-label" for="loglevel_warning">
                                     Warning
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_critical" value="3">
+                                <input class="form-check-input" type="radio" name="general/loglevel" id="loglevel_critical"
+                                    value="3">
                                 <label class="form-check-label" for="loglevel_critical">
                                     Critical
                                 </label>
@@ -93,12 +101,9 @@
                     </div>
                 </fieldset>
                 <div class="form-group row">
-                    <div class="col-sm-2">cookies.txt</div>
+                    <div class="col-sm-2">cookies.txt (restart required)</div>
                     <div class="col-sm-10">
-                        <div class="custom-file">
-                            <input type="file" class="custom-file-input" id="general/cookies">
-                            <label class="custom-file-label" for="general_cookies">Browse</label>
-                        </div>
+                        <textarea rows="10" cols="80" id="general/cookies" placeholder="Paste cookies.txt here"></textarea>
                     </div>
                 </div>
                 <div class="form-group row">

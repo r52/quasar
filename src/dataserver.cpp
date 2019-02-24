@@ -35,8 +35,8 @@ DataServer::DataServer(QObject* parent) :
               {"query", std::bind(&DataServer::handleMethodQuery, this, _1, _2)},
               {"auth", std::bind(&DataServer::handleMethodAuth, this, _1, _2)},
               {"mutate", std::bind(&DataServer::handleMethodMutate, this, _1, _2)}},
-    m_InternalTargets{{"settings", std::bind(&DataServer::handleTargetSettings, this, _1, _2, _3)},
-                      {"launcher", std::bind(&DataServer::handleTargetLauncher, this, _1, _2, _3)}},
+    m_InternalTargets{{"settings", std::bind(&DataServer::handleQuerySettings, this, _1, _2, _3)},
+                      {"launcher", std::bind(&DataServer::handleQueryLauncher, this, _1, _2, _3)}},
     m_MutateTargets{{"settings", std::bind(&DataServer::handleMutateSettings, this, _1, _2)}}
 {
     qRegisterMetaType<AppLauncherData>("AppLauncherData");
@@ -371,7 +371,7 @@ void DataServer::handleMethodMutate(const QJsonObject& req, QWebSocket* sender)
     m_MutateTargets[targ](parms["params"], sender);
 }
 
-void DataServer::handleTargetSettings(QString params, client_data_t client, QWebSocket* sender)
+void DataServer::handleQuerySettings(QString params, client_data_t client, QWebSocket* sender)
 {
     if (client.access < CAL_SETTINGS)
     {
@@ -379,154 +379,166 @@ void DataServer::handleTargetSettings(QString params, client_data_t client, QWeb
         return;
     }
 
+    // handle params
+    auto plist = QSet<QString>::fromList(params.split(',', QString::SkipEmptyParts));
+
     // compile all settings into json
     QSettings settings;
 
     QJsonObject sjson;
 
     // general
-    QJsonObject general;
+    if (plist.contains("all") || plist.contains("general"))
+    {
+        QJsonObject general;
 
-    general["dataport"] = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
-    general["loglevel"] = settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
-    general["cookies"]  = settings.value(QUASAR_CONFIG_COOKIES).toString();
-    general["savelog"]  = settings.value(QUASAR_CONFIG_LOGFILE, false).toBool();
+        general["dataport"] = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
+        general["loglevel"] = settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
+        general["cookies"]  = QString::fromUtf8(qUncompress(settings.value(QUASAR_CONFIG_COOKIES).toByteArray()));
+        general["savelog"]  = settings.value(QUASAR_CONFIG_LOGFILE, false).toBool();
 
 #ifdef Q_OS_WIN
-    // ------------------Startup launch
-    QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
-    QFileInfo lnk(startupFolder + "/Quasar.lnk");
+        // ------------------Startup launch
+        QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
+        QFileInfo lnk(startupFolder + "/Quasar.lnk");
 
-    general["startup"] = lnk.exists();
+        general["startup"] = lnk.exists();
 #else
-    general["startup"] = false;
+        general["startup"] = false;
 #endif
 
-    sjson["general"] = general;
+        sjson["general"] = general;
+    }
 
     // extensions
-    QJsonArray extensions;
-
+    if (plist.contains("all") || plist.contains("extensions"))
     {
-        std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
+        QJsonArray extensions;
 
-        for (auto& iext : m_Extensions)
         {
-            QJsonObject jext;
+            std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
 
-            auto& ext = iext.second;
-
-            // ext info
-            jext["name"]        = iext.first;
-            jext["fullname"]    = ext->getName();
-            jext["version"]     = ext->getVersion();
-            jext["author"]      = ext->getAuthor();
-            jext["description"] = ext->getDesc();
-            jext["website"]; // TODO ext web
-
-            // ext rates
-            QJsonArray rates;
-
-            for (auto& isrc : ext->getDataSources())
+            for (auto& iext : m_Extensions)
             {
-                QJsonObject rate;
+                QJsonObject jext;
 
-                auto& src       = isrc.second;
-                rate["name"]    = src.name;
-                rate["enabled"] = settings.value(ext->getSettingsKey(src.name + QUASAR_DP_ENABLED), true).toBool();
-                rate["rate"]    = src.refreshmsec;
+                auto& ext = iext.second;
 
-                rates.append(rate);
-            }
+                // ext info
+                jext["name"]        = iext.first;
+                jext["fullname"]    = ext->getName();
+                jext["version"]     = ext->getVersion();
+                jext["author"]      = ext->getAuthor();
+                jext["description"] = ext->getDesc();
+                jext["website"]; // TODO ext web
 
-            jext["rates"] = rates;
+                // ext rates
+                QJsonArray rates;
 
-            // ext settings
-            if (auto eset = ext->getSettings())
-            {
-                static const QString entryTypeStrArr[] = {"int", "double", "bool"};
-
-                QJsonArray extsettings;
-
-                for (auto& it : eset->map)
+                for (auto& isrc : ext->getDataSources())
                 {
-                    QJsonObject s;
+                    QJsonObject rate;
 
-                    auto& entry = it.second;
-                    s["name"]   = it.first;
-                    s["desc"]   = entry.description;
-                    s["type"]   = entryTypeStrArr[entry.type];
+                    auto& src       = isrc.second;
+                    rate["name"]    = src.name;
+                    rate["enabled"] = settings.value(ext->getSettingsKey(src.name + QUASAR_DP_ENABLED), true).toBool();
+                    rate["rate"]    = src.refreshmsec;
 
-                    switch (entry.type)
-                    {
-                        case QUASAR_SETTING_ENTRY_INT:
-                        {
-                            s["min"]  = entry.inttype.min;
-                            s["max"]  = entry.inttype.max;
-                            s["step"] = entry.inttype.step;
-                            s["def"]  = entry.inttype.def;
-                            s["val"]  = entry.inttype.val;
-                            break;
-                        }
-
-                        case QUASAR_SETTING_ENTRY_DOUBLE:
-                        {
-                            s["min"]  = entry.doubletype.min;
-                            s["max"]  = entry.doubletype.max;
-                            s["step"] = entry.doubletype.step;
-                            s["def"]  = entry.doubletype.def;
-                            s["val"]  = entry.doubletype.val;
-                            break;
-                        }
-
-                        case QUASAR_SETTING_ENTRY_BOOL:
-                        {
-                            s["def"] = entry.booltype.def;
-                            s["val"] = entry.booltype.val;
-                            break;
-                        }
-                    }
-
-                    extsettings.append(s);
+                    rates.append(rate);
                 }
 
-                jext["settings"] = extsettings;
-            }
-            else
-            {
-                jext["settings"] = QJsonValue(QJsonValue::Null);
+                jext["rates"] = rates;
+
+                // ext settings
+                if (auto eset = ext->getSettings())
+                {
+                    static const QString entryTypeStrArr[] = {"int", "double", "bool"};
+
+                    QJsonArray extsettings;
+
+                    for (auto& it : eset->map)
+                    {
+                        QJsonObject s;
+
+                        auto& entry = it.second;
+                        s["name"]   = it.first;
+                        s["desc"]   = entry.description;
+                        s["type"]   = entryTypeStrArr[entry.type];
+
+                        switch (entry.type)
+                        {
+                            case QUASAR_SETTING_ENTRY_INT:
+                            {
+                                s["min"]  = entry.inttype.min;
+                                s["max"]  = entry.inttype.max;
+                                s["step"] = entry.inttype.step;
+                                s["def"]  = entry.inttype.def;
+                                s["val"]  = entry.inttype.val;
+                                break;
+                            }
+
+                            case QUASAR_SETTING_ENTRY_DOUBLE:
+                            {
+                                s["min"]  = entry.doubletype.min;
+                                s["max"]  = entry.doubletype.max;
+                                s["step"] = entry.doubletype.step;
+                                s["def"]  = entry.doubletype.def;
+                                s["val"]  = entry.doubletype.val;
+                                break;
+                            }
+
+                            case QUASAR_SETTING_ENTRY_BOOL:
+                            {
+                                s["def"] = entry.booltype.def;
+                                s["val"] = entry.booltype.val;
+                                break;
+                            }
+                        }
+
+                        extsettings.append(s);
+                    }
+
+                    jext["settings"] = extsettings;
+                }
+                else
+                {
+                    jext["settings"] = QJsonValue(QJsonValue::Null);
+                }
             }
         }
-    }
 
-    sjson["extensions"] = extensions;
+        sjson["extensions"] = extensions;
+    }
 
     // launcher
-    QJsonArray launcher;
-
+    if (plist.contains("all") || plist.contains("launcher"))
     {
-        std::shared_lock<std::shared_mutex> lock(m_LauncherMtx);
+        QJsonArray launcher;
 
-        // need to convert to table format...
-        for (auto& e : m_LauncherMap)
         {
-            if (e.canConvert<AppLauncherData>())
+            std::shared_lock<std::shared_mutex> lock(m_LauncherMtx);
+
+            // need to convert to table format...
+            for (auto& e : m_LauncherMap)
             {
-                auto [command, file, start, args, icon] = e.value<AppLauncherData>();
+                if (e.canConvert<AppLauncherData>())
+                {
+                    auto [command, file, start, args, icon] = e.value<AppLauncherData>();
 
-                QJsonObject entry;
-                entry["command"] = command;
-                entry["file"]    = file;
-                entry["args"]    = args;
-                entry["start"]   = start;
-                entry["icon"]    = icon;
+                    QJsonObject entry;
+                    entry["command"] = command;
+                    entry["file"]    = file;
+                    entry["args"]    = args;
+                    entry["start"]   = start;
+                    entry["icon"]    = QString::fromUtf8(qUncompress(icon));
 
-                launcher.append(entry);
+                    launcher.append(entry);
+                }
             }
         }
-    }
 
-    sjson["launcher"] = launcher;
+        sjson["launcher"] = launcher;
+    }
 
     auto sdata = QJsonObject{{"data", QJsonObject{{"settings", sjson}}}};
 
@@ -535,9 +547,9 @@ void DataServer::handleTargetSettings(QString params, client_data_t client, QWeb
     sender->sendTextMessage(QString::fromUtf8(doc.toJson()));
 }
 
-void DataServer::handleTargetLauncher(QString params, client_data_t client, QWebSocket* sender)
+void DataServer::handleQueryLauncher(QString params, client_data_t client, QWebSocket* sender)
 {
-    // IIf get, send data
+    // If get, send data
     if (params == "get")
     {
         QJsonArray launcher;
@@ -557,7 +569,7 @@ void DataServer::handleTargetLauncher(QString params, client_data_t client, QWeb
                     entry["file"]    = file;
                     entry["args"]    = args;
                     entry["start"]   = start;
-                    entry["icon"]    = icon;
+                    entry["icon"]    = QString::fromUtf8(qUncompress(icon));
 
                     launcher.append(entry);
                 }
@@ -649,7 +661,7 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                     ldat.file      = eobj["file"].toString();
                     ldat.arguments = eobj["args"].toString();
                     ldat.startpath = eobj["start"].toString();
-                    ldat.icon      = eobj["icon"].toString();
+                    ldat.icon      = qCompress(eobj["icon"].toString().toUtf8());
 
                     newmap[ldat.command] = QVariant::fromValue(ldat);
                 }
@@ -660,8 +672,72 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
 
             settings.setValue(QUASAR_CONFIG_LAUNCHERMAP, m_LauncherMap);
         }
-        else
+        else if (key == "extensions")
         {
+            auto exts = data["extensions"].toObject();
+
+            std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
+
+            for (auto& extkey : exts.keys())
+            {
+                if (!m_Extensions.count(extkey))
+                {
+                    // Extension doesn't exist
+                    qWarning() << "Unknown extension code " << extkey;
+                    continue;
+                }
+
+                auto extset = exts[extkey].toObject();
+
+                for (auto& setkey : extset.keys())
+                {
+                    auto parts = setkey.split("/", QString::SkipEmptyParts);
+
+                    if (parts.length() < 2 || parts.length() > 3)
+                    {
+                        // invalid key
+                        qWarning() << "Invalid setting key " << key;
+                        continue;
+                    }
+
+                    auto ext = m_Extensions[parts[0]].get();
+                    if (parts.length() < 3)
+                    {
+                        // custom setting
+                        auto& cmap = ext->getSettings()->map;
+                        auto& cset = cmap[parts[1]];
+
+                        switch (cset.type)
+                        {
+                            case QUASAR_SETTING_ENTRY_INT:
+                                ext->setCustomSetting(parts[1], extset[setkey].toInt());
+                                break;
+                            case QUASAR_SETTING_ENTRY_DOUBLE:
+                                ext->setCustomSetting(parts[1], extset[setkey].toDouble());
+                                break;
+                            case QUASAR_SETTING_ENTRY_BOOL:
+                                ext->setCustomSetting(parts[1], extset[setkey].toBool());
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        // rate setting
+                        if (parts[2] == "rate")
+                        {
+                            ext->setDataSourceRefresh(parts[1], extset[setkey].toInt());
+                        }
+                        else if (parts[2] == "enabled")
+                        {
+                            ext->setDataSourceEnabled(parts[1], extset[setkey].toBool());
+                        }
+                    }
+                }
+            }
+        }
+        else if (key.startsWith("general"))
+        {
+            // handle general group
             if (key == "general/startup")
             {
                 // windows only
@@ -683,10 +759,21 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                 }
 #endif
             }
+            else if (key == "general/cookies")
+            {
+                // compress cookies file
+                auto cookies = qCompress(data[key].toString().toUtf8());
+                settings.setValue(key, cookies);
+            }
             else
             {
                 settings.setValue(key, data[key].toVariant());
             }
+        }
+        else
+        {
+            qWarning() << "Unknown setting key " << key;
+            continue;
         }
     }
 }

@@ -55,7 +55,7 @@ protected:
 class QuasarWebView : public QWebEngineView
 {
 public:
-    QuasarWebView(QWidget* parent = Q_NULLPTR) : QWebEngineView{parent} {}
+    QuasarWebView(QWidget* parent = nullptr) : QWebEngineView{parent} {}
 
 protected:
     virtual void contextMenuEvent(QContextMenuEvent* event) override
@@ -73,9 +73,9 @@ protected:
 class QuasarWebPage : public QWebEnginePage
 {
 public:
-    QuasarWebPage(QObject* parent = Q_NULLPTR) : QWebEnginePage{parent} {}
+    QuasarWebPage(QObject* parent = nullptr) : QWebEnginePage{parent} {}
 
-    QuasarWebPage(QWebEngineProfile* profile, QObject* parent = Q_NULLPTR) : QWebEnginePage{profile, parent} {}
+    QuasarWebPage(QWebEngineProfile* profile, QObject* parent = nullptr) : QWebEnginePage{profile, parent} {}
 
 protected:
     virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID);
@@ -118,7 +118,7 @@ protected slots:
     void toggleOnTop(bool ontop);
 
 private:
-    explicit WebWidget(QString widgetName, const QJsonObject& dat, QString authcode, QWidget* parent = Q_NULLPTR);
+    explicit WebWidget(QString widgetName, const QJsonObject& dat, QString authcode, QWidget* parent = nullptr);
 
     QString getSettingKey(QString key);
 

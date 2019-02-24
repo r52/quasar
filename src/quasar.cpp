@@ -167,7 +167,7 @@ void Quasar::createActions()
     connect(consoleAction, &QAction::triggered, [=] {
         if (condlg == nullptr)
         {
-            condlg = new WebUiDialog(service->getServer(), tr("Console"), WebUiHandler::consoleUrl, CAL_DEBUG);
+            condlg = new WebUiDialog(service->getServer(), tr("Debug Console"), WebUiHandler::consoleUrl, CAL_DEBUG);
             connect(condlg, &QObject::destroyed, [=] { this->condlg = nullptr; });
 
             condlg->show();

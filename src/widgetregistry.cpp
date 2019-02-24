@@ -24,8 +24,7 @@ namespace
     };
 }
 
-WidgetRegistry::WidgetRegistry(DataServer* s, QObject* parent)
-    : QObject(parent), server(s)
+WidgetRegistry::WidgetRegistry(DataServer* s, QObject* parent) : QObject(parent), server(s)
 {
     loadCookies();
 }
@@ -155,25 +154,18 @@ WebWidget* WidgetRegistry::findWidget(QString widgetName)
 void WidgetRegistry::loadCookies()
 {
     QSettings settings;
-    QString   cookiesfile = settings.value(QUASAR_CONFIG_COOKIES).toString();
+    auto      rawcookies = qUncompress(settings.value(QUASAR_CONFIG_COOKIES).toByteArray());
 
-    if (cookiesfile.isEmpty())
+    if (rawcookies.isEmpty())
     {
         qInfo() << "No cookies loaded";
-        return;
-    }
-
-    QFile file(cookiesfile);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        qWarning() << "Failed to load cookies file " << cookiesfile;
         return;
     }
 
     QWebEngineCookieStore* store = QWebEngineProfile::defaultProfile()->cookieStore();
 
     // parse netscape format cookies file
-    QTextStream in(&file);
+    QTextStream in(rawcookies);
 
     while (!in.atEnd())
     {
@@ -203,7 +195,7 @@ void WidgetRegistry::loadCookies()
         store->setCookie(cookie);
     }
 
-    qInfo() << "Cookies file " << cookiesfile << "loaded";
+    qInfo() << "Cookies file loaded";
 }
 
 void WidgetRegistry::closeWebWidget(WebWidget* widget)

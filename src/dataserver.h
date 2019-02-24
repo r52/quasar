@@ -21,11 +21,11 @@ using namespace std::chrono;
 
 struct AppLauncherData
 {
-    QString command;
-    QString file;
-    QString startpath;
-    QString arguments;
-    QString icon;
+    QString    command;
+    QString    file;
+    QString    startpath;
+    QString    arguments;
+    QByteArray icon; // icon data is compressed by qCompress()
 
     friend QDataStream& operator<<(QDataStream& s, const AppLauncherData& o)
     {
@@ -99,8 +99,8 @@ private:
     void handleMethodMutate(const QJsonObject& req, QWebSocket* sender);
 
     // Internal data targets
-    void handleTargetSettings(QString params, client_data_t client, QWebSocket* sender);
-    void handleTargetLauncher(QString params, client_data_t client, QWebSocket* sender);
+    void handleQuerySettings(QString params, client_data_t client, QWebSocket* sender);
+    void handleQueryLauncher(QString params, client_data_t client, QWebSocket* sender);
 
     // Mutate targets
     void handleMutateSettings(QJsonValue val, QWebSocket* sender);
@@ -115,7 +115,7 @@ private slots:
     void socketDisconnected();
 
 private:
-    explicit DataServer(QObject* parent = Q_NULLPTR);
+    explicit DataServer(QObject* parent = nullptr);
     DataServer(const DataServer&) = delete;
     DataServer(DataServer&&)      = delete;
     DataServer& operator=(const DataServer&) = delete;
