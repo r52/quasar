@@ -149,6 +149,13 @@ public:
     */
     QString getSettingsKey(QString name) { return getCode() + "/" + name; };
 
+    //! Gets all of this extension's metadata and settings as a JSON object
+    /*!
+        \param[in]  settings_only   Retrieve only the settings if true, otherwise retrieves extension's full metadata
+        \return JSON object with the extension's metadata
+    */
+    QJsonObject getMetadataJSON(bool settings_only);
+
     /*! Gets extension custom settings
         \sa quasar_settings_t
         \return pointer to extension custom settings

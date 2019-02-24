@@ -3,6 +3,7 @@
 #include <extension_support_internal.h>
 #include <unordered_set>
 
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLibrary>
@@ -293,6 +294,98 @@ void DataExtension::sendDataToSubscribers(DataSource& source)
     }
 }
 
+QJsonObject DataExtension::getMetadataJSON(bool settings_only)
+{
+    QSettings   settings;
+    QJsonObject mdat;
+
+    if (!settings_only)
+    {
+        // ext info
+        mdat["name"]        = getCode();
+        mdat["fullname"]    = getName();
+        mdat["version"]     = getVersion();
+        mdat["author"]      = getAuthor();
+        mdat["description"] = getDesc();
+        // mdat["website"]; TODO website api
+    }
+
+    // ext rates
+    QJsonArray rates;
+
+    for (auto& isrc : m_datasources)
+    {
+        QJsonObject rate;
+
+        auto& src       = isrc.second;
+        rate["name"]    = src.name;
+        rate["enabled"] = settings.value(getSettingsKey(src.name + QUASAR_DP_ENABLED), true).toBool();
+        rate["rate"]    = src.refreshmsec;
+
+        rates.append(rate);
+    }
+
+    mdat["rates"] = rates;
+
+    // ext settings
+    if (m_settings)
+    {
+        static const QString entryTypeStrArr[] = {"int", "double", "bool"};
+
+        QJsonArray extsettings;
+
+        for (auto& it : m_settings->map)
+        {
+            QJsonObject s;
+
+            auto& entry = it.second;
+            s["name"]   = it.first;
+            s["desc"]   = entry.description;
+            s["type"]   = entryTypeStrArr[entry.type];
+
+            switch (entry.type)
+            {
+                case QUASAR_SETTING_ENTRY_INT:
+                {
+                    s["min"]  = entry.inttype.min;
+                    s["max"]  = entry.inttype.max;
+                    s["step"] = entry.inttype.step;
+                    s["def"]  = entry.inttype.def;
+                    s["val"]  = entry.inttype.val;
+                    break;
+                }
+
+                case QUASAR_SETTING_ENTRY_DOUBLE:
+                {
+                    s["min"]  = entry.doubletype.min;
+                    s["max"]  = entry.doubletype.max;
+                    s["step"] = entry.doubletype.step;
+                    s["def"]  = entry.doubletype.def;
+                    s["val"]  = entry.doubletype.val;
+                    break;
+                }
+
+                case QUASAR_SETTING_ENTRY_BOOL:
+                {
+                    s["def"] = entry.booltype.def;
+                    s["val"] = entry.booltype.val;
+                    break;
+                }
+            }
+
+            extsettings.append(s);
+        }
+
+        mdat["settings"] = extsettings;
+    }
+    else
+    {
+        mdat["settings"] = QJsonValue(QJsonValue::Null);
+    }
+
+    return mdat;
+}
+
 void DataExtension::setDataSourceEnabled(QString source, bool enabled)
 {
     if (!m_datasources.count(source))
@@ -451,6 +544,7 @@ void DataExtension::createTimer(DataSource& data)
 
 QString DataExtension::craftDataMessage(const DataSource& data)
 {
+    // TODO: FIX THIS
     QJsonObject src;
     auto        dat = src[data.name];
 
@@ -484,35 +578,10 @@ QString DataExtension::craftSettingsMessage()
 
     if (m_settings)
     {
-        // TODO: FIX
-        // Craft the settings message
-        QJsonObject msg;
-        QJsonObject settings;
+        auto mdat = getMetadataJSON(true);
+        auto msg  = QJsonObject{{"data", QJsonObject{{"settings", QJsonObject{{getCode(), mdat}}}}}};
 
-        msg["type"]      = "settings";
-        msg["extension"] = getCode();
-
-        for (auto& s : m_settings->map)
-        {
-            switch (s.second.type)
-            {
-                case QUASAR_SETTING_ENTRY_INT:
-                    settings[s.first] = s.second.inttype.val;
-                    break;
-
-                case QUASAR_SETTING_ENTRY_DOUBLE:
-                    settings[s.first] = s.second.doubletype.val;
-                    break;
-
-                case QUASAR_SETTING_ENTRY_BOOL:
-                    settings[s.first] = s.second.booltype.val;
-                    break;
-            }
-        }
-
-        msg["data"] = settings;
         QJsonDocument doc(msg);
-
         payload = QString::fromUtf8(doc.toJson());
     }
 

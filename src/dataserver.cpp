@@ -420,90 +420,7 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
 
             for (auto& iext : m_Extensions)
             {
-                QJsonObject jext;
-
-                auto& ext = iext.second;
-
-                // ext info
-                jext["name"]        = iext.first;
-                jext["fullname"]    = ext->getName();
-                jext["version"]     = ext->getVersion();
-                jext["author"]      = ext->getAuthor();
-                jext["description"] = ext->getDesc();
-                jext["website"]; // TODO ext web
-
-                // ext rates
-                QJsonArray rates;
-
-                for (auto& isrc : ext->getDataSources())
-                {
-                    QJsonObject rate;
-
-                    auto& src       = isrc.second;
-                    rate["name"]    = src.name;
-                    rate["enabled"] = settings.value(ext->getSettingsKey(src.name + QUASAR_DP_ENABLED), true).toBool();
-                    rate["rate"]    = src.refreshmsec;
-
-                    rates.append(rate);
-                }
-
-                jext["rates"] = rates;
-
-                // ext settings
-                if (auto eset = ext->getSettings())
-                {
-                    static const QString entryTypeStrArr[] = {"int", "double", "bool"};
-
-                    QJsonArray extsettings;
-
-                    for (auto& it : eset->map)
-                    {
-                        QJsonObject s;
-
-                        auto& entry = it.second;
-                        s["name"]   = it.first;
-                        s["desc"]   = entry.description;
-                        s["type"]   = entryTypeStrArr[entry.type];
-
-                        switch (entry.type)
-                        {
-                            case QUASAR_SETTING_ENTRY_INT:
-                            {
-                                s["min"]  = entry.inttype.min;
-                                s["max"]  = entry.inttype.max;
-                                s["step"] = entry.inttype.step;
-                                s["def"]  = entry.inttype.def;
-                                s["val"]  = entry.inttype.val;
-                                break;
-                            }
-
-                            case QUASAR_SETTING_ENTRY_DOUBLE:
-                            {
-                                s["min"]  = entry.doubletype.min;
-                                s["max"]  = entry.doubletype.max;
-                                s["step"] = entry.doubletype.step;
-                                s["def"]  = entry.doubletype.def;
-                                s["val"]  = entry.doubletype.val;
-                                break;
-                            }
-
-                            case QUASAR_SETTING_ENTRY_BOOL:
-                            {
-                                s["def"] = entry.booltype.def;
-                                s["val"] = entry.booltype.val;
-                                break;
-                            }
-                        }
-
-                        extsettings.append(s);
-                    }
-
-                    jext["settings"] = extsettings;
-                }
-                else
-                {
-                    jext["settings"] = QJsonValue(QJsonValue::Null);
-                }
+                extensions.append(iext.second->getMetadataJSON(false));
             }
         }
 
@@ -687,7 +604,8 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                     continue;
                 }
 
-                auto extset = exts[extkey].toObject();
+                auto& ext    = m_Extensions[extkey];
+                auto  extset = exts[extkey].toObject();
 
                 for (auto& setkey : extset.keys())
                 {
@@ -700,7 +618,6 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                         continue;
                     }
 
-                    auto ext = m_Extensions[parts[0]].get();
                     if (parts.length() < 3)
                     {
                         // custom setting
@@ -733,6 +650,8 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                         }
                     }
                 }
+
+                ext->updateExtensionSettings();
             }
         }
         else if (key.startsWith("general"))

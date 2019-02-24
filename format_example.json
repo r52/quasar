@@ -133,4 +133,38 @@
             ]
         }
     }
+},
+{
+    "data": {
+        "settings": {
+            "win_audio_viz": {
+                "rates": [{
+                    "name": "viz",
+                    "enabled": true,
+                    "rate": null
+                }],
+                "settings": [{
+                        "name": "fftsize",
+                        "desc": "FFT Size",
+                        "type": "int",
+                        "min": 0,
+                        "max": 8192,
+                        "step": 2,
+                        "def": 256,
+                        "val": 256
+                    },
+                    {
+                        "name": "sensitivity",
+                        "desc": "Sensitivity",
+                        "type": "double",
+                        "min": 0.0,
+                        "max": 10000.0,
+                        "step": 0.1,
+                        "def": 50.0,
+                        "val": 50.0
+                    }
+                ]
+            }
+        }
+    }
 }
