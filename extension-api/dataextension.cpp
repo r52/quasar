@@ -437,40 +437,64 @@ void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
     }
 }
 
-void DataExtension::setCustomSetting(QString name, int val)
+void DataExtension::setAllSettings(const QJsonObject& setjs)
 {
-    if (m_settings)
+    QSettings settings;
+
+    for (auto& setkey : setjs.keys())
     {
-        m_settings->map[name].inttype.val = val;
+        auto parts = setkey.split("/", QString::SkipEmptyParts);
 
-        // Save to file
-        QSettings settings;
-        settings.setValue(getSettingsKey(name), val);
+        if (parts.length() < 2 || parts.length() > 3)
+        {
+            // invalid key
+            qWarning() << "Invalid setting key " << setkey;
+            continue;
+        }
+
+        auto name = parts[1];
+
+        if (parts.length() < 3 && m_settings)
+        {
+            // custom setting
+            // <extname>/<setting name>
+
+            auto& cmap = m_settings->map;
+            auto& cset = cmap[name];
+
+            switch (cset.type)
+            {
+                case QUASAR_SETTING_ENTRY_INT:
+                    cset.inttype.val = setjs[setkey].toInt();
+                    settings.setValue(getSettingsKey(name), setjs[setkey].toInt());
+                    break;
+                case QUASAR_SETTING_ENTRY_DOUBLE:
+                    cset.doubletype.val = setjs[setkey].toDouble();
+                    settings.setValue(getSettingsKey(name), setjs[setkey].toDouble());
+                    break;
+                case QUASAR_SETTING_ENTRY_BOOL:
+                    cset.booltype.val = setjs[setkey].toBool();
+                    settings.setValue(getSettingsKey(name), setjs[setkey].toBool());
+                    break;
+            }
+        }
+        else
+        {
+            // <extname>/<source name>/<rate|enabled>
+
+            auto type = parts[2];
+            if (type == "rate")
+            {
+                setDataSourceRefresh(name, setjs[setkey].toInt());
+            }
+            else if (type == "enabled")
+            {
+                setDataSourceEnabled(name, setjs[setkey].toBool());
+            }
+        }
     }
-}
 
-void DataExtension::setCustomSetting(QString name, double val)
-{
-    if (m_settings)
-    {
-        m_settings->map[name].doubletype.val = val;
-
-        // Save to file
-        QSettings settings;
-        settings.setValue(getSettingsKey(name), val);
-    }
-}
-
-void DataExtension::setCustomSetting(QString name, bool val)
-{
-    if (m_settings)
-    {
-        m_settings->map[name].booltype.val = val;
-
-        // Save to file
-        QSettings settings;
-        settings.setValue(getSettingsKey(name), val);
-    }
+    updateExtensionSettings();
 }
 
 void DataExtension::updateExtensionSettings()
@@ -544,30 +568,26 @@ void DataExtension::createTimer(DataSource& data)
 
 QString DataExtension::craftDataMessage(const DataSource& data)
 {
-    // TODO: FIX THIS
     QJsonObject src;
     auto        dat = src[data.name];
 
     // Poll extension for data source
     if (!m_extension->get_data(data.uid, &dat))
     {
-        qWarning() << "getData(" << getCode() << ", " << data.name << ") failed";
+        qWarning() << "get_data(" << getCode() << ", " << data.name << ") failed";
         return QString();
     }
 
-    if (dat.isNull())
+    if (dat.isUndefined())
     {
         // Allow empty return (for async data)
         return QString();
     }
 
     // Craft response
-    QJsonObject ext;
-    QJsonObject reply;
-    ext[getCode()] = src;
-    reply["data"]  = ext;
+    auto msg = QJsonObject{{"data", QJsonObject{{getCode(), src}}}};
 
-    QJsonDocument doc(reply);
+    QJsonDocument doc(msg);
 
     return QString::fromUtf8(doc.toJson());
 }

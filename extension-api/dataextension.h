@@ -182,35 +182,14 @@ public:
     */
     void setDataSourceRefresh(QString source, int64_t msec);
 
-    /*! Sets an integer custom extension setting.
+    /*! Sets all settings returned by the settings dialog
         This function is only called by the relevant GUI can should not be used otherwise.
 
-        \param[in]  name    Custom setting name
-        \param[in]  val     New value
+        \param[in]  settings    JSON object containing extension settings being changed
 
-        \sa quasar_settings_t
+        \sa quasar_settings_t, DataSource.refreshmsec, DataSource.timer
     */
-    void setCustomSetting(QString name, int val);
-
-    /*! Sets a double custom extension setting.
-        This function is only called by the relevant GUI can should not be used otherwise.
-
-        \param[in]  name    Custom setting name
-        \param[in]  val     New value
-
-        \sa quasar_settings_t
-    */
-    void setCustomSetting(QString name, double val);
-
-    /*! Sets a bool custom extension setting.
-        This function is only called by the relevant GUI can should not be used otherwise.
-
-        \param[in]  name    Custom setting name
-        \param[in]  val     New value
-
-        \sa quasar_settings_t
-    */
-    void setCustomSetting(QString name, bool val);
+    void setAllSettings(const QJsonObject& setjs);
 
     /*! Propagates custom setting value changes to the extension
         as well as all unique subscribers

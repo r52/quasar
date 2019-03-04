@@ -604,54 +604,8 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                     continue;
                 }
 
-                auto& ext    = m_Extensions[extkey];
-                auto  extset = exts[extkey].toObject();
-
-                for (auto& setkey : extset.keys())
-                {
-                    auto parts = setkey.split("/", QString::SkipEmptyParts);
-
-                    if (parts.length() < 2 || parts.length() > 3)
-                    {
-                        // invalid key
-                        qWarning() << "Invalid setting key " << key;
-                        continue;
-                    }
-
-                    if (parts.length() < 3)
-                    {
-                        // custom setting
-                        auto& cmap = ext->getSettings()->map;
-                        auto& cset = cmap[parts[1]];
-
-                        switch (cset.type)
-                        {
-                            case QUASAR_SETTING_ENTRY_INT:
-                                ext->setCustomSetting(parts[1], extset[setkey].toInt());
-                                break;
-                            case QUASAR_SETTING_ENTRY_DOUBLE:
-                                ext->setCustomSetting(parts[1], extset[setkey].toDouble());
-                                break;
-                            case QUASAR_SETTING_ENTRY_BOOL:
-                                ext->setCustomSetting(parts[1], extset[setkey].toBool());
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        // rate setting
-                        if (parts[2] == "rate")
-                        {
-                            ext->setDataSourceRefresh(parts[1], extset[setkey].toInt());
-                        }
-                        else if (parts[2] == "enabled")
-                        {
-                            ext->setDataSourceEnabled(parts[1], extset[setkey].toBool());
-                        }
-                    }
-                }
-
-                ext->updateExtensionSettings();
+                auto& ext = m_Extensions[extkey];
+                ext->setAllSettings(exts[extkey].toObject());
             }
         }
         else if (key.startsWith("general"))

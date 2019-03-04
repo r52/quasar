@@ -37,7 +37,7 @@ quasar_settings_t* quasar_create_settings(void)
 
 quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* data)
 {
-    QJsonValueRef* ref = (QJsonValueRef*) hData;
+    QJsonValueRef* ref = static_cast<QJsonValueRef*>(hData);
 
     if (ref)
     {
@@ -51,7 +51,7 @@ quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* 
 
 quasar_data_handle quasar_set_data_json(quasar_data_handle hData, const char* data)
 {
-    QJsonValueRef* ref = (QJsonValueRef*) hData;
+    QJsonValueRef* ref = static_cast<QJsonValueRef*>(hData);
 
     if (ref)
     {
@@ -66,7 +66,7 @@ quasar_data_handle quasar_set_data_json(quasar_data_handle hData, const char* da
 
 quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, const char* data, size_t len)
 {
-    QJsonValueRef* ref = (QJsonValueRef*) hData;
+    QJsonValueRef* ref = static_cast<QJsonValueRef*>(hData);
 
     if (ref)
     {
@@ -80,7 +80,7 @@ quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, const char* 
 
 quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char** arr, size_t len)
 {
-    QJsonValueRef* ref = (QJsonValueRef*) hData;
+    QJsonValueRef* ref = static_cast<QJsonValueRef*>(hData);
 
     if (ref)
     {
@@ -101,7 +101,7 @@ quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char**
 
 quasar_data_handle quasar_set_data_int_array(quasar_data_handle hData, int* arr, size_t len)
 {
-    QJsonValueRef* ref = (QJsonValueRef*) hData;
+    QJsonValueRef* ref = static_cast<QJsonValueRef*>(hData);
 
     if (ref)
     {
@@ -122,7 +122,7 @@ quasar_data_handle quasar_set_data_int_array(quasar_data_handle hData, int* arr,
 
 quasar_data_handle quasar_set_data_float_array(quasar_data_handle hData, float* arr, size_t len)
 {
-    QJsonValueRef* ref = (QJsonValueRef*) hData;
+    QJsonValueRef* ref = static_cast<QJsonValueRef*>(hData);
 
     if (ref)
     {
@@ -143,7 +143,7 @@ quasar_data_handle quasar_set_data_float_array(quasar_data_handle hData, float* 
 
 quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double* arr, size_t len)
 {
-    QJsonValueRef* ref = (QJsonValueRef*) hData;
+    QJsonValueRef* ref = static_cast<QJsonValueRef*>(hData);
 
     if (ref)
     {
@@ -264,7 +264,7 @@ double quasar_get_double(quasar_settings_t* settings, const char* name)
 
 void quasar_signal_data_ready(quasar_ext_handle handle, const char* source)
 {
-    DataExtension* ext = (DataExtension*) handle;
+    DataExtension* ext = static_cast<DataExtension*>(handle);
 
     if (ext)
     {
@@ -274,7 +274,7 @@ void quasar_signal_data_ready(quasar_ext_handle handle, const char* source)
 
 void quasar_signal_wait_processed(quasar_ext_handle handle, const char* source)
 {
-    DataExtension* ext = (DataExtension*) handle;
+    DataExtension* ext = static_cast<DataExtension*>(handle);
 
     if (ext)
     {
