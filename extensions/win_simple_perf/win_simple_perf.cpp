@@ -5,17 +5,17 @@
 #include <sstream>
 #include <unordered_map>
 
-#include <plugin_api.h>
-#include <plugin_support.h>
+#include <extension_api.h>
+#include <extension_support.h>
 
-#define PLUGIN_NAME "Simple Performance Query"
-#define PLUGIN_CODE "win_simple_perf"
+#define EXT_FULLNAME "Simple Performance Query"
+#define EXT_NAME "win_simple_perf"
 
-#define qlog(l, f, ...)                                                \
-    {                                                                  \
-        char msg[256];                                                 \
-        snprintf(msg, sizeof(msg), PLUGIN_CODE ": " f, ##__VA_ARGS__); \
-        quasar_log(l, msg);                                            \
+#define qlog(l, f, ...)                                             \
+    {                                                               \
+        char msg[256];                                              \
+        snprintf(msg, sizeof(msg), EXT_NAME ": " f, ##__VA_ARGS__); \
+        quasar_log(l, msg);                                         \
     }
 
 #define info(f, ...) qlog(QUASAR_LOG_INFO, f, ##__VA_ARGS__)
@@ -32,11 +32,7 @@ enum PerfDataSources
     PERF_SRC_RAM
 };
 
-quasar_data_source_t sources[2] =
-    {
-        { "cpu", 5000, 0 },
-        { "ram", 5000, 0 }
-    };
+quasar_data_source_t sources[2] = {{"cpu", 5000, 0}, {"ram", 5000, 0}};
 
 // From https://stackoverflow.com/questions/23143693/retrieving-cpu-load-percent-total-in-windows-with-c
 static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
@@ -65,14 +61,16 @@ static unsigned long long FileTimeToInt64(const FILETIME& ft)
 float GetCPULoad()
 {
     FILETIME idleTime, kernelTime, userTime;
-    return GetSystemTimes(&idleTime, &kernelTime, &userTime) ? CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime) + FileTimeToInt64(userTime)) : -1.0f;
+    return GetSystemTimes(&idleTime, &kernelTime, &userTime) ?
+               CalculateCPULoad(FileTimeToInt64(idleTime), FileTimeToInt64(kernelTime) + FileTimeToInt64(userTime)) :
+               -1.0f;
 }
 
 bool getCPUData(quasar_data_handle hData)
 {
     double cpu = GetCPULoad() * 100.0;
 
-    quasar_set_data_string(hData, std::to_string((int) cpu).c_str());
+    quasar_set_data_int(hData, (int) cpu);
 
     return true;
 }
@@ -95,7 +93,7 @@ bool getRAMData(quasar_data_handle hData)
     return true;
 }
 
-bool simple_perf_init(quasar_plugin_handle handle)
+bool simple_perf_init(quasar_ext_handle handle)
 {
     // Process uid entries.
     if (sources[PERF_SRC_CPU].uid != 0)
@@ -111,7 +109,7 @@ bool simple_perf_init(quasar_plugin_handle handle)
     return true;
 }
 
-bool simple_perf_shutdown(quasar_plugin_handle handle)
+bool simple_perf_shutdown(quasar_ext_handle handle)
 {
     // nothing to do. no dynamic allocations
     return true;
@@ -131,31 +129,26 @@ bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData)
     return false;
 }
 
-quasar_plugin_info_t info =
-    {
-        QUASAR_API_VERSION,
-        PLUGIN_NAME,
-        PLUGIN_CODE,
-        "v1",
-        "me",
-        "Sample plugin that queries basic performance numbers",
+quasar_ext_info_fields_t fields = {EXT_NAME, EXT_FULLNAME, "2.0", "r52", "Sample plugin that queries basic performance numbers", ""};
 
-        std::size(sources),
-        sources,
+quasar_ext_info_t info = {QUASAR_API_VERSION,
+                          &fields,
 
-        simple_perf_init,
-        simple_perf_shutdown,
-        simple_perf_get_data,
-        nullptr,
-        nullptr
-    };
+                          std::size(sources),
+                          sources,
 
-quasar_plugin_info_t* quasar_plugin_load(void)
+                          simple_perf_init,
+                          simple_perf_shutdown,
+                          simple_perf_get_data,
+                          nullptr,
+                          nullptr};
+
+quasar_ext_info_t* quasar_ext_load(void)
 {
     return &info;
 }
 
-void quasar_plugin_destroy(quasar_plugin_info_t* info)
+void quasar_ext_destroy(quasar_ext_info_t* info)
 {
     // does nothing; info is on stack
 }
