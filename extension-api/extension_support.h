@@ -45,7 +45,28 @@ SAPI_EXPORT quasar_settings_t* quasar_create_settings(void);
 */
 SAPI_EXPORT quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* data);
 
-//! Sets the return data to be a valid JSON string
+//! Sets the return data to be an integer
+/*! \param[in]  hData   Data handle
+    \param[in]  data    Data to set
+    \return Data handle if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_data_handle quasar_set_data_int(quasar_data_handle hData, int data);
+
+//! Sets the return data to be a floating point double
+/*! \param[in]  hData   Data handle
+    \param[in]  data    Data to set
+    \return Data handle if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_data_handle quasar_set_data_double(quasar_data_handle hData, double data);
+
+//! Sets the return data to be a bool
+/*! \param[in]  hData   Data handle
+    \param[in]  data    Data to set
+    \return Data handle if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_data_handle quasar_set_data_bool(quasar_data_handle hData, bool data);
+
+//! Sets the return data to be a valid JSON object string
 /*! \param[in]  hData   Data handle
     \param[in]  data    Data to set
     \return Data handle if successful, nullptr otherwise
