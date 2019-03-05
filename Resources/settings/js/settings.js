@@ -74,7 +74,7 @@ function createExtensionTab(ext) {
     <div class="tab-pane fade" id="${ext.name}" role="tabpanel" aria-labelledby="extensions-tab">
         <h1>${ext.fullname}</h1>
         <dl class="row">
-            <dt class="col-sm-3">Extension Code</dt>
+            <dt class="col-sm-3">Extension Identifier</dt>
             <dd class="col-sm-9">${ext.name}</dd>
             <dt class="col-sm-3">Description</dt>
             <dd class="col-sm-9">${ext.description}</dd>
@@ -83,7 +83,7 @@ function createExtensionTab(ext) {
             <dt class="col-sm-3">Version</dt>
             <dd class="col-sm-9">${ext.version}</dd>
             <dt class="col-sm-3">Website</dt>
-            <dd class="col-sm-9">${ext.website}</dd>
+            <dd class="col-sm-9">${ext.url}</dd>
         </dl>
         <h2>Data Sources</h2>
         ${rates}

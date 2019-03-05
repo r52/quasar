@@ -31,7 +31,7 @@
                     "version": "v1",
                     "author": "me",
                     "description": "Sample extension providing basic performance metrics",
-                    "website": "https://github.com/r52/quasar",
+                    "url": "https://github.com/r52/quasar",
                     "rates": [{
                             "name": "cpu",
                             "enabled": true,
@@ -51,7 +51,7 @@
                     "version": "v1",
                     "author": "me",
                     "description": "Provides desktop audio frequency data",
-                    "website": "https://github.com/r52/quasar",
+                    "url": "https://github.com/r52/quasar",
                     "rates": [{
                         "name": "viz",
                         "enabled": true,

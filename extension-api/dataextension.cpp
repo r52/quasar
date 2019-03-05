@@ -26,18 +26,30 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
 {
     if (nullptr == m_extension)
     {
-        throw std::invalid_argument("null extension struct");
+        throw std::invalid_argument("null extension info struct");
     }
 
-    CHAR_TO_UTF8(m_name, m_extension->name);
-    CHAR_TO_UTF8(m_code, m_extension->code);
-    CHAR_TO_UTF8(m_author, m_extension->author);
-    CHAR_TO_UTF8(m_desc, m_extension->description);
-    CHAR_TO_UTF8(m_version, m_extension->version);
-
-    if (m_code.isEmpty() || m_name.isEmpty())
+    // Currently only support latest API version
+    if (m_extension->api_version != QUASAR_API_VERSION)
     {
-        throw std::runtime_error("Invalid extension name or code");
+        throw std::invalid_argument("unsupported API version");
+    }
+
+    if (nullptr == m_extension->fields)
+    {
+        throw std::invalid_argument("null extension fields struct");
+    }
+
+    CHAR_TO_UTF8(m_name, m_extension->fields->name);
+    CHAR_TO_UTF8(m_fullname, m_extension->fields->fullname);
+    CHAR_TO_UTF8(m_author, m_extension->fields->author);
+    CHAR_TO_UTF8(m_desc, m_extension->fields->description);
+    CHAR_TO_UTF8(m_version, m_extension->fields->version);
+    CHAR_TO_UTF8(m_url, m_extension->fields->url);
+
+    if (m_name.isEmpty() || m_fullname.isEmpty())
+    {
+        throw std::runtime_error("Invalid extension identifier or name");
     }
 
     QSettings settings;
@@ -51,11 +63,11 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
 
             if (m_datasources.count(srcname))
             {
-                qWarning() << "Extension " << m_code << " tried to register more than one data source '" << srcname << "'";
+                qWarning() << "Extension " << m_name << " tried to register more than one data source '" << srcname << "'";
                 continue;
             }
 
-            qInfo() << "Extension " << m_code << " registering data source '" << srcname << "'";
+            qInfo() << "Extension " << m_name << " registering data source '" << srcname << "'";
 
             DataSource& source = m_datasources[srcname];
             source.name        = srcname;
@@ -180,7 +192,7 @@ bool DataExtension::addSubscriber(QString source, QWebSocket* subscriber, QStrin
 
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_code << " by widget " << widgetName;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_name << " by widget " << widgetName;
         return false;
     }
 
@@ -219,7 +231,7 @@ void DataExtension::removeSubscriber(QWebSocket* subscriber)
         // Log if unsubscribed succeeded
         if (it.second.subscribers.erase(subscriber))
         {
-            qInfo() << "Widget unsubscribed from extension " << m_code << " data source " << it.first;
+            qInfo() << "Widget unsubscribed from extension " << m_name << " data source " << it.first;
         }
 
         // Stop timer if no subscribers
@@ -240,7 +252,7 @@ void DataExtension::pollAndSendData(QString source, QWebSocket* subscriber, QStr
 
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_code << " by widget " << widgetName;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_name << " by widget " << widgetName;
         return;
     }
 
@@ -302,12 +314,12 @@ QJsonObject DataExtension::getMetadataJSON(bool settings_only)
     if (!settings_only)
     {
         // ext info
-        mdat["name"]        = getCode();
-        mdat["fullname"]    = getName();
+        mdat["name"]        = getName();
+        mdat["fullname"]    = getFullName();
         mdat["version"]     = getVersion();
         mdat["author"]      = getAuthor();
         mdat["description"] = getDesc();
-        // mdat["website"]; TODO website api
+        mdat["url"]         = getUrl();
     }
 
     // ext rates
@@ -390,7 +402,7 @@ void DataExtension::setDataSourceEnabled(QString source, bool enabled)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
         return;
     }
 
@@ -418,7 +430,7 @@ void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
         return;
     }
 
@@ -511,7 +523,7 @@ void DataExtension::emitDataReady(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
         return;
     }
 
@@ -527,7 +539,7 @@ void DataExtension::waitDataProcessed(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
         return;
     }
 
@@ -545,7 +557,7 @@ void DataExtension::sendDataToSubscribersByName(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_code;
+        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
         return;
     }
 
@@ -574,7 +586,7 @@ QString DataExtension::craftDataMessage(const DataSource& data)
     // Poll extension for data source
     if (!m_extension->get_data(data.uid, &dat))
     {
-        qWarning() << "get_data(" << getCode() << ", " << data.name << ") failed";
+        qWarning() << "get_data(" << m_name << ", " << data.name << ") failed";
         return QString();
     }
 
@@ -585,7 +597,7 @@ QString DataExtension::craftDataMessage(const DataSource& data)
     }
 
     // Craft response
-    auto msg = QJsonObject{{"data", QJsonObject{{getCode(), src}}}};
+    auto msg = QJsonObject{{"data", QJsonObject{{m_name, src}}}};
 
     QJsonDocument doc(msg);
 
@@ -599,7 +611,7 @@ QString DataExtension::craftSettingsMessage()
     if (m_settings)
     {
         auto mdat = getMetadataJSON(true);
-        auto msg  = QJsonObject{{"data", QJsonObject{{"settings", QJsonObject{{getCode(), mdat}}}}}};
+        auto msg  = QJsonObject{{"data", QJsonObject{{"settings", QJsonObject{{m_name, mdat}}}}}};
 
         QJsonDocument doc(msg);
         payload = QString::fromUtf8(doc.toJson());

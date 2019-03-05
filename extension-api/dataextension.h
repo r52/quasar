@@ -23,9 +23,6 @@
 //! Internal setting prefix for Data Source refresh rate UI
 #define QUASAR_DP_RATE_PREFIX "/rate"
 
-//! Internal setting prefix for custom extension defined settings
-#define QUASAR_DP_CUSTOM_PREFIX "custom_"
-
 #ifdef PLUGINAPI_LIB
 #    define PAPI_EXPORT Q_DECL_EXPORT
 #else
@@ -119,15 +116,15 @@ public:
     */
     QString getLibPath() { return m_libpath; };
 
-    /*! Gets extension name
-        \return extension name
+    /*! Gets extension identifier
+        \return extension identifier
     */
     QString getName() { return m_name; };
 
-    /*! Gets extension codename
-        \return extension codename
+    /*! Gets extension full name
+        \return extension full name
     */
-    QString getCode() { return m_code; };
+    QString getFullName() { return m_fullname; };
 
     /*! Gets extension description
         \return extension description
@@ -144,10 +141,15 @@ public:
     */
     QString getVersion() { return m_version; };
 
+    /*! Gets extension url
+        \return extension url
+    */
+    QString getUrl() { return m_url; };
+
     /*! Gets extension settings prefix for use with internal Quasar settings store
         \return extension settings prefix
     */
-    QString getSettingsKey(QString name) { return getCode() + "/" + name; };
+    QString getSettingsKey(QString name) { return getName() + "/" + name; };
 
     //! Gets all of this extension's metadata and settings as a JSON object
     /*!
@@ -266,12 +268,13 @@ private:
 
     std::unique_ptr<quasar_settings_t> m_settings; //!< Extension settings \sa quasar_settings_t
 
-    QString m_libpath; //!< Path to library file
-    QString m_name;    //!< extension name
-    QString m_code;    //!< extension codename
-    QString m_desc;    //!< extension description
-    QString m_author;  //!< extension author
-    QString m_version; //!< extension version string
+    QString m_libpath;  //!< Path to library file
+    QString m_name;     //!< Extension identifiter
+    QString m_fullname; //!< Extension full name
+    QString m_desc;     //!< Extension description
+    QString m_author;   //!< Extension author
+    QString m_version;  //!< Extension version string
+    QString m_url;      //!< Extension url, if any
 
     DataSourceMapType m_datasources; //!< Map of Data Sources provided by this extension
 };

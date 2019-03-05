@@ -150,18 +150,18 @@ void DataServer::loadExtensions()
         {
             qWarning() << "Failed to load extension" << libpath;
         }
-        else if (m_InternalTargets.count(extn->getCode()))
+        else if (m_InternalTargets.count(extn->getName()))
         {
-            qWarning() << "The extension code" << extn->getCode() << " is reserved. Unloading " << libpath;
+            qWarning() << "The extension code" << extn->getName() << " is reserved. Unloading " << libpath;
         }
-        else if (m_Extensions.count(extn->getCode()))
+        else if (m_Extensions.count(extn->getName()))
         {
-            qWarning() << "Extension with code " << extn->getCode() << " already loaded. Unloading" << libpath;
+            qWarning() << "Extension with code " << extn->getName() << " already loaded. Unloading" << libpath;
         }
         else
         {
-            qInfo() << "Extension " << extn->getCode() << " loaded.";
-            m_Extensions[extn->getCode()].reset(extn);
+            qInfo() << "Extension " << extn->getName() << " loaded.";
+            m_Extensions[extn->getName()].reset(extn);
             extn = nullptr;
         }
 

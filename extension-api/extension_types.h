@@ -16,7 +16,7 @@
 #endif
 
 //! Quasar extension API version.
-#define QUASAR_API_VERSION 1
+#define QUASAR_API_VERSION 2
 
 #if defined(__cplusplus)
 extern "C" {
@@ -47,12 +47,30 @@ enum quasar_polling_type_t
 */
 struct quasar_settings_t;
 
+// Typedefs
+
 //! Type for the extension handle pointer.
 typedef void* quasar_ext_handle;
 
 //! Handle type for storing return data.
 /*! \sa extension_support.h, quasar_ext_info_t.get_data */
 typedef void* quasar_data_handle;
+
+//! Function pointer type for the \ref quasar_ext_info_t.init and \ref quasar_ext_info_t.shutdown functions.
+/*! \sa quasar_ext_info_t.init, quasar_ext_info_t.shutdown */
+typedef bool (*ext_info_call_t)(quasar_ext_handle);
+
+//! Function pointer type for the \ref quasar_ext_info_t.create_settings function.
+/*! \sa quasar_ext_info_t.create_settings */
+typedef quasar_settings_t* (*ext_create_settings_call_t)();
+
+//! Function pointer type for settings related functions, like \ref quasar_ext_info_t.update.
+/*! \sa quasar_ext_info_t.update */
+typedef void (*ext_settings_call_t)(quasar_settings_t*);
+
+//! Function pointer type for the \ref quasar_ext_info_t.get_data function.
+/*! \sa quasar_ext_info_t.get_data */
+typedef bool (*ext_get_data_call_t)(size_t, quasar_data_handle);
 
 //! Struct for defining Data Sources.
 /*! Defines the Data Sources available to widgets provided by this extension.
@@ -72,6 +90,20 @@ struct quasar_data_source_t
                 //!< \ref quasar_ext_info_t.get_data.
 };
 
+//! Struct for defining information and description fields for the extension.
+/*! Defines the information and description fields for this extension.
+    \sa quasar_ext_info_t.fields
+*/
+struct quasar_ext_info_fields_t
+{
+    char name[16];         //!< A unique short identifier for this extension. Used by widgets to identify and subscribe to this extension.
+    char fullname[64];     //!< Full name of this extension.
+    char version[64];      //!< Version string.
+    char author[64];       //!< Author.
+    char description[256]; //!< Extension description.
+    char url[256];         //!< Extension url, if any.
+};
+
 //! Struct for defining a Quasar extension.
 /*! An extension should populate this struct with data upon initialization
     and return it to Quasar when \ref quasar_ext_load() is called
@@ -79,28 +111,8 @@ struct quasar_data_source_t
 */
 struct quasar_ext_info_t
 {
-    //! Function pointer type for the \ref init and \ref shutdown functions.
-    /*! \sa init, shutdown */
-    typedef bool (*ext_info_call_t)(quasar_ext_handle);
-
-    //! Function pointer type for the \ref create_settings function.
-    /*! \sa create_settings */
-    typedef quasar_settings_t* (*ext_create_settings_call_t)();
-
-    //! Function pointer type for settings related functions, like \ref update.
-    /*! \sa update */
-    typedef void (*ext_settings_call_t)(quasar_settings_t*);
-
-    //! Function pointer type for the \ref get_data function.
-    /*! \sa get_data */
-    typedef bool (*ext_get_data_call_t)(size_t, quasar_data_handle);
-
-    int  api_version;      //!< API version. Should always be initialized to #QUASAR_API_VERSION.
-    char name[64];         //!< Name of this extension.
-    char code[16];         //!< A unique short identifier for widgets to identify and subscribe to this extension.
-    char version[64];      //!< Version string.
-    char author[64];       //!< Author.
-    char description[256]; //!< Extension description.
+    int                       api_version; //!< API version. Should always be initialized to #QUASAR_API_VERSION.
+    quasar_ext_info_fields_t* fields;      //!< Extension info/description fields. Must be initialized.
 
     size_t                numDataSources; //!< Number of Data Sources provided by this extension.
     quasar_data_source_t* dataSources;    //!< Array of Data Sources provided by this extension.
