@@ -394,8 +394,14 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
 
         general["dataport"] = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
         general["loglevel"] = settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
-        general["cookies"]  = QString::fromUtf8(qUncompress(settings.value(QUASAR_CONFIG_COOKIES).toByteArray()));
         general["savelog"]  = settings.value(QUASAR_CONFIG_LOGFILE, false).toBool();
+        general["cookies"]  = "";
+
+        auto bcookies = settings.value(QUASAR_CONFIG_COOKIES, QByteArray()).toByteArray();
+        if (!bcookies.isEmpty())
+        {
+            general["cookies"] = QString::fromUtf8(qUncompress(bcookies));
+        }
 
 #ifdef Q_OS_WIN
         // ------------------Startup launch

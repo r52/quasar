@@ -154,11 +154,20 @@ WebWidget* WidgetRegistry::findWidget(QString widgetName)
 void WidgetRegistry::loadCookies()
 {
     QSettings settings;
-    auto      rawcookies = qUncompress(settings.value(QUASAR_CONFIG_COOKIES).toByteArray());
+
+    auto bcookies = settings.value(QUASAR_CONFIG_COOKIES, QByteArray()).toByteArray();
+
+    if (bcookies.isEmpty())
+    {
+        qInfo() << "No cookies loaded";
+        return;
+    }
+
+    auto rawcookies = qUncompress(bcookies);
 
     if (rawcookies.isEmpty())
     {
-        qInfo() << "No cookies loaded";
+        qWarning() << "Corrupted cookies";
         return;
     }
 
