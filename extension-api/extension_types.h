@@ -33,7 +33,7 @@ enum quasar_log_level_t
 
 //! Defines valid polling type values.
 /*! Positive values determine extension timed data refresh rate
-    \sa quasar_data_source_t.refreshMsec
+    \sa quasar_data_source_t.rate
 */
 enum quasar_polling_type_t
 {
@@ -78,11 +78,16 @@ typedef bool (*ext_get_data_call_t)(size_t, quasar_data_handle);
 */
 struct quasar_data_source_t
 {
-    char dataSrc[32]; //!< Codename of a Data Source.
+    char name[32]; //!< Identifier for this data source.
 
-    int64_t refreshMsec; //!< Default rate of refresh for this Data Source (in milliseconds).
-                         //!< See \ref quasar_polling_type_t for additional polling options.
-                         //!< \sa quasar_signal_data_ready(), quasar_signal_wait_processed(), quasar_polling_type_t
+    int64_t rate; //!< Default rate of refresh for this Data Source (in milliseconds).
+                  //!< See \ref quasar_polling_type_t for additional polling options.
+                  //!< \sa quasar_signal_data_ready(), quasar_signal_wait_processed(), quasar_polling_type_t
+
+    int64_t validtime; //!< For client polled data (\ref QUASAR_POLLING_CLIENT), this defines the duration in milliseconds
+                       //!< that newly retrieved data is cached remains valid. Additional poll requests during this valid duration
+                       //!< will return the cached data. A value of 0 means the data is never cached. Not used for other polling types.
+                       //!< \sa quasar_polling_type_t
 
     size_t uid; //!< uid assigned to this Data Source by Quasar.
                 //!< An integer uid is assigned to each Data Source by Quasar to reduce

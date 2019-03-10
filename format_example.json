@@ -13,7 +13,7 @@
     }
 },
 {
-    "error": "omg something failed"
+    "errors": "omg something failed"
 },
 {
     "data": {

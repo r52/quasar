@@ -59,7 +59,7 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
     {
         for (unsigned int i = 0; i < m_extension->numDataSources; i++)
         {
-            CHAR_TO_UTF8(QString srcname, m_extension->dataSources[i].dataSrc);
+            CHAR_TO_UTF8(QString srcname, m_extension->dataSources[i].name);
 
             if (m_datasources.count(srcname))
             {
@@ -70,17 +70,27 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
             qInfo() << "Extension " << m_name << " registering data source '" << srcname << "'";
 
             DataSource& source = m_datasources[srcname];
+            source.enabled     = settings.value(getSettingsKey(source.name + QUASAR_DP_ENABLED), true).toBool();
             source.name        = srcname;
             source.uid = m_extension->dataSources[i].uid = ++DataExtension::_uid;
-            source.refreshmsec =
-                settings.value(getSettingsKey(source.name + QUASAR_DP_RATE_PREFIX), (qlonglong) m_extension->dataSources[i].refreshMsec).toLongLong();
-            source.enabled = settings.value(getSettingsKey(source.name + QUASAR_DP_ENABLED), true).toBool();
+            source.rate      = settings.value(getSettingsKey(source.name + QUASAR_DP_RATE_PREFIX), (qlonglong) m_extension->dataSources[i].rate).toLongLong();
+            source.validtime = m_extension->dataSources[i].validtime;
 
-            // If data source is extension signaled or async poll
-            if (source.refreshmsec <= 0)
+            // Initialize type specific fields
+            if (source.rate == QUASAR_POLLING_SIGNALED)
             {
                 source.locks = std::make_unique<DataLock>();
-                connect(this, &DataExtension::dataReady, this, &DataExtension::sendDataToSubscribersByName, Qt::QueuedConnection);
+            }
+
+            if (source.rate == QUASAR_POLLING_CLIENT)
+            {
+                source.expiry = std::chrono::system_clock::now();
+            }
+
+            // If data source is extension signaled or async poll
+            if (source.rate <= QUASAR_POLLING_CLIENT)
+            {
+                connect(this, &DataExtension::dataReady, this, &DataExtension::handleDataReadySignal, Qt::QueuedConnection);
             }
         }
     }
@@ -164,9 +174,9 @@ DataExtension* DataExtension::load(QString libpath, QObject* parent)
 
     quasar_ext_info_t* p = loadfunc();
 
-    if (!p || !p->init || !p->shutdown || !p->get_data)
+    if (!p || !p->init || !p->shutdown || !p->get_data || !p->fields || !p->dataSources)
     {
-        qWarning() << "quasar_ext_load failed in" << libpath;
+        qWarning() << "quasar_ext_load failed in" << libpath << ": required extension data missing";
         return nullptr;
     }
 
@@ -196,14 +206,20 @@ bool DataExtension::addSubscriber(QString source, QWebSocket* subscriber, QStrin
         return false;
     }
 
-    // TODO maybe needs locks
-    DataSource& data = m_datasources[source];
+    // XXX maybe needs locks
+    DataSource& dsrc = m_datasources[source];
 
-    data.subscribers.insert(subscriber);
-
-    if (data.refreshmsec > 0)
+    if (dsrc.rate == QUASAR_POLLING_CLIENT)
     {
-        createTimer(data);
+        qWarning() << "Polling data source " << source << " in extension " << m_name << " requested by widget " << widgetName << " does not accept subscribers";
+        return false;
+    }
+
+    dsrc.subscribers.insert(subscriber);
+
+    if (dsrc.rate > QUASAR_POLLING_CLIENT)
+    {
+        createTimer(dsrc);
     }
 
     // Send settings if applicable
@@ -242,42 +258,72 @@ void DataExtension::removeSubscriber(QWebSocket* subscriber)
     }
 }
 
-void DataExtension::pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName)
+void DataExtension::pollAndSendData(QString source, QWebSocket* client, QString widgetName)
 {
-    if (!subscriber)
+    if (!client)
     {
-        qWarning() << "Null subscriber";
+        qWarning() << "Null client";
         return;
     }
 
-    if (!m_datasources.count(source))
+    QStringList dlist = source.split(',', QString::SkipEmptyParts);
+
+    QJsonObject data;
+    QJsonArray  errs;
+
+    for (QString& src : dlist)
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_name << " by widget " << widgetName;
-        return;
+        if (!m_datasources.count(src))
+        {
+            QString m = "Unknown data source " + src + " requested in extension " + m_name + " by widget " + widgetName;
+            errs.append(m);
+            qWarning() << m;
+            continue;
+        }
+
+        // XXX maybe needs locks
+        DataSource& dsrc   = m_datasources[src];
+        auto        result = getDataFromSource(data, dsrc);
+
+        switch (result)
+        {
+            case GET_DATA_FAILED:
+            {
+                QString m = "getDataFromSource(" + src + ") failed in extension " + m_name + " requested by widget " + widgetName;
+                errs.append(m);
+                qWarning() << m;
+            }
+            break;
+            case GET_DATA_DELAYED:
+                // add to poll queue
+                dsrc.pollqueue.push_back(client);
+                break;
+            case GET_DATA_SUCCESS:
+                // done. do nothing
+                break;
+        }
     }
 
-    // TODO maybe needs locks
-    DataSource& data = m_datasources[source];
-
-    QString message = craftDataMessage(data);
+    QString message = craftDataMessage(data, errs);
 
     if (!message.isEmpty())
     {
-        subscriber->sendTextMessage(message);
-
-        // Pop client from poll queue if data was readily available
-        data.subscribers.erase(subscriber);
+        client->sendTextMessage(message);
     }
 }
 
 void DataExtension::sendDataToSubscribers(DataSource& source)
 {
-    // TODO maybe needs locks
+    // XXX maybe needs locks
 
     // Only send if there are subscribers
     if (!source.subscribers.empty())
     {
-        QString message = craftDataMessage(source);
+        QJsonObject data;
+
+        getDataFromSource(data, source);
+
+        QString message = craftDataMessage(data);
 
         if (!message.isEmpty())
         {
@@ -286,12 +332,6 @@ void DataExtension::sendDataToSubscribers(DataSource& source)
                 sub->sendTextMessage(message);
             }
         }
-    }
-
-    if (source.refreshmsec == 0)
-    {
-        // Clear poll queue
-        source.subscribers.clear();
     }
 
     // Signal data processed
@@ -332,7 +372,7 @@ QJsonObject DataExtension::getMetadataJSON(bool settings_only)
         auto& src       = isrc.second;
         rate["name"]    = src.name;
         rate["enabled"] = settings.value(getSettingsKey(src.name + QUASAR_DP_ENABLED), true).toBool();
-        rate["rate"]    = src.refreshmsec;
+        rate["rate"]    = src.rate;
 
         rates.append(rate);
     }
@@ -414,7 +454,7 @@ void DataExtension::setDataSourceEnabled(QString source, bool enabled)
     QSettings settings;
     settings.setValue(getSettingsKey(source + QUASAR_DP_ENABLED), data.enabled);
 
-    if (data.enabled && data.refreshmsec > 0)
+    if (data.enabled && data.rate > QUASAR_POLLING_CLIENT)
     {
         // Create timer if not exist
         createTimer(data);
@@ -436,16 +476,16 @@ void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
 
     DataSource& data = m_datasources[source];
 
-    data.refreshmsec = msec;
+    data.rate = msec;
 
     // Save to file
     QSettings settings;
-    settings.setValue(getSettingsKey(source + QUASAR_DP_RATE_PREFIX), (qlonglong) data.refreshmsec);
+    settings.setValue(getSettingsKey(source + QUASAR_DP_RATE_PREFIX), (qlonglong) data.rate);
 
     // Refresh timer if exists
     if (nullptr != data.timer)
     {
-        data.timer->setInterval(data.refreshmsec);
+        data.timer->setInterval(data.rate);
     }
 }
 
@@ -553,7 +593,7 @@ void DataExtension::waitDataProcessed(QString source)
     }
 }
 
-void DataExtension::sendDataToSubscribersByName(QString source)
+void DataExtension::handleDataReadySignal(QString source)
 {
     if (!m_datasources.count(source))
     {
@@ -561,47 +601,139 @@ void DataExtension::sendDataToSubscribersByName(QString source)
         return;
     }
 
-    DataSource& data = m_datasources[source];
+    DataSource& dsrc = m_datasources[source];
 
-    sendDataToSubscribers(data);
+    if (dsrc.rate == QUASAR_POLLING_CLIENT)
+    {
+        // pop poll queue
+        QJsonObject data;
+        auto        result = getDataFromSource(data, dsrc);
+
+        switch (result)
+        {
+            case GET_DATA_FAILED:
+                qWarning() << "getDataFromSource(" << source << ") in extension " << m_name << " failed";
+                break;
+            case GET_DATA_DELAYED:
+                qWarning() << "getDataFromSource(" << source << ") in extension " << m_name << " returns delayed data on signal ready";
+                break;
+            case GET_DATA_SUCCESS:
+            {
+                QString message = craftDataMessage(data);
+
+                if (!message.isEmpty())
+                {
+                    // XXX maybe needs locks
+                    while (!dsrc.pollqueue.empty())
+                    {
+                        dsrc.pollqueue.front()->sendTextMessage(message);
+                        dsrc.pollqueue.pop_front();
+                    }
+                }
+            }
+            break;
+        }
+    }
+    else
+    {
+        // send to subscribers
+        sendDataToSubscribers(dsrc);
+    }
 }
 
 void DataExtension::createTimer(DataSource& data)
 {
     if (data.enabled && !data.timer)
     {
-        // Initialize timer not done so
+        // Timer creation required
         data.timer = std::make_unique<QTimer>(this);
         connect(data.timer.get(), &QTimer::timeout, [this, &data] { sendDataToSubscribers(data); });
 
-        data.timer->start(data.refreshmsec);
+        data.timer->start(data.rate);
     }
 }
 
-QString DataExtension::craftDataMessage(const DataSource& data)
+QString DataExtension::craftDataMessage(const QJsonObject& data, const QJsonArray& errors)
 {
-    QJsonObject src;
-    auto        dat = src[data.name];
-
-    // Poll extension for data source
-    if (!m_extension->get_data(data.uid, &dat))
+    if (data.isEmpty() && errors.isEmpty())
     {
-        qWarning() << "get_data(" << m_name << ", " << data.name << ") failed";
+        // No data
         return QString();
     }
 
-    if (dat.isUndefined())
+    QJsonObject msg;
+
+    if (!data.isEmpty())
     {
-        // Allow empty return (for async data)
-        return QString();
+        msg["data"] = data;
     }
 
-    // Craft response
-    auto msg = QJsonObject{{"data", QJsonObject{{m_name, src}}}};
+    if (!errors.isEmpty())
+    {
+        if (errors.count() == 1)
+        {
+            msg["errors"] = errors.at(0);
+        }
+        else
+        {
+            msg["errors"] = errors;
+        }
+    }
 
     QJsonDocument doc(msg);
 
     return QString::fromUtf8(doc.toJson());
+}
+
+DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObject& data, DataSource& src)
+{
+    using namespace std::chrono;
+
+    if (src.rate == QUASAR_POLLING_CLIENT && src.validtime)
+    {
+        // If this source is client polled and a validity duration is specified,
+        // first check for expiry time and cached data
+
+        if (src.expiry >= system_clock::now())
+        {
+            // If data hasn't expired yet, use the cached data
+            data[src.name] = src.cacheddat;
+            return GET_DATA_SUCCESS;
+        }
+    }
+
+    QJsonValue dat;
+
+    // Poll extension for data source
+    if (!m_extension->get_data(src.uid, &dat))
+    {
+        qWarning() << "get_data(" << m_name << ", " << src.name << ") failed";
+        return GET_DATA_FAILED;
+    }
+
+    if (dat.isNull())
+    {
+        if (src.rate == QUASAR_POLLING_CLIENT)
+        {
+            // Allow empty return (for async data)
+            return GET_DATA_DELAYED;
+        }
+
+        qWarning() << "get_data(" << m_name << ", " << src.name << ") returned no data as a non async-polled source";
+        return GET_DATA_FAILED;
+    }
+
+    // If we have valid data here:
+    if (src.rate == QUASAR_POLLING_CLIENT && src.validtime)
+    {
+        // If validity time duration is set, cache the data
+        src.cacheddat = dat;
+        src.expiry    = system_clock::now() + milliseconds(src.validtime);
+    }
+
+    data[src.name] = dat;
+
+    return GET_DATA_SUCCESS;
 }
 
 QString DataExtension::craftSettingsMessage()

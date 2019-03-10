@@ -284,11 +284,7 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
         return;
     }
 
-    // Add client to poll queue
-    if (m_Extensions[extcode]->addSubscriber(extparm, sender, clidat.ident))
-    {
-        m_Extensions[extcode]->pollAndSendData(extparm, sender, clidat.ident);
-    }
+    m_Extensions[extcode]->pollAndSendData(extparm, sender, clidat.ident);
 }
 
 void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
@@ -675,7 +671,7 @@ void DataServer::checkAuth(QWebSocket* client)
         std::unique_lock<std::mutex> lk(m_AuthCodeMtx);
         for (auto it = m_AuthCodeMap.begin(); it != m_AuthCodeMap.end();)
         {
-            if (it->second.expiry > system_clock::now())
+            if (it->second.expiry < system_clock::now())
             {
                 it = m_AuthCodeMap.erase(it);
             }
@@ -691,7 +687,7 @@ void DataServer::sendErrorToClient(QWebSocket* client, QString err)
 {
     // Craft error json msg
     QJsonObject msg;
-    msg["error"] = err;
+    msg["errors"] = err;
 
     QJsonDocument doc(msg);
 

@@ -8,12 +8,16 @@
 
 #include <extension_types.h>
 
+#include <chrono>
 #include <condition_variable>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <set>
 #include <unordered_map>
 
+#include <QJsonArray>
+#include <QJsonValue>
 #include <QObject>
 #include <QTimer>
 
@@ -44,13 +48,27 @@ struct DataLock
 //! Struct containing internal resources for a Data Source
 struct DataSource
 {
-    bool                      enabled;     //!< Whether this data source is enabled
-    QString                   name;        //!< Data Source codename
-    size_t                    uid;         //!< Data Source uid
-    int64_t                   refreshmsec; //!< Data Source refresh rate \sa quasar_data_source_t.refreshMsec
-    std::unique_ptr<QTimer>   timer;       //!< QTimer for timer based Data Sources
-    std::set<QWebSocket*>     subscribers; //!< Set of widgets (its WebSocket connection instance) subscribed to this Data Source
-    std::unique_ptr<DataLock> locks;       //!< Mutex/cv for asynchronous or extension signaled Data Sources \sa DataLock
+    // basic data source fields
+    bool    enabled;   //!< Whether this data source is enabled
+    QString name;      //!< Data Source identifier
+    size_t  uid;       //!< Data Source uid
+    int64_t rate;      //!< Data Source refresh rate \sa quasar_data_source_t.rate, quasar_polling_type_t
+    int64_t validtime; //!< Data validity duration for \ref QUASAR_POLLING_CLIENT. \sa quasar_data_source_t.rate, quasar_data_source_t.validtime,
+                       //!< quasar_polling_type_t
+
+    // subscription type source fields
+    std::unique_ptr<QTimer> timer;       //!< QTimer for timer based subscription sources
+    std::set<QWebSocket*>   subscribers; //!< Set of widgets (i.e. its WebSocket instance) subscribed to this source
+
+    // poll type
+    std::deque<QWebSocket*> pollqueue; //!< Queue of widgets (i.e. its WebSocket instance) waiting for polled data
+    QJsonValue              cacheddat; //!< Cached data for polled data with a validity duration \sa quasar_data_source_t.rate, quasar_data_source_t.validtime,
+                                       //!< quasar_polling_type_t
+    std::chrono::system_clock::time_point
+        expiry; //!< Expiry time of cached data \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
+
+    // signaled type source fields
+    std::unique_ptr<DataLock> locks; //!< Mutex/cv for asynchronous or extension signaled sources \sa DataLock
 };
 
 //! Shorthand for m_datasources type
@@ -60,6 +78,14 @@ using DataSourceMapType = std::unordered_map<QString, DataSource>;
 class PAPI_EXPORT DataExtension : public QObject
 {
     Q_OBJECT;
+
+    //! Defines valid return values for getDataFromSource()
+    enum DataSourceReturnState : int8_t
+    {
+        GET_DATA_FAILED  = -1, //!< get_data failed
+        GET_DATA_DELAYED = 0,  //!< get_data delayed
+        GET_DATA_SUCCESS = 1   //!< data successfully retrieved
+    };
 
 public:
     //! Shorthand type for quasar_extension_load()
@@ -84,7 +110,7 @@ public:
 
     //! Adds a subscriber to a Data Source
     /*!
-        \param[in]  source      Data Source codename
+        \param[in]  source      Data Source identifier
         \param[in]  subscriber  Subscriber widget's websocket connection instance
         \param[in]  widgetName  Widget name
         \return true if successful, false otherwise
@@ -99,11 +125,11 @@ public:
 
     //! Polls the extension for data and sends it to the requesting widget
     /*! Called when the extension receives a widget "poll" request
-        \param[in]  source      Data Source codename
-        \param[in]  subscriber  Requesting widget's websocket connection instance
+        \param[in]  source      Data Source identifier
+        \param[in]  client      Requesting widget's websocket connection instance
         \param[in]  widgetName  Widget name
     */
-    void pollAndSendData(QString source, QWebSocket* subscriber, QString widgetName);
+    void pollAndSendData(QString source, QWebSocket* client, QString widgetName);
 
     //! Retrieves data from the extension and sends it to all subscribers
     /*! Called when extension data is ready to be sent (by both timer and signal)
@@ -171,16 +197,16 @@ public:
     DataSourceMapType& getDataSources() { return m_datasources; };
 
     /*! Set Data Source enabled/disabled
-        \param[in]  source  Data Source codename
+        \param[in]  source  Data Source identifier
         \param[in]  enabled Enabled
         \sa DataSource.enabled
     */
     void setDataSourceEnabled(QString source, bool enabled);
 
     /*! Set Data Source refresh rate (for timed Data Sources)
-        \param[in]  source  Data Source codename
+        \param[in]  source  Data Source identifier
         \param[in]  msec    Refresh rate (ms)
-        \sa DataSource.refreshmsec, DataSource.timer
+        \sa DataSource.rate, DataSource.timer
     */
     void setDataSourceRefresh(QString source, int64_t msec);
 
@@ -189,7 +215,7 @@ public:
 
         \param[in]  settings    JSON object containing extension settings being changed
 
-        \sa quasar_settings_t, DataSource.refreshmsec, DataSource.timer
+        \sa quasar_settings_t, DataSource.rate, DataSource.timer
     */
     void setAllSettings(const QJsonObject& setjs);
 
@@ -202,32 +228,31 @@ public:
 
     /*! Emits the data ready signal
 
-        \param[in]  source  Data Source codename
+        \param[in]  source  Data Source identifier
         \sa quasar_signal_data_ready()
     */
     void emitDataReady(QString source);
 
     /*! Waits for a set of data to be sent to clients before processing the next set
 
-        \param[in]  source  Data Source codename
+        \param[in]  source  Data Source identifier
         \sa quasar_signal_wait_processed()
     */
     void waitDataProcessed(QString source);
 
 signals:
     /*! Qt data ready signal
-        \param[in]  source  Data Source codename
+        \param[in]  source  Data Source identifier
         \sa emitDataReady(), quasar_signal_data_ready()
     */
     void dataReady(QString source);
 
 private slots:
-    //! Retrieves data from the extension and sends it to all subscribers by name
-    /*! Called when extension data is ready to be sent (by async and signaled sources)
-        \param[in]  source  Data Source codename
-        \sa sendDataToSubscribers()
+    /*! Handles a data ready signal sent by the extension (by async-polled and signaled sources)
+        \param[in]  source  Data Source identifier
+        \sa quasar_polling_type_t, quasar_signal_data_ready()
     */
-    void sendDataToSubscribersByName(QString source);
+    void handleDataReadySignal(QString source);
 
 private:
     //! DataExtension constructor
@@ -246,11 +271,20 @@ private:
     */
     void createTimer(DataSource& data);
 
-    /*! Crafts the data message to be sent to subscribers
-        \param[in]  data    Reference to the Data Source object
+    /*! Crafts the data message to be sent to clients
+        \param[in]  data    JSON Object containing the data to be sent to the client
+        \param[in]  errors  Errors occurred that are also sent to the client
         \return The data message
     */
-    QString craftDataMessage(const DataSource& data);
+    QString craftDataMessage(const QJsonObject& data, const QJsonArray& errors = QJsonArray());
+
+    /*! Retrieves data from a data source and saves it to the supplied JSON object as JSON data
+        \param[in]  data    Reference to the JSON object to save data to
+        \param[in]  src     Reference to the Data Source object
+        \return DataSourceReturnState value determining state of data retrieval
+        \sa DataSourceReturnState
+    */
+    DataSourceReturnState getDataFromSource(QJsonObject& data, DataSource& src);
 
     /*! Crafts the custom settings message to be sent to subscribers
         \return The settings message

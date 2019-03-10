@@ -183,26 +183,26 @@ SAPI_EXPORT bool quasar_get_bool(quasar_settings_t* settings, const char* name);
 SAPI_EXPORT double quasar_get_double(quasar_settings_t* settings, const char* name);
 
 //! Signals to Quasar that data is ready to be sent to clients
-/*! This function is for Data Sources with \ref quasar_data_source_t.refreshMsec
-    set to 0 or -1. This function signals to Quasar that the data for the specified
-    source is ready to be sent.
+/*! This function is for Data Sources with \ref quasar_data_source_t.rate
+    set to \ref QUASAR_POLLING_CLIENT or \ref QUASAR_POLLING_SIGNALED.
+    This function signals to Quasar that the data for the specified source is ready to be sent.
 
     \param[in]  handle  Extension handle
-    \param[in]  source  Data Source codename
+    \param[in]  source  Data Source identifier
 
-    \sa quasar_data_source_t.refreshMsec
+    \sa quasar_data_source_t.rate
 */
 SAPI_EXPORT void quasar_signal_data_ready(quasar_ext_handle handle, const char* source);
 
 //! Waits for a set of data to be sent to clients before processing the next set
-/*! This function is for Data Sources with \ref quasar_data_source_t.refreshMsec
-    set to -1. This function can be used to allow a thread to wait until a set of data
+/*! This function is for Data Sources with \ref quasar_data_source_t.rate
+    set to \ref QUASAR_POLLING_SIGNALED. This function can be used to allow a thread to wait until a set of data
     has been consumed before moving on to processing the next set.
 
     \param[in]  handle  Extension handle
-    \param[in]  source  Data Source codename
+    \param[in]  source  Data Source identifier
 
-    \sa quasar_data_source_t.refreshMsec
+    \sa quasar_data_source_t.rate
 */
 SAPI_EXPORT void quasar_signal_wait_processed(quasar_ext_handle handle, const char* source);
 
