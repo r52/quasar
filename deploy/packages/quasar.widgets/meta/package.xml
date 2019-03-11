@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Sample Widgets</DisplayName>
+    <Description>Installs sample widgets for Quasar.</Description>
+    <inheritVersionFrom>quasar</inheritVersionFrom>
+    <Version>1</Version>
+    <ReleaseDate>2019-03-10</ReleaseDate>
+    <Default>true</Default>
+    <SortingPriority>100</SortingPriority>
+</Package>

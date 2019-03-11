@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Installer>
+    <Name>Quasar</Name>
+    <Version>2.0.0</Version>
+    <Title>Quasar Installer</Title>
+    <Publisher>r52</Publisher>
+    <StartMenuDir>Quasar</StartMenuDir>
+    <RunProgram>@TargetDir@/Quasar.exe</RunProgram>
+    <TargetDir>@HomeDir@/AppData/Local/Programs/Quasar</TargetDir>
+    <AdminTargetDir>@ApplicationsDir@/Quasar</AdminTargetDir>
+</Installer>

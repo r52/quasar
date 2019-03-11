@@ -13,7 +13,7 @@ if ($debug)
     $rels = "--debug"
 }
 
-if ($qtpath -eq $null)
+if ($null -eq $qtpath)
 {
     $qtpath = "C:\Qt\5.12.1\msvc2017_64"
 }

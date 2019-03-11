@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Start Menu Shortcuts</DisplayName>
+    <Description>Adds Start Menu shortcuts for Quasar.</Description>
+    <inheritVersionFrom>quasar</inheritVersionFrom>
+    <Version>1</Version>
+    <ReleaseDate>2019-03-10</ReleaseDate>
+    <Default>true</Default>
+    <Script>installscript.qs</Script>
+    <SortingPriority>100</SortingPriority>
+</Package>
