@@ -13,7 +13,7 @@ if ($null -eq $qtpath) {
 
 $windeployqt = "$($qtpath)\bin\windeployqt.exe"
 
-$package_paths = (".\deploy\packages\quasar\data\"),
+$package_paths = (".\deploy\packages\quasar.main\data\"),
 (".\deploy\packages\quasar.api\data\"),
 (".\deploy\packages\quasar.debug\data\"),
 (".\deploy\packages\quasar.widgets\data\")
@@ -52,6 +52,7 @@ $debug_files = ("Quasar.pdb"),
 Write-Host "Packing artifacts ($($name))..."
 
 # Copy main app files
+Write-Host "Copying main application files..."
 New-Item $package_paths[$data_path] -Type Directory -Force > $null
 New-Item ($package_paths[$data_path] + "extensions\") -Type Directory -Force > $null
 foreach ($file in $release_files) {
@@ -63,6 +64,7 @@ foreach ($file in $release_files) {
 Copy-Item README.rst -Destination $package_paths[$data_path] -Force
 
 # Copy api files
+Write-Host "Copying API files..."
 New-Item $package_paths[$api_path] -Type Directory -Force > $null
 New-Item ($package_paths[$api_path] + "api\") -Type Directory -Force > $null
 foreach ($file in $api_files) {
@@ -71,6 +73,7 @@ foreach ($file in $api_files) {
 }
 
 #Copy debug files
+Write-Host "Copying debug files..."
 New-Item $package_paths[$debug_path] -Type Directory -Force > $null
 New-Item ($package_paths[$debug_path] + "extensions\") -Type Directory -Force > $null
 foreach ($file in $debug_files) {
@@ -79,6 +82,7 @@ foreach ($file in $debug_files) {
 }
 
 # Copy widgets
+Write-Host "Copying widgets..."
 Copy-Item .\widgets\ -Destination ($package_paths[$widget_path] + "widgets\") -recurse -Force
 
 # Copy SSL lib
@@ -88,13 +92,14 @@ if (($env:OPENSSL) -and (Test-Path $env:OPENSSL -pathType container)) {
 }
 
 # Deploy Qt
+Write-Host "Deploying Qt..."
 & $windeployqt --no-quick-import --release ($package_paths[$data_path] + "\Quasar.exe")
 
 # Create installer
 $pkgname = "quasar_$($name)_x64_installer.exe"
-Write-Host "Packaging $($pkgname)..."
+Write-Host "Creating installer $($pkgname)..."
 
-& C:\Qt\Tools\QtInstallerFramework\3.0\bin\binarycreator.exe -c deploy\config\config.xml -p deploy\packages $pkgname
+& C:\Qt\Tools\QtInstallerFramework\3.0\bin\binarycreator.exe --offline-only -c deploy\config\config.xml -p deploy\packages $pkgname
 
 if ($env:APPVEYOR -eq $true) {
     Get-ChildItem $pkgname | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
