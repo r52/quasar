@@ -12,13 +12,13 @@
 #define WGT_DEF_OPTIONAL "optional"
 #define WGT_DEF_DATASERVER "dataserver"
 
-#define QUASAR_CONFIG_PORT "general/dataport"
-#define QUASAR_CONFIG_LOADED "general/loaded"
-#define QUASAR_CONFIG_LOGLEVEL "general/loglevel"
-#define QUASAR_CONFIG_LOGFILE "general/logfile"
-#define QUASAR_CONFIG_COOKIES "general/cookies"
-#define QUASAR_CONFIG_ALLOWGEO "general/allowGeo"
-#define QUASAR_CONFIG_LASTPATH "general/lastpath"
+#define QUASAR_CONFIG_PORT "global/dataport"
+#define QUASAR_CONFIG_LOADED "global/loaded"
+#define QUASAR_CONFIG_LOGLEVEL "global/loglevel"
+#define QUASAR_CONFIG_LOGFILE "global/logfile"
+#define QUASAR_CONFIG_COOKIES "global/cookies"
+#define QUASAR_CONFIG_ALLOWGEO "global/allowGeo"
+#define QUASAR_CONFIG_LASTPATH "global/lastpath"
 #define QUASAR_CONFIG_LAUNCHERMAP "launcher/map"
 
 #define QUASAR_CONFIG_DEFAULT_LOGLEVEL QUASAR_LOG_DEBUG

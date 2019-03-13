@@ -448,21 +448,25 @@ void DataExtension::setDataSourceEnabled(QString source, bool enabled)
 
     DataSource& data = m_datasources[source];
 
-    data.enabled = enabled;
-
-    // Save to file
-    QSettings settings;
-    settings.setValue(getSettingsKey(source + QUASAR_DP_ENABLED), data.enabled);
-
-    if (data.enabled && data.rate > QUASAR_POLLING_CLIENT)
+    // Set if changed
+    if (data.enabled != enabled)
     {
-        // Create timer if not exist
-        createTimer(data);
-    }
-    else if (data.timer)
-    {
-        // Delete the timer if enabled
-        data.timer.reset();
+        data.enabled = enabled;
+
+        // Save to file
+        QSettings settings;
+        settings.setValue(getSettingsKey(source + QUASAR_DP_ENABLED), data.enabled);
+
+        if (data.enabled && data.rate > QUASAR_POLLING_CLIENT && !data.subscribers.empty())
+        {
+            // Create timer if not exist
+            createTimer(data);
+        }
+        else if (data.timer)
+        {
+            // Delete the timer if enabled
+            data.timer.reset();
+        }
     }
 }
 
@@ -476,16 +480,26 @@ void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
 
     DataSource& data = m_datasources[source];
 
-    data.rate = msec;
-
-    // Save to file
-    QSettings settings;
-    settings.setValue(getSettingsKey(source + QUASAR_DP_RATE_PREFIX), (qlonglong) data.rate);
-
-    // Refresh timer if exists
-    if (nullptr != data.timer)
+    if (msec <= 0)
     {
-        data.timer->setInterval(data.rate);
+        qWarning() << "Tried to set invalid refresh rate in data source " << source;
+        return;
+    }
+
+    // Set if changed
+    if (data.rate != msec)
+    {
+        data.rate = msec;
+
+        // Save to file
+        QSettings settings;
+        settings.setValue(getSettingsKey(source + QUASAR_DP_RATE_PREFIX), (qlonglong) data.rate);
+
+        // Refresh timer if exists
+        if (nullptr != data.timer)
+        {
+            data.timer->setInterval(data.rate);
+        }
     }
 }
 

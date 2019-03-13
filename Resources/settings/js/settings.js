@@ -11,13 +11,13 @@ function getTableSelections(table) {
     })
 }
 
-function initialize_general(data) {
-    var dat = data["data"]["settings"]["general"];
-    $("input#general\\/dataport").val(dat.dataport);
-    $("input[name='general\\/loglevel']").val([dat.loglevel]);
-    $("textarea#general\\/cookies").val(dat.cookies);
-    $("input#general\\/savelog").checked = dat.savelog;
-    $("input#general\\/startup").checked = dat.startup;
+function initialize_global(data) {
+    var dat = data["data"]["settings"]["global"];
+    $("input#global\\/dataport").val(dat.dataport);
+    $("input[name='global\\/loglevel']").val([dat.loglevel]);
+    $("textarea#global\\/cookies").val(dat.cookies);
+    $("input#global\\/savelog").checked = dat.savelog;
+    $("input#global\\/startup").checked = dat.startup;
 }
 
 function createExtensionTab(ext) {
@@ -34,7 +34,7 @@ function createExtensionTab(ext) {
         }
         var rgroup = `
         <div class="form-group">
-            <label for="${ext.name}/${r.name}-rate">${r.name}</label>
+            <label for="${ext.name}/${r.name}/rate">${r.name}</label>
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="${ext.name}/${r.name}/enabled" ${r.enabled ? 'checked' : ''} ${r.rate < 0 ? 'disabled' : ''}>
                 <label class="custom-control-label" for="${ext.name}/${r.name}/enabled">Enabled</label>
@@ -230,8 +230,8 @@ function createLauncherPage(data) {
 function save_settings() {
     var dat = {};
 
-    // general tab
-    $("div[aria-labelledby='general-tab'] :input, textarea").each(function() {
+    // global tab
+    $("div[aria-labelledby='global-tab'] :input, textarea").each(function() {
         var input = $(this);
         var key = input.attr("name");
 
@@ -248,6 +248,8 @@ function save_settings() {
                 dat[key] = input.val();
             }
             // else do nothing
+        } else if (type == "number") {
+            dat[key] = parseInt(input.val());
         } else {
             dat[key] = input.val();
         }
@@ -280,6 +282,8 @@ function save_settings() {
                 dat["extensions"][extname][key] = input.val();
             }
             // else do nothing
+        } else if (type == "number") {
+            dat["extensions"][extname][key] = parseInt(input.val());
         } else {
             dat["extensions"][extname][key] = input.val();
         }
@@ -325,7 +329,7 @@ async function do_on_connect(socket) {
 
 function initialize_page(dat) {
     if (!initialized) {
-        initialize_general(dat);
+        initialize_global(dat);
 
         createExtensionPages(dat);
         createLauncherPage(dat);

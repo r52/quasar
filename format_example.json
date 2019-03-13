@@ -18,7 +18,7 @@
 {
     "data": {
         "settings": {
-            "general": {
+            "global": {
                 "dataport": 13337,
                 "loglevel": 2,
                 "cookies": "",
@@ -103,8 +103,8 @@
     "params": {
         "target": "settings",
         "params": {
-            "general/dataport": 15132,
-            "general/loglevel": 2,
+            "global/dataport": 15132,
+            "global/loglevel": 2,
             "extensions": {
                 "simple_perf": {
                     "simple_perf/cpu/enabled": true,

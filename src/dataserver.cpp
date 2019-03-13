@@ -383,20 +383,20 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
 
     QJsonObject sjson;
 
-    // general
-    if (plist.contains("all") || plist.contains("general"))
+    // global
+    if (plist.contains("all") || plist.contains("global"))
     {
-        QJsonObject general;
+        QJsonObject global;
 
-        general["dataport"] = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
-        general["loglevel"] = settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
-        general["savelog"]  = settings.value(QUASAR_CONFIG_LOGFILE, false).toBool();
-        general["cookies"]  = "";
+        global["dataport"] = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
+        global["loglevel"] = settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
+        global["savelog"]  = settings.value(QUASAR_CONFIG_LOGFILE, false).toBool();
+        global["cookies"]  = QString();
 
         auto bcookies = settings.value(QUASAR_CONFIG_COOKIES, QByteArray()).toByteArray();
         if (!bcookies.isEmpty())
         {
-            general["cookies"] = QString::fromUtf8(qUncompress(bcookies));
+            global["cookies"] = QString::fromUtf8(qUncompress(bcookies));
         }
 
 #ifdef Q_OS_WIN
@@ -404,12 +404,12 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
         QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
         QFileInfo lnk(startupFolder + "/Quasar.lnk");
 
-        general["startup"] = lnk.exists();
+        global["startup"] = lnk.exists();
 #else
-        general["startup"] = false;
+        global["startup"] = false;
 #endif
 
-        sjson["general"] = general;
+        sjson["global"] = global;
     }
 
     // extensions
@@ -449,7 +449,12 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
                     entry["file"]    = file;
                     entry["args"]    = args;
                     entry["start"]   = start;
-                    entry["icon"]    = QString::fromUtf8(qUncompress(icon));
+                    entry["icon"]    = QString();
+
+                    if (!icon.isEmpty())
+                    {
+                        entry["icon"] = QString::fromUtf8(qUncompress(icon));
+                    }
 
                     launcher.append(entry);
                 }
@@ -488,7 +493,12 @@ void DataServer::handleQueryLauncher(QString params, client_data_t client, QWebS
                     entry["file"]    = file;
                     entry["args"]    = args;
                     entry["start"]   = start;
-                    entry["icon"]    = QString::fromUtf8(qUncompress(icon));
+                    entry["icon"]    = QString();
+
+                    if (!icon.isEmpty())
+                    {
+                        entry["icon"] = QString::fromUtf8(qUncompress(icon));
+                    }
 
                     launcher.append(entry);
                 }
@@ -580,7 +590,13 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                     ldat.file      = eobj["file"].toString();
                     ldat.arguments = eobj["args"].toString();
                     ldat.startpath = eobj["start"].toString();
-                    ldat.icon      = qCompress(eobj["icon"].toString().toUtf8());
+                    ldat.icon      = QByteArray();
+
+                    auto icon = eobj["icon"].toString().toUtf8();
+                    if (!icon.isEmpty())
+                    {
+                        ldat.icon = qCompress(icon);
+                    }
 
                     newmap[ldat.command] = QVariant::fromValue(ldat);
                 }
@@ -610,10 +626,10 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                 ext->setAllSettings(exts[extkey].toObject());
             }
         }
-        else if (key.startsWith("general"))
+        else if (key.startsWith("global"))
         {
-            // handle general group
-            if (key == "general/startup")
+            // handle global group
+            if (key == "global/startup")
             {
                 // windows only
 #ifdef Q_OS_WIN
@@ -634,10 +650,17 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                 }
 #endif
             }
-            else if (key == "general/cookies")
+            else if (key == "global/cookies")
             {
                 // compress cookies file
-                auto cookies = qCompress(data[key].toString().toUtf8());
+                auto rcook   = data[key].toString().toUtf8();
+                auto cookies = QByteArray();
+
+                if (!rcook.isEmpty())
+                {
+                    cookies = qCompress(rcook);
+                }
+
                 settings.setValue(key, cookies);
             }
             else
@@ -651,6 +674,8 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
             continue;
         }
     }
+
+    qInfo() << "All settings saved!";
 }
 
 void DataServer::checkAuth(QWebSocket* client)
