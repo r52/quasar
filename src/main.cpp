@@ -19,6 +19,9 @@ int main(int argc, char* argv[])
         return 0;
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setApplicationName("quasar");
+    QCoreApplication::setOrganizationName("quasar");
+    QSettings::setDefaultFormat(QSettings::IniFormat);
 
     WebUiHandler::registerUrlScheme();
 
@@ -36,10 +39,8 @@ int main(int argc, char* argv[])
     splash.showMessage("Loading configuration...", align, color);
     a.processEvents();
 
-    QCoreApplication::setApplicationName("quasar");
-    QCoreApplication::setOrganizationName("quasar");
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-
+    WebUiHandler handler;
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(WebUiHandler::schemeName, &handler);
     QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
 
     splash.showMessage("Loading services...", align, color);

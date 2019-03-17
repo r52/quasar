@@ -1,7 +1,5 @@
 #include "webuidialog.h"
 
-#include "dataserver.h"
-#include "webuihandler.h"
 #include "webwidget.h"
 #include "widgetdefs.h"
 
@@ -17,12 +15,7 @@ WebUiDialog::WebUiDialog(DataServer* server, QString title, QUrl url, ClientAcce
     setAttribute(Qt::WA_DeleteOnClose);
     setWindowModality(Qt::WindowModal);
 
-    profile = new QWebEngineProfile;
-
-    WebUiHandler* handler = new WebUiHandler(profile);
-    profile->installUrlSchemeHandler(WebUiHandler::schemeName, handler);
-
-    QuasarWebPage* page = new QuasarWebPage(profile, this);
+    QuasarWebPage* page = new QuasarWebPage(this);
     page->load(url);
 
     QWebEngineView* view = new QWebEngineView(this);
@@ -35,7 +28,7 @@ WebUiDialog::WebUiDialog(DataServer* server, QString title, QUrl url, ClientAcce
 
     connect(page, &QWebEnginePage::windowCloseRequested, [=] { this->close(); });
 
-    QString authcode = server->generateAuthCode(WebUiHandler::settingsUrl.toString(), lvl);
+    QString authcode = server->generateAuthCode(url.toString(), lvl);
 
     QString gscript = WebWidget::getGlobalScript();
 
@@ -54,9 +47,4 @@ WebUiDialog::WebUiDialog(DataServer* server, QString title, QUrl url, ClientAcce
 
     setWindowTitle(title);
     resize(size);
-}
-
-WebUiDialog::~WebUiDialog()
-{
-    profile->deleteLater();
 }

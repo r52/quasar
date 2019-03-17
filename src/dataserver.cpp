@@ -680,14 +680,15 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
 
 void DataServer::checkAuth(QWebSocket* client)
 {
+    bool disconnect = false;
+
     {
         // Check auth
         std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
         if (!m_AuthedClientsMap.count(client))
         {
             // unauthenticated client, cut the connection
-            DS_SEND_WARN(client, "Unauthenticated client, disconnecting");
-            client->close(QWebSocketProtocol::CloseCodeNormal, "Unauthenticated client");
+            disconnect = true;
         }
     }
 
@@ -705,6 +706,12 @@ void DataServer::checkAuth(QWebSocket* client)
                 ++it;
             }
         }
+    }
+
+    if (disconnect)
+    {
+        DS_SEND_WARN(client, "Unauthenticated client, disconnecting");
+        client->close(QWebSocketProtocol::CloseCodeNormal, "Unauthenticated client");
     }
 }
 

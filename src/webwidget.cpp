@@ -32,8 +32,11 @@ void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level
 
 bool QuasarWebPage::certificateError(const QWebEngineCertificateError& certificateError)
 {
-    auto url = certificateError.url();
-    if (certificateError.error() == QWebEngineCertificateError::CertificateAuthorityInvalid && url.scheme() == "wss" && url.host() == "localhost")
+    auto url  = certificateError.url();
+    auto host = url.host();
+
+    if (certificateError.error() == QWebEngineCertificateError::CertificateAuthorityInvalid && url.scheme() == "wss" &&
+        (host == "localhost" || host == "::1" || host == "127.0.0.1"))
     {
         // Ignore invalid CA for now for localhost due to custom localhost cert and
         // QWebEngine having no support for local certs
