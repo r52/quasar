@@ -133,6 +133,7 @@ void Quasar::createTrayIcon()
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(aboutAction);
     trayIconMenu->addAction(aboutQtAction);
+    trayIconMenu->addAction(docAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 
@@ -176,7 +177,7 @@ void Quasar::createActions()
 
     aboutAction = new QAction(tr("&About Quasar"), this);
 
-    connect(aboutAction, &QAction::triggered, [=](bool checked) {
+    connect(aboutAction, &QAction::triggered, [=] {
         static QString aboutMsg = "Quasar " GIT_VER_STRING "<br/>"
 #ifndef NDEBUG
                                   "DEBUG BUILD<br/>"
@@ -193,7 +194,10 @@ void Quasar::createActions()
     });
 
     aboutQtAction = new QAction(tr("About &Qt"), this);
-    connect(aboutQtAction, &QAction::triggered, [=](bool checked) { QMessageBox::aboutQt(this, "About Qt"); });
+    connect(aboutQtAction, &QAction::triggered, [=] { QMessageBox::aboutQt(this, "About Qt"); });
+
+    docAction = new QAction(tr("Quasar &Documentation"), this);
+    connect(docAction, &QAction::triggered, [=] { QDesktopServices::openUrl(QUrl("https://quasardoc.readthedocs.io")); });
 
     quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);

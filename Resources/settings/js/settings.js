@@ -6,7 +6,7 @@ function sleep(ms) {
 }
 
 function getTableSelections(table) {
-    return $.map(table.bootstrapTable('getSelections'), function(row) {
+    return $.map(table.bootstrapTable('getSelections'), function (row) {
         return row.command
     })
 }
@@ -27,7 +27,7 @@ function createExtensionTab(ext) {
 
     // generate rate settings
     var rates = "";
-    ext.rates.forEach(function(r) {
+    ext.rates.forEach(function (r) {
         var rinput = "";
         if (r.rate > 0) {
             rinput = `<input type="number" class="form-control" id="${ext.name}/${r.name}/rate" placeholder="ms" min="1" max="2147483647" step="1" value="${r.rate}">`
@@ -50,7 +50,7 @@ function createExtensionTab(ext) {
     if (ext.settings != null) {
         extsettings += "<h2>Extension Settings</h2>";
 
-        ext.settings.forEach(function(s) {
+        ext.settings.forEach(function (s) {
             var minmax = ""
 
             if (s.type === "int" || s.type === "double") {
@@ -97,7 +97,7 @@ function createExtensionPages(data) {
     var dat = data["data"]["settings"]["extensions"];
     if (dat.length > 0) {
         $('#extension-links').empty();
-        dat.forEach(function(e) {
+        dat.forEach(function (e) {
             createExtensionTab(e);
         });
     }
@@ -137,7 +137,7 @@ function createLauncherPage(data) {
             {
                 field: 'icon',
                 title: 'Icon',
-                formatter: function(value) {
+                formatter: function (value) {
                     if (value) {
                         return '<img class="icon" src="' + value + '"/>';
                     }
@@ -150,11 +150,11 @@ function createLauncherPage(data) {
     // delete button function
     $ltable.on('check.bs.table uncheck.bs.table ' +
         'check-all.bs.table uncheck-all.bs.table',
-        function() {
+        function () {
             $lremove.prop('disabled', !$ltable.bootstrapTable('getSelections').length)
         });
 
-    $lremove.click(function(evt) {
+    $lremove.click(function (evt) {
         evt.preventDefault();
         var cmds = getTableSelections($ltable);
         $ltable.bootstrapTable('remove', {
@@ -165,10 +165,10 @@ function createLauncherPage(data) {
     });
 
     // debug button
-    $('#launch-test').click(function(evt) {
+    $('#launch-test').click(function (evt) {
         evt.preventDefault();
         var dat = $ltable.bootstrapTable('getData')
-        dat.forEach(function(e) {
+        dat.forEach(function (e) {
             delete e.state;
         });
         console.log(dat);
@@ -176,11 +176,11 @@ function createLauncherPage(data) {
     });
 
     // launcher icon functions
-    $("#launcher-icon").change(function() {
+    $("#launcher-icon").change(function () {
         if (this.files && this.files[0]) {
             var reader = new FileReader();
 
-            reader.onload = function(e) {
+            reader.onload = function (e) {
                 $('#icon-preview').attr('src', e.target.result);
             }
 
@@ -189,7 +189,7 @@ function createLauncherPage(data) {
     });
 
     // launcher add modal function
-    $('#launcher-save').click(function() {
+    $('#launcher-save').click(function () {
         var entry = {
             command: $('#command-name').val(),
             file: $('#file-name').val(),
@@ -231,7 +231,7 @@ function save_settings() {
     var dat = {};
 
     // global tab
-    $("div[aria-labelledby='global-tab'] :input, textarea").each(function() {
+    $("div[aria-labelledby='global-tab'] :input, textarea").each(function () {
         var input = $(this);
         var key = input.attr("name");
 
@@ -257,7 +257,7 @@ function save_settings() {
 
     // extension tabs
     dat["extensions"] = {};
-    $("div[aria-labelledby='extensions-tab'] :input").each(function() {
+    $("div[aria-labelledby='extensions-tab'] :input").each(function () {
         var input = $(this);
         var key = input.attr("name");
 
@@ -291,7 +291,7 @@ function save_settings() {
 
     // do launcher table
     var tab = $('#launcher-table').bootstrapTable('getData')
-    tab.forEach(function(e) {
+    tab.forEach(function (e) {
         delete e.state;
     });
 
@@ -307,6 +307,29 @@ function save_settings() {
     };
 
     websocket.send(JSON.stringify(msg));
+
+    var notify = $.notify({
+        title: "Success!",
+        message: "All settings have been saved."
+    }, {
+        type: "success",
+        allow_dismiss: false,
+        placement: {
+            from: "bottom",
+            align: "right"
+        },
+        offset: {
+            x: 20,
+            y: 20
+        },
+        animate: {
+            enter: 'animated fadeInUp',
+            exit: 'animated fadeOutDown'
+        },
+        spacing: 10,
+        z_index: 1031,
+        delay: 2000
+    });
 }
 
 function query_settings(socket) {
@@ -348,18 +371,18 @@ function parse_data(msg) {
     }
 }
 
-$(function() {
+$(function () {
     try {
         if (websocket && websocket.readyState == 1)
             websocket.close();
         websocket = quasar_create_websocket();
-        websocket.onopen = function(evt) {
+        websocket.onopen = function (evt) {
             do_on_connect(websocket);
         };
-        websocket.onmessage = function(evt) {
+        websocket.onmessage = function (evt) {
             parse_data(evt.data);
         };
-        websocket.onerror = function(evt) {
+        websocket.onerror = function (evt) {
             console.log('ERROR: ' + evt.data);
         };
     } catch (exception) {
@@ -367,12 +390,12 @@ $(function() {
     }
 
     // save button
-    $('#settings-save').click(function() {
+    $('#settings-save').click(function () {
         save_settings();
     });
 
     // close button
-    $('#settings-close').click(function() {
+    $('#settings-close').click(function () {
         close();
     });
 });

@@ -52,6 +52,7 @@ private:
     QAction* consoleAction;
     QAction* aboutAction;
     QAction* aboutQtAction;
+    QAction* docAction;
     QAction* quitAction;
 
     // Services
