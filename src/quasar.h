@@ -3,6 +3,8 @@
 #include "ui_quasar.h"
 
 #include <QMainWindow>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
 #include <QSystemTrayIcon>
 
 QT_FORWARD_DECLARE_CLASS(DataServices)
@@ -24,6 +26,7 @@ protected:
 private:
     void createTrayIcon();
     void createActions();
+    void checkForUpdates();
 
 private slots:
     void openWebWidget();
@@ -61,4 +64,8 @@ private:
     // WebUI dialogs
     WebUiDialog* setdlg;
     WebUiDialog* condlg;
+
+    // Networking
+    QNetworkAccessManager* netmanager;
+    QNetworkRequest        updrequest;
 };

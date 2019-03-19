@@ -15,10 +15,17 @@
 #include <QFileDialog>
 #include <QMenu>
 #include <QMessageBox>
+#include <QNetworkReply>
 #include <QTextEdit>
 #include <QVBoxLayout>
 
-Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(parent), logWindow(log), service(s), setdlg(nullptr), condlg(nullptr)
+Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) :
+    QMainWindow(parent),
+    logWindow(log),
+    service(s),
+    setdlg(nullptr),
+    condlg(nullptr),
+    netmanager(new QNetworkAccessManager(this))
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
@@ -58,6 +65,8 @@ Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) : QMainWindow(p
     ui.centralWidget->setLayout(layout);
 
     resize(800, 400);
+
+    checkForUpdates();
 }
 
 Quasar::~Quasar()
@@ -216,4 +225,49 @@ void Quasar::closeEvent(QCloseEvent* event)
         hide();
         event->ignore();
     }
+}
+
+void Quasar::checkForUpdates()
+{
+    connect(netmanager, &QNetworkAccessManager::finished, this, [=](QNetworkReply* reply) {
+        if (reply->error())
+        {
+            qInfo() << reply->errorString();
+            return;
+        }
+
+        QString       answer = reply->readAll();
+        QJsonDocument doc    = QJsonDocument::fromJson(answer.toUtf8());
+
+        if (doc.isNull())
+        {
+            qWarning() << "Error parsing Github API response";
+            return;
+        }
+
+        auto info = doc.object();
+
+        // simple case compare should suffice
+        if (info["name"].toString() > GIT_VER_STRING)
+        {
+            auto reply = QMessageBox::question(nullptr,
+                                               tr("Quasar Update"),
+                                               tr("Quasar version ") + info["name"].toString() + tr(" is available.\n\nWould you like to download it?"),
+                                               QMessageBox::Yes | QMessageBox::No);
+
+            if (reply == QMessageBox::Ok)
+            {
+                QDesktopServices::openUrl(QUrl(info["html_url"].toString()));
+            }
+        }
+        else
+        {
+            qInfo() << "No updates available.";
+        }
+    });
+
+    QTimer::singleShot(5000, [=] {
+        updrequest.setUrl(QUrl("https://api.github.com/repos/r52/quasar/releases/latest"));
+        netmanager->get(updrequest);
+    });
 }
