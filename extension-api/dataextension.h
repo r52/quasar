@@ -131,12 +131,6 @@ public:
     */
     void pollAndSendData(QString source, QWebSocket* client, QString widgetName);
 
-    //! Retrieves data from the extension and sends it to all subscribers
-    /*! Called when extension data is ready to be sent (by both timer and signal)
-        \param[in]  source  Data Source
-    */
-    void sendDataToSubscribers(DataSource& source);
-
     /*! Gets path to library file
         \return path to library file
     */
@@ -172,43 +166,12 @@ public:
     */
     QString getUrl() { return m_url; };
 
-    /*! Gets extension settings prefix for use with internal Quasar settings store
-        \return extension settings prefix
-    */
-    QString getSettingsKey(QString name) { return getName() + "/" + name; };
-
     //! Gets all of this extension's metadata and settings as a JSON object
     /*!
         \param[in]  settings_only   Retrieve only the settings if true, otherwise retrieves extension's full metadata
         \return JSON object with the extension's metadata
     */
     QJsonObject getMetadataJSON(bool settings_only);
-
-    /*! Gets extension custom settings
-        \sa quasar_settings_t
-        \return pointer to extension custom settings
-    */
-    quasar_settings_t* getSettings() { return m_settings.get(); };
-
-    /*! Gets extension Data Sources
-        \sa DataSourceMapType, DataSource
-        \return reference to map of Data Sources
-    */
-    DataSourceMapType& getDataSources() { return m_datasources; };
-
-    /*! Set Data Source enabled/disabled
-        \param[in]  source  Data Source identifier
-        \param[in]  enabled Enabled
-        \sa DataSource.enabled
-    */
-    void setDataSourceEnabled(QString source, bool enabled);
-
-    /*! Set Data Source refresh rate (for timed Data Sources)
-        \param[in]  source  Data Source identifier
-        \param[in]  msec    Refresh rate (ms)
-        \sa DataSource.rate, DataSource.timer
-    */
-    void setDataSourceRefresh(QString source, int64_t msec);
 
     /*! Sets all settings returned by the settings dialog
         This function is only called by the relevant GUI can should not be used otherwise.
@@ -218,13 +181,6 @@ public:
         \sa quasar_settings_t, DataSource.rate, DataSource.timer
     */
     void setAllSettings(const QJsonObject& setjs);
-
-    /*! Propagates custom setting value changes to the extension
-        as well as all unique subscribers
-
-        \sa quasar_ext_info_t.update
-    */
-    void updateExtensionSettings();
 
     /*! Emits the data ready signal
 
@@ -265,6 +221,33 @@ private:
     */
     DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent = nullptr);
 
+    // Helpers
+
+    /*! Gets extension settings prefix for use with internal Quasar settings store
+        \return extension settings prefix
+    */
+    QString getSettingsKey(QString name) { return getName() + "/" + name; };
+
+    /*! Set Data Source enabled/disabled
+        \param[in]  source  Data Source identifier
+        \param[in]  enabled Enabled
+        \sa DataSource.enabled
+    */
+    void setDataSourceEnabled(QString source, bool enabled);
+
+    /*! Set Data Source refresh rate (for timed Data Sources)
+        \param[in]  source  Data Source identifier
+        \param[in]  msec    Refresh rate (ms)
+        \sa DataSource.rate, DataSource.timer
+    */
+    void setDataSourceRefresh(QString source, int64_t msec);
+
+    //! Retrieves data from the extension and sends it to all subscribers
+    /*! Called when extension data is ready to be sent (by both timer and signal)
+        \param[in]  source  Data Source
+    */
+    void sendDataToSubscribers(DataSource& source);
+
     /*! Creates and initializes the timer for a timer-based source (if it does not exist)
         \param[in,out]  data    Reference to the Data Source object
         \sa DataSource.timer
@@ -292,10 +275,19 @@ private:
     */
     QString craftSettingsMessage();
 
+    /*! Propagates custom setting value changes to the extension
+        as well as all unique subscribers
+
+        \sa quasar_ext_info_t.update
+    */
+    void updateExtensionSettings();
+
     /*! Helper function that propagates custom settings message to all unique subscribers
         \sa updateExtensionSettings()
     */
     void propagateSettingsToAllUniqueSubscribers();
+
+    // Members
 
     quasar_ext_info_t* m_extension;   //!< Extension info data \sa quasar_ext_info_t
     extension_destroy  m_destroyfunc; //!< Extension destroy function \sa quasar_ext_destroy()

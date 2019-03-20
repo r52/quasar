@@ -35,8 +35,8 @@ DataServer::DataServer(QObject* parent) :
               {"query", std::bind(&DataServer::handleMethodQuery, this, _1, _2)},
               {"auth", std::bind(&DataServer::handleMethodAuth, this, _1, _2)},
               {"mutate", std::bind(&DataServer::handleMethodMutate, this, _1, _2)}},
-    m_InternalTargets{{"settings", std::bind(&DataServer::handleQuerySettings, this, _1, _2, _3)},
-                      {"launcher", std::bind(&DataServer::handleQueryLauncher, this, _1, _2, _3)}},
+    m_InternalQueryTargets{{"settings", std::bind(&DataServer::handleQuerySettings, this, _1, _2, _3)},
+                           {"launcher", std::bind(&DataServer::handleQueryLauncher, this, _1, _2, _3)}},
     m_MutateTargets{{"settings", std::bind(&DataServer::handleMutateSettings, this, _1, _2)}}
 {
     qRegisterMetaType<AppLauncherData>("AppLauncherData");
@@ -90,19 +90,6 @@ DataServer::~DataServer()
     m_pWebSocketServer->close();
 }
 
-bool DataServer::addMethodHandler(QString type, MethodFuncType handler)
-{
-    if (m_Methods.count(type))
-    {
-        qWarning() << "Handler for request type " << type << " already exists";
-        return false;
-    }
-
-    m_Methods[type] = handler;
-
-    return true;
-}
-
 bool DataServer::findExtension(QString extcode)
 {
     std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
@@ -150,7 +137,7 @@ void DataServer::loadExtensions()
         {
             qWarning() << "Failed to load extension" << libpath;
         }
-        else if (m_InternalTargets.count(extn->getName()))
+        else if (m_InternalQueryTargets.count(extn->getName()))
         {
             qWarning() << "The extension code" << extn->getName() << " is reserved. Unloading " << libpath;
         }
@@ -270,9 +257,9 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
     QString extcode = parms["target"].toString();
     QString extparm = parms["params"].toString();
 
-    if (m_InternalTargets.count(extcode))
+    if (m_InternalQueryTargets.count(extcode))
     {
-        m_InternalTargets[extcode](extparm, clidat, sender);
+        m_InternalQueryTargets[extcode](extparm, clidat, sender);
         return;
     }
 

@@ -25,8 +25,6 @@ public:
 
     auto getWidgets() { return make_shared_locker<WidgetMapType>(&m_widgetMap, &m_mutex); }
 
-    WebWidget* findWidget(QString widgetName);
-
 private:
     void loadCookies();
 

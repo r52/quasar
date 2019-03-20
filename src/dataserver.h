@@ -83,7 +83,6 @@ class DataServer : public QObject
 public:
     ~DataServer();
 
-    bool addMethodHandler(QString type, MethodFuncType handler);
     bool findExtension(QString extcode);
 
     QString generateAuthCode(QString ident, ClientAccessLevel lvl = CAL_WIDGET);
@@ -126,8 +125,8 @@ private:
     // Method function map
     MethodCallMapType m_Methods;
 
-    // Internal data targets
-    InternalTargetMapType m_InternalTargets;
+    // Internal query targets
+    InternalTargetMapType m_InternalQueryTargets;
 
     // Mutate targets
     MutateTargetMapType m_MutateTargets;

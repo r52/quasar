@@ -137,20 +137,6 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
     return true;
 }
 
-WebWidget* WidgetRegistry::findWidget(QString widgetName)
-{
-    std::shared_lock<std::shared_mutex> lk(m_mutex);
-
-    auto it = m_widgetMap.find(widgetName);
-
-    if (it != m_widgetMap.end())
-    {
-        return it->second.get();
-    }
-
-    return nullptr;
-}
-
 void WidgetRegistry::loadCookies()
 {
     QSettings settings;
