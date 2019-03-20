@@ -106,7 +106,7 @@ struct quasar_ext_info_fields_t
     char version[64];      //!< Version string.
     char author[64];       //!< Author.
     char description[256]; //!< Extension description.
-    char url[256];         //!< Extension url, if any.
+    char url[256];         //!< Extension website url, if any.
 };
 
 //! Struct for defining a Quasar extension.

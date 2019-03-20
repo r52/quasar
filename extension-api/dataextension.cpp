@@ -679,7 +679,7 @@ QString DataExtension::craftDataMessage(const QJsonObject& data, const QJsonArra
 
     if (!data.isEmpty())
     {
-        msg["data"] = data;
+        msg["data"] = QJsonObject{{m_name, data}};
     }
 
     if (!errors.isEmpty())

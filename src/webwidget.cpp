@@ -207,15 +207,87 @@ WebWidget::~WebWidget()
 
 bool WebWidget::validateWidgetDefinition(const QJsonObject& dat)
 {
-    if (!dat.isEmpty() && dat.contains(WGT_DEF_NAME) && !dat[WGT_DEF_NAME].toString().isNull() && dat.contains(WGT_DEF_WIDTH) &&
-        dat[WGT_DEF_WIDTH].toInt() > 0 && dat.contains(WGT_DEF_HEIGHT) && dat[WGT_DEF_HEIGHT].toInt() > 0 && dat.contains(WGT_DEF_STARTFILE) &&
-        !dat[WGT_DEF_STARTFILE].toString().isNull() && dat.contains(WGT_DEF_FULLPATH) && !dat[WGT_DEF_FULLPATH].toString().isNull() &&
-        dat.contains(WGT_DEF_DATASERVER) && dat[WGT_DEF_DATASERVER].isBool())
+    if (dat.isEmpty())
     {
-        return true;
+        qWarning() << "Empty widget definition";
+        return false;
     }
 
-    return false;
+    static QString errmsg = "%1 '%2' definition";
+
+    if (!dat.contains(WGT_DEF_NAME))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_NAME);
+        return false;
+    }
+
+    if (dat[WGT_DEF_NAME].toString().isNull())
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_NAME);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_WIDTH))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_WIDTH);
+        return false;
+    }
+
+    if (dat[WGT_DEF_WIDTH].toInt() <= 0)
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_WIDTH);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_HEIGHT))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_HEIGHT);
+        return false;
+    }
+
+    if (dat[WGT_DEF_HEIGHT].toInt() <= 0)
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_HEIGHT);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_STARTFILE))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_STARTFILE);
+        return false;
+    }
+
+    if (dat[WGT_DEF_STARTFILE].toString().isNull())
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_STARTFILE);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_FULLPATH))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_FULLPATH);
+        return false;
+    }
+
+    if (dat[WGT_DEF_FULLPATH].toString().isNull())
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_FULLPATH);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_DATASERVER))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_DATASERVER);
+        return false;
+    }
+
+    if (!dat[WGT_DEF_DATASERVER].isBool())
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_DATASERVER);
+        return false;
+    }
+
+    return true;
 }
 
 bool WebWidget::acceptSecurityWarnings(const QJsonObject& dat)
