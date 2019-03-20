@@ -32,7 +32,7 @@ enum PerfDataSources
     PERF_SRC_RAM
 };
 
-quasar_data_source_t sources[2] = {{"cpu", 5000, 0, 0}, {"ram", 5000, 0, 0}};
+quasar_data_source_t sources[2] = {{"cpu", 0, 1000, 0}, {"ram", 0, 1000, 0}};
 
 // From https://stackoverflow.com/questions/23143693/retrieving-cpu-load-percent-total-in-windows-with-c
 static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
@@ -120,13 +120,10 @@ bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData)
     if (calltable.count(srcUid) == 0)
     {
         warn("Unknown source %Iu", srcUid);
-    }
-    else
-    {
-        return calltable[srcUid](hData);
+        return false;
     }
 
-    return false;
+    return calltable[srcUid](hData);
 }
 
 quasar_ext_info_fields_t fields = {EXT_NAME, EXT_FULLNAME, "2.0", "r52", "Sample plugin that queries basic performance numbers", ""};
