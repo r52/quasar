@@ -3,5 +3,6 @@
     "width": 470,
     "height": 220,
     "startFile": "index.html",
-    "transparentBg": true
+    "transparentBg": true,
+    "dataserver": false
 }
