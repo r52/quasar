@@ -716,6 +716,13 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
         }
     }
 
+    if (!src.enabled)
+    {
+        // honour enabled flag
+        qWarning() << "Data source " << src.name << " is disabled";
+        return GET_DATA_FAILED;
+    }
+
     QJsonValue dat;
 
     // Poll extension for data source
