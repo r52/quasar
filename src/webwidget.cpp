@@ -1,12 +1,12 @@
 #include "webwidget.h"
 
+#include "dataserver.h"
 #include "widgetdefs.h"
 
 #include <QAction>
 #include <QMenu>
 #include <QMessageBox>
 #include <QtWebEngineWidgets/QWebEngineCertificateError>
-#include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineSettings>
 
@@ -47,11 +47,16 @@ bool QuasarWebPage::certificateError(const QWebEngineCertificateError& certifica
     return false;
 }
 
-WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QString authcode, QWidget* parent) : QWidget(parent), m_Name(widgetName)
+WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, DataServer* serv, QWidget* parent) : QWidget(parent), m_Name(widgetName), server(serv)
 {
     if (m_Name.isEmpty())
     {
         throw std::invalid_argument("Widget name cannot be null");
+    }
+
+    if (server == nullptr)
+    {
+        throw std::invalid_argument("Dataserver cannot be null");
     }
 
     // Copy data
@@ -183,12 +188,13 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QString authcod
     // Inject global script
     if (data[WGT_DEF_DATASERVER].toBool())
     {
+        QString authcode = server->generateAuthCode(m_Name);
+
         QString gscript = getGlobalScript();
         quint16 port    = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
         QString pageGlobals = gscript.arg(port).arg(authcode);
 
-        QWebEngineScript script;
         script.setName("PageGlobals");
         script.setInjectionPoint(QWebEngineScript::DocumentCreation);
         script.setWorldId(0);
@@ -355,7 +361,26 @@ void WebWidget::createContextMenuActions()
     });
 
     rReload = new QAction(tr("&Reload"), this);
-    connect(rReload, &QAction::triggered, webview, &QWebEngineView::reload);
+    connect(rReload, &QAction::triggered, [=] {
+        if (webview->page()->scripts().size())
+        {
+            // Delete old script if it exists
+            webview->page()->scripts().remove(script);
+
+            // Insert refreshed script
+            QString authcode = server->generateAuthCode(m_Name);
+            QString gscript  = getGlobalScript();
+
+            QSettings settings;
+            quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+
+            QString pageGlobals = gscript.arg(port).arg(authcode);
+            script.setSourceCode(pageGlobals);
+
+            webview->page()->scripts().insert(script);
+        }
+        webview->reload();
+    });
 
     rResetPos = new QAction(tr("Re&set Position"), this);
     connect(rResetPos, &QAction::triggered, [=](bool e) { this->move(0, 0); });

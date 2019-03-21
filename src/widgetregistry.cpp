@@ -101,7 +101,6 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
     // Generate unique widget name
     QString defName    = dat[WGT_DEF_NAME].toString();
     QString widgetName = defName;
-    QString authcode   = "";
     int     idx        = 2;
 
     std::unique_lock<std::shared_mutex> lk(m_mutex);
@@ -113,12 +112,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
     qInfo() << "Loading widget " << widgetName << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
 
-    if (dat[WGT_DEF_DATASERVER].toBool())
-    {
-        authcode = server->generateAuthCode(widgetName);
-    }
-
-    WebWidget* widget = new WebWidget(widgetName, dat, authcode);
+    WebWidget* widget = new WebWidget(widgetName, dat, server);
 
     m_widgetMap.insert(std::make_pair(widgetName, widget));
 

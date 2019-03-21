@@ -3,9 +3,11 @@
 #include <QWidget>
 #include <QtGui>
 #include <QtWebEngineWidgets/QWebEngineProfile>
+#include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineView>
 
 QT_FORWARD_DECLARE_CLASS(QMenu);
+QT_FORWARD_DECLARE_CLASS(DataServer);
 
 // From https://stackoverflow.com/questions/19362455/dark-transparent-layer-over-a-qmainwindow-in-qt
 class OverlayWidget : public QWidget
@@ -118,7 +120,7 @@ protected slots:
     void toggleOnTop(bool ontop);
 
 private:
-    explicit WebWidget(QString widgetName, const QJsonObject& dat, QString authcode, QWidget* parent = nullptr);
+    explicit WebWidget(QString widgetName, const QJsonObject& dat, DataServer* serv, QWidget* parent = nullptr);
 
     QString getSettingKey(QString key);
 
@@ -127,6 +129,9 @@ private:
     bool m_fixedposition = false;
 
     QString m_Name;
+
+    // Dataserver
+    DataServer* server;
 
     // Web engine widget
     QuasarWebView* webview;
@@ -139,6 +144,9 @@ private:
 
     // Drag and drop pos
     QPoint dragPosition;
+
+    // Page script
+    QWebEngineScript script;
 
     // Menu/actions
     QMenu*   m_Menu;
