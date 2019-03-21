@@ -475,11 +475,9 @@ void DataServer::handleQueryLauncher(QString params, client_data_t client, QWebS
                 {
                     auto [command, file, start, args, icon] = e.value<AppLauncherData>();
 
+                    // For regular clients, only include command and icon data
                     QJsonObject entry;
                     entry["command"] = command;
-                    entry["file"]    = file;
-                    entry["args"]    = args;
-                    entry["start"]   = start;
                     entry["icon"]    = QString();
 
                     if (!icon.isEmpty())
