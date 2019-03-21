@@ -11,7 +11,7 @@ function parse_data(msg) {
 
 $(function() {
     var sconfig = {
-        value: "{\n  \"method\": \"query\",\n  \"params\": {\n    \"target\": \"simple_perf\",\n    \"params\": \"cpu\"\n  }\n}",
+        value: "{\n  \"method\": \"query\",\n  \"params\": {\n    \"target\": \"win_simple_perf\",\n    \"params\": \"cpu\"\n  }\n}",
         mode: {name: "javascript", json: true },
         tabSize: tabSize
     };
