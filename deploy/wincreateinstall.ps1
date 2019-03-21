@@ -8,7 +8,7 @@ $ErrorActionPreference = "Stop"
 
 $qtpath = $env:QTDIR
 if ($null -eq $qtpath) {
-    $qtpath = "C:\Qt\5.12.1\msvc2017_64"
+    $qtpath = "C:\Qt\5.12.2\msvc2017_64"
 }
 
 $windeployqt = "$($qtpath)\bin\windeployqt.exe"
