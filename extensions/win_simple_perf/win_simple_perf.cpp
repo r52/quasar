@@ -126,7 +126,8 @@ bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData)
     return calltable[srcUid](hData);
 }
 
-quasar_ext_info_fields_t fields = {EXT_NAME, EXT_FULLNAME, "2.0", "r52", "Sample plugin that queries basic performance numbers", ""};
+quasar_ext_info_fields_t fields =
+    {EXT_NAME, EXT_FULLNAME, "2.0", "r52", "Sample plugin that queries basic performance numbers", "https://github.com/r52/quasar"};
 
 quasar_ext_info_t info = {QUASAR_API_VERSION,
                           &fields,

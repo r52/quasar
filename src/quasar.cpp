@@ -262,7 +262,7 @@ void Quasar::checkForUpdates()
         }
         else
         {
-            qInfo() << "No updates available.";
+            qInfo() << "No updates available. Already on the latest version.";
         }
     });
 
