@@ -17,6 +17,7 @@ enum QuasarSettingEntryType
     QUASAR_SETTING_ENTRY_INT = 0,  //!< Integer type
     QUASAR_SETTING_ENTRY_DOUBLE,   //!< Double type
     QUASAR_SETTING_ENTRY_BOOL,     //!< Bool type
+    QUASAR_SETTING_ENTRY_STRING,   //!< String type
     QUASAR_SETTING_ENTRY_SELECTION //!< Selection type
 };
 
@@ -49,6 +50,13 @@ struct esi_booltype_t
     bool val; //!< Current value
 };
 
+//! Internal struct holding a string type setting
+struct esi_stringtype_t
+{
+    QString def; //!< Default value
+    QString val; //!< Current value
+};
+
 //! Internal struct holding a selection type setting
 struct esi_selecttype_t
 {
@@ -59,6 +67,7 @@ struct esi_selecttype_t
 Q_DECLARE_METATYPE(esi_inttype_t);
 Q_DECLARE_METATYPE(esi_doubletype_t);
 Q_DECLARE_METATYPE(esi_booltype_t);
+Q_DECLARE_METATYPE(esi_stringtype_t);
 Q_DECLARE_METATYPE(esi_selecttype_t);
 
 //! Struct for defining a extension setting entry

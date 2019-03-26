@@ -266,6 +266,29 @@ quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* na
     return nullptr;
 }
 
+quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* name, const char* description, const char* dflt)
+{
+    if (settings)
+    {
+        quasar_setting_def_t entry;
+
+        entry.type        = QUASAR_SETTING_ENTRY_STRING;
+        entry.description = description;
+
+        esi_stringtype_t c;
+
+        c.def = dflt;
+
+        entry.var.setValue(c);
+
+        settings->map.insert(std::make_pair(name, entry));
+
+        return settings;
+    }
+
+    return nullptr;
+}
+
 quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, const char** vals, size_t len)
 {
     if (settings)
@@ -275,14 +298,14 @@ quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char*
         entry.type        = QUASAR_SETTING_ENTRY_SELECTION;
         entry.description = description;
 
-        esi_selecttype_t selecttype;
+        esi_selecttype_t c;
 
         for (size_t i = 0; i < len; i++)
         {
-            selecttype.list.append(vals[i]);
+            c.list.append(vals[i]);
         }
 
-        entry.var.setValue(selecttype);
+        entry.var.setValue(c);
 
         settings->map.insert(std::make_pair(name, entry));
 
@@ -334,6 +357,18 @@ double quasar_get_double(quasar_settings_t* settings, const char* name)
     }
 
     return 0.0;
+}
+
+const char* quasar_get_string(quasar_settings_t* settings, const char* name)
+{
+    if (settings && settings->map.count(name))
+    {
+        auto c  = settings->map[name].var.value<esi_stringtype_t>();
+        auto ba = c.val.toLocal8Bit();
+        return ba.data();
+    }
+
+    return nullptr;
 }
 
 const char* quasar_get_selection(quasar_settings_t* settings, const char* name)

@@ -53,12 +53,20 @@ function createExtensionTab(ext) {
         ext.settings.forEach(function (s) {
             var element = "";
 
-            if (s.type === "int" || s.type === "double" || s.type === "bool") {
+            if (s.type === "int" || s.type === "double" || s.type === "bool" || s.type === "string") {
                 var minmax = "";
+                var type = "text";
+
                 if (s.type === "int" || s.type === "double") {
+                    type = "number";
                     minmax = `min="${s.min}" max="${s.max}" step="${s.step}"`;
+                } else if (s.type === "bool") {
+                    type = "checkbox";
+                } else if (s.type === "string") {
+                    type = "text";
                 }
-                element = `<input type="${(s.type === "int" || s.type === "double") ? 'number' : 'checkbox'}" class="form-control" id="${ext.name}/${s.name}" ${minmax} value="${s.val}">`;
+
+                element = `<input type="${type}" class="form-control" id="${ext.name}/${s.name}" ${minmax} value="${s.val}">`;
             } else if (s.type === "select") {
                 var options = "";
                 s.list.forEach(function (l) {

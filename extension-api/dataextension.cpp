@@ -131,6 +131,14 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
                         break;
                     }
 
+                    case QUASAR_SETTING_ENTRY_STRING:
+                    {
+                        auto c = it.second.var.value<esi_stringtype_t>();
+                        c.val  = settings.value(getSettingsKey(it.first), c.def).toString();
+                        it.second.var.setValue(c);
+                        break;
+                    }
+
                     case QUASAR_SETTING_ENTRY_SELECTION:
                     {
                         auto c = it.second.var.value<esi_selecttype_t>();
@@ -402,7 +410,7 @@ QJsonObject DataExtension::getMetadataJSON(bool settings_only)
     // ext settings
     if (m_settings)
     {
-        static const QString entryTypeStrArr[] = {"int", "double", "bool", "select"};
+        static const QString entryTypeStrArr[] = {"int", "double", "bool", "string", "select"};
 
         QJsonArray extsettings;
 
@@ -442,6 +450,14 @@ QJsonObject DataExtension::getMetadataJSON(bool settings_only)
                 case QUASAR_SETTING_ENTRY_BOOL:
                 {
                     auto c   = entry.var.value<esi_booltype_t>();
+                    s["def"] = c.def;
+                    s["val"] = c.val;
+                    break;
+                }
+
+                case QUASAR_SETTING_ENTRY_STRING:
+                {
+                    auto c   = entry.var.value<esi_stringtype_t>();
                     s["def"] = c.def;
                     s["val"] = c.val;
                     break;
@@ -582,6 +598,14 @@ void DataExtension::setAllSettings(const QJsonObject& setjs)
                     auto c = cset.var.value<esi_booltype_t>();
                     c.val  = setjs[setkey].toBool();
                     settings.setValue(getSettingsKey(name), setjs[setkey].toBool());
+                    cset.var.setValue(c);
+                    break;
+                }
+                case QUASAR_SETTING_ENTRY_STRING:
+                {
+                    auto c = cset.var.value<esi_stringtype_t>();
+                    c.val  = setjs[setkey].toString();
+                    settings.setValue(getSettingsKey(name), setjs[setkey].toString());
                     cset.var.setValue(c);
                     break;
                 }

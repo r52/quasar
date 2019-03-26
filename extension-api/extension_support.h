@@ -150,6 +150,16 @@ SAPI_EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, cons
 SAPI_EXPORT quasar_settings_t*
             quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt);
 
+//! Creates a string type setting in extension settings
+/*!
+    \param[in]  settings    The extension settings handle
+    \param[in]  name        Name of the setting
+    \param[in]  description Description for the setting
+    \param[in]  dflt        Default value (if any)
+    \return The settings handle if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* name, const char* description, const char* dflt);
+
 //! Creates a selection type setting in extension settings
 /*!
     \param[in]  settings    The extension settings handle
@@ -192,6 +202,14 @@ SAPI_EXPORT bool quasar_get_bool(quasar_settings_t* settings, const char* name);
     \return Value of the setting if successful, default value otherwise
 */
 SAPI_EXPORT double quasar_get_double(quasar_settings_t* settings, const char* name);
+
+//! Retrieves a string setting from Quasar
+/*!
+    \param[in]  settings    The extension settings handle
+    \param[in]  name        Name of the setting
+    \return Value of the setting if successful, default value otherwise
+*/
+SAPI_EXPORT const char* quasar_get_string(quasar_settings_t* settings, const char* name);
 
 //! Retrieves a selection setting from Quasar
 /*!
