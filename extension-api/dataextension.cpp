@@ -108,16 +108,36 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
                 switch (it.second.type)
                 {
                     case QUASAR_SETTING_ENTRY_INT:
-                        it.second.inttype.val = settings.value(getSettingsKey(it.first), it.second.inttype.def).toInt();
+                    {
+                        auto c = it.second.var.value<esi_inttype_t>();
+                        c.val  = settings.value(getSettingsKey(it.first), c.def).toInt();
+                        it.second.var.setValue(c);
                         break;
+                    }
 
                     case QUASAR_SETTING_ENTRY_DOUBLE:
-                        it.second.doubletype.val = settings.value(getSettingsKey(it.first), it.second.doubletype.def).toDouble();
+                    {
+                        auto c = it.second.var.value<esi_doubletype_t>();
+                        c.val  = settings.value(getSettingsKey(it.first), c.def).toDouble();
+                        it.second.var.setValue(c);
                         break;
+                    }
 
                     case QUASAR_SETTING_ENTRY_BOOL:
-                        it.second.booltype.val = settings.value(getSettingsKey(it.first), it.second.booltype.def).toBool();
+                    {
+                        auto c = it.second.var.value<esi_doubletype_t>();
+                        c.val  = settings.value(getSettingsKey(it.first), c.def).toBool();
+                        it.second.var.setValue(c);
                         break;
+                    }
+
+                    case QUASAR_SETTING_ENTRY_SELECTION:
+                    {
+                        auto c = it.second.var.value<esi_selecttype_t>();
+                        c.val  = settings.value(getSettingsKey(it.first), c.list.at(0)).toString();
+                        it.second.var.setValue(c);
+                        break;
+                    }
                 }
             }
 
@@ -382,7 +402,7 @@ QJsonObject DataExtension::getMetadataJSON(bool settings_only)
     // ext settings
     if (m_settings)
     {
-        static const QString entryTypeStrArr[] = {"int", "double", "bool"};
+        static const QString entryTypeStrArr[] = {"int", "double", "bool", "select"};
 
         QJsonArray extsettings;
 
@@ -399,28 +419,39 @@ QJsonObject DataExtension::getMetadataJSON(bool settings_only)
             {
                 case QUASAR_SETTING_ENTRY_INT:
                 {
-                    s["min"]  = entry.inttype.min;
-                    s["max"]  = entry.inttype.max;
-                    s["step"] = entry.inttype.step;
-                    s["def"]  = entry.inttype.def;
-                    s["val"]  = entry.inttype.val;
+                    auto c    = entry.var.value<esi_inttype_t>();
+                    s["min"]  = c.min;
+                    s["max"]  = c.max;
+                    s["step"] = c.step;
+                    s["def"]  = c.def;
+                    s["val"]  = c.val;
                     break;
                 }
 
                 case QUASAR_SETTING_ENTRY_DOUBLE:
                 {
-                    s["min"]  = entry.doubletype.min;
-                    s["max"]  = entry.doubletype.max;
-                    s["step"] = entry.doubletype.step;
-                    s["def"]  = entry.doubletype.def;
-                    s["val"]  = entry.doubletype.val;
+                    auto c    = entry.var.value<esi_doubletype_t>();
+                    s["min"]  = c.min;
+                    s["max"]  = c.max;
+                    s["step"] = c.step;
+                    s["def"]  = c.def;
+                    s["val"]  = c.val;
                     break;
                 }
 
                 case QUASAR_SETTING_ENTRY_BOOL:
                 {
-                    s["def"] = entry.booltype.def;
-                    s["val"] = entry.booltype.val;
+                    auto c   = entry.var.value<esi_booltype_t>();
+                    s["def"] = c.def;
+                    s["val"] = c.val;
+                    break;
+                }
+
+                case QUASAR_SETTING_ENTRY_SELECTION:
+                {
+                    auto c    = entry.var.value<esi_selecttype_t>();
+                    s["list"] = QJsonArray::fromStringList(c.list);
+                    s["val"]  = c.val;
                     break;
                 }
             }
@@ -531,17 +562,37 @@ void DataExtension::setAllSettings(const QJsonObject& setjs)
             switch (cset.type)
             {
                 case QUASAR_SETTING_ENTRY_INT:
-                    cset.inttype.val = setjs[setkey].toInt();
+                {
+                    auto c = cset.var.value<esi_inttype_t>();
+                    c.val  = setjs[setkey].toInt();
                     settings.setValue(getSettingsKey(name), setjs[setkey].toInt());
+                    cset.var.setValue(c);
                     break;
+                }
                 case QUASAR_SETTING_ENTRY_DOUBLE:
-                    cset.doubletype.val = setjs[setkey].toDouble();
+                {
+                    auto c = cset.var.value<esi_doubletype_t>();
+                    c.val  = setjs[setkey].toDouble();
                     settings.setValue(getSettingsKey(name), setjs[setkey].toDouble());
+                    cset.var.setValue(c);
                     break;
+                }
                 case QUASAR_SETTING_ENTRY_BOOL:
-                    cset.booltype.val = setjs[setkey].toBool();
+                {
+                    auto c = cset.var.value<esi_booltype_t>();
+                    c.val  = setjs[setkey].toBool();
                     settings.setValue(getSettingsKey(name), setjs[setkey].toBool());
+                    cset.var.setValue(c);
                     break;
+                }
+                case QUASAR_SETTING_ENTRY_SELECTION:
+                {
+                    auto c = cset.var.value<esi_selecttype_t>();
+                    c.val  = setjs[setkey].toString();
+                    settings.setValue(getSettingsKey(name), setjs[setkey].toString());
+                    cset.var.setValue(c);
+                    break;
+                }
             }
         }
         else
@@ -644,8 +695,8 @@ void DataExtension::handleDataReadySignal(QString source)
                         dsrc.pollqueue.pop_front();
                     }
                 }
+                break;
             }
-            break;
         }
     }
     else

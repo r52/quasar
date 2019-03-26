@@ -110,7 +110,7 @@ quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, const char* 
     return nullptr;
 }
 
-quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char** arr, size_t len)
+quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, const char** arr, size_t len)
 {
     QJsonValue* ref = static_cast<QJsonValue*>(hData);
 
@@ -200,12 +200,16 @@ quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name,
     {
         quasar_setting_def_t entry;
 
-        entry.type         = QUASAR_SETTING_ENTRY_INT;
-        entry.description  = description;
-        entry.inttype.min  = min;
-        entry.inttype.max  = max;
-        entry.inttype.step = step;
-        entry.inttype.def = entry.inttype.val = dflt;
+        entry.type        = QUASAR_SETTING_ENTRY_INT;
+        entry.description = description;
+
+        esi_inttype_t c;
+        c.min  = min;
+        c.max  = max;
+        c.step = step;
+        c.def = c.val = dflt;
+
+        entry.var.setValue(c);
 
         settings->map.insert(std::make_pair(name, entry));
 
@@ -221,9 +225,13 @@ quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name
     {
         quasar_setting_def_t entry;
 
-        entry.type         = QUASAR_SETTING_ENTRY_BOOL;
-        entry.description  = description;
-        entry.booltype.def = entry.booltype.val = dflt;
+        entry.type        = QUASAR_SETTING_ENTRY_BOOL;
+        entry.description = description;
+
+        esi_booltype_t c;
+        c.def = c.val = dflt;
+
+        entry.var.setValue(c);
 
         settings->map.insert(std::make_pair(name, entry));
 
@@ -239,12 +247,42 @@ quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* na
     {
         quasar_setting_def_t entry;
 
-        entry.type            = QUASAR_SETTING_ENTRY_DOUBLE;
-        entry.description     = description;
-        entry.doubletype.min  = min;
-        entry.doubletype.max  = max;
-        entry.doubletype.step = step;
-        entry.doubletype.def = entry.doubletype.val = dflt;
+        entry.type        = QUASAR_SETTING_ENTRY_DOUBLE;
+        entry.description = description;
+
+        esi_doubletype_t c;
+        c.min  = min;
+        c.max  = max;
+        c.step = step;
+        c.def = c.val = dflt;
+
+        entry.var.setValue(c);
+
+        settings->map.insert(std::make_pair(name, entry));
+
+        return settings;
+    }
+
+    return nullptr;
+}
+
+quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, const char** vals, size_t len)
+{
+    if (settings)
+    {
+        quasar_setting_def_t entry;
+
+        entry.type        = QUASAR_SETTING_ENTRY_SELECTION;
+        entry.description = description;
+
+        esi_selecttype_t selecttype;
+
+        for (size_t i = 0; i < len; i++)
+        {
+            selecttype.list.append(vals[i]);
+        }
+
+        entry.var.setValue(selecttype);
 
         settings->map.insert(std::make_pair(name, entry));
 
@@ -258,7 +296,8 @@ intmax_t quasar_get_int(quasar_settings_t* settings, const char* name)
 {
     if (settings && settings->map.count(name))
     {
-        return settings->map[name].inttype.val;
+        auto c = settings->map[name].var.value<esi_inttype_t>();
+        return c.val;
     }
 
     return intmax_t();
@@ -268,7 +307,8 @@ uintmax_t quasar_get_uint(quasar_settings_t* settings, const char* name)
 {
     if (settings && settings->map.count(name))
     {
-        return settings->map[name].inttype.val;
+        auto c = settings->map[name].var.value<esi_inttype_t>();
+        return c.val;
     }
 
     return uintmax_t();
@@ -278,7 +318,8 @@ bool quasar_get_bool(quasar_settings_t* settings, const char* name)
 {
     if (settings && settings->map.count(name))
     {
-        return settings->map[name].booltype.val;
+        auto c = settings->map[name].var.value<esi_booltype_t>();
+        return c.val;
     }
 
     return false;
@@ -288,10 +329,23 @@ double quasar_get_double(quasar_settings_t* settings, const char* name)
 {
     if (settings && settings->map.count(name))
     {
-        return settings->map[name].doubletype.val;
+        auto c = settings->map[name].var.value<esi_doubletype_t>();
+        return c.val;
     }
 
     return 0.0;
+}
+
+const char* quasar_get_selection(quasar_settings_t* settings, const char* name)
+{
+    if (settings && settings->map.count(name))
+    {
+        auto c  = settings->map[name].var.value<esi_selecttype_t>();
+        auto ba = c.val.toLocal8Bit();
+        return ba.data();
+    }
+
+    return nullptr;
 }
 
 void quasar_signal_data_ready(quasar_ext_handle handle, const char* source)

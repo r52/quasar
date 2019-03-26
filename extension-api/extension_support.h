@@ -87,7 +87,7 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, 
     \param[in]  len     Length of array
     \return Data handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char** arr, size_t len);
+SAPI_EXPORT quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, const char** arr, size_t len);
 
 //! Sets the return data to be an array of integers
 /*! \param[in]  hData   Data handle
@@ -150,6 +150,17 @@ SAPI_EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, cons
 SAPI_EXPORT quasar_settings_t*
             quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt);
 
+//! Creates a selection type setting in extension settings
+/*!
+    \param[in]  settings    The extension settings handle
+    \param[in]  name        Name of the setting
+    \param[in]  description Description for the setting
+    \param[in]  vals        Array of possible values
+    \param[in]  len         Length of array
+    \return The settings handle if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, const char** vals, size_t len);
+
 //! Retrieves an integer setting from Quasar
 /*!
     \param[in]  settings    The extension settings handle
@@ -181,6 +192,14 @@ SAPI_EXPORT bool quasar_get_bool(quasar_settings_t* settings, const char* name);
     \return Value of the setting if successful, default value otherwise
 */
 SAPI_EXPORT double quasar_get_double(quasar_settings_t* settings, const char* name);
+
+//! Retrieves a selection setting from Quasar
+/*!
+    \param[in]  settings    The extension settings handle
+    \param[in]  name        Name of the setting
+    \return Value of the setting if successful, default value otherwise
+*/
+SAPI_EXPORT const char* quasar_get_selection(quasar_settings_t* settings, const char* name);
 
 //! Signals to Quasar that data is ready to be sent to clients
 /*! This function is for Data Sources with \ref quasar_data_source_t.rate

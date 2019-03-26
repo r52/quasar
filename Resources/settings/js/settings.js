@@ -51,17 +51,31 @@ function createExtensionTab(ext) {
         extsettings += "<h2>Extension Settings</h2>";
 
         ext.settings.forEach(function (s) {
-            var minmax = ""
+            var element = "";
 
-            if (s.type === "int" || s.type === "double") {
-                minmax = `min="${s.min}" max="${s.max}" step="${s.step}"`;
+            if (s.type === "int" || s.type === "double" || s.type === "bool") {
+                var minmax = "";
+                if (s.type === "int" || s.type === "double") {
+                    minmax = `min="${s.min}" max="${s.max}" step="${s.step}"`;
+                }
+                element = `<input type="${(s.type === "int" || s.type === "double") ? 'number' : 'checkbox'}" class="form-control" id="${ext.name}/${s.name}" ${minmax} value="${s.val}">`;
+            } else if (s.type === "select") {
+                var options = "";
+                s.list.forEach(function (l) {
+                    options += `<option value="${l}" ${s.val === l ? 'selected' : ''}>${l}</option>`;
+                });
+                element = `
+                <select class="custom-select" id="${ext.name}/${s.name}">
+                    ${options}
+                </select>
+                `;
             }
 
             var sinput = `
             <div class="form-group">
                 <label for="${ext.name}/${s.name}">${s.desc}</label>
                 <div class="input-group mb-3">
-                    <input type="${(s.type === "int" || s.type === "double") ? 'number' : 'checkbox'}" class="form-control" id="${ext.name}/${s.name}" ${minmax} value="${s.val}">
+                    ${element}
                 </div>
             </div>
             `
@@ -231,7 +245,7 @@ function save_settings() {
     var dat = {};
 
     // global tab
-    $("div[aria-labelledby='global-tab'] :input, textarea").each(function () {
+    $("div[aria-labelledby='global-tab'] :input").each(function () {
         var input = $(this);
         var key = input.attr("name");
 
