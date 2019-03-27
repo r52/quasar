@@ -32,9 +32,22 @@ void quasar_log(quasar_log_level_t level, const char* msg)
     }
 }
 
+void quasar_free(void* handle)
+{
+    if (nullptr != handle)
+    {
+        delete handle;
+    }
+}
+
 quasar_settings_t* quasar_create_settings(void)
 {
     return new quasar_settings_t;
+}
+
+quasar_selection_options_t* quasar_create_selection_setting(void)
+{
+    return new quasar_selection_options_t;
 }
 
 quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* data)
@@ -289,7 +302,7 @@ quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* na
     return nullptr;
 }
 
-quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, const char** vals, size_t len)
+quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t*& select)
 {
     if (settings)
     {
@@ -298,18 +311,26 @@ quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char*
         entry.type        = QUASAR_SETTING_ENTRY_SELECTION;
         entry.description = description;
 
-        esi_selecttype_t c;
-
-        for (size_t i = 0; i < len; i++)
-        {
-            c.list.append(vals[i]);
-        }
-
-        entry.var.setValue(c);
+        entry.var.setValue(*select);
 
         settings->map.insert(std::make_pair(name, entry));
 
+        delete select;
+        select = nullptr;
+
         return settings;
+    }
+
+    return nullptr;
+}
+
+quasar_selection_options_t* quasar_add_selection_option(quasar_selection_options_t* select, const char* name, const char* value)
+{
+    if (select)
+    {
+        select->list.append({name, value});
+
+        return select;
     }
 
     return nullptr;
@@ -375,7 +396,7 @@ const char* quasar_get_selection(quasar_settings_t* settings, const char* name)
 {
     if (settings && settings->map.count(name))
     {
-        auto c  = settings->map[name].var.value<esi_selecttype_t>();
+        auto c  = settings->map[name].var.value<quasar_selection_options_t>();
         auto ba = c.val.toLocal8Bit();
         return ba.data();
     }

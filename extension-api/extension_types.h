@@ -47,6 +47,12 @@ enum quasar_polling_type_t
 */
 struct quasar_settings_t;
 
+//! Struct for creating and storing selection options in a selection type setting.
+/*! This struct is opaque to the front facing API.
+    \sa extension_support.h, extension_support_internal.h
+*/
+struct quasar_selection_options_t;
+
 // Typedefs
 
 //! Type for the extension handle pointer.

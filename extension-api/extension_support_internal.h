@@ -57,18 +57,25 @@ struct esi_stringtype_t
     QString val; //!< Current value
 };
 
-//! Internal struct holding a selection type setting
-struct esi_selecttype_t
+struct esi_select_option_t
 {
-    QStringList list; //!< Possible values
-    QString     val;  //!< Current value
+    QString name;  //!< Name of the option (shown in UI)
+    QString value; //!< Actual value of the option
+};
+
+//! Internal struct holding a selection type setting
+struct quasar_selection_options_t
+{
+    QList<esi_select_option_t> list; //!< Possible values
+    QString                    val;  //!< Current value
 };
 
 Q_DECLARE_METATYPE(esi_inttype_t);
 Q_DECLARE_METATYPE(esi_doubletype_t);
 Q_DECLARE_METATYPE(esi_booltype_t);
 Q_DECLARE_METATYPE(esi_stringtype_t);
-Q_DECLARE_METATYPE(esi_selecttype_t);
+Q_DECLARE_METATYPE(esi_select_option_t);
+Q_DECLARE_METATYPE(quasar_selection_options_t);
 
 //! Struct for defining a extension setting entry
 /*! \sa extension_support.h

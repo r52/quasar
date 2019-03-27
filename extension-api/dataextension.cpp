@@ -100,57 +100,59 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
     {
         m_settings.reset(m_extension->create_settings());
 
-        if (m_settings)
+        if (!m_settings)
         {
-            // Fill saved settings if any
-            for (auto& it : m_settings->map)
+            throw std::runtime_error("extension create_settings() failed");
+        }
+
+        // Fill saved settings if any
+        for (auto& it : m_settings->map)
+        {
+            switch (it.second.type)
             {
-                switch (it.second.type)
+                case QUASAR_SETTING_ENTRY_INT:
                 {
-                    case QUASAR_SETTING_ENTRY_INT:
-                    {
-                        auto c = it.second.var.value<esi_inttype_t>();
-                        c.val  = settings.value(getSettingsKey(it.first), c.def).toInt();
-                        it.second.var.setValue(c);
-                        break;
-                    }
+                    auto c = it.second.var.value<esi_inttype_t>();
+                    c.val  = settings.value(getSettingsKey(it.first), c.def).toInt();
+                    it.second.var.setValue(c);
+                    break;
+                }
 
-                    case QUASAR_SETTING_ENTRY_DOUBLE:
-                    {
-                        auto c = it.second.var.value<esi_doubletype_t>();
-                        c.val  = settings.value(getSettingsKey(it.first), c.def).toDouble();
-                        it.second.var.setValue(c);
-                        break;
-                    }
+                case QUASAR_SETTING_ENTRY_DOUBLE:
+                {
+                    auto c = it.second.var.value<esi_doubletype_t>();
+                    c.val  = settings.value(getSettingsKey(it.first), c.def).toDouble();
+                    it.second.var.setValue(c);
+                    break;
+                }
 
-                    case QUASAR_SETTING_ENTRY_BOOL:
-                    {
-                        auto c = it.second.var.value<esi_doubletype_t>();
-                        c.val  = settings.value(getSettingsKey(it.first), c.def).toBool();
-                        it.second.var.setValue(c);
-                        break;
-                    }
+                case QUASAR_SETTING_ENTRY_BOOL:
+                {
+                    auto c = it.second.var.value<esi_doubletype_t>();
+                    c.val  = settings.value(getSettingsKey(it.first), c.def).toBool();
+                    it.second.var.setValue(c);
+                    break;
+                }
 
-                    case QUASAR_SETTING_ENTRY_STRING:
-                    {
-                        auto c = it.second.var.value<esi_stringtype_t>();
-                        c.val  = settings.value(getSettingsKey(it.first), c.def).toString();
-                        it.second.var.setValue(c);
-                        break;
-                    }
+                case QUASAR_SETTING_ENTRY_STRING:
+                {
+                    auto c = it.second.var.value<esi_stringtype_t>();
+                    c.val  = settings.value(getSettingsKey(it.first), c.def).toString();
+                    it.second.var.setValue(c);
+                    break;
+                }
 
-                    case QUASAR_SETTING_ENTRY_SELECTION:
-                    {
-                        auto c = it.second.var.value<esi_selecttype_t>();
-                        c.val  = settings.value(getSettingsKey(it.first), c.list.at(0)).toString();
-                        it.second.var.setValue(c);
-                        break;
-                    }
+                case QUASAR_SETTING_ENTRY_SELECTION:
+                {
+                    auto c = it.second.var.value<quasar_selection_options_t>();
+                    c.val  = settings.value(getSettingsKey(it.first), c.list.at(0).value).toString();
+                    it.second.var.setValue(c);
+                    break;
                 }
             }
-
-            updateExtensionSettings();
         }
+
+        updateExtensionSettings();
     }
 
     // initialize the extension
@@ -465,8 +467,15 @@ QJsonObject DataExtension::getMetadataJSON(bool settings_only)
 
                 case QUASAR_SETTING_ENTRY_SELECTION:
                 {
-                    auto c    = entry.var.value<esi_selecttype_t>();
-                    s["list"] = QJsonArray::fromStringList(c.list);
+                    auto       c = entry.var.value<quasar_selection_options_t>();
+                    QJsonArray vlist;
+
+                    for (auto& e : c.list)
+                    {
+                        vlist.append(QJsonObject{{"name", e.name}, {"value", e.value}});
+                    }
+
+                    s["list"] = vlist;
                     s["val"]  = c.val;
                     break;
                 }
@@ -611,7 +620,7 @@ void DataExtension::setAllSettings(const QJsonObject& setjs)
                 }
                 case QUASAR_SETTING_ENTRY_SELECTION:
                 {
-                    auto c = cset.var.value<esi_selecttype_t>();
+                    auto c = cset.var.value<quasar_selection_options_t>();
                     c.val  = setjs[setkey].toString();
                     settings.setValue(getSettingsKey(name), setjs[setkey].toString());
                     cset.var.setValue(c);

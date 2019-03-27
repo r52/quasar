@@ -70,7 +70,7 @@ function createExtensionTab(ext) {
             } else if (s.type === "select") {
                 var options = "";
                 s.list.forEach(function (l) {
-                    options += `<option value="${l}" ${s.val === l ? 'selected' : ''}>${l}</option>`;
+                    options += `<option value="${l.value}" ${s.val === l.value ? 'selected' : ''}>${l.name}</option>`;
                 });
                 element = `
                 <select class="custom-select" id="${ext.name}/${s.name}">

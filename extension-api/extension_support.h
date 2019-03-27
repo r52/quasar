@@ -30,13 +30,26 @@ extern "C" {
 */
 SAPI_EXPORT void quasar_log(quasar_log_level_t level, const char* msg);
 
-//! Creates a new instance \ref quasar_settings_t
+//! Frees any dangling created instances. Should only be used in error case exits.
+/*!
+    \param[in]  handle  Handle to instance to be freed
+*/
+SAPI_EXPORT void quasar_free(void* handle);
+
+//! Creates a new instance of \ref quasar_settings_t
 /*! Use in \ref quasar_ext_info_t.create_settings to create extension settings.
     Ensure that only a single instance is created and used per extension.
 
     \return quasar_settings_t instance if successful, nullptr otherwise
 */
 SAPI_EXPORT quasar_settings_t* quasar_create_settings(void);
+
+//! Creates a new \ref quasar_selection_options_t setting.
+/*! Use with \ref quasar_add_selection() after populating options.
+
+    \return quasar_selection_options_t instance if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_selection_options_t* quasar_create_selection_setting(void);
 
 //! Sets the return data to be a null terminated string
 /*! \param[in]  hData   Data handle
@@ -165,11 +178,20 @@ SAPI_EXPORT quasar_settings_t* quasar_add_string(quasar_settings_t* settings, co
     \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
     \param[in]  description Description for the setting
-    \param[in]  vals        Array of possible values
-    \param[in]  len         Length of array
+    \param[in]  select      Handle to the selection setting instance (takes ownership)
     \return The settings handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, const char** vals, size_t len);
+SAPI_EXPORT quasar_settings_t*
+            quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t*& select);
+
+//! Creates a selection type setting in extension settings
+/*!
+    \param[in]  select      The selection setting handle
+    \param[in]  name        Name of the option (shown in UI)
+    \param[in]  value       Actual value of the option
+    \return The setting handle if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_selection_options_t* quasar_add_selection_option(quasar_selection_options_t* select, const char* name, const char* value);
 
 //! Retrieves an integer setting from Quasar
 /*!
