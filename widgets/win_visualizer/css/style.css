@@ -23,7 +23,7 @@ main {
   position: absolute;
   width: 100%;
   background: #ffffff;
-  opacity: 0.5;
+  opacity: 0.75;
   will-change: height;
 }
 
