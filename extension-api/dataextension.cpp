@@ -160,6 +160,11 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
     {
         throw std::runtime_error("extension init() failed");
     }
+
+    if (m_settings)
+    {
+        updateExtensionSettings();
+    }
 }
 
 DataExtension::~DataExtension()

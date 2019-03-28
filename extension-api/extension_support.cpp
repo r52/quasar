@@ -380,28 +380,34 @@ double quasar_get_double(quasar_settings_t* settings, const char* name)
     return 0.0;
 }
 
-const char* quasar_get_string(quasar_settings_t* settings, const char* name)
+bool quasar_get_string(quasar_settings_t* settings, const char* name, char* buf, size_t size)
 {
     if (settings && settings->map.count(name))
     {
         auto c  = settings->map[name].var.value<esi_stringtype_t>();
         auto ba = c.val.toLocal8Bit();
-        return ba.data();
+
+        strcpy_s(buf, size, ba.data());
+
+        return true;
     }
 
-    return nullptr;
+    return false;
 }
 
-const char* quasar_get_selection(quasar_settings_t* settings, const char* name)
+bool quasar_get_selection(quasar_settings_t* settings, const char* name, char* buf, size_t size)
 {
     if (settings && settings->map.count(name))
     {
         auto c  = settings->map[name].var.value<quasar_selection_options_t>();
         auto ba = c.val.toLocal8Bit();
-        return ba.data();
+
+        strcpy_s(buf, size, ba.data());
+
+        return true;
     }
 
-    return nullptr;
+    return false;
 }
 
 void quasar_signal_data_ready(quasar_ext_handle handle, const char* source)

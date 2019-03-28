@@ -229,17 +229,21 @@ SAPI_EXPORT double quasar_get_double(quasar_settings_t* settings, const char* na
 /*!
     \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
-    \return Value of the setting if successful, default value otherwise
+    \param[in]  buf         Buffer to copy results to
+    \param[in]  size        Size of buffer
+    \return true if successful, false otherwise
 */
-SAPI_EXPORT const char* quasar_get_string(quasar_settings_t* settings, const char* name);
+SAPI_EXPORT bool quasar_get_string(quasar_settings_t* settings, const char* name, char* buf, size_t size);
 
 //! Retrieves a selection setting from Quasar
 /*!
     \param[in]  settings    The extension settings handle
     \param[in]  name        Name of the setting
-    \return Value of the setting if successful, default value otherwise
+    \param[in]  buf         Buffer to copy results to
+    \param[in]  size        Size of buffer
+    \return true if successful, false otherwise
 */
-SAPI_EXPORT const char* quasar_get_selection(quasar_settings_t* settings, const char* name);
+SAPI_EXPORT bool quasar_get_selection(quasar_settings_t* settings, const char* name, char* buf, size_t size);
 
 //! Signals to Quasar that data is ready to be sent to clients
 /*! This function is for Data Sources with \ref quasar_data_source_t.rate
