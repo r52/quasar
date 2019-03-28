@@ -18,10 +18,11 @@
     <ClCompile Include="win_audio_viz.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="cleanup.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClCompile Include="deps\kissfft\kiss_fft.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="deps\kissfft\kiss_fftr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
