@@ -133,7 +133,7 @@ quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, const 
 
         for (size_t i = 0; i < len; i++)
         {
-            jarr.append(QString(arr[i]));
+            jarr.append(QString::fromUtf8(arr[i]));
         }
 
         (*ref) = jarr;
@@ -385,7 +385,7 @@ bool quasar_get_string(quasar_settings_t* settings, const char* name, char* buf,
     if (settings && settings->map.count(name))
     {
         auto c  = settings->map[name].var.value<esi_stringtype_t>();
-        auto ba = c.val.toLocal8Bit();
+        auto ba = c.val.toUtf8();
 
         strcpy_s(buf, size, ba.data());
 
@@ -400,7 +400,7 @@ bool quasar_get_selection(quasar_settings_t* settings, const char* name, char* b
     if (settings && settings->map.count(name))
     {
         auto c  = settings->map[name].var.value<quasar_selection_options_t>();
-        auto ba = c.val.toLocal8Bit();
+        auto ba = c.val.toUtf8();
 
         strcpy_s(buf, size, ba.data());
 
