@@ -1,9 +1,4 @@
 var websocket = null;
-var bars = null;
-
-var prop = {
-    height: '100%'
-};
 
 function subscribe() {
     var msg = {
@@ -31,22 +26,22 @@ function initialize(dat) {
                 for (var i = 0; i < e.val; i++) {
                     main.append(element);
                 }
-
-                bars = $('.wav> div> i');
             }
         });
     }
 }
 
 function bounce(dat) {
-    bars.each(function (index, element) {
-        var hp = (dat[index] * 100.0).toFixed(0);
-        prop["height"] = hp + '%';
-
-        $(this).velocity("stop")
-            .velocity(prop, {
-                duration: 100
-            });
+    anime({
+        targets: '.wav> div> i',
+        height: function (el, i) {
+            return Math.round(dat[i] * 100.0) + '%';
+        },
+        background: function (el, i) {
+            return 'hsl(' + (120 - Math.min(Math.round(dat[i] * 135.0), 120)) + ', 100%, 66%)'
+        },
+        duration: 90,
+        easing: 'linear'
     });
 }
 

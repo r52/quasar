@@ -1,36 +1,36 @@
 main {
-  height: 180px;
-  left: 50%;
-  overflow: hidden;
-  position: absolute;
-  transform: translate3d(-50%, -50%, 0);
-  top: 50%;
-  width: 448px;
+    height: 180px;
+    left: 50%;
+    overflow: hidden;
+    position: absolute;
+    transform: translate3d(-50%, -50%, 0);
+    top: 50%;
+    width: 448px;
 }
 
 .wav {
-  display: flex;
+    display: flex;
 }
 
 .wav>div {
-  height: 100%;
-  position: relative;
-  width: calc(100% / 32);
+    flex: 1;
+    height: 100%;
+    position: relative;
 }
 
 .wav>div>i {
-  bottom: 0;
-  position: absolute;
-  width: 100%;
-  background: #ffffff;
-  opacity: 0.75;
-  will-change: height;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+    background: #ffffff;
+    opacity: 1.0;
+    will-change: height, background;
 }
 
 .wav>div>i:before {
-  background: inherit;
-  content: '';
-  height: 1px;
-  position: absolute;
-  width: 100%;
+    background: inherit;
+    content: '';
+    height: 1px;
+    position: absolute;
+    width: 100%;
 }
