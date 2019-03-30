@@ -22,7 +22,7 @@ function initialize_global(data) {
 
 function createExtensionTab(ext) {
     // add the links
-    var a = `<a class="dropdown-item" data-toggle="tab" href="#${ext.name}">${ext.fullname}</a>`
+    var a = `<a class="dropdown-item" data-toggle="tab" href="#${ext.name}" aria-controls="${ext.name}" aria-selected="false">${ext.fullname}</a>`
     $('#extension-links').append(a);
 
     // generate rate settings
