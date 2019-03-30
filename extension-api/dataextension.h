@@ -14,7 +14,8 @@
 #include <memory>
 #include <mutex>
 #include <set>
-#include <unordered_map>
+
+#include <tsl/ordered_map.h>
 
 #include <QJsonArray>
 #include <QJsonValue>
@@ -72,7 +73,7 @@ struct DataSource
 };
 
 //! Shorthand for m_datasources type
-using DataSourceMapType = std::unordered_map<QString, DataSource>;
+using DataSourceMapType = tsl::ordered_map<QString, DataSource>;
 
 //! Class that encapsulates a Quasar extension library (dll/so)
 class PAPI_EXPORT DataExtension : public QObject

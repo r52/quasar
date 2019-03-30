@@ -106,47 +106,49 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
         }
 
         // Fill saved settings if any
-        for (auto& it : m_settings->map)
+        for (auto it = m_settings->map.begin(); it != m_settings->map.end(); ++it)
         {
-            switch (it.second.type)
+            auto& def = it.value();
+
+            switch (def.type)
             {
                 case QUASAR_SETTING_ENTRY_INT:
                 {
-                    auto c = it.second.var.value<esi_inttype_t>();
-                    c.val  = settings.value(getSettingsKey(it.first), c.def).toInt();
-                    it.second.var.setValue(c);
+                    auto c = def.var.value<esi_inttype_t>();
+                    c.val  = settings.value(getSettingsKey(it.key()), c.def).toInt();
+                    def.var.setValue(c);
                     break;
                 }
 
                 case QUASAR_SETTING_ENTRY_DOUBLE:
                 {
-                    auto c = it.second.var.value<esi_doubletype_t>();
-                    c.val  = settings.value(getSettingsKey(it.first), c.def).toDouble();
-                    it.second.var.setValue(c);
+                    auto c = def.var.value<esi_doubletype_t>();
+                    c.val  = settings.value(getSettingsKey(it.key()), c.def).toDouble();
+                    def.var.setValue(c);
                     break;
                 }
 
                 case QUASAR_SETTING_ENTRY_BOOL:
                 {
-                    auto c = it.second.var.value<esi_doubletype_t>();
-                    c.val  = settings.value(getSettingsKey(it.first), c.def).toBool();
-                    it.second.var.setValue(c);
+                    auto c = def.var.value<esi_doubletype_t>();
+                    c.val  = settings.value(getSettingsKey(it.key()), c.def).toBool();
+                    def.var.setValue(c);
                     break;
                 }
 
                 case QUASAR_SETTING_ENTRY_STRING:
                 {
-                    auto c = it.second.var.value<esi_stringtype_t>();
-                    c.val  = settings.value(getSettingsKey(it.first), c.def).toString();
-                    it.second.var.setValue(c);
+                    auto c = def.var.value<esi_stringtype_t>();
+                    c.val  = settings.value(getSettingsKey(it.key()), c.def).toString();
+                    def.var.setValue(c);
                     break;
                 }
 
                 case QUASAR_SETTING_ENTRY_SELECTION:
                 {
-                    auto c = it.second.var.value<quasar_selection_options_t>();
-                    c.val  = settings.value(getSettingsKey(it.first), c.list.at(0).value).toString();
-                    it.second.var.setValue(c);
+                    auto c = def.var.value<quasar_selection_options_t>();
+                    c.val  = settings.value(getSettingsKey(it.key()), c.list.at(0).value).toString();
+                    def.var.setValue(c);
                     break;
                 }
             }
@@ -175,12 +177,12 @@ DataExtension::~DataExtension()
     }
 
     // Do some explicit cleanup
-    for (auto& src : m_datasources)
+    for (auto it = m_datasources.begin(); it != m_datasources.end(); ++it)
     {
-        src.second.timer.reset();
-        src.second.locks.reset();
+        it.value().timer.reset();
+        it.value().locks.reset();
 
-        src.second.subscribers.clear();
+        it.value().subscribers.clear();
     }
 
     // extension is responsible for cleanup of quasar_ext_info_t*
@@ -277,18 +279,19 @@ void DataExtension::removeSubscriber(QWebSocket* subscriber)
     }
 
     // Removes subscriber from all data sources
-    for (auto& it : m_datasources)
+
+    for (auto it = m_datasources.begin(); it != m_datasources.end(); ++it)
     {
         // Log if unsubscribed succeeded
-        if (it.second.subscribers.erase(subscriber))
+        if (it.value().subscribers.erase(subscriber))
         {
-            qInfo() << "Widget unsubscribed from extension " << m_name << " data source " << it.first;
+            qInfo() << "Widget unsubscribed from extension " << m_name << " data source " << it.key();
         }
 
         // Stop timer if no subscribers
-        if (it.second.subscribers.empty())
+        if (it.value().subscribers.empty())
         {
-            it.second.timer.reset();
+            it.value().timer.reset();
         }
     }
 }

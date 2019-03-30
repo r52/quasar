@@ -9,7 +9,8 @@
 
 #include <QVariant>
 #include <qstring_hash_impl.h>
-#include <unordered_map>
+
+#include <tsl/ordered_map.h>
 
 //! Enum for data types supported by extension settings definitions
 enum QuasarSettingEntryType
@@ -104,5 +105,5 @@ struct quasar_setting_def_t
 struct quasar_settings_t
 {
     //! Map of \ref quasar_setting_def_t custom settings
-    std::unordered_map<QString, quasar_setting_def_t> map;
+    tsl::ordered_map<QString, quasar_setting_def_t> map;
 };
