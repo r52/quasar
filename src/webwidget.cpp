@@ -281,13 +281,7 @@ bool WebWidget::validateWidgetDefinition(const QJsonObject& dat)
         return false;
     }
 
-    if (!dat.contains(WGT_DEF_DATASERVER))
-    {
-        qWarning() << errmsg.arg("Missing", WGT_DEF_DATASERVER);
-        return false;
-    }
-
-    if (!dat[WGT_DEF_DATASERVER].isBool())
+    if (dat.contains(WGT_DEF_DATASERVER) && !dat[WGT_DEF_DATASERVER].isBool())
     {
         qWarning() << errmsg.arg("Invalid", WGT_DEF_DATASERVER);
         return false;
