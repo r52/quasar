@@ -15,7 +15,6 @@
     <script src="qrc:/js/bootstrap.bundle.min.js"></script>
     <script src="qrc:/js/bootstrap-table.min.js"></script>
     <script src="qrc:/js/bootstrap-notify.min.js"></script>
-
 </head>
 
 <body class="d-flex flex-column h-100">
@@ -38,30 +37,41 @@
         </div>
     </div>
     <!-- Tab menu -->
-    <ul class="nav nav-pills" id="main_menu" role="tablist">
-        <li class="nav-item">
-            <a class="nav-link active" id="global-tab" data-toggle="tab" href="#global" role="tab" aria-controls="global"
-                aria-selected="true">General</a>
-        </li>
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" id="extensions-tab" data-toggle="dropdown" href="#" role="button"
-                aria-haspopup="true" aria-expanded="false">Extensions</a>
-            <div id="extension-links" class="dropdown-menu">
-                <!-- Extension tab links -->
-                <span>No extensions loaded</span>
-            </div>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" id="launcher-tab" data-toggle="tab" href="#launcher" role="tab" aria-controls="launcher"
-                aria-selected="false">App Launcher</a>
-        </li>
-    </ul>
+    <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">
+            <img src="qrc:/Resources/q.png" width="30" height="30" class="d-inline-block align-top" alt="">
+            Quasar
+        </a>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav nav" role="tablist">
+                <li class="nav-item active">
+                    <a class="nav-link" data-toggle="tab" href="#global" role="tab" aria-controls="global"
+                        aria-selected="true">General</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Extensions
+                    </a>
+                    <div class="dropdown-menu" id="extension-links" aria-labelledby="navbarDropdownMenuLink">
+                        <span>No extensions loaded</span>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#launcher" role="tab" aria-controls="launcher"
+                        aria-selected="false">App Launcher</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
     <!-- Tab content -->
     <main role="main" class="flex-shrink-0">
         <div class="tab-content" id="tab_content">
-            <div class="tab-pane fade show active" id="global" role="tabpanel" aria-labelledby="global-tab">
+            <div class="tab-pane fade show active container-fluid" id="global" role="tabpanel"
+                aria-labelledby="global-tab">
                 <div class="form-group row">
-                    <label for="global/dataport" class="col-sm-2 col-form-label">Data Server Port (restart required)</label>
+                    <label for="global/dataport" class="col-sm-2 col-form-label">Data Server Port (restart
+                        required)</label>
                     <div class="col-sm-10">
                         <input type="number" class="form-control" id="global/dataport" placeholder="Port" min="1024"
                             max="65535" step="1" value="13337">
@@ -86,15 +96,15 @@
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="global/loglevel" id="loglevel_warning"
-                                    value="2" checked>
+                                <input class="form-check-input" type="radio" name="global/loglevel"
+                                    id="loglevel_warning" value="2" checked>
                                 <label class="form-check-label" for="loglevel_warning">
                                     Warning
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="global/loglevel" id="loglevel_critical"
-                                    value="3">
+                                <input class="form-check-input" type="radio" name="global/loglevel"
+                                    id="loglevel_critical" value="3">
                                 <label class="form-check-label" for="loglevel_critical">
                                     Critical
                                 </label>
@@ -105,7 +115,8 @@
                 <div class="form-group row">
                     <div class="col-sm-2">cookies.txt (restart required)</div>
                     <div class="col-sm-10">
-                        <textarea rows="10" cols="80" id="global/cookies" placeholder="Paste cookies.txt here"></textarea>
+                        <textarea rows="10" cols="80" id="global/cookies"
+                            placeholder="Paste cookies.txt here"></textarea>
                     </div>
                 </div>
                 <div class="form-group row">
@@ -125,7 +136,7 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="launcher" role="tabpanel" aria-labelledby="launcher-tab">
+            <div class="tab-pane fade container-fluid" id="launcher" role="tabpanel" aria-labelledby="launcher-tab">
                 <div id="toolbar">
                     <button id="remove-launch-command" class="btn btn-danger" disabled>
                         Delete
@@ -135,7 +146,8 @@
                         Debug
                     </button>
                 -->
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal">Add</button>
+                    <button type="button" class="btn btn-primary" data-toggle="modal"
+                        data-target="#addModal">Add</button>
                 </div>
                 <table id="launcher-table" class="table table-hover">
                 </table>
@@ -143,7 +155,8 @@
             <!-- Extension tab contents -->
         </div>
         <!-- Add Modal -->
-        <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel" aria-hidden="true">
+        <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -185,7 +198,7 @@
             </div>
         </div>
     </main>
-    <footer class="footer mt-auto py-3">
+    <footer class="footer fixed-bottom mt-auto py-3">
         <div class="container">
             <button type="button" class="btn btn-success" id="settings-save">Save</button>
             <button type="button" class="btn btn-primary" id="settings-close">Close</button>

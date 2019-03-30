@@ -87,7 +87,11 @@
 }
 
 @keyframes lds-default {
-    0%, 20%, 80%, 100% {
+
+    0%,
+    20%,
+    80%,
+    100% {
         transform: scale(1);
     }
 
@@ -113,7 +117,12 @@
 }
 
 body {
-    max-width: 98%;
+    max-width: 100%;
+    padding-top: 4.5rem;
+}
+
+main {
+    margin-bottom: 4.5rem;
 }
 
 img.icon {

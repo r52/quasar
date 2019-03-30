@@ -34,7 +34,7 @@ function createExtensionTab(ext) {
         }
         var rgroup = `
         <div class="form-group">
-            <label for="${ext.name}/${r.name}/rate">${r.name}</label>
+            <label class="font-weight-bold" for="${ext.name}/${r.name}/rate">${r.name}</label>
             <div class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="${ext.name}/${r.name}/enabled" ${r.enabled ? 'checked' : ''} ${r.rate < 0 ? 'disabled' : ''}>
                 <label class="custom-control-label" for="${ext.name}/${r.name}/enabled">Enabled</label>
@@ -81,7 +81,7 @@ function createExtensionTab(ext) {
 
             var sinput = `
             <div class="form-group">
-                <label for="${ext.name}/${s.name}">${s.desc}</label>
+                <label class="font-weight-bold" for="${ext.name}/${s.name}">${s.desc}</label>
                 <div class="input-group mb-3">
                     ${element}
                 </div>
@@ -93,7 +93,7 @@ function createExtensionTab(ext) {
 
     // generate tab html
     var t = `
-    <div class="tab-pane fade" id="${ext.name}" role="tabpanel" aria-labelledby="extensions-tab">
+    <div class="tab-pane fade container-fluid" id="${ext.name}" role="tabpanel" aria-labelledby="extensions-tab">
         <h1>${ext.fullname}</h1>
         <dl class="row">
             <dt class="col-sm-3">Extension Identifier</dt>
