@@ -100,7 +100,7 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, 
     \param[in]  len     Length of array
     \return Data handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, const char** arr, size_t len);
+SAPI_EXPORT quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char** arr, size_t len);
 
 //! Sets the return data to be an array of integers
 /*! \param[in]  hData   Data handle

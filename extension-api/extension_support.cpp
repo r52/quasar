@@ -123,7 +123,7 @@ quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, const char* 
     return nullptr;
 }
 
-quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, const char** arr, size_t len)
+quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char** arr, size_t len)
 {
     QJsonValue* ref = static_cast<QJsonValue*>(hData);
 
