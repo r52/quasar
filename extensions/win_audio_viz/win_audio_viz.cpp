@@ -91,6 +91,13 @@ struct Measure
         TYPE_PEAK,
         TYPE_FFT,
         TYPE_BAND,
+        TYPE_FFTFREQ,
+        TYPE_BANDFREQ,
+        TYPE_FORMAT,
+        TYPE_DEV_STATUS,
+        TYPE_DEV_NAME,
+        TYPE_DEV_ID,
+        TYPE_DEV_LIST,
         // ... //
         NUM_TYPES
     };
@@ -110,8 +117,8 @@ struct Measure
         float x;
     };
 
-    Port    m_port;    // port specifier (not used)
-    Channel m_channel; // channel specifier (not used)
+    Port    m_port;    // port specifier (not used, only output is supported in win_audio_viz)
+    Channel m_channel; // channel specifier (not used, all channels are processed in win_audio_viz)
 
     Format m_format;      // format specifier (detected in init)
     int    m_envRMS[2];   // RMS attack/decay times in ms (parsed from options)
@@ -224,7 +231,17 @@ const IID   IID_IAudioClient         = __uuidof(IAudioClient);
 const IID   IID_IAudioCaptureClient  = __uuidof(IAudioCaptureClient);
 const IID   IID_IAudioRenderClient   = __uuidof(IAudioRenderClient);
 
-quasar_data_source_t sources[] = {{"rms", 100, 0, 0}, {"peak", 100, 0, 0}, {"fft", 100, 0, 0}, {"band", 100, 0, 0}};
+quasar_data_source_t sources[] = {{"rms", 100, 0, 0},
+                                  {"peak", 100, 0, 0},
+                                  {"fft", 100, 0, 0},
+                                  {"band", 100, 0, 0},
+                                  {"fftfreq", 0, 5000, 0},
+                                  {"bandfreq", 0, 5000, 0},
+                                  {"format", 0, 5000, 0},
+                                  {"dev_status", 0, 5000, 0},
+                                  {"dev_name", 0, 5000, 0},
+                                  {"dev_id", 0, 5000, 0},
+                                  {"dev_list", 0, 5000, 0}};
 
 namespace
 {
@@ -241,10 +258,17 @@ bool win_audio_viz_init(quasar_ext_handle handle)
     assert(m);
 
     // process types
-    m_typemap[sources[0].uid] = Measure::TYPE_RMS;
-    m_typemap[sources[1].uid] = Measure::TYPE_PEAK;
-    m_typemap[sources[2].uid] = Measure::TYPE_FFT;
-    m_typemap[sources[3].uid] = Measure::TYPE_BAND;
+    m_typemap[sources[0].uid]  = Measure::TYPE_RMS;
+    m_typemap[sources[1].uid]  = Measure::TYPE_PEAK;
+    m_typemap[sources[2].uid]  = Measure::TYPE_FFT;
+    m_typemap[sources[3].uid]  = Measure::TYPE_BAND;
+    m_typemap[sources[4].uid]  = Measure::TYPE_FFTFREQ;
+    m_typemap[sources[5].uid]  = Measure::TYPE_BANDFREQ;
+    m_typemap[sources[6].uid]  = Measure::TYPE_FORMAT;
+    m_typemap[sources[7].uid]  = Measure::TYPE_DEV_STATUS;
+    m_typemap[sources[8].uid]  = Measure::TYPE_DEV_NAME;
+    m_typemap[sources[9].uid]  = Measure::TYPE_DEV_ID;
+    m_typemap[sources[10].uid] = Measure::TYPE_DEV_LIST;
 
     QueryPerformanceCounter(&m->m_pcPoll);
 
@@ -267,6 +291,174 @@ bool win_audio_viz_shutdown(quasar_ext_handle handle)
 bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
 {
     size_t type = m_typemap[srcUid];
+
+    switch (type)
+    {
+        case Measure::TYPE_FFTFREQ:
+        {
+            static std::vector<double> output;
+
+            if (m->m_clCapture && m->m_fftSize)
+            {
+                output.resize((m->m_fftSize / 2) + 1);
+
+                for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
+                {
+                    output[i] = (double) (i * m->m_wfx->nSamplesPerSec / m->m_fftSize);
+                }
+
+                quasar_set_data_double_array(hData, output.data(), output.size());
+                return true;
+            }
+            break;
+        }
+
+        case Measure::TYPE_BANDFREQ:
+        {
+            static std::vector<double> output;
+
+            if (m->m_clCapture && m->m_nBands)
+            {
+                output.resize(m->m_nBands);
+
+                for (size_t i = 0; i < m->m_nBands; i++)
+                {
+                    output[i] = m->m_bandFreq[i];
+                }
+
+                quasar_set_data_double_array(hData, output.data(), output.size());
+                return true;
+            }
+            break;
+        }
+
+        case Measure::TYPE_DEV_STATUS:
+        {
+            if (m->m_dev)
+            {
+                DWORD state;
+                bool  bst = false;
+                if (m->m_dev->GetState(&state) == S_OK && state == DEVICE_STATE_ACTIVE)
+                {
+                    bst = true;
+                }
+
+                quasar_set_data_bool(hData, bst);
+                return true;
+            }
+            break;
+        }
+
+        case Measure::TYPE_FORMAT:
+        {
+            const char* s_fmtName[Measure::NUM_FORMATS] = {
+                "<invalid>", // FMT_INVALID
+                "PCM 16b",   // FMT_PCM_S16
+                "PCM 32b",   // FMT_PCM_F32
+            };
+
+            if (m->m_wfx)
+            {
+                char buffer[512];
+                _snprintf_s(buffer, _TRUNCATE, "%dHz %s %dch", m->m_wfx->nSamplesPerSec, s_fmtName[m->m_format], m->m_wfx->nChannels);
+
+                quasar_set_data_string(hData, buffer);
+                return true;
+            }
+            break;
+        }
+
+        case Measure::TYPE_DEV_NAME:
+        {
+            quasar_set_data_string(hData, converter.to_bytes(m->m_devName).c_str());
+            return true;
+        }
+
+        case Measure::TYPE_DEV_ID:
+        {
+            if (m->m_dev)
+            {
+                LPWSTR pwszID = NULL;
+                if (m->m_dev->GetId(&pwszID) == S_OK)
+                {
+                    quasar_set_data_string(hData, converter.to_bytes(pwszID).c_str());
+                    CoTaskMemFree(pwszID);
+                    return true;
+                }
+            }
+            break;
+        }
+
+        case Measure::TYPE_DEV_LIST:
+        {
+            if (m->m_enum)
+            {
+                IMMDeviceCollection* collection = NULL;
+                if (m->m_enum->EnumAudioEndpoints(
+                        m->m_port == Measure::PORT_OUTPUT ? eRender : eCapture, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &collection) == S_OK)
+                {
+                    WCHAR  wbuf[512];
+                    char** list = nullptr;
+                    UINT   nDevices;
+
+                    collection->GetCount(&nDevices);
+
+                    if (nDevices > 0)
+                    {
+                        list = new char*[nDevices];
+                    }
+
+                    for (ULONG iDevice = 0; iDevice < nDevices; ++iDevice)
+                    {
+                        IMMDevice*      device = NULL;
+                        IPropertyStore* props  = NULL;
+                        if (collection->Item(iDevice, &device) == S_OK && device->OpenPropertyStore(STGM_READ, &props) == S_OK)
+                        {
+                            LPWSTR      id = NULL;
+                            PROPVARIANT varName;
+                            PropVariantInit(&varName);
+
+                            if (device->GetId(&id) == S_OK && props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
+                            {
+                                _snwprintf_s(wbuf, _TRUNCATE, L"%s: %s", id, varName.pwszVal);
+                                list[iDevice] = _strdup(converter.to_bytes(wbuf).c_str());
+                            }
+
+                            if (id)
+                                CoTaskMemFree(id);
+
+                            PropVariantClear(&varName);
+                        }
+
+                        SAFE_RELEASE(props);
+                        SAFE_RELEASE(device);
+                    }
+
+                    // set data
+                    if (list)
+                    {
+                        quasar_set_data_string_array(hData, list, nDevices);
+
+                        // cleanup
+                        for (size_t i = 0; i < nDevices; i++)
+                        {
+                            free(list[i]);
+                        }
+
+                        delete list;
+                    }
+                }
+
+                SAFE_RELEASE(collection);
+
+                return true;
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
 
     LARGE_INTEGER pcCur;
     QueryPerformanceCounter(&pcCur);
@@ -535,12 +727,11 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
 
             for (size_t i = 0; i < m->m_wfx->nChannels; i++)
             {
-                output[i] = CLAMP01(sqrt(m->m_rms[m->m_channel]) * m->m_gainRMS);
+                output[i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
             }
 
             quasar_set_data_double_array(hData, output.data(), output.size());
             return true;
-            break;
         }
 
         case Measure::TYPE_PEAK:
@@ -551,12 +742,11 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
 
             for (size_t i = 0; i < m->m_wfx->nChannels; i++)
             {
-                output[i] = CLAMP01(m->m_peak[m->m_channel] * m->m_gainPeak);
+                output[i] = CLAMP01(m->m_peak[i] * m->m_gainPeak);
             }
 
             quasar_set_data_double_array(hData, output.data(), output.size());
             return true;
-            break;
         }
 
         case Measure::TYPE_FFT:
@@ -637,6 +827,9 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
             }
             break;
         }
+
+        default:
+            break;
     }
 
     return false;
