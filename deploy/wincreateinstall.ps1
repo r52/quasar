@@ -61,7 +61,7 @@ foreach ($file in $release_files) {
 }
 
 # Copy README
-Copy-Item README.rst -Destination $package_paths[$data_path] -Force
+Copy-Item README.md -Destination $package_paths[$data_path] -Force
 
 # Copy api files
 Write-Host "Copying API files..."
