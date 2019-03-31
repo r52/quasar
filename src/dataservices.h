@@ -4,7 +4,6 @@
 
 QT_FORWARD_DECLARE_CLASS(WidgetRegistry)
 QT_FORWARD_DECLARE_CLASS(DataServer)
-QT_FORWARD_DECLARE_CLASS(AppLauncher)
 
 class DataServices : public QObject
 {
@@ -19,7 +18,6 @@ public:
 
     DataServer*     getServer() { return server; }
     WidgetRegistry* getRegistry() { return reg; }
-    AppLauncher*    getLauncher() { return launcher; }
 
 private:
     // Data server
@@ -27,7 +25,4 @@ private:
 
     // Widget registry
     WidgetRegistry* reg;
-
-    // App launcher
-    AppLauncher* launcher;
 };

@@ -1,15 +1,16 @@
 #include "webwidget.h"
 
+#include "dataserver.h"
 #include "widgetdefs.h"
 
 #include <QAction>
 #include <QMenu>
 #include <QMessageBox>
-#include <QtWebEngineWidgets/QWebEngineScript>
+#include <QtWebEngineWidgets/QWebEngineCertificateError>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineSettings>
 
-QString WebWidget::PageGlobalTemp;
+QString WebWidget::PageGlobalScript;
 
 void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
 {
@@ -31,9 +32,11 @@ void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level
 
 bool QuasarWebPage::certificateError(const QWebEngineCertificateError& certificateError)
 {
-    auto url = certificateError.url();
-    if (certificateError.error() == QWebEngineCertificateError::CertificateAuthorityInvalid &&
-        url.scheme() == "wss" && url.host() == "localhost")
+    auto url  = certificateError.url();
+    auto host = url.host();
+
+    if (certificateError.error() == QWebEngineCertificateError::CertificateAuthorityInvalid && url.scheme() == "wss" &&
+        (host == "localhost" || host == "::1" || host == "127.0.0.1"))
     {
         // Ignore invalid CA for now for localhost due to custom localhost cert and
         // QWebEngine having no support for local certs
@@ -44,12 +47,16 @@ bool QuasarWebPage::certificateError(const QWebEngineCertificateError& certifica
     return false;
 }
 
-WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent)
-    : QWidget(parent), m_Name(widgetName)
+WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, DataServer* serv, QWidget* parent) : QWidget(parent), m_Name(widgetName), server(serv)
 {
     if (m_Name.isEmpty())
     {
         throw std::invalid_argument("Widget name cannot be null");
+    }
+
+    if (server == nullptr)
+    {
+        throw std::invalid_argument("Dataserver cannot be null");
     }
 
     // Copy data
@@ -169,9 +176,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
 
     // Custom context menu
     setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(this, &QWidget::customContextMenuRequested, [=](const QPoint& pos) {
-        m_Menu->exec(mapToGlobal(pos));
-    });
+    connect(this, &QWidget::customContextMenuRequested, [=](const QPoint& pos) { m_Menu->exec(mapToGlobal(pos)); });
 
     // Set flags
     setWindowFlags(flags);
@@ -180,30 +185,23 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent
     webview->resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
     resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
 
-    // Create page globals
-    if (PageGlobalTemp.isEmpty())
+    // Inject global script
+    if (data[WGT_DEF_DATASERVER].toBool())
     {
-        QFile file(":/Resources/pageglobals.js");
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        {
-            throw std::runtime_error("pageglobal script load failure");
-        }
+        QString authcode = server->generateAuthCode(m_Name);
 
-        QTextStream in(&file);
-        PageGlobalTemp = in.readAll();
+        QString gscript = getGlobalScript();
+        quint16 port    = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+
+        QString pageGlobals = gscript.arg(port).arg(authcode);
+
+        script.setName("PageGlobals");
+        script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+        script.setWorldId(0);
+        script.setSourceCode(pageGlobals);
+
+        webview->page()->scripts().insert(script);
     }
-
-    quint16 port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
-
-    QString pageGlobals = PageGlobalTemp.arg(m_Name).arg(port);
-
-    QWebEngineScript script;
-    script.setName("PageGlobals");
-    script.setInjectionPoint(QWebEngineScript::DocumentCreation);
-    script.setWorldId(0);
-    script.setSourceCode(pageGlobals);
-
-    webview->page()->scripts().insert(script);
 
     setWindowTitle(m_Name);
 }
@@ -215,17 +213,81 @@ WebWidget::~WebWidget()
 
 bool WebWidget::validateWidgetDefinition(const QJsonObject& dat)
 {
-    if (!dat.isEmpty() &&
-        dat.contains(WGT_DEF_NAME) && !dat[WGT_DEF_NAME].toString().isNull() &&
-        dat.contains(WGT_DEF_WIDTH) && dat[WGT_DEF_WIDTH].toInt() > 0 &&
-        dat.contains(WGT_DEF_HEIGHT) && dat[WGT_DEF_HEIGHT].toInt() > 0 &&
-        dat.contains(WGT_DEF_STARTFILE) && !dat[WGT_DEF_STARTFILE].toString().isNull() &&
-        dat.contains(WGT_DEF_FULLPATH) && !dat[WGT_DEF_FULLPATH].toString().isNull())
+    if (dat.isEmpty())
     {
-        return true;
+        qWarning() << "Empty widget definition";
+        return false;
     }
 
-    return false;
+    static QString errmsg = "%1 '%2' definition";
+
+    if (!dat.contains(WGT_DEF_NAME))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_NAME);
+        return false;
+    }
+
+    if (dat[WGT_DEF_NAME].toString().isNull())
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_NAME);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_WIDTH))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_WIDTH);
+        return false;
+    }
+
+    if (dat[WGT_DEF_WIDTH].toInt() <= 0)
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_WIDTH);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_HEIGHT))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_HEIGHT);
+        return false;
+    }
+
+    if (dat[WGT_DEF_HEIGHT].toInt() <= 0)
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_HEIGHT);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_STARTFILE))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_STARTFILE);
+        return false;
+    }
+
+    if (dat[WGT_DEF_STARTFILE].toString().isNull())
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_STARTFILE);
+        return false;
+    }
+
+    if (!dat.contains(WGT_DEF_FULLPATH))
+    {
+        qWarning() << errmsg.arg("Missing", WGT_DEF_FULLPATH);
+        return false;
+    }
+
+    if (dat[WGT_DEF_FULLPATH].toString().isNull())
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_FULLPATH);
+        return false;
+    }
+
+    if (dat.contains(WGT_DEF_DATASERVER) && !dat[WGT_DEF_DATASERVER].isBool())
+    {
+        qWarning() << errmsg.arg("Invalid", WGT_DEF_DATASERVER);
+        return false;
+    }
+
+    return true;
 }
 
 bool WebWidget::acceptSecurityWarnings(const QJsonObject& dat)
@@ -248,6 +310,23 @@ bool WebWidget::acceptSecurityWarnings(const QJsonObject& dat)
     }
 
     return accept;
+}
+
+QString WebWidget::getGlobalScript()
+{
+    if (PageGlobalScript.isEmpty())
+    {
+        QFile file(":/Resources/pageglobals.js");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            throw std::runtime_error("pageglobal script load failure");
+        }
+
+        QTextStream in(&file);
+        PageGlobalScript = in.readAll();
+    }
+
+    return PageGlobalScript;
 }
 
 QString WebWidget::getFullPath()
@@ -276,12 +355,29 @@ void WebWidget::createContextMenuActions()
     });
 
     rReload = new QAction(tr("&Reload"), this);
-    connect(rReload, &QAction::triggered, webview, &QWebEngineView::reload);
+    connect(rReload, &QAction::triggered, [=] {
+        if (webview->page()->scripts().size())
+        {
+            // Delete old script if it exists
+            webview->page()->scripts().remove(script);
+
+            // Insert refreshed script
+            QString authcode = server->generateAuthCode(m_Name);
+            QString gscript  = getGlobalScript();
+
+            QSettings settings;
+            quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+
+            QString pageGlobals = gscript.arg(port).arg(authcode);
+            script.setSourceCode(pageGlobals);
+
+            webview->page()->scripts().insert(script);
+        }
+        webview->reload();
+    });
 
     rResetPos = new QAction(tr("Re&set Position"), this);
-    connect(rResetPos, &QAction::triggered, [=](bool e) {
-        this->move(0, 0);
-    });
+    connect(rResetPos, &QAction::triggered, [=](bool e) { this->move(0, 0); });
 
     rOnTop = new QAction(tr("&Always on Top"), this);
     rOnTop->setCheckable(true);
@@ -289,15 +385,11 @@ void WebWidget::createContextMenuActions()
 
     rFixedPos = new QAction(tr("&Fixed Position"), this);
     rFixedPos->setCheckable(true);
-    connect(rFixedPos, &QAction::triggered, [=](bool enabled) {
-        this->m_fixedposition = enabled;
-    });
+    connect(rFixedPos, &QAction::triggered, [=](bool enabled) { this->m_fixedposition = enabled; });
 
     rClickable = new QAction(tr("&Clickable"), this);
     rClickable->setCheckable(true);
-    connect(rClickable, &QAction::triggered, [=](bool enabled) {
-        overlay->setVisible(!enabled);
-    });
+    connect(rClickable, &QAction::triggered, [=](bool enabled) { overlay->setVisible(!enabled); });
 
     rClose = new QAction(tr("&Close"), this);
     connect(rClose, &QAction::triggered, [=] {

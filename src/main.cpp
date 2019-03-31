@@ -2,6 +2,7 @@
 #include "logwindow.h"
 #include "quasar.h"
 #include "runguard.h"
+#include "webuihandler.h"
 #include "widgetdefs.h"
 #include "widgetregistry.h"
 
@@ -18,6 +19,12 @@ int main(int argc, char* argv[])
         return 0;
 
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QCoreApplication::setApplicationName("quasar");
+    QCoreApplication::setOrganizationName("quasar");
+    QSettings::setDefaultFormat(QSettings::IniFormat);
+
+    WebUiHandler::registerUrlScheme();
+
     QApplication a(argc, argv);
     a.setQuitOnLastWindowClosed(false);
 
@@ -32,10 +39,8 @@ int main(int argc, char* argv[])
     splash.showMessage("Loading configuration...", align, color);
     a.processEvents();
 
-    QApplication::setApplicationName("quasar");
-    QApplication::setOrganizationName("quasar");
-    QSettings::setDefaultFormat(QSettings::IniFormat);
-
+    WebUiHandler handler;
+    QWebEngineProfile::defaultProfile()->installUrlSchemeHandler(WebUiHandler::schemeName, &handler);
     QWebEngineProfile::defaultProfile()->setPersistentCookiesPolicy(QWebEngineProfile::NoPersistentCookies);
 
     splash.showMessage("Loading services...", align, color);

@@ -4,5 +4,6 @@
     "height": 200,
     "startFile": "index.html",
     "transparentBg": true,
-    "required": ["win_audio_viz"]
+    "required": ["win_audio_viz"],
+    "dataserver": true
 }

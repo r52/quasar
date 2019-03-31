@@ -1,1 +1,1 @@
-.. include:: ../plugins/win_audio_viz/README.rst
+.. include:: ../extensions/win_audio_viz/README.rst

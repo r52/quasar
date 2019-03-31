@@ -1,12 +1,14 @@
 Setting up the App Launcher
 ============================
 
-App Launcher widgets require additional setup in order to function properly. The installation instructions for an App Launcher widget may ask you to setup several App Launcher commands (or give you the option of setting up custom commands) so that apps can be launched from Quasar. App Launcher commands can be configured in the **Settings** menu under the **Launcher** page.
+App Launcher widgets require additional setup in order to function properly. Specific App Launcher commands needs to be created and configured so that apps can be launched from Quasar. App Launcher commands can be configured in the **Settings** menu under the **Launcher** page.
 
 Example:
 
-.. image:: https://i.imgur.com/sUPGVaM.png
+.. image:: https://i.imgur.com/yEh9Cu9.png
 
-In the image above, Quasar is configured to launch Chrome, Windows Explorer, Spotify, and Steam using the App Launcher commands ``chrome``, ``explorer``, ``spotify``, and ``steam`` respectively. A properly configured App Launcher widget will then be able to send these commands to Quasar in order to launch the configured applications.
+In the image above, Quasar is configured to launch Chrome, Spotify, and Steam using the App Launcher commands ``chrome``, ``spotify``, and ``steam`` respectively. A properly configured App Launcher widget will receive the list of configured commands and will able to send these commands to Quasar in order to launch the configured applications.
 
-For example, the ``sample_app_launcher`` that comes installed with Quasar requires the commands ``chrome``, ``spotify``, and ``steam`` to be configured in order to work properly. Of course, what the commands themselves execute can be completely arbitrary and is up to user discretion, so be sure to set them up properly!
+.. image:: https://i.imgur.com/aTjp7gm.png
+
+Furthermore, you can also specify your own custom icon for each of these commands. In the previous example, icons have been added for all three commands. The sample widget ``sample_app_launcher`` that comes installed with Quasar is preconfigured to use custom icons. Of course, what the commands themselves execute can be completely arbitrary and is up to user discretion, so be sure to set them up properly!

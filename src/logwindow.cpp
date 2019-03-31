@@ -1,7 +1,7 @@
 #include "logwindow.h"
 
 #include "widgetdefs.h"
-#include <plugin_types.h>
+#include <extension_types.h>
 
 #include <QFile>
 #include <QSettings>

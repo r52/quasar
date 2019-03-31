@@ -78,7 +78,7 @@
       HelpUrl="http://doc.qt.io/qt-5/moc.html"
       DisplayName="Macro Definitions"
       Description="Define macro, with optional definition; separate with semicolons if more than one. (-D&lt;macro&gt;[=&lt;def&gt;])"
-      Switch="-D[value]" />
+      Switch="-D " />
     <StringListProperty
       Name="Undefine"
       HelpUrl="http://doc.qt.io/qt-5/moc.html"
@@ -119,7 +119,7 @@
       Name="PrependInclude"
       HelpUrl="http://doc.qt.io/qt-5/moc.html"
       DisplayName="Prepend Include"
-      Description="Prepend #include &lt;file&gt; (overwrite default); separate with semicolons if more than one. (-b &lt;file&gt;)"
+      Description="Prepend #include &lt;file&gt; (preserve default); separate with semicolons if more than one. (-b &lt;file&gt;)"
       Switch="-b &quot;[value]&quot;"/>
     <StringListProperty
       Name="Include"

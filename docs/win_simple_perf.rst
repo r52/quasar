@@ -1,1 +1,1 @@
-.. include:: ../plugins/win_simple_perf/README.rst
+.. include:: ../extensions/win_simple_perf/README.rst

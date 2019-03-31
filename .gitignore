@@ -148,8 +148,6 @@ publish/
 
 # NuGet Packages
 *.nupkg
-# The packages folder can be ignored because of Package Restore
-**/packages/*
 # except build/, which is used as an MSBuild target.
 !**/packages/build/
 # Uncomment if necessary however generally it will be regenerated when needed
@@ -244,12 +242,13 @@ ModelManifest.xml
 #Qt
 GeneratedFiles/
 
-# WiX
-Quasar/
+# Installer
 *.wixobj
 *.wixpdb
 *.msi
 *.7z
+*installer.exe
+deploy/**/data/
 
 # CMake
 CMakeCache.txt
@@ -269,3 +268,6 @@ docs/Makefile
 docs/make.bat
 docs/_*
 docs/xml/
+
+# vscode
+.vscode/

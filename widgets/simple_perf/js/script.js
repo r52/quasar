@@ -1,40 +1,37 @@
 var websocket = null;
 
-function subscribe() {
-    var reg = {
-        widget: qWidgetName,
-        type: "subscribe",
-        plugin: "win_simple_perf",
-        source: "cpu,ram"
-    };
+function poll() {
+    var msg = {
+        "method": "query",
+        "params": {
+            "target": "win_simple_perf",
+            "params": "cpu,ram"
+        }
+    }
 
-    websocket.send(JSON.stringify(reg));
+    websocket.send(JSON.stringify(msg));
 }
 
-function processData(data) {
-    var val = data["data"];
+function setData(source, value) {
     var $elm = null;
 
-    switch (data["source"]) {
+    switch (source) {
         case "cpu":
             $elm = $('#cpu');
             break;
         case "ram":
-            val = Math.round((val["used"] / val["total"]) * 100);
+            value = Math.round((value["used"] / value["total"]) * 100);
             $elm = $('#ram');
-            break;
-        default:
-            console.log("Unknown source type " + data["source"]);
             break;
     }
 
     if ($elm != null) {
-        $elm.attr("aria-valuenow", val).text(val + "%").width(val + "%");
+        $elm.attr("aria-valuenow", value).text(value + "%").width(value + "%");
         $elm.removeClass("bg-success bg-info bg-warning bg-danger");
 
-        if (val >= 80) {
+        if (value >= 80) {
             $elm.addClass("bg-danger");
-        } else if (val >= 60) {
+        } else if (value >= 60) {
             $elm.addClass("bg-warning");
         } else {
             $elm.addClass("bg-success");
@@ -42,34 +39,38 @@ function processData(data) {
     }
 }
 
-function parseMsg(msg) {
-    var data = JSON.parse(msg);
+function processData(data) {
+    var vals = data["data"]["win_simple_perf"];
+    if ("cpu" in vals) {
+        setData("cpu", vals["cpu"]);
+    }
 
-    switch (data["type"]) {
-        case "data":
-            processData(data);
-            break;
-        default:
-            console.log("Unsupported message type " + data["type"]);
-            break;
+    if ("ram" in vals) {
+        setData("ram", vals["ram"]);
     }
 }
 
-$(document).ready(function() {
+function parseMsg(msg) {
+    var data = JSON.parse(msg);
+
+    if ("data" in data && "win_simple_perf" in data["data"]) {
+        processData(data);
+    }
+}
+
+$(function () {
     try {
         if (websocket && websocket.readyState == 1)
             websocket.close();
-        websocket = new WebSocket(qWsServerUrl);
-        websocket.onopen = function(evt) {
-            subscribe();
+        websocket = quasar_create_websocket();
+        websocket.onopen = function (evt) {
+            quasar_authenticate(websocket);
+            setInterval(poll, 5000);
         };
-        websocket.onclose = function(evt) {
-            console.log("Disconnected");
-        };
-        websocket.onmessage = function(evt) {
+        websocket.onmessage = function (evt) {
             parseMsg(evt.data);
         };
-        websocket.onerror = function(evt) {
+        websocket.onerror = function (evt) {
             console.log('ERROR: ' + evt.data);
         };
     } catch (exception) {

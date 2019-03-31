@@ -1,20 +1,68 @@
 #pragma once
 
-#include "sharedlocker.h"
 #include <qstring_hash_impl.h>
 
 #include <QObject>
+#include <QVariant>
+
+#include <chrono>
 #include <functional>
 #include <memory>
+#include <shared_mutex>
 #include <unordered_map>
+#include <unordered_set>
 
 QT_FORWARD_DECLARE_CLASS(QWebSocketServer)
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 
-class DataPlugin;
+class DataExtension;
 
-using DataPluginMapType = std::unordered_map<QString, std::unique_ptr<DataPlugin>>;
-using HandlerFuncType   = std::function<void(const QJsonObject&, QWebSocket*)>;
+using namespace std::chrono;
+
+struct AppLauncherData
+{
+    QString    command;
+    QString    file;
+    QString    startpath;
+    QString    arguments;
+    QByteArray icon; // icon data is compressed by qCompress()
+
+    friend QDataStream& operator<<(QDataStream& s, const AppLauncherData& o)
+    {
+        s << o.command;
+        s << o.file;
+        s << o.startpath;
+        s << o.arguments;
+        s << o.icon;
+        return s;
+    }
+
+    friend QDataStream& operator>>(QDataStream& s, AppLauncherData& o)
+    {
+        s >> o.command;
+        s >> o.file;
+        s >> o.startpath;
+        s >> o.arguments;
+        s >> o.icon;
+        return s;
+    }
+};
+
+Q_DECLARE_METATYPE(AppLauncherData);
+
+enum ClientAccessLevel : uint8_t
+{
+    CAL_WIDGET = 0,
+    CAL_SETTINGS,
+    CAL_DEBUG
+};
+
+struct client_data_t
+{
+    QString                  ident;
+    ClientAccessLevel        access;
+    system_clock::time_point expiry;
+};
 
 class DataServer : public QObject
 {
@@ -22,22 +70,43 @@ class DataServer : public QObject
 
     Q_OBJECT
 
-    using HandleReqCallMapType = std::unordered_map<QString, HandlerFuncType>;
+    using DataExtensionMapType   = std::unordered_map<QString, std::unique_ptr<DataExtension>>;
+    using MethodFuncType         = std::function<void(const QJsonObject&, QWebSocket*)>;
+    using MethodCallMapType      = std::unordered_map<QString, MethodFuncType>;
+    using AuthedClientsMapType   = std::unordered_map<QWebSocket*, client_data_t>;
+    using AuthCodesMapType       = std::unordered_map<QString, client_data_t>;
+    using InternalTargetFuncType = std::function<void(QString, client_data_t, QWebSocket*)>;
+    using InternalTargetMapType  = std::unordered_map<QString, InternalTargetFuncType>;
+    using MutateTargetFuncType   = std::function<void(QJsonValue, QWebSocket*)>;
+    using MutateTargetMapType    = std::unordered_map<QString, MutateTargetFuncType>;
 
 public:
     ~DataServer();
 
-    auto getPlugins() { return make_shared_locker<DataPluginMapType>(&m_plugins, &m_mutex); }
+    bool findExtension(QString extcode);
 
-    bool addHandler(QString type, HandlerFuncType handler);
-    bool findPlugin(QString pluginCode);
+    QString generateAuthCode(QString ident, ClientAccessLevel lvl = CAL_WIDGET);
 
 private:
-    void loadDataPlugins();
+    void loadExtensions();
     void handleRequest(const QJsonObject& req, QWebSocket* sender);
 
-    void handleSubscribeReq(const QJsonObject& req, QWebSocket* sender);
-    void handlePollReq(const QJsonObject& req, QWebSocket* sender);
+    // Method handling
+    void handleMethodSubscribe(const QJsonObject& req, QWebSocket* sender);
+    void handleMethodQuery(const QJsonObject& req, QWebSocket* sender);
+    void handleMethodAuth(const QJsonObject& req, QWebSocket* sender);
+    void handleMethodMutate(const QJsonObject& req, QWebSocket* sender);
+
+    // Internal data targets
+    void handleQuerySettings(QString params, client_data_t client, QWebSocket* sender);
+    void handleQueryLauncher(QString params, client_data_t client, QWebSocket* sender);
+
+    // Mutate targets
+    void handleMutateSettings(QJsonValue val, QWebSocket* sender);
+
+    // Helpers
+    void checkAuth(QWebSocket* client);
+    void sendErrorToClient(QWebSocket* client, QString err);
 
 private slots:
     void onNewConnection();
@@ -45,14 +114,36 @@ private slots:
     void socketDisconnected();
 
 private:
-    explicit DataServer(QObject* parent = Q_NULLPTR);
+    explicit DataServer(QObject* parent = nullptr);
     DataServer(const DataServer&) = delete;
     DataServer(DataServer&&)      = delete;
     DataServer& operator=(const DataServer&) = delete;
     DataServer& operator=(DataServer&&) = delete;
 
-    HandleReqCallMapType      m_reqcallmap;
-    QWebSocketServer*         m_pWebSocketServer;
-    DataPluginMapType         m_plugins;
-    mutable std::shared_mutex m_mutex;
+    QWebSocketServer* m_pWebSocketServer;
+
+    // Method function map
+    MethodCallMapType m_Methods;
+
+    // Internal query targets
+    InternalTargetMapType m_InternalQueryTargets;
+
+    // Mutate targets
+    MutateTargetMapType m_MutateTargets;
+
+    // App launcher
+    QVariantMap               m_LauncherMap;
+    mutable std::shared_mutex m_LauncherMtx;
+
+    // Authentication code management
+    AuthCodesMapType   m_AuthCodeMap;
+    mutable std::mutex m_AuthCodeMtx;
+
+    // Authenticated clients management
+    AuthedClientsMapType      m_AuthedClientsMap;
+    mutable std::shared_mutex m_AuthedClientsMtx;
+
+    // Extensions management
+    DataExtensionMapType      m_Extensions;
+    mutable std::shared_mutex m_ExtensionsMtx;
 };

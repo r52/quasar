@@ -16,9 +16,9 @@ Quasar
 
 **Quasar** is a cross-platform desktop application that displays web-based widgets on your desktop. Quasar takes full advantage of the Chromium engine to allow even for complex, fully dynamic web apps.
 
-Quasar provides a WebSocket-based Data Server that is extensible using plugins. The Data Server is capable of processing and sending data to client widgets that would otherwise not be available in a purely web-based context, for example, your PC's resource information such as CPU and memory usage, or your `Spotify client's now-playing information <https://github.com/r52/quasar-spotify>`_.
+Quasar provides a WebSocket-based Data Server that is extensible by custom extensions. The Data Server is capable of processing and sending data to client widgets that would otherwise not be available in a purely web-based context, for example, your PC's resource information such as CPU and memory usage, or your `Spotify client's now-playing information <https://github.com/r52/quasar-spotify>`_.
 
-See :doc:`plugqs` and :doc:`api` for more information on how to create a Data Server extension plugin, and :doc:`widgetqs` for building widgets.
+See :doc:`extqs` and :doc:`api` for more information on how to create a Data Server extension, and :doc:`widgetqs` for building widgets.
 
 Quasar is licensed under GPL-3.0.
 
@@ -36,7 +36,7 @@ Both an installer and a portable package is provided for Windows x64 under `GitH
 
 Simply install or extract Quasar and run the application. The Quasar icon will then show up in your desktop's notification bar. Right-click the icon, load your desired widgets, and enjoy! See :doc:`usage` for more details.
 
-For developers who wishes to build a Data Server extension plugin, or those who wants to create their own web widget, please refer to Quasar's documentation at https://quasardoc.readthedocs.io. The documentation contains examples and other resources on how to build your first plugin or widget.
+For developers who wishes to build a Data Server extension, or those who wants to create their own web widget, please refer to Quasar's documentation at https://quasardoc.readthedocs.io. The documentation contains examples and other resources on how to build your first extension or widget.
 
 Building
 -------------------------
@@ -75,17 +75,18 @@ Resources
    usage
    settings
    launcher
+   console
 
 .. toctree::
    :maxdepth: 1
    :caption: Guides
 
    widgetqs
-   plugqs
+   extqs
 
 .. toctree::
   :maxdepth: 1
-  :caption: Sample Plugins
+  :caption: Sample Extensions
 
   win_simple_perf
   win_audio_viz

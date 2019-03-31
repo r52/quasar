@@ -24,8 +24,7 @@ namespace
     };
 }
 
-WidgetRegistry::WidgetRegistry(DataServer* s, QObject* parent)
-    : QObject(parent), server(s)
+WidgetRegistry::WidgetRegistry(DataServer* s, QObject* parent) : QObject(parent), server(s)
 {
     loadCookies();
 }
@@ -63,30 +62,30 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
         return false;
     }
 
-    // Verify plugin dependencies
+    // Verify extension dependencies
     if (dat.contains(WGT_DEF_REQUIRED))
     {
-        bool    pass     = true;
-        QString failplug = "";
-        auto    arr      = dat[WGT_DEF_REQUIRED].toArray();
+        bool    pass    = true;
+        QString failext = "";
+        auto    arr     = dat[WGT_DEF_REQUIRED].toArray();
 
         for (auto p : arr)
         {
-            if (!server->findPlugin(p.toString()))
+            if (!server->findExtension(p.toString()))
             {
-                pass     = false;
-                failplug = p.toString();
+                pass    = false;
+                failext = p.toString();
                 break;
             }
         }
 
         if (!pass)
         {
-            qWarning() << "Missing plugin '" << failplug << "' for '" << filename << "'";
+            qWarning() << "Missing extension '" << failext << "' for '" << filename << "'";
 
             QMessageBox::warning(nullptr,
-                                 tr("Missing Plugin"),
-                                 tr("Plugin \"%1\" is required for widget \"%2\". Please install this plugin and try again.").arg(failplug, filename),
+                                 tr("Missing Extension"),
+                                 tr("Extension \"%1\" is required for widget \"%2\". Please install this extension and try again.").arg(failext, filename),
                                  QMessageBox::Ok);
 
             return false;
@@ -113,7 +112,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
     qInfo() << "Loading widget " << widgetName << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
 
-    WebWidget* widget = new WebWidget(widgetName, dat);
+    WebWidget* widget = new WebWidget(widgetName, dat, server);
 
     m_widgetMap.insert(std::make_pair(widgetName, widget));
 
@@ -132,42 +131,30 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
     return true;
 }
 
-WebWidget* WidgetRegistry::findWidget(QString widgetName)
-{
-    std::shared_lock<std::shared_mutex> lk(m_mutex);
-
-    auto it = m_widgetMap.find(widgetName);
-
-    if (it != m_widgetMap.end())
-    {
-        return it->second.get();
-    }
-
-    return nullptr;
-}
-
 void WidgetRegistry::loadCookies()
 {
     QSettings settings;
-    QString   cookiesfile = settings.value(QUASAR_CONFIG_COOKIES).toString();
 
-    if (cookiesfile.isEmpty())
+    auto bcookies = settings.value(QUASAR_CONFIG_COOKIES, QByteArray()).toByteArray();
+
+    if (bcookies.isEmpty())
     {
         qInfo() << "No cookies loaded";
         return;
     }
 
-    QFile file(cookiesfile);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    auto rawcookies = qUncompress(bcookies);
+
+    if (rawcookies.isEmpty())
     {
-        qWarning() << "Failed to load cookies file " << cookiesfile;
+        qWarning() << "Corrupted cookies";
         return;
     }
 
     QWebEngineCookieStore* store = QWebEngineProfile::defaultProfile()->cookieStore();
 
     // parse netscape format cookies file
-    QTextStream in(&file);
+    QTextStream in(rawcookies);
 
     while (!in.atEnd())
     {
@@ -197,7 +184,7 @@ void WidgetRegistry::loadCookies()
         store->setCookie(cookie);
     }
 
-    qInfo() << "Cookies file " << cookiesfile << "loaded";
+    qInfo() << "Cookies file loaded";
 }
 
 void WidgetRegistry::closeWebWidget(WebWidget* widget)

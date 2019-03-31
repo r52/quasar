@@ -1,7 +1,6 @@
 body {
     font-family: "Century Gothic", CenturyGothic, sans-serif;
     user-select: none;
-    user-drag: none;
     background-color: transparent;
     overflow: hidden;
     color: #fff;

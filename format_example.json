@@ -1,0 +1,170 @@
+{
+    "method": "query",
+    "params": {
+        "target": "simple_perf",
+        "params": "cpu"
+    }
+},
+{
+    "data": {
+        "simple_perf": {
+            "cpu": 36
+        }
+    }
+},
+{
+    "errors": "omg something failed"
+},
+{
+    "data": {
+        "settings": {
+            "global": {
+                "dataport": 13337,
+                "loglevel": 2,
+                "cookies": "",
+                "savelog": true,
+                "startup": true
+            },
+            "extensions": [{
+                    "name": "simple_perf",
+                    "fullname": "Simple Performance Query",
+                    "version": "v1",
+                    "author": "me",
+                    "description": "Sample extension providing basic performance metrics",
+                    "url": "https://github.com/r52/quasar",
+                    "rates": [{
+                            "name": "cpu",
+                            "enabled": true,
+                            "rate": 5000
+                        },
+                        {
+                            "name": "ram",
+                            "enabled": true,
+                            "rate": 5000
+                        }
+                    ],
+                    "settings": null
+                },
+                {
+                    "name": "win_audio_viz",
+                    "fullname": "Audio Visualization",
+                    "version": "v1",
+                    "author": "me",
+                    "description": "Provides desktop audio frequency data",
+                    "url": "https://github.com/r52/quasar",
+                    "rates": [{
+                        "name": "viz",
+                        "enabled": true,
+                        "rate": null
+                    }],
+                    "settings": [{
+                            "name": "fftsize",
+                            "desc": "FFT Size",
+                            "type": "int",
+                            "min": 0,
+                            "max": 8192,
+                            "step": 2,
+                            "def": 256,
+                            "val": 256
+                        },
+                        {
+                            "name": "sensitivity",
+                            "desc": "Sensitivity",
+                            "type": "double",
+                            "min": 0.0,
+                            "max": 10000.0,
+                            "step": 0.1,
+                            "def": 50.0,
+                            "val": 50.0
+                        }
+                    ]
+                }
+            ],
+            "launcher": [{
+                    "command": "chrome",
+                    "file": "cmd",
+                    "args": "/c start chrome",
+                    "start": "",
+                    "icon": ""
+                },
+                {
+                    "command": "explorer",
+                    "file": "C:/Windows/explorer.exe",
+                    "args": "",
+                    "start": "",
+                    "icon": ""
+                }
+            ]
+        }
+    }
+},
+{
+    "method": "mutate",
+    "params": {
+        "target": "settings",
+        "params": {
+            "global/dataport": 15132,
+            "global/loglevel": 2,
+            "extensions": {
+                "simple_perf": {
+                    "simple_perf/cpu/enabled": true,
+                    "simple_perf/cpu/rate": 5000,
+                    "simple_perf/ram/enabled": true,
+                    "simple_perf/ram/rate": 5000,
+                },
+                "win_audio_viz": {
+                    "win_audio_viz/fftsize": 256
+                }
+            },
+            "launcher": [{
+                    "command": "chrome",
+                    "file": "cmd",
+                    "args": "/c start chrome",
+                    "start": "",
+                    "icon": ""
+                },
+                {
+                    "command": "explorer",
+                    "file": "C:/Windows/explorer.exe",
+                    "args": "",
+                    "start": "",
+                    "icon": ""
+                }
+            ]
+        }
+    }
+},
+{
+    "data": {
+        "settings": {
+            "win_audio_viz": {
+                "rates": [{
+                    "name": "viz",
+                    "enabled": true,
+                    "rate": null
+                }],
+                "settings": [{
+                        "name": "fftsize",
+                        "desc": "FFT Size",
+                        "type": "int",
+                        "min": 0,
+                        "max": 8192,
+                        "step": 2,
+                        "def": 256,
+                        "val": 256
+                    },
+                    {
+                        "name": "sensitivity",
+                        "desc": "Sensitivity",
+                        "type": "double",
+                        "min": 0.0,
+                        "max": 10000.0,
+                        "step": 0.1,
+                        "def": 50.0,
+                        "val": 50.0
+                    }
+                ]
+            }
+        }
+    }
+}

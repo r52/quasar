@@ -25,8 +25,6 @@ public:
 
     auto getWidgets() { return make_shared_locker<WidgetMapType>(&m_widgetMap, &m_mutex); }
 
-    WebWidget* findWidget(QString widgetName);
-
 private:
     void loadCookies();
 
@@ -34,7 +32,7 @@ public slots:
     void closeWebWidget(WebWidget* widget);
 
 private:
-    explicit WidgetRegistry(DataServer* s, QObject* parent = Q_NULLPTR);
+    explicit WidgetRegistry(DataServer* s, QObject* parent = nullptr);
     WidgetRegistry()                      = delete;
     WidgetRegistry(const WidgetRegistry&) = delete;
     WidgetRegistry(WidgetRegistry&&)      = delete;

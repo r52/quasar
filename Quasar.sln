@@ -5,14 +5,14 @@ VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Quasar", "Quasar.vcxproj", "{B12702AD-ABFB-343A-A199-8E24837244A3}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "plugin-api", "plugin-api\plugin-api.vcxproj", "{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "extension-api", "extension-api\extension-api.vcxproj", "{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win_simple_perf", "plugins\win_simple_perf\win_simple_perf.vcxproj", "{0AA860FA-E76C-4AD9-B473-D564D8C73327}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win_simple_perf", "extensions\win_simple_perf\win_simple_perf.vcxproj", "{0AA860FA-E76C-4AD9-B473-D564D8C73327}"
 	ProjectSection(ProjectDependencies) = postProject
 		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52} = {DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win_audio_viz", "plugins\win_audio_viz\win_audio_viz.vcxproj", "{6775782B-1D7A-46EA-A741-C8032936CA1E}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "win_audio_viz", "extensions\win_audio_viz\win_audio_viz.vcxproj", "{6775782B-1D7A-46EA-A741-C8032936CA1E}"
 	ProjectSection(ProjectDependencies) = postProject
 		{DFCEC467-6147-4DF6-98FF-BD7AE8E17E52} = {DFCEC467-6147-4DF6-98FF-BD7AE8E17E52}
 	EndProjectSection

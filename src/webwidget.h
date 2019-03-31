@@ -2,9 +2,12 @@
 
 #include <QWidget>
 #include <QtGui>
+#include <QtWebEngineWidgets/QWebEngineProfile>
+#include <QtWebEngineWidgets/QWebEngineScript>
 #include <QtWebEngineWidgets/QWebEngineView>
 
 QT_FORWARD_DECLARE_CLASS(QMenu);
+QT_FORWARD_DECLARE_CLASS(DataServer);
 
 // From https://stackoverflow.com/questions/19362455/dark-transparent-layer-over-a-qmainwindow-in-qt
 class OverlayWidget : public QWidget
@@ -18,8 +21,7 @@ class OverlayWidget : public QWidget
     }
 
 public:
-    explicit OverlayWidget(QWidget* parent = {})
-        : QWidget{ parent }
+    explicit OverlayWidget(QWidget* parent = {}) : QWidget{parent}
     {
         setAttribute(Qt::WA_NoSystemBackground);
         newParent();
@@ -55,10 +57,7 @@ protected:
 class QuasarWebView : public QWebEngineView
 {
 public:
-    QuasarWebView(QWidget* parent = Q_NULLPTR)
-        : QWebEngineView{ parent }
-    {
-    }
+    QuasarWebView(QWidget* parent = nullptr) : QWebEngineView{parent} {}
 
 protected:
     virtual void contextMenuEvent(QContextMenuEvent* event) override
@@ -76,10 +75,9 @@ protected:
 class QuasarWebPage : public QWebEnginePage
 {
 public:
-    QuasarWebPage(QObject* parent = Q_NULLPTR)
-        : QWebEnginePage{ parent }
-    {
-    }
+    QuasarWebPage(QObject* parent = nullptr) : QWebEnginePage{parent} {}
+
+    QuasarWebPage(QWebEngineProfile* profile, QObject* parent = nullptr) : QWebEnginePage{profile, parent} {}
 
 protected:
     virtual void javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID);
@@ -95,8 +93,9 @@ class WebWidget : public QWidget
 public:
     ~WebWidget();
 
-    static bool validateWidgetDefinition(const QJsonObject& dat);
-    static bool acceptSecurityWarnings(const QJsonObject& dat);
+    static bool    validateWidgetDefinition(const QJsonObject& dat);
+    static bool    acceptSecurityWarnings(const QJsonObject& dat);
+    static QString getGlobalScript();
 
     QJsonObject getData() { return data; }
     QString     getName() { return m_Name; }
@@ -121,17 +120,18 @@ protected slots:
     void toggleOnTop(bool ontop);
 
 private:
-    explicit WebWidget(QString widgetName, const QJsonObject& dat, QWidget* parent = Q_NULLPTR);
-    WebWidget(const WebWidget&) = delete;
-    WebWidget& operator=(const WebWidget&) = delete;
+    explicit WebWidget(QString widgetName, const QJsonObject& dat, DataServer* serv, QWidget* parent = nullptr);
 
     QString getSettingKey(QString key);
 
-    static QString PageGlobalTemp;
+    static QString PageGlobalScript;
 
     bool m_fixedposition = false;
 
     QString m_Name;
+
+    // Dataserver
+    DataServer* server;
 
     // Web engine widget
     QuasarWebView* webview;
@@ -145,6 +145,9 @@ private:
     // Drag and drop pos
     QPoint dragPosition;
 
+    // Page script
+    QWebEngineScript script;
+
     // Menu/actions
     QMenu*   m_Menu;
     QAction* rName;
@@ -154,4 +157,6 @@ private:
     QAction* rFixedPos;
     QAction* rClickable;
     QAction* rClose;
+
+    Q_DISABLE_COPY(WebWidget);
 };
