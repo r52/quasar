@@ -25,7 +25,9 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/quasar")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-add_subdirectory(plugin-api)
+include_directories(include)
+
+add_subdirectory(extension-api)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -47,7 +49,7 @@ file(GLOB SOURCES "src/*.cpp")
 add_executable(quasar ${SOURCES} quasar.qrc)
 target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_compile_features(quasar PUBLIC cxx_std_17)
-target_link_libraries(quasar quasar-pluginapi)
+target_link_libraries(quasar quasar-extensionapi)
 target_link_libraries(quasar Threads::Threads)
 target_link_libraries(quasar Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::WebSockets Qt5::WebEngineCore Qt5::WebEngineWidgets)
 
