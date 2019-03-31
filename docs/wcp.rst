@@ -133,7 +133,7 @@ Server to Client
 
 The following is the basic message format used by the Data Server to send data and messages to client widgets.
 
-Message Format
+Basic Message Format
 ###############
 
 ::
@@ -249,7 +249,7 @@ For example, sending the following message:
 .. code-block:: json
 
     {
-        "method": "query"
+        "method": "query",
         "params": {
             "target": "launcher",
             "params": "get"
@@ -280,7 +280,7 @@ Where ``chrome``, ``spotify``, and ``steam`` are commands preconfigured in the :
 .. code-block:: json
 
     {
-        "method": "query"
+        "method": "query",
         "params": {
             "target": "launcher",
             "params": "chrome"

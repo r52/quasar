@@ -69,9 +69,9 @@ We can do this with the following JavaScript:
 
     var websocket = quasar_create_websocket();
 
-``quasar_create_websocket()`` is a globally defined function only available to widgets loaded in Quasar with the ``dataserver`` parameter set to ``true``. This function creates a WebSocket object connecting to Quasar's Data Server.
+``quasar_create_websocket()`` is a globally defined function only available to widgets loaded in Quasar when the ``dataserver`` parameter is set to ``true``. This function creates a WebSocket object connecting to Quasar's Data Server.
 
-Once the connection is established, we then need to authenticate with the Data Server to establish our widget's identity. Widgets loaded in Quasar can achieve this simply by calling the (similarity defined) global function ``quasar_authenticate(websocket)`` in the WebSocket's ``onopen`` handler:
+Once the connection is established, we then need to authenticate with the Data Server to establish our widget's identity. Widgets loaded in Quasar can achieve this simply by calling the (similarity defined) global function ``quasar_authenticate()`` in the WebSocket's ``onopen`` handler, supplying our ``websocket`` connection object as an argument:
 
 .. code-block:: javascript
 
@@ -79,7 +79,7 @@ Once the connection is established, we then need to authenticate with the Data S
         quasar_authenticate(websocket);
     };
 
-Once our widget is authenticated, we can start fetching data from a Data Source. For example:
+Once our widget is authenticated, we can start fetching data from a Data Source by placing a call to a data request function in the handler. For example:
 
 .. code-block:: javascript
 
@@ -106,7 +106,7 @@ Where the function ``poll()`` can be something like:
 
 The above example polls the Data Source ``cpu`` provided by the sample extension `win_simple_perf <https://github.com/r52/quasar/tree/master/extensions/win_simple_perf>`_ every 5000ms.
 
-How that we have configured the Data Sources we want to receive data from, we must now setup our data processing code. We start by implementing another handler on the WebSocket connection. For example:
+How that we have configured the Data Sources we want to receive data from, we must now setup our data processing for the data we will receive. We start by implementing another handler on the WebSocket connection. For example:
 
 .. code-block:: javascript
 
@@ -127,7 +127,7 @@ We can then implement a function ``parseMsg()`` to process the incoming data. Re
         }
     }
 
-We start by parsing the JSON message, then examining the object's fields to ensure that we have received what we wanted, namely the ``data["data"]["win_simple_perf"]["cpu"]`` field, which is what we requested in the previous code examples. If everything matches, we finally process the payload. Since we know that the ``cpu`` Data Source only outputs a single integer containing the current CPU load on your desktop, we simply output that to the HTML element with the id ``cpu`` using jQuery.
+We start by parsing the JSON message, then examining the object's fields to ensure that we have received what we wanted, namely the ``data["data"]["win_simple_perf"]["cpu"]`` field, which is what we requested in the previous code examples. If everything matches, we finally process the payload. Since we know that the ``cpu`` Data Source only outputs a single integer containing the current CPU load on your desktop, we simply output that to the HTML element with the id ``cpu`` using jQuery in this example.
 
 Putting everything together, your widget's script may end up looking something like this:
 
