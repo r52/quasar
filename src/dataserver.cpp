@@ -210,7 +210,7 @@ void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sende
 
     if (!m_Extensions.count(extcode))
     {
-        DS_SEND_WARN(sender, "Unknown extension code " + extcode);
+        DS_SEND_WARN(sender, "Unknown extension identifier " + extcode);
         return;
     }
 
@@ -267,7 +267,7 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
 
     if (!m_Extensions.count(extcode))
     {
-        DS_SEND_WARN(sender, "Unknown extension code " + extcode);
+        DS_SEND_WARN(sender, "Unknown extension identifier " + extcode);
         return;
     }
 

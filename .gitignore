@@ -268,3 +268,6 @@ docs/Makefile
 docs/make.bat
 docs/_*
 docs/xml/
+
+# vscode
+.vscode/
