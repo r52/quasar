@@ -61,3 +61,16 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+QtMsBuild/* linguist-vendored
+docs/* linguist-documentation
+jquery-3.3.1.slim.min.js linguist-vendored
+anime.min.js linguist-vendored
+codemirror.js linguist-vendored
+codemirror.css linguist-vendored
+javascript.js linguist-vendored
+bootstrap.bundle.min.js linguist-vendored
+bootstrap-notify.min.js linguist-vendored
+bootstrap-table.min.js linguist-vendored
+bootstrap.min.css linguist-vendored
+bootstrap-table.min.css linguist-vendored
