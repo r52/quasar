@@ -4,7 +4,15 @@ param (
     [switch]$clean = $false
 )
 
-$ErrorActionPreference = "Stop"
+pushd "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools"
+cmd /c "VsDevCmd.bat&set" |
+foreach {
+  if ($_ -match "=") {
+    $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
+  }
+}
+popd
+Write-Host "`nVisual Studio 2017 Command Prompt variables set." -ForegroundColor Yellow
 
 $qtpath = $env:QTDIR
 if ($null -eq $qtpath) {
@@ -34,7 +42,7 @@ $release_path = ".\build\x64\Release\"
 $release_files = ("Quasar.exe"),
 ("extension-api.dll"),
 ("ssleay32.dll"),
-("libeay32.dll")
+("libeay32.dll"),
 ("extensions\win_simple_perf.dll"),
 ("extensions\win_audio_viz.dll")
 

@@ -8,6 +8,7 @@
         <License name="GNU General Public License v3.0" file="license.txt" />
     </Licenses>
     <Default>true</Default>
+    <Script>installscript.qs</Script>
     <ForcedInstallation>true</ForcedInstallation>
     <SortingPriority>1000</SortingPriority>
 </Package>
