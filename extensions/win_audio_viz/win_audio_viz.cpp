@@ -235,13 +235,13 @@ quasar_data_source_t sources[] = {{"rms", 100, 0, 0},
                                   {"peak", 100, 0, 0},
                                   {"fft", 100, 0, 0},
                                   {"band", 100, 0, 0},
-                                  {"fftfreq", 0, 5000, 0},
-                                  {"bandfreq", 0, 5000, 0},
-                                  {"format", 0, 5000, 0},
-                                  {"dev_status", 0, 5000, 0},
-                                  {"dev_name", 0, 5000, 0},
-                                  {"dev_id", 0, 5000, 0},
-                                  {"dev_list", 0, 5000, 0}};
+                                  {"fftfreq", QUASAR_POLLING_CLIENT, 5000, 0},
+                                  {"bandfreq", QUASAR_POLLING_CLIENT, 5000, 0},
+                                  {"format", QUASAR_POLLING_CLIENT, 5000, 0},
+                                  {"dev_status", QUASAR_POLLING_CLIENT, 5000, 0},
+                                  {"dev_name", QUASAR_POLLING_CLIENT, 5000, 0},
+                                  {"dev_id", QUASAR_POLLING_CLIENT, 5000, 0},
+                                  {"dev_list", QUASAR_POLLING_CLIENT, 5000, 0}};
 
 namespace
 {

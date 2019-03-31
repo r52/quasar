@@ -32,7 +32,7 @@ enum PerfDataSources
     PERF_SRC_RAM
 };
 
-quasar_data_source_t sources[2] = {{"cpu", 0, 1000, 0}, {"ram", 0, 1000, 0}};
+quasar_data_source_t sources[2] = {{"cpu", QUASAR_POLLING_CLIENT, 1000, 0}, {"ram", QUASAR_POLLING_CLIENT, 1000, 0}};
 
 // From https://stackoverflow.com/questions/23143693/retrieving-cpu-load-percent-total-in-windows-with-c
 static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
