@@ -37,7 +37,7 @@ Optional Parameters
 --------------------
 
 ``dataserver``: true/false (default false)
-    Defines whether connection and authentication scripts are loaded into the widget. This parameter must be defined and set to ``true`` if the widget requires a connection to the Data Server. If this parameter is not defined, ``false`` is implied, and connection/authentication scripts are not loaded.
+    Defines whether connection and authentication scripts are loaded into the widget. This parameter must be defined and set to ``true`` if the widget requires a connection to the Data Server. If this parameter is not defined, or if ``false`` is set, then the connection/authentication scripts are not loaded and the widget will not be able to connect to the Data Server.
 
 ``required``: String array
     A string array containing extension identifiers that the widget requires to function. The widget will fail to load if one or more of the extensions listed here are unavailable.
