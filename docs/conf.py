@@ -26,13 +26,13 @@ if rtd_build:
 # -- Project information -----------------------------------------------------
 
 project = 'Quasar'
-copyright = '2018, r52'
+copyright = '2019, r52'
 author = 'r52'
 
 # The short X.Y version
-version = '1.3.1'
+version = '2.0.0'
 # The full version, including alpha/beta/rc tags
-release = 'v1.3.1'
+release = 'v2.0.0'
 
 
 # -- General configuration ---------------------------------------------------

@@ -57,44 +57,56 @@ Communicating with the Data Server
 
 .. note::
 
-    The following JavaScript code samples assume `jQuery <https://jquery.com/>`_ is being utilized.
+    The subsequent JavaScript code samples assume `jQuery <https://jquery.com/>`_ is being utilized.
 
-In order to communicate with the Data Server and fetch data from installed Data Server plugins, we first need to open up a WebSocket connection with Quasar.
+In order for widgets to be able to communicate with the Quasar Data Server and fetch data from installed Data Server extensions, its definition file must have the parameter ``dataserver`` defined with its value set to ``true``. This tells Quasar to load the connection and authentication scripts into the widget (see :doc:`wdef`).
+
+Once this is done, we first need to open up a WebSocket connection with Quasar.
 
 We can do this with the following JavaScript:
 
 .. code-block:: javascript
 
-    var websocket = new WebSocket(qWsServerUrl);
+    var websocket = quasar_create_websocket();
 
-``qWsServerUrl`` is a globally defined variable only available to widgets loaded in Quasar. This variable contains the URL for Quasar's Data Server.
+``quasar_create_websocket()`` is a globally defined function only available to widgets loaded in Quasar with the ``dataserver`` parameter set to ``true``. This function creates a WebSocket object connecting to Quasar's Data Server.
 
-Once the connection is established, we can start fetching data by subscribing to a Data Source. We can do so first by implementing a handler on the WebSocket connection:
+Once the connection is established, we then need to authenticate with the Data Server to establish our widget's identity. Widgets loaded in Quasar can achieve this simply by calling the (similarity defined) global function ``quasar_authenticate(websocket)`` in the WebSocket's ``onopen`` handler:
 
 .. code-block:: javascript
 
     websocket.onopen = function(evt) {
-        subscribe();
+        quasar_authenticate(websocket);
     };
 
-Where the function ``subscribe()`` can be something like:
+Once our widget is authenticated, we can start fetching data from a Data Source. For example:
 
 .. code-block:: javascript
 
-    function subscribe() {
-        var reg = {
-            widget: qWidgetName,
-            type: "subscribe",
-            plugin: "win_simple_perf",
-            source: "cpu"
-        };
+    websocket.onopen = function(evt) {
+        quasar_authenticate(websocket);
+        setInterval(poll, 5000);
+    };
 
-        websocket.send(JSON.stringify(reg));
+Where the function ``poll()`` can be something like:
+
+.. code-block:: javascript
+
+    function poll() {
+        var msg = {
+            "method": "query",
+            "params": {
+                "target": "win_simple_perf",
+                "params": "cpu"
+            }
+        }
+
+        websocket.send(JSON.stringify(msg));
     }
 
-The above example subscribes the widget to Data Source ``cpu`` provided by the plugin `win_simple_perf <https://github.com/r52/quasar/tree/master/plugins/win_simple_perf>`_. The variable ``qWidgetName`` is also a globally defined variable available to widgets loaded in Quasar. It contains the name of your widget as defined in the Widget Definition file.
+The above example polls the Data Source ``cpu`` provided by the sample extension `win_simple_perf <https://github.com/r52/quasar/tree/master/extensions/win_simple_perf>`_ every 5000ms.
 
-How that we have subscribed to a Data Source, we can begin receiving data from the source. To do that, we start by implementing another handler on the WebSocket connection:
+How that we have configured the Data Sources we want to receive data from, we must now setup our data processing code. We start by implementing another handler on the WebSocket connection. For example:
 
 .. code-block:: javascript
 
@@ -102,27 +114,20 @@ How that we have subscribed to a Data Source, we can begin receiving data from t
         parseMsg(evt.data);
     };
 
-We can then implement the function ``parseMsg()`` to process the incoming data. Refer to the :doc:`wcp` for the full message format:
+We can then implement a function ``parseMsg()`` to process the incoming data. Refer to the :doc:`wcp` for the full message format:
 
 .. code-block:: javascript
 
     function parseMsg(msg) {
         var data = JSON.parse(msg);
 
-        switch (data["type"]) {
-            case "data":
-                if (data["plugin"] == "win_simple_perf" && data["source"] == "cpu") {
-                    var val = data["data"];
-                    $('#cpu').text(val + "%");
-                }
-                break;
-            default:
-                console.log("Unsupported message type " + data["type"]);
-                break;
+        if ("data" in data && "win_simple_perf" in data["data"] && "cpu" in data["data"]["win_simple_perf"]) {
+            var val = data["data"]["win_simple_perf"]["cpu"]
+            $('#cpu').text(val + "%");
         }
     }
 
-We start by parsing the JSON message, then examining the ``type`` attribute of the message. Since we've only subscribed to a single Data Source that outputs very simple data, our function here is only expected to receive messages with ``type: "data"``. If the message that receive is indeed ``type: "data"``, we proceed by checking whether the ``plugin`` and ``source`` attributes matches up with what we've subscribed to, namely ``win_simple_perf`` and ``cpu`` respectively. If everything matches, we finally process the payload under the attribute ``data``. Since we know that the ``cpu`` Data Source only outputs a single integer containing the current CPU load on your desktop, we simply output that to the HTML element with the id ``cpu`` using jQuery.
+We start by parsing the JSON message, then examining the object's fields to ensure that we have received what we wanted, namely the ``data["data"]["win_simple_perf"]["cpu"]`` field, which is what we requested in the previous code examples. If everything matches, we finally process the payload. Since we know that the ``cpu`` Data Source only outputs a single integer containing the current CPU load on your desktop, we simply output that to the HTML element with the id ``cpu`` using jQuery.
 
 Putting everything together, your widget's script may end up looking something like this:
 
@@ -130,30 +135,24 @@ Putting everything together, your widget's script may end up looking something l
 
     var websocket = null;
 
-    function subscribe() {
-        var reg = {
-            widget: qWidgetName,
-            type: "subscribe",
-            plugin: "win_simple_perf",
-            source: "cpu"
-        };
+    function poll() {
+        var msg = {
+            "method": "query",
+            "params": {
+                "target": "win_simple_perf",
+                "params": "cpu"
+            }
+        }
 
-        websocket.send(JSON.stringify(reg));
+        websocket.send(JSON.stringify(msg));
     }
 
     function parseMsg(msg) {
         var data = JSON.parse(msg);
 
-        switch (data["type"]) {
-            case "data":
-                if (data["plugin"] == "win_simple_perf" && data["source"] == "cpu") {
-                    var val = data["data"];
-                    $('#cpu').text(val + "%");
-                }
-                break;
-            default:
-                console.log("Unsupported message type " + data["type"]);
-                break;
+        if ("data" in data && "win_simple_perf" in data["data"] && "cpu" in data["data"]["win_simple_perf"]) {
+            var val = data["data"]["win_simple_perf"]["cpu"]
+            $('#cpu').text(val + "%");
         }
     }
 
@@ -161,9 +160,10 @@ Putting everything together, your widget's script may end up looking something l
         try {
             if (websocket && websocket.readyState == 1)
                 websocket.close();
-            websocket = new WebSocket(qWsServerUrl);
+            websocket = quasar_create_websocket();
             websocket.onopen = function(evt) {
-                subscribe();
+                quasar_authenticate(websocket);
+                setInterval(poll, 5000);
             };
             websocket.onmessage = function(evt) {
                 parseMsg(evt.data);
