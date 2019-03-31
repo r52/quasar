@@ -253,6 +253,289 @@ namespace
     std::unordered_map<size_t, Measure::Type> m_typemap;
 }
 
+HRESULT Measure::DeviceInit()
+{
+    HRESULT hr;
+
+    // get the device handle
+    assert(m_enum && !m_dev);
+
+    // if a specific ID was requested, search for that one, otherwise get the default
+    if (*m_reqID && wcscmp(m_reqID, L"Default") != 0)
+    {
+        hr = m_enum->GetDevice(m_reqID, &m_dev);
+        if (hr != S_OK)
+        {
+            warn("Audio %s device '%ls' not found (error 0x%08x).", m_port == PORT_OUTPUT ? "output" : "input", m_reqID, hr);
+        }
+    }
+    else
+    {
+        hr = m_enum->GetDefaultAudioEndpoint(m_port == PORT_OUTPUT ? eRender : eCapture, eConsole, &m_dev);
+    }
+
+    EXIT_ON_ERROR(hr);
+
+    // store device name
+    IPropertyStore* props = NULL;
+    if (m_dev->OpenPropertyStore(STGM_READ, &props) == S_OK)
+    {
+        PROPVARIANT varName;
+        PropVariantInit(&varName);
+
+        if (props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
+        {
+            _snwprintf_s(m_devName, _TRUNCATE, L"%s", varName.pwszVal);
+        }
+
+        PropVariantClear(&varName);
+    }
+
+    SAFE_RELEASE(props);
+
+#if (WINDOWS_BUG_WORKAROUND)
+    // get an extra audio client for the dummy silent channel
+    hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**) &m_clBugAudio);
+    if (hr != S_OK)
+    {
+        warn("Failed to create audio client for Windows bug workaround.");
+    }
+#endif
+
+    // get the main audio client
+    hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**) &m_clAudio);
+    if (hr != S_OK)
+    {
+        warn("Failed to create audio client.");
+    }
+
+    EXIT_ON_ERROR(hr);
+
+    // parse audio format - Note: not all formats are supported.
+    hr = m_clAudio->GetMixFormat(&m_wfx);
+    EXIT_ON_ERROR(hr);
+
+    switch (m_wfx->wFormatTag)
+    {
+        case WAVE_FORMAT_PCM:
+            if (m_wfx->wBitsPerSample == 16)
+            {
+                m_format = FMT_PCM_S16;
+            }
+            break;
+
+        case WAVE_FORMAT_IEEE_FLOAT:
+            m_format = FMT_PCM_F32;
+            break;
+
+        case WAVE_FORMAT_EXTENSIBLE:
+            if (reinterpret_cast<WAVEFORMATEXTENSIBLE*>(m_wfx)->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
+            {
+                m_format = FMT_PCM_F32;
+            }
+            break;
+    }
+
+    if (m_format == FMT_INVALID)
+    {
+        warn("Invalid sample format.  Only PCM 16b integer or PCM 32b float are supported.");
+    }
+
+    // setup FFT buffers
+    if (m_fftSize)
+    {
+        for (int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
+        {
+            m_fftCfg[iChan] = kiss_fftr_alloc(m_fftSize, 0, NULL, NULL);
+            m_fftIn[iChan]  = (float*) calloc(m_fftSize * sizeof(float), 1);
+            m_fftOut[iChan] = (float*) calloc(m_fftSize * sizeof(float), 1);
+        }
+
+        m_fftKWdw   = (float*) calloc(m_fftSize * sizeof(float), 1);
+        m_fftTmpIn  = (float*) calloc(m_fftSize * sizeof(float), 1);
+        m_fftTmpOut = (kiss_fft_cpx*) calloc(m_fftSize * sizeof(kiss_fft_cpx), 1);
+        m_fftBufP   = m_fftSize - m_fftOverlap;
+
+        // calculate window function coefficients (http://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window)
+        for (int iBin = 0; iBin < m_fftSize; ++iBin)
+        {
+            m_fftKWdw[iBin] = (float) (0.5 * (1.0 - cos(TWOPI * iBin / (m_fftSize - 1))));
+        }
+    }
+
+    // calculate band frequencies and allocate band output buffers
+    if (m_nBands)
+    {
+        m_bandFreq        = (float*) malloc(m_nBands * sizeof(float));
+        const double step = (log(m_freqMax / m_freqMin) / m_nBands) / log(2.0);
+        m_bandFreq[0]     = (float) (m_freqMin * pow(2.0, step / 2.0));
+
+        for (int iBand = 1; iBand < m_nBands; ++iBand)
+        {
+            m_bandFreq[iBand] = (float) (m_bandFreq[iBand - 1] * pow(2.0, step));
+        }
+
+        for (int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
+        {
+            m_bandOut[iChan] = (float*) calloc(m_nBands * sizeof(float), 1);
+        }
+    }
+
+    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
+
+#if (WINDOWS_BUG_WORKAROUND)
+    // ---------------------------------------------------------------------------------------
+    // Windows bug workaround: create a silent render client before initializing loopback mode
+    // see:
+    // http://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/c7ba0a04-46ce-43ff-ad15-ce8932c00171/loopback-recording-causes-digital-stuttering?forum=windowspro-audiodevelopment
+    if (m_port == PORT_OUTPUT)
+    {
+        hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, m_wfx, NULL);
+        EXIT_ON_ERROR(hr);
+
+        // get the frame count
+        UINT32 nFrames;
+        hr = m_clBugAudio->GetBufferSize(&nFrames);
+        EXIT_ON_ERROR(hr);
+
+        // create a render client
+        hr = m_clBugAudio->GetService(IID_IAudioRenderClient, (void**) &m_clBugRender);
+        EXIT_ON_ERROR(hr);
+
+        // get the buffer
+        BYTE* buffer;
+        hr = m_clBugRender->GetBuffer(nFrames, &buffer);
+        EXIT_ON_ERROR(hr);
+
+        // release it
+        hr = m_clBugRender->ReleaseBuffer(nFrames, AUDCLNT_BUFFERFLAGS_SILENT);
+        EXIT_ON_ERROR(hr);
+
+        // start the stream
+        hr = m_clBugAudio->Start();
+        EXIT_ON_ERROR(hr);
+    }
+    // ---------------------------------------------------------------------------------------
+#endif
+
+    // initialize the audio client
+    hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, hnsRequestedDuration, 0, m_wfx, NULL);
+    if (hr != S_OK)
+    {
+        // Compatibility with the Nahimic audio driver
+        // https://github.com/rainmeter/rainmeter/commit/0a3dfa35357270512ec4a3c722674b67bff541d6
+        // https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/bd8cd9f2-974f-4a9f-8e9c-e83001819942/iaudioclient-initialize-failure
+
+        // initialization failed, try to use stereo waveformat
+        m_wfx->nChannels       = 2;
+        m_wfx->nBlockAlign     = (2 * m_wfx->wBitsPerSample) / 8;
+        m_wfx->nAvgBytesPerSec = m_wfx->nSamplesPerSec * m_wfx->nBlockAlign;
+
+        hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, hnsRequestedDuration, 0, m_wfx, NULL);
+        if (hr != S_OK)
+        {
+            // stereo waveformat didnt work either, throw an error
+            warn("Failed to initialize audio client.");
+        }
+    }
+    EXIT_ON_ERROR(hr);
+
+    // initialize the audio capture client
+    hr = m_clAudio->GetService(IID_IAudioCaptureClient, (void**) &m_clCapture);
+    if (hr != S_OK)
+    {
+        warn("Failed to create audio capture client.");
+    }
+    EXIT_ON_ERROR(hr);
+
+    // start the stream
+    hr = m_clAudio->Start();
+    if (hr != S_OK)
+    {
+        warn("Failed to start the stream.");
+    }
+    EXIT_ON_ERROR(hr);
+
+    // initialize the watchdog timer
+    QueryPerformanceCounter(&m_pcFill);
+
+    return S_OK;
+
+Exit:
+    DeviceRelease();
+    return hr;
+}
+
+void Measure::DeviceRelease()
+{
+#if (WINDOWS_BUG_WORKAROUND)
+    if (m_clBugAudio)
+    {
+        m_clBugAudio->Stop();
+    }
+    SAFE_RELEASE(m_clBugRender);
+    SAFE_RELEASE(m_clBugAudio);
+#endif
+
+    if (m_clAudio)
+    {
+        m_clAudio->Stop();
+    }
+
+    SAFE_RELEASE(m_clCapture);
+
+    if (m_wfx)
+    {
+        CoTaskMemFree(m_wfx);
+        m_wfx = NULL;
+    }
+
+    SAFE_RELEASE(m_clAudio);
+    SAFE_RELEASE(m_dev);
+
+    for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+    {
+        if (m_fftCfg[iChan])
+            kiss_fftr_free(m_fftCfg[iChan]);
+        m_fftCfg[iChan] = NULL;
+
+        if (m_fftIn[iChan])
+            free(m_fftIn[iChan]);
+        m_fftIn[iChan] = NULL;
+
+        if (m_fftOut[iChan])
+            free(m_fftOut[iChan]);
+        m_fftOut[iChan] = NULL;
+
+        if (m_bandOut[iChan])
+            free(m_bandOut[iChan]);
+        m_bandOut[iChan] = NULL;
+
+        m_rms[iChan]  = 0.0;
+        m_peak[iChan] = 0.0;
+    }
+
+    if (m_bandFreq)
+    {
+        free(m_bandFreq);
+        m_bandFreq = NULL;
+    }
+
+    if (m_fftTmpOut)
+    {
+        free(m_fftTmpOut);
+        free(m_fftTmpIn);
+        free(m_fftKWdw);
+        m_fftTmpOut = NULL;
+        m_fftTmpIn  = NULL;
+        m_fftKWdw   = NULL;
+        kiss_fft_cleanup();
+    }
+
+    m_devName[0] = '\0';
+    m_format     = FMT_INVALID;
+}
+
 bool win_audio_viz_init(quasar_ext_handle handle)
 {
     assert(m);
@@ -1014,289 +1297,6 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
         m->DeviceRelease();
         m->DeviceInit();
     }
-}
-
-HRESULT Measure::DeviceInit()
-{
-    HRESULT hr;
-
-    // get the device handle
-    assert(m_enum && !m_dev);
-
-    // if a specific ID was requested, search for that one, otherwise get the default
-    if (*m_reqID && wcscmp(m_reqID, L"Default") != 0)
-    {
-        hr = m_enum->GetDevice(m_reqID, &m_dev);
-        if (hr != S_OK)
-        {
-            warn("Audio %s device '%ls' not found (error 0x%08x).", m_port == PORT_OUTPUT ? "output" : "input", m_reqID, hr);
-        }
-    }
-    else
-    {
-        hr = m_enum->GetDefaultAudioEndpoint(m_port == PORT_OUTPUT ? eRender : eCapture, eConsole, &m_dev);
-    }
-
-    EXIT_ON_ERROR(hr);
-
-    // store device name
-    IPropertyStore* props = NULL;
-    if (m_dev->OpenPropertyStore(STGM_READ, &props) == S_OK)
-    {
-        PROPVARIANT varName;
-        PropVariantInit(&varName);
-
-        if (props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
-        {
-            _snwprintf_s(m_devName, _TRUNCATE, L"%s", varName.pwszVal);
-        }
-
-        PropVariantClear(&varName);
-    }
-
-    SAFE_RELEASE(props);
-
-#if (WINDOWS_BUG_WORKAROUND)
-    // get an extra audio client for the dummy silent channel
-    hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**) &m_clBugAudio);
-    if (hr != S_OK)
-    {
-        warn("Failed to create audio client for Windows bug workaround.");
-    }
-#endif
-
-    // get the main audio client
-    hr = m_dev->Activate(IID_IAudioClient, CLSCTX_ALL, NULL, (void**) &m_clAudio);
-    if (hr != S_OK)
-    {
-        warn("Failed to create audio client.");
-    }
-
-    EXIT_ON_ERROR(hr);
-
-    // parse audio format - Note: not all formats are supported.
-    hr = m_clAudio->GetMixFormat(&m_wfx);
-    EXIT_ON_ERROR(hr);
-
-    switch (m_wfx->wFormatTag)
-    {
-        case WAVE_FORMAT_PCM:
-            if (m_wfx->wBitsPerSample == 16)
-            {
-                m_format = FMT_PCM_S16;
-            }
-            break;
-
-        case WAVE_FORMAT_IEEE_FLOAT:
-            m_format = FMT_PCM_F32;
-            break;
-
-        case WAVE_FORMAT_EXTENSIBLE:
-            if (reinterpret_cast<WAVEFORMATEXTENSIBLE*>(m_wfx)->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
-            {
-                m_format = FMT_PCM_F32;
-            }
-            break;
-    }
-
-    if (m_format == FMT_INVALID)
-    {
-        warn("Invalid sample format.  Only PCM 16b integer or PCM 32b float are supported.");
-    }
-
-    // setup FFT buffers
-    if (m_fftSize)
-    {
-        for (int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
-        {
-            m_fftCfg[iChan] = kiss_fftr_alloc(m_fftSize, 0, NULL, NULL);
-            m_fftIn[iChan]  = (float*) calloc(m_fftSize * sizeof(float), 1);
-            m_fftOut[iChan] = (float*) calloc(m_fftSize * sizeof(float), 1);
-        }
-
-        m_fftKWdw   = (float*) calloc(m_fftSize * sizeof(float), 1);
-        m_fftTmpIn  = (float*) calloc(m_fftSize * sizeof(float), 1);
-        m_fftTmpOut = (kiss_fft_cpx*) calloc(m_fftSize * sizeof(kiss_fft_cpx), 1);
-        m_fftBufP   = m_fftSize - m_fftOverlap;
-
-        // calculate window function coefficients (http://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window)
-        for (int iBin = 0; iBin < m_fftSize; ++iBin)
-        {
-            m_fftKWdw[iBin] = (float) (0.5 * (1.0 - cos(TWOPI * iBin / (m_fftSize - 1))));
-        }
-    }
-
-    // calculate band frequencies and allocate band output buffers
-    if (m_nBands)
-    {
-        m_bandFreq        = (float*) malloc(m_nBands * sizeof(float));
-        const double step = (log(m_freqMax / m_freqMin) / m_nBands) / log(2.0);
-        m_bandFreq[0]     = (float) (m_freqMin * pow(2.0, step / 2.0));
-
-        for (int iBand = 1; iBand < m_nBands; ++iBand)
-        {
-            m_bandFreq[iBand] = (float) (m_bandFreq[iBand - 1] * pow(2.0, step));
-        }
-
-        for (int iChan = 0; iChan < m_wfx->nChannels; ++iChan)
-        {
-            m_bandOut[iChan] = (float*) calloc(m_nBands * sizeof(float), 1);
-        }
-    }
-
-    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
-
-#if (WINDOWS_BUG_WORKAROUND)
-    // ---------------------------------------------------------------------------------------
-    // Windows bug workaround: create a silent render client before initializing loopback mode
-    // see:
-    // http://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/c7ba0a04-46ce-43ff-ad15-ce8932c00171/loopback-recording-causes-digital-stuttering?forum=windowspro-audiodevelopment
-    if (m_port == PORT_OUTPUT)
-    {
-        hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, m_wfx, NULL);
-        EXIT_ON_ERROR(hr);
-
-        // get the frame count
-        UINT32 nFrames;
-        hr = m_clBugAudio->GetBufferSize(&nFrames);
-        EXIT_ON_ERROR(hr);
-
-        // create a render client
-        hr = m_clBugAudio->GetService(IID_IAudioRenderClient, (void**) &m_clBugRender);
-        EXIT_ON_ERROR(hr);
-
-        // get the buffer
-        BYTE* buffer;
-        hr = m_clBugRender->GetBuffer(nFrames, &buffer);
-        EXIT_ON_ERROR(hr);
-
-        // release it
-        hr = m_clBugRender->ReleaseBuffer(nFrames, AUDCLNT_BUFFERFLAGS_SILENT);
-        EXIT_ON_ERROR(hr);
-
-        // start the stream
-        hr = m_clBugAudio->Start();
-        EXIT_ON_ERROR(hr);
-    }
-    // ---------------------------------------------------------------------------------------
-#endif
-
-    // initialize the audio client
-    hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, hnsRequestedDuration, 0, m_wfx, NULL);
-    if (hr != S_OK)
-    {
-        // Compatibility with the Nahimic audio driver
-        // https://github.com/rainmeter/rainmeter/commit/0a3dfa35357270512ec4a3c722674b67bff541d6
-        // https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/bd8cd9f2-974f-4a9f-8e9c-e83001819942/iaudioclient-initialize-failure
-
-        // initialization failed, try to use stereo waveformat
-        m_wfx->nChannels       = 2;
-        m_wfx->nBlockAlign     = (2 * m_wfx->wBitsPerSample) / 8;
-        m_wfx->nAvgBytesPerSec = m_wfx->nSamplesPerSec * m_wfx->nBlockAlign;
-
-        hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, hnsRequestedDuration, 0, m_wfx, NULL);
-        if (hr != S_OK)
-        {
-            // stereo waveformat didnt work either, throw an error
-            warn("Failed to initialize audio client.");
-        }
-    }
-    EXIT_ON_ERROR(hr);
-
-    // initialize the audio capture client
-    hr = m_clAudio->GetService(IID_IAudioCaptureClient, (void**) &m_clCapture);
-    if (hr != S_OK)
-    {
-        warn("Failed to create audio capture client.");
-    }
-    EXIT_ON_ERROR(hr);
-
-    // start the stream
-    hr = m_clAudio->Start();
-    if (hr != S_OK)
-    {
-        warn("Failed to start the stream.");
-    }
-    EXIT_ON_ERROR(hr);
-
-    // initialize the watchdog timer
-    QueryPerformanceCounter(&m_pcFill);
-
-    return S_OK;
-
-Exit:
-    DeviceRelease();
-    return hr;
-}
-
-void Measure::DeviceRelease()
-{
-#if (WINDOWS_BUG_WORKAROUND)
-    if (m_clBugAudio)
-    {
-        m_clBugAudio->Stop();
-    }
-    SAFE_RELEASE(m_clBugRender);
-    SAFE_RELEASE(m_clBugAudio);
-#endif
-
-    if (m_clAudio)
-    {
-        m_clAudio->Stop();
-    }
-
-    SAFE_RELEASE(m_clCapture);
-
-    if (m_wfx)
-    {
-        CoTaskMemFree(m_wfx);
-        m_wfx = NULL;
-    }
-
-    SAFE_RELEASE(m_clAudio);
-    SAFE_RELEASE(m_dev);
-
-    for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
-    {
-        if (m_fftCfg[iChan])
-            kiss_fftr_free(m_fftCfg[iChan]);
-        m_fftCfg[iChan] = NULL;
-
-        if (m_fftIn[iChan])
-            free(m_fftIn[iChan]);
-        m_fftIn[iChan] = NULL;
-
-        if (m_fftOut[iChan])
-            free(m_fftOut[iChan]);
-        m_fftOut[iChan] = NULL;
-
-        if (m_bandOut[iChan])
-            free(m_bandOut[iChan]);
-        m_bandOut[iChan] = NULL;
-
-        m_rms[iChan]  = 0.0;
-        m_peak[iChan] = 0.0;
-    }
-
-    if (m_bandFreq)
-    {
-        free(m_bandFreq);
-        m_bandFreq = NULL;
-    }
-
-    if (m_fftTmpOut)
-    {
-        free(m_fftTmpOut);
-        free(m_fftTmpIn);
-        free(m_fftKWdw);
-        m_fftTmpOut = NULL;
-        m_fftTmpIn  = NULL;
-        m_fftKWdw   = NULL;
-        kiss_fft_cleanup();
-    }
-
-    m_devName[0] = '\0';
-    m_format     = FMT_INVALID;
 }
 
 quasar_ext_info_fields_t fields = {EXT_NAME,
