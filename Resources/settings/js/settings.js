@@ -197,6 +197,9 @@ function createLauncherPage(data) {
         modal.data('command', cmd);
         modal.find('.modal-title').text(cmd + " Command");
 
+        modal.find('#command-name').removeClass("is-invalid");
+        modal.find('#file-name').removeClass("is-invalid");
+
         var ro = false;
         if (cmd === 'Edit') {
             ro = true;
@@ -250,9 +253,9 @@ function createLauncherPage(data) {
         }
 
         if (cmd === "Add") {
-            var dat = $ltable.bootstrapTable('getData')
+            var dat = $ltable.bootstrapTable('getRowByUniqueId', entry.command);
 
-            if (dat.find(e => e.command === entry.command)) {
+            if (dat != null) {
                 $('#command-name').addClass("is-invalid");
                 return;
             }
