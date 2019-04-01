@@ -55,8 +55,8 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PreprocessorDefinitions>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;QT_MESSAGELOGCONTEXT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtWebSockets;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;PLUGINAPI_LIB;QT_MESSAGELOGCONTEXT;QT_WEBSOCKETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;..\include;$(QTDIR)\include\QtWebSockets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
@@ -75,19 +75,15 @@
     <CustomBuildStep />
     <CustomBuildStep />
     <QtMoc>
-      <QTDIR>$(QTDIR)</QTDIR>
-      <InputFile>%(FullPath)</InputFile>
-      <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
-      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtWebSockets;..\include;%(AdditionalIncludeDirectories)</IncludePath>
-      <Define>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;QT_MESSAGELOGCONTEXT;_WINDLL;_UNICODE</Define>
-      <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
+      <Define>UNICODE;WIN32;WIN64;QT_NO_DEBUG;NDEBUG;QT_CORE_LIB;PLUGINAPI_LIB;QT_MESSAGELOGCONTEXT;QT_WEBSOCKETS_LIB;%(PreprocessorDefinitions)</Define>
       <DynamicSource>output</DynamicSource>
+      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;..\include;$(QTDIR)\include\QtWebSockets;%(AdditionalIncludeDirectories)</IncludePath>
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>UNICODE;WIN32;WIN64;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtWebSockets;..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;..\include;$(QTDIR)\include\QtWebSockets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -106,13 +102,9 @@
     <CustomBuildStep />
     <CustomBuildStep />
     <QtMoc>
-      <QTDIR>$(QTDIR)</QTDIR>
-      <InputFile>%(FullPath)</InputFile>
-      <OutputFile>.\GeneratedFiles\$(ConfigurationName)\moc_%(Filename).cpp</OutputFile>
-      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtWebSockets;..\include;%(AdditionalIncludeDirectories)</IncludePath>
-      <Define>UNICODE;WIN32;WIN64;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;_WINDLL;_UNICODE</Define>
-      <ExecutionDescription>Moc'ing %(Identity)...</ExecutionDescription>
+      <Define>UNICODE;WIN32;WIN64;QT_CORE_LIB;PLUGINAPI_LIB;QT_WEBSOCKETS_LIB;%(PreprocessorDefinitions)</Define>
       <DynamicSource>output</DynamicSource>
+      <IncludePath>.\GeneratedFiles\$(ConfigurationName);.\GeneratedFiles;.;$(QTDIR)\include;$(QTDIR)\include\QtCore;..\include;$(QTDIR)\include\QtWebSockets;%(AdditionalIncludeDirectories)</IncludePath>
     </QtMoc>
   </ItemDefinitionGroup>
   <ItemGroup>

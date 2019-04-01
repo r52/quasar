@@ -11,8 +11,7 @@ class SharedLocker<T, std::enable_if_t<!std::is_pointer_v<T>>>
 {
 public:
     SharedLocker(SharedLocker&&) = default;
-    explicit SharedLocker(std::add_pointer_t<T> obj, std::shared_mutex* mutex)
-        : m_obj(obj), m_mutex(mutex)
+    explicit SharedLocker(std::add_pointer_t<T> obj, std::shared_mutex* mutex) : m_obj(obj), m_mutex(mutex)
     {
         if (nullptr == m_obj || nullptr == m_mutex)
         {
@@ -22,10 +21,7 @@ public:
         m_mutex->lock_shared();
     }
 
-    ~SharedLocker()
-    {
-        m_mutex->unlock_shared();
-    }
+    ~SharedLocker() { m_mutex->unlock_shared(); }
 
     const std::add_lvalue_reference_t<T> operator*() { return *m_obj; }
     const std::add_pointer_t<T>          operator->() { return m_obj; }
@@ -41,8 +37,7 @@ private:
 };
 
 template <class T>
-inline SharedLocker<T, std::enable_if_t<!std::is_pointer_v<T>>>
-make_shared_locker(std::add_pointer_t<T> t, std::shared_mutex* u)
+inline SharedLocker<T, std::enable_if_t<!std::is_pointer_v<T>>> make_shared_locker(std::add_pointer_t<T> t, std::shared_mutex* u)
 {
     return (SharedLocker<T>(t, u));
 }
