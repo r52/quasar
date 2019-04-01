@@ -128,6 +128,7 @@ function createExtensionPages(data) {
 function createLauncherPage(data) {
     var $ltable = $('#launcher-table');
     var $lremove = $('#remove-launch-command');
+    var $ledit = $('#edit-launch-command');
 
     // generate bootstrap table
     $ltable.bootstrapTable({
@@ -135,6 +136,7 @@ function createLauncherPage(data) {
         striped: true,
         clickToSelect: true,
         idField: 'command',
+        uniqueId: 'command',
         columns: [{
                 field: 'state',
                 checkbox: true,
@@ -169,11 +171,12 @@ function createLauncherPage(data) {
         ]
     });
 
-    // delete button function
+    // delete/edit button function
     $ltable.on('check.bs.table uncheck.bs.table ' +
         'check-all.bs.table uncheck-all.bs.table',
         function () {
-            $lremove.prop('disabled', !$ltable.bootstrapTable('getSelections').length)
+            $lremove.prop('disabled', !$ltable.bootstrapTable('getSelections').length);
+            $ledit.prop('disabled', $ltable.bootstrapTable('getSelections').length != 1);
         });
 
     $lremove.click(function (evt) {
@@ -186,15 +189,28 @@ function createLauncherPage(data) {
         $lremove.prop('disabled', true);
     });
 
-    // debug button
-    $('#launch-test').click(function (evt) {
-        evt.preventDefault();
-        var dat = $ltable.bootstrapTable('getData')
-        dat.forEach(function (e) {
-            delete e.state;
-        });
-        console.log(dat);
-        console.log(JSON.stringify(dat));
+    // Modal Add/Edit functionality
+    $('#addModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var cmd = button.data('command');
+        var modal = $(this);
+        modal.data('command', cmd);
+        modal.find('.modal-title').text(cmd + " Command");
+
+        var ro = false;
+        if (cmd === 'Edit') {
+            ro = true;
+
+            // Fill fields if editing
+            var dat = $ltable.bootstrapTable('getSelections')[0];
+            modal.find('#command-name').val(dat.command);
+            modal.find('#file-name').val(dat.file);
+            modal.find('#start-path').val(dat.start);
+            modal.find('#arguments').val(dat.args);
+            modal.find('#icon-preview').attr('src', dat.icon);
+        }
+
+        modal.find('#command-name').prop('readonly', ro);
     });
 
     // launcher icon functions
@@ -212,6 +228,9 @@ function createLauncherPage(data) {
 
     // launcher add modal function
     $('#launcher-save').click(function () {
+        var modal = $('#addModal');
+        var cmd = modal.data('command');
+
         var entry = {
             command: $('#command-name').val(),
             file: $('#file-name').val(),
@@ -230,11 +249,13 @@ function createLauncherPage(data) {
             return;
         }
 
-        var dat = $ltable.bootstrapTable('getData')
+        if (cmd === "Add") {
+            var dat = $ltable.bootstrapTable('getData')
 
-        if (dat.find(e => e.command === entry.command)) {
-            $('#command-name').addClass("is-invalid");
-            return;
+            if (dat.find(e => e.command === entry.command)) {
+                $('#command-name').addClass("is-invalid");
+                return;
+            }
         }
 
         $('#command-name').val("");
@@ -244,8 +265,25 @@ function createLauncherPage(data) {
         $("#launcher-icon").val("");
         $('#icon-preview').attr('src', "");
 
-        $ltable.bootstrapTable('append', entry);
+        if (cmd === "Add") {
+            $ltable.bootstrapTable('append', entry);
+        } else {
+            $ltable.bootstrapTable('updateByUniqueId', {
+                id: entry.command,
+                row: entry
+            });
+        }
+
         $('#addModal').modal('hide');
+    });
+
+    $('#launcher-close').click(function () {
+        $('#command-name').val("");
+        $('#file-name').val("");
+        $('#start-path').val("");
+        $('#arguments').val("");
+        $("#launcher-icon").val("");
+        $('#icon-preview').attr('src', "");
     });
 }
 
