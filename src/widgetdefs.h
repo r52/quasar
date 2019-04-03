@@ -12,6 +12,9 @@
 #define WGT_DEF_OPTIONAL "optional"
 #define WGT_DEF_DATASERVER "dataserver"
 
+#define WGT_PROP_IDENTITY "qsr_identity"
+#define WGT_PROP_USERKEY "qsr_userkey"
+
 #define QUASAR_CONFIG_PORT "global/dataport"
 #define QUASAR_CONFIG_LOADED "global/loaded"
 #define QUASAR_CONFIG_LOGLEVEL "global/loglevel"

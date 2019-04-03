@@ -64,6 +64,8 @@ struct client_data_t
     system_clock::time_point expiry;
 };
 
+Q_DECLARE_METATYPE(client_data_t);
+
 class DataServer : public QObject
 {
     friend class DataServices;
@@ -73,7 +75,7 @@ class DataServer : public QObject
     using DataExtensionMapType   = std::unordered_map<QString, std::unique_ptr<DataExtension>>;
     using MethodFuncType         = std::function<void(const QJsonObject&, QWebSocket*)>;
     using MethodCallMapType      = std::unordered_map<QString, MethodFuncType>;
-    using AuthedClientsMapType   = std::unordered_map<QWebSocket*, client_data_t>;
+    using AuthedClientsSetType   = std::unordered_set<QWebSocket*>;
     using AuthCodesMapType       = std::unordered_map<QString, client_data_t>;
     using InternalTargetFuncType = std::function<void(QString, client_data_t, QWebSocket*)>;
     using InternalTargetMapType  = std::unordered_map<QString, InternalTargetFuncType>;
@@ -140,7 +142,7 @@ private:
     mutable std::mutex m_AuthCodeMtx;
 
     // Authenticated clients management
-    AuthedClientsMapType      m_AuthedClientsMap;
+    AuthedClientsSetType      m_AuthedClientsSet;
     mutable std::shared_mutex m_AuthedClientsMtx;
 
     // Extensions management

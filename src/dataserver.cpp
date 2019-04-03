@@ -83,7 +83,7 @@ DataServer::~DataServer()
 
     m_Extensions.clear();
 
-    m_AuthedClientsMap.clear();
+    m_AuthedClientsSet.clear();
 
     m_AuthCodeMap.clear();
 
@@ -180,20 +180,26 @@ void DataServer::handleRequest(const QJsonObject& req, QWebSocket* sender)
 
 void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sender)
 {
-    QString widgetName;
-
     {
         std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
 
-        auto it = m_AuthedClientsMap.find(sender);
-        if (it == m_AuthedClientsMap.end())
+        auto it = m_AuthedClientsSet.find(sender);
+        if (it == m_AuthedClientsSet.end())
         {
             DS_SEND_WARN(sender, "Unauthenticated client");
             return;
         }
-
-        widgetName = it->second.ident;
     }
+
+    auto qvar = sender->property(WGT_PROP_IDENTITY);
+    if (!qvar.isValid())
+    {
+        qCritical() << "Invalid identity in authenticated WebSocket connection.";
+        return;
+    }
+
+    client_data_t clidat     = qvar.value<client_data_t>();
+    QString       widgetName = clidat.ident;
 
     auto parms = req["params"].toObject();
 
@@ -231,20 +237,25 @@ void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sende
 
 void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
 {
-    client_data_t clidat;
-
     {
         std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
 
-        auto it = m_AuthedClientsMap.find(sender);
-        if (it == m_AuthedClientsMap.end())
+        auto it = m_AuthedClientsSet.find(sender);
+        if (it == m_AuthedClientsSet.end())
         {
             DS_SEND_WARN(sender, "Unauthenticated client");
             return;
         }
-
-        clidat = it->second;
     }
+
+    auto qvar = sender->property(WGT_PROP_IDENTITY);
+    if (!qvar.isValid())
+    {
+        qCritical() << "Invalid identity in authenticated WebSocket connection.";
+        return;
+    }
+
+    client_data_t clidat = qvar.value<client_data_t>();
 
     auto parms = req["params"].toObject();
 
@@ -278,7 +289,7 @@ void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
 {
     {
         std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
-        if (m_AuthedClientsMap.count(sender))
+        if (m_AuthedClientsSet.count(sender))
         {
             DS_SEND_WARN(sender, "Client already authenticated.");
             return;
@@ -304,30 +315,39 @@ void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
         return;
     }
 
-    std::unique_lock<std::shared_mutex> lkm(m_AuthedClientsMtx);
-    m_AuthedClientsMap.insert({sender, it->second});
+    auto clident = it->second;
 
-    qInfo() << "Widget ident " << it->second.ident << " authenticated.";
+    sender->setProperty(WGT_PROP_IDENTITY, QVariant::fromValue(clident));
+
+    std::unique_lock<std::shared_mutex> lkm(m_AuthedClientsMtx);
+    m_AuthedClientsSet.insert(sender);
+
+    qInfo() << "Widget ident " << clident.ident << " authenticated.";
 
     m_AuthCodeMap.erase(it);
 }
 
 void DataServer::handleMethodMutate(const QJsonObject& req, QWebSocket* sender)
 {
-    client_data_t clidat;
-
     {
         std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
 
-        auto it = m_AuthedClientsMap.find(sender);
-        if (it == m_AuthedClientsMap.end())
+        auto it = m_AuthedClientsSet.find(sender);
+        if (it == m_AuthedClientsSet.end())
         {
             DS_SEND_WARN(sender, "Unauthenticated client");
             return;
         }
-
-        clidat = it->second;
     }
+
+    auto qvar = sender->property(WGT_PROP_IDENTITY);
+    if (!qvar.isValid())
+    {
+        qCritical() << "Invalid identity in authenticated WebSocket connection.";
+        return;
+    }
+
+    client_data_t clidat = qvar.value<client_data_t>();
 
     if (clidat.access < CAL_SETTINGS)
     {
@@ -670,7 +690,7 @@ void DataServer::checkAuth(QWebSocket* client)
     {
         // Check auth
         std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
-        if (!m_AuthedClientsMap.count(client))
+        if (!m_AuthedClientsSet.count(client))
         {
             // unauthenticated client, cut the connection
             disconnect = true;
@@ -764,7 +784,7 @@ void DataServer::socketDisconnected()
 
         {
             std::unique_lock<std::shared_mutex> lkm(m_AuthedClientsMtx);
-            m_AuthedClientsMap.erase(pClient);
+            m_AuthedClientsSet.erase(pClient);
         }
 
         pClient->deleteLater();
