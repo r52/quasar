@@ -23,6 +23,7 @@
 #define QUASAR_CONFIG_ALLOWGEO "global/allowGeo"
 #define QUASAR_CONFIG_LASTPATH "global/lastpath"
 #define QUASAR_CONFIG_LAUNCHERMAP "launcher/map"
+#define QUASAR_CONFIG_USERKEYSMAP "userkeys/map"
 
 #define QUASAR_CONFIG_DEFAULT_LOGLEVEL QUASAR_LOG_WARNING
 

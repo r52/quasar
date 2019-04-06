@@ -31,7 +31,7 @@ For developers who wishes to build a Data Server extension, or those who wants t
 
 ## Data Server
 
-Quasar propagates data to widgets over the WebSocket protocol using a local WebSocket Data Server that is extensible using extensions. The Data Server is currently limited to serving Quasar loaded widgets, but there are future plans to extend this functionality for operation outside of Quasar widgets. Refer to Quasar's documentation at https://quasardoc.readthedocs.io for more information on how to build a widget or a Data Server extension.
+Quasar propagates data to widgets over the WebSocket protocol using a local WebSocket Data Server that is extensible using extensions, and it is not just limited to Quasar widgets. External widgets or applications can connect to Quasar Data Server as well, allowing Quasar to be used in various other scenarios, such as an HTML stream overlay. Refer to Quasar's documentation at https://quasardoc.readthedocs.io for more information on how to build a widget or a Data Server extension.
 
 ## Building
 

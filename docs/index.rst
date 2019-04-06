@@ -75,6 +75,7 @@ Resources
    usage
    settings
    launcher
+   userkeys
    console
 
 .. toctree::

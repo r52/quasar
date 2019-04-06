@@ -75,6 +75,7 @@ DataServer::DataServer(QObject* parent) :
     }
 
     m_LauncherMap = settings.value(QUASAR_CONFIG_LAUNCHERMAP).toMap();
+    m_UserKeysMap = settings.value(QUASAR_CONFIG_USERKEYSMAP).toMap();
 }
 
 DataServer::~DataServer()
@@ -98,11 +99,14 @@ bool DataServer::findExtension(QString extcode)
 
 QString DataServer::generateAuthCode(QString ident, ClientAccessLevel lvl)
 {
-    quint64 v  = QRandomGenerator::global()->generate64();
-    QString hv = QString::number(v, 16).toUpper();
+    quint64 h  = QRandomGenerator::global()->generate64();
+    quint64 l  = QRandomGenerator::global()->generate64();
+    QString hv = QString::number(h, 16).toUpper() + QString::number(l, 16).toUpper();
+
+    client_data_t cdt = {ident, lvl, system_clock::now() + 10s};
 
     std::unique_lock<std::mutex> lk(m_AuthCodeMtx);
-    m_AuthCodeMap.insert({hv, {ident, lvl, system_clock::now() + 10s}});
+    m_AuthCodeMap.insert({hv, cdt});
 
     return hv;
 }
@@ -306,16 +310,13 @@ void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
 
     QString authcode = parms["code"].toString();
 
-    std::unique_lock<std::mutex> lk(m_AuthCodeMtx);
+    client_data_t clident;
 
-    auto it = m_AuthCodeMap.find(authcode);
-    if (it == m_AuthCodeMap.end())
+    if (!authenticateClient(sender, authcode, clident))
     {
         DS_SEND_WARN(sender, "Invalid authentication code");
         return;
     }
-
-    auto clident = it->second;
 
     sender->setProperty(WGT_PROP_IDENTITY, QVariant::fromValue(clident));
 
@@ -323,8 +324,6 @@ void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
     m_AuthedClientsSet.insert(sender);
 
     qInfo() << "Widget ident " << clident.ident << " authenticated.";
-
-    m_AuthCodeMap.erase(it);
 }
 
 void DataServer::handleMethodMutate(const QJsonObject& req, QWebSocket* sender)
@@ -469,6 +468,30 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
         }
 
         sjson["launcher"] = launcher;
+    }
+
+    // launcher
+    if (plist.contains("all") || plist.contains("userkeys"))
+    {
+        QJsonArray userkeys;
+
+        {
+            std::shared_lock<std::shared_mutex> lock(m_UserKeysMtx);
+
+            // need to convert to table format...
+            for (auto it = m_UserKeysMap.begin(); it != m_UserKeysMap.end(); ++it)
+            {
+                auto name = it.value().toString();
+
+                QJsonObject entry;
+                entry["name"] = name;
+                entry["key"]  = it.key();
+
+                userkeys.append(entry);
+            }
+        }
+
+        sjson["userkeys"] = userkeys;
     }
 
     auto sdata = QJsonObject{{"data", QJsonObject{{"settings", sjson}}}};
@@ -673,6 +696,28 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                 settings.setValue(key, data[key].toVariant());
             }
         }
+        else if (key == "userkeys")
+        {
+            QVariantMap newmap;
+
+            // deal with launcher table
+            auto ltab = data["userkeys"].toArray();
+            for (auto& e : ltab)
+            {
+                QJsonObject eobj = e.toObject();
+                if (!eobj.isEmpty())
+                {
+                    auto name   = eobj["name"].toString();
+                    auto key    = eobj["key"].toString();
+                    newmap[key] = name;
+                }
+            }
+
+            std::unique_lock<std::shared_mutex> lock(m_UserKeysMtx);
+            m_UserKeysMap = newmap;
+
+            settings.setValue(QUASAR_CONFIG_USERKEYSMAP, m_UserKeysMap);
+        }
         else
         {
             qWarning() << "Unknown setting key " << key;
@@ -681,6 +726,54 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
     }
 
     qInfo() << "All settings saved!";
+}
+
+bool DataServer::authenticateClient(QWebSocket* client, QString code, client_data_t& clidat)
+{
+    // Check user keys
+    {
+        std::unique_lock<std::shared_mutex> lk(m_UserKeysMtx);
+
+        auto it = m_UserKeysMap.find(code);
+        if (it != m_UserKeysMap.end())
+        {
+            auto keyname = it.value().toString();
+
+            // User key exists, check if it is in use
+            if (m_UserKeysInUse.count(code))
+            {
+                // Key is in use
+                DS_SEND_WARN(client, "User key " + keyname + " already in use.");
+                return false;
+            }
+
+            client_data_t cdt;
+            cdt.ident  = keyname;
+            cdt.access = CAL_WIDGET;
+
+            // Otherwise, log them in
+            m_UserKeysInUse.insert(code);
+            clidat = cdt;
+            client->setProperty(WGT_PROP_USERKEY, code);
+            return true;
+        }
+        // Otherwise, pass thru to regular authcode check
+    }
+
+    // Check auth codes
+    std::unique_lock<std::mutex> lk(m_AuthCodeMtx);
+
+    auto it = m_AuthCodeMap.find(code);
+    if (it == m_AuthCodeMap.end())
+    {
+        return false;
+    }
+
+    clidat = it->second;
+
+    m_AuthCodeMap.erase(it);
+
+    return true;
 }
 
 void DataServer::checkAuth(QWebSocket* client)
@@ -785,6 +878,15 @@ void DataServer::socketDisconnected()
         {
             std::unique_lock<std::shared_mutex> lkm(m_AuthedClientsMtx);
             m_AuthedClientsSet.erase(pClient);
+        }
+
+        auto keyprop = pClient->property(WGT_PROP_USERKEY);
+        if (keyprop.isValid())
+        {
+            // If this client was connected using a user key, free it
+            std::unique_lock<std::shared_mutex> lk(m_UserKeysMtx);
+
+            m_UserKeysInUse.erase(keyprop.toString());
         }
 
         pClient->deleteLater();

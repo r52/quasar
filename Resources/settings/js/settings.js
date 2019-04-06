@@ -5,10 +5,10 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function getTableSelections(table) {
+function getTableSelections(table, key) {
     return $.map(table.bootstrapTable('getSelections'), function (row) {
-        return row.command
-    })
+        return row[key];
+    });
 }
 
 function initialize_global(data) {
@@ -181,7 +181,7 @@ function createLauncherPage(data) {
 
     $lremove.click(function (evt) {
         evt.preventDefault();
-        var cmds = getTableSelections($ltable);
+        var cmds = getTableSelections($ltable, "command");
         $ltable.bootstrapTable('remove', {
             field: 'command',
             values: cmds
@@ -190,7 +190,7 @@ function createLauncherPage(data) {
     });
 
     // Modal Add/Edit functionality
-    $('#addModal').on('show.bs.modal', function (event) {
+    $('#addLauncherModal').on('show.bs.modal', function (event) {
         var button = $(event.relatedTarget);
         var cmd = button.data('command');
         var modal = $(this);
@@ -216,6 +216,16 @@ function createLauncherPage(data) {
         modal.find('#command-name').prop('readonly', ro);
     });
 
+    $('#addLauncherModal').on('hide.bs.modal', function (event) {
+        // clear fields
+        $('#command-name').val("");
+        $('#file-name').val("");
+        $('#start-path').val("");
+        $('#arguments').val("");
+        $("#launcher-icon").val("");
+        $('#icon-preview').attr('src', "");
+    });
+
     // launcher icon functions
     $("#launcher-icon").change(function () {
         if (this.files && this.files[0]) {
@@ -231,7 +241,7 @@ function createLauncherPage(data) {
 
     // launcher add modal function
     $('#launcher-save').click(function () {
-        var modal = $('#addModal');
+        var modal = $('#addLauncherModal');
         var cmd = modal.data('command');
 
         var entry = {
@@ -261,13 +271,6 @@ function createLauncherPage(data) {
             }
         }
 
-        $('#command-name').val("");
-        $('#file-name').val("");
-        $('#start-path').val("");
-        $('#arguments').val("");
-        $("#launcher-icon").val("");
-        $('#icon-preview').attr('src', "");
-
         if (cmd === "Add") {
             $ltable.bootstrapTable('append', entry);
         } else {
@@ -277,16 +280,154 @@ function createLauncherPage(data) {
             });
         }
 
-        $('#addModal').modal('hide');
+        modal.modal('hide');
+    });
+}
+
+function copy_key_val(element) {
+    // copy button functions
+    var keyname = $(element).data("keyname");
+    var row = $('#userkeys-table').bootstrapTable('getRowByUniqueId', keyname);
+
+    if (row) {
+        var textArea = document.createElement("textarea");
+        textArea.value = row.key;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand("Copy");
+        textArea.remove();
+
+        $.notify({
+            title: "Copied.",
+            message: "The Key has been copied to clipboard."
+        }, {
+            type: "success",
+            allow_dismiss: false,
+            placement: {
+                from: "bottom",
+                align: "right"
+            },
+            offset: {
+                x: 20,
+                y: 20
+            },
+            animate: {
+                enter: 'animated fadeInUp',
+                exit: 'animated fadeOutDown'
+            },
+            spacing: 10,
+            z_index: 1031,
+            delay: 2000
+        });
+    }
+}
+
+function createUserKeysPage(data) {
+    var $ktable = $('#userkeys-table');
+    var $kremove = $('#remove-userkeys');
+
+    // generate bootstrap table
+    $ktable.bootstrapTable({
+        data: data["data"]["settings"]["userkeys"],
+        striped: true,
+        clickToSelect: true,
+        idField: 'name',
+        uniqueId: 'name',
+        columns: [{
+                field: 'state',
+                checkbox: true,
+                align: 'center',
+                valign: 'middle'
+            }, {
+                field: 'name',
+                title: 'Name'
+            },
+            {
+                field: 'key',
+                title: 'Key',
+                formatter: function (val, row) {
+                    return `<input type="password" class="form-control" value="justareallylongplaceholdervaluee" readonly>`;
+                }
+            },
+            {
+                title: 'Options',
+                formatter: function (val, row) {
+                    var btn = `
+                    <button type="button" class="btn btn-warning" data-keyname="${row.name}" onclick="copy_key_val(this)">
+                        Copy Key
+                    </button>
+                    `
+                    return btn;
+                }
+            }
+        ]
     });
 
-    $('#launcher-close').click(function () {
-        $('#command-name').val("");
-        $('#file-name').val("");
-        $('#start-path').val("");
-        $('#arguments').val("");
-        $("#launcher-icon").val("");
-        $('#icon-preview').attr('src', "");
+    // delete button function
+    $ktable.on('check.bs.table uncheck.bs.table ' +
+        'check-all.bs.table uncheck-all.bs.table',
+        function () {
+            $kremove.prop('disabled', !$ktable.bootstrapTable('getSelections').length);
+        });
+
+    $kremove.click(function (evt) {
+        evt.preventDefault();
+        var names = getTableSelections($ktable, "name");
+        $ktable.bootstrapTable('remove', {
+            field: 'name',
+            values: names
+        })
+        $kremove.prop('disabled', true);
+    });
+
+    // Modal show/hide functionality
+    $('#generateKeyModal').on('show.bs.modal', function (event) {
+        var modal = $(this);
+        modal.find('#userkey-name').removeClass("is-invalid");
+    });
+
+    $('#generateKeyModal').on('hide.bs.modal', function (event) {
+        // clear fields
+        $('#userkey-name').val("");
+    });
+
+    // bind enter key
+    $('#generateKeyModal').on('keypress', function (e) {
+        if (e.keyCode === 13) {
+            $('#userkey-save').click();
+        }
+    });
+
+    // key add modal function
+    $('#userkey-save').click(function () {
+        var modal = $('#generateKeyModal');
+        var keyname = $('#userkey-name').val()
+
+        if (!keyname) {
+            $('#userkey-name').addClass("is-invalid");
+            return;
+        }
+
+        var dat = $ktable.bootstrapTable('getRowByUniqueId', keyname);
+
+        if (dat != null) {
+            $('#userkey-name').addClass("is-invalid");
+            return;
+        }
+
+        // generate key
+        const strfy = (acc, curr) => acc + curr.toString(16).toUpperCase();
+        var karr = new Uint32Array(4);
+        window.crypto.getRandomValues(karr);
+
+        var keyval = karr.reduce(strfy, "");
+
+        $ktable.bootstrapTable('append', {
+            name: keyname,
+            key: keyval
+        });
+
+        modal.modal('hide');
     });
 }
 
@@ -353,12 +494,20 @@ function save_settings() {
     });
 
     // do launcher table
-    var tab = $('#launcher-table').bootstrapTable('getData')
-    tab.forEach(function (e) {
+    var ltab = $('#launcher-table').bootstrapTable('getData')
+    ltab.forEach(function (e) {
         delete e.state;
     });
 
-    dat["launcher"] = tab;
+    dat["launcher"] = ltab;
+
+    // do user keys table
+    var ktab = $('#userkeys-table').bootstrapTable('getData')
+    ktab.forEach(function (e) {
+        delete e.state;
+    });
+
+    dat["userkeys"] = ktab;
 
     // send it
     var msg = {
@@ -419,6 +568,7 @@ function initialize_page(dat) {
 
         createExtensionPages(dat);
         createLauncherPage(dat);
+        createUserKeysPage(dat);
 
         $("#cover").hide();
 

@@ -63,7 +63,7 @@ In order for widgets to be able to communicate with the Quasar Data Server and f
 
 Once this is done, we first need to open up a WebSocket connection with Quasar.
 
-We can do this with the following JavaScript:
+**Quasar widgets** can simply execute the following JavaScript:
 
 .. code-block:: javascript
 
@@ -71,13 +71,44 @@ We can do this with the following JavaScript:
 
 ``quasar_create_websocket()`` is a globally defined function only available to widgets loaded in Quasar when the ``dataserver`` parameter is set to ``true``. This function creates a WebSocket object connecting to Quasar's Data Server.
 
-Once the connection is established, we then need to authenticate with the Data Server to establish our widget's identity. Widgets loaded in Quasar can achieve this simply by calling the (similarity defined) global function ``quasar_authenticate()`` in the WebSocket's ``onopen`` handler, supplying our ``websocket`` connection object as an argument:
+However, **external clients** must manually establish the connection to Quasar:
+
+.. code-block:: javascript
+
+    var websocket = new WebSocket("wss://localhost:<port>");
+
+Where ``<port>`` is the port that the Data Server is running on, as set in :doc:`settings`.
+
+Once the connection is established, we then need to authenticate with the Data Server to establish our widget's identity.
+
+Similar to the above, **Quasar widgets** can achieve this simply by calling the (similarity defined) global function ``quasar_authenticate()`` in the WebSocket's ``onopen`` handler, supplying our ``websocket`` connection object as an argument:
 
 .. code-block:: javascript
 
     websocket.onopen = function(evt) {
         quasar_authenticate(websocket);
     };
+
+Whereas again, **external clients** must manually supply the authenticating function:
+
+.. code-block:: javascript
+
+    function authenticate() {
+        var msg = {
+            "method": "auth",
+            "params": {
+                "code": "<user key>"
+            }
+        }
+
+        websocket.send(JSON.stringify(msg));
+    }
+
+    websocket.onopen = function(evt) {
+        authenticate();
+    };
+
+Where ``<user key>`` is an authentication code generated in the :doc:`userkeys` section in the **Settings** menu.
 
 Once our widget is authenticated, we can start fetching data from a Data Source by placing a call to a data request function in the handler. For example:
 
@@ -129,7 +160,7 @@ We can then implement a function ``parseMsg()`` to process the incoming data. Re
 
 We start by parsing the JSON message, then examining the object's fields to ensure that we have received what we wanted, namely the ``data["data"]["win_simple_perf"]["cpu"]`` field, which is what we requested in the previous code examples. If everything matches, we finally process the payload. Since we know that the ``cpu`` Data Source only outputs a single integer containing the current CPU load on your desktop, we simply output that to the HTML element with the id ``cpu`` using jQuery in this example.
 
-Putting everything together, your widget's script may end up looking something like this:
+Putting everything together, your widget's script may end up looking something like this (assuming it is a Quasar loaded widget):
 
 .. code-block:: javascript
 

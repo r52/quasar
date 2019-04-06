@@ -64,6 +64,7 @@ struct client_data_t
     system_clock::time_point expiry;
 };
 
+Q_DECLARE_METATYPE(system_clock::time_point);
 Q_DECLARE_METATYPE(client_data_t);
 
 class DataServer : public QObject
@@ -77,6 +78,7 @@ class DataServer : public QObject
     using MethodCallMapType      = std::unordered_map<QString, MethodFuncType>;
     using AuthedClientsSetType   = std::unordered_set<QWebSocket*>;
     using AuthCodesMapType       = std::unordered_map<QString, client_data_t>;
+    using SavableCodesMapType    = QVariantMap;
     using InternalTargetFuncType = std::function<void(QString, client_data_t, QWebSocket*)>;
     using InternalTargetMapType  = std::unordered_map<QString, InternalTargetFuncType>;
     using MutateTargetFuncType   = std::function<void(QJsonValue, QWebSocket*)>;
@@ -107,6 +109,8 @@ private:
     void handleMutateSettings(QJsonValue val, QWebSocket* sender);
 
     // Helpers
+    bool authenticateClient(QWebSocket* client, QString code, client_data_t& clidat);
+
     void checkAuth(QWebSocket* client);
     void sendErrorToClient(QWebSocket* client, QString err);
 
@@ -140,6 +144,11 @@ private:
     // Authentication code management
     AuthCodesMapType   m_AuthCodeMap;
     mutable std::mutex m_AuthCodeMtx;
+
+    // User keys
+    std::unordered_set<QString> m_UserKeysInUse;
+    SavableCodesMapType         m_UserKeysMap;
+    mutable std::shared_mutex   m_UserKeysMtx;
 
     // Authenticated clients management
     AuthedClientsSetType      m_AuthedClientsSet;

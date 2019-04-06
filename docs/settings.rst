@@ -26,3 +26,8 @@ App Launcher Settings
 ----------------------
 
 Commands available to App Launcher widgets can be configured under the **Launcher** page. See :doc:`Setting up the App Launcher <launcher>` for more information.
+
+User Keys
+-----------
+
+External applications and widgets not loaded through Quasar can still connect to the Quasar Data Server through the use of **User Keys**. See the :doc:`userkeys` document for more details.

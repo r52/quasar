@@ -61,6 +61,10 @@
                     <a class="nav-link" data-toggle="tab" href="#launcher" role="tab" aria-controls="launcher"
                         aria-selected="false">App Launcher</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#userkeys" role="tab" aria-controls="userkeys"
+                        aria-selected="false">User Keys</a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -137,15 +141,15 @@
                 </div>
             </div>
             <div class="tab-pane fade container-fluid" id="launcher" role="tabpanel" aria-labelledby="launcher-tab">
-                <div id="toolbar">
+                <div id="launcher-toolbar">
                     <button id="remove-launch-command" type="button" class="btn btn-danger" disabled>
                         Delete
                     </button>
                     <button id="edit-launch-command" type="button" class="btn btn-warning" data-toggle="modal"
-                        data-target="#addModal" data-command="Edit" disabled>
+                        data-target="#addLauncherModal" data-command="Edit" disabled>
                         Edit
                     </button>
-                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addModal"
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#addLauncherModal"
                         data-command="Add">
                         Add
                     </button>
@@ -153,48 +157,83 @@
                 <table id="launcher-table" class="table table-hover">
                 </table>
             </div>
+            <div class="tab-pane fade container-fluid" id="userkeys" role="tabpanel" aria-labelledby="userkeys-tab">
+                <div id="userkeys-toolbar">
+                    <button id="remove-userkeys" type="button" class="btn btn-danger" disabled>
+                        Delete
+                    </button>
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#generateKeyModal">
+                        Generate New Key
+                    </button>
+                </div>
+                <table id="userkeys-table" class="table table-hover">
+                </table>
+            </div>
             <!-- Extension tab contents -->
         </div>
-        <!-- Add Modal -->
-        <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="addModalLabel"
-            aria-hidden="true">
+        <!-- Add Launcher Modal -->
+        <div class="modal fade" id="addLauncherModal" tabindex="-1" role="dialog"
+            aria-labelledby="addLauncherModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="addModalLabel">Add Command</h5>
+                        <h5 class="modal-title" id="addLauncherModalLabel">Add Command</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <form>
-                            <div class="form-group">
-                                <label for="command-name" class="col-form-label">Command:</label>
-                                <input type="text" class="form-control" id="command-name">
-                            </div>
-                            <div class="form-group">
-                                <label for="file-name" class="col-form-label">File/Commandline:</label>
-                                <input type="text" class="form-control" id="file-name">
-                            </div>
-                            <div class="form-group">
-                                <label for="start-path" class="col-form-label">Start Path:</label>
-                                <input type="text" class="form-control" id="start-path">
-                            </div>
-                            <div class="form-group">
-                                <label for="arguments" class="col-form-label">Arguments:</label>
-                                <input type="text" class="form-control" id="arguments">
-                            </div>
-                            <div class="form-group">
-                                <label for="launcher-icon" class="col-form-label">Icon:</label>
-                                <input type="file" id="launcher-icon" name="avatar" accept="image/*">
-                                <img class="icon" id="icon-preview" src="" />
-                            </div>
-                        </form>
+                        <div class="form-group">
+                            <label for="command-name" class="col-form-label">Command:</label>
+                            <input type="text" class="form-control" id="command-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="file-name" class="col-form-label">File/Commandline:</label>
+                            <input type="text" class="form-control" id="file-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="start-path" class="col-form-label">Start Path:</label>
+                            <input type="text" class="form-control" id="start-path">
+                        </div>
+                        <div class="form-group">
+                            <label for="arguments" class="col-form-label">Arguments:</label>
+                            <input type="text" class="form-control" id="arguments">
+                        </div>
+                        <div class="form-group">
+                            <label for="launcher-icon" class="col-form-label">Icon:</label>
+                            <input type="file" id="launcher-icon" name="avatar" accept="image/*">
+                            <img class="icon" id="icon-preview" src="" />
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" id="launcher-close"
                             data-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-primary" id="launcher-save">Save changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Generate Key Modal -->
+        <div class="modal fade" id="generateKeyModal" tabindex="-1" role="dialog"
+            aria-labelledby="generateKeyModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="generateKeyModalLabel">Generate New Key</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="userkey-name" class="col-form-label">Key Name:</label>
+                            <input type="text" class="form-control" id="userkey-name">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="userkey-close"
+                            data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" id="userkey-save">Generate Key</button>
                     </div>
                 </div>
             </div>

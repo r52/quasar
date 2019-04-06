@@ -56,10 +56,11 @@ Field Descriptions
     The method/function to be invoked by this message.
     For client widgets, supported values are: ``subscribe``, and ``query``.
     ``subscribe`` is used to subscribe to timer-based or extension signaled Data Sources, while ``query`` is used for client polled Data Sources as well as any other commands.
+    For external widgets and applications, ``auth`` is also supported for authenication purposes.
 
 ``params``
     The parameters sent to the method.
-    This field should be a JSON object that is typically comprised of two fields: ``target`` and ``params``.
+    This field should be a JSON object that is typically comprised of two fields: ``target`` and ``params``. If the method is ``auth``, then it should be comprised of a single field ``code`` that is set to the :doc:`User Key <userkeys>` being used.
 
 ``target``
     The intended target of the message.
@@ -119,6 +120,17 @@ Sample Usages
             "params": {
                 "target": "launcher",
                 "params": cmd
+            }
+        }
+
+        websocket.send(JSON.stringify(msg));
+    }
+
+    function authenticate() {
+        var msg = {
+            "method": "auth",
+            "params": {
+                "code": "6EFBBE6542D52FDD294337343147B033"
             }
         }
 
