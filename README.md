@@ -9,7 +9,7 @@
 
 Quasar provides a WebSocket-based Data Server that is extensible using extensions. The Data Server is capable of processing and sending data to client widgets that would otherwise not be available in a purely web-based context, for example, your PC's resource information such as CPU and memory usage, or your [Spotify client's now-playing information](https://github.com/r52/quasar-spotify).
 
-Refer to Quasar's documentation at https://quasardoc.readthedocs.io for more information on how to build a widget or a Data Server extension.
+Refer to the [Quasar documentation](https://quasardoc.readthedocs.io) for more information on how to build a widget or a Data Server extension.
 
 Quasar is licensed under GPL-3.0.
 
@@ -26,12 +26,12 @@ Both an installer and a portable package is provided for Windows x64 under [GitH
 
 Simply install or extract Quasar and run the application. The Quasar icon will then show up in your desktop's notification bar. Right-click the icon, load your desired widgets, and enjoy! See the [documentation](https://quasardoc.readthedocs.io) for more details.
 
-For developers who wishes to build a Data Server extension, or those who wants to create their own widget, please refer to Quasar's documentation at https://quasardoc.readthedocs.io. The documentation contains examples and other resources on how to build your first extension or widget.
+For developers who wishes to build a Data Server extension, or those who wants to create their own widget, please refer to the [Quasar documentation](https://quasardoc.readthedocs.io). The documentation contains examples and other resources on how to build your first extension or widget.
 
 
 ## Data Server
 
-Quasar propagates data to widgets over the WebSocket protocol using a local WebSocket Data Server that is extensible using extensions, and it is not just limited to Quasar widgets. External widgets or applications can connect to Quasar Data Server as well, allowing Quasar to be used in various other scenarios, such as an HTML stream overlay. Refer to Quasar's documentation at https://quasardoc.readthedocs.io for more information on how to build a widget or a Data Server extension.
+Quasar propagates data to widgets over the WebSocket protocol using a local WebSocket Data Server that is extensible using extensions, and it is not just limited to Quasar widgets. External widgets or applications can connect to Quasar Data Server as well, allowing Quasar to be used in various other scenarios, such as an HTML stream overlay. Refer to the [Quasar documentation](https://quasardoc.readthedocs.io) for more information on how to build a widget or a Data Server extension.
 
 ## Building
 
