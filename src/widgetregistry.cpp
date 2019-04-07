@@ -46,7 +46,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
     if (!wgtFile.open(QIODevice::ReadOnly))
     {
-        qWarning() << "Failed to load '" << filename << "'";
+        qWarning() << "Failed to load" << filename;
         return false;
     }
 
@@ -58,7 +58,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
     if (!WebWidget::validateWidgetDefinition(dat))
     {
-        qWarning() << "Invalid widget definition '" << filename << "'";
+        qWarning() << "Invalid widget definition" << filename;
         return false;
     }
 
@@ -81,7 +81,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
         if (!pass)
         {
-            qWarning() << "Missing extension '" << failext << "' for '" << filename << "'";
+            qWarning() << "Missing extension" << failext << "for" << filename;
 
             QMessageBox::warning(nullptr,
                                  tr("Missing Extension"),
@@ -94,7 +94,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
     if (userAction && !WebWidget::acceptSecurityWarnings(dat))
     {
-        qWarning() << "Denied loading '" << filename << "'";
+        qWarning() << "Denied loading" << filename;
         return false;
     }
 
@@ -110,7 +110,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
         widgetName = defName + QString::number(idx++);
     }
 
-    qInfo() << "Loading widget " << widgetName << " (" << dat[WGT_DEF_FULLPATH].toString() << ")";
+    qInfo().noquote().nospace() << "Loading widget \"" << widgetName << "\" (" << dat[WGT_DEF_FULLPATH].toString() << ")";
 
     WebWidget* widget = new WebWidget(widgetName, dat, server);
 
@@ -192,7 +192,7 @@ void WidgetRegistry::closeWebWidget(WebWidget* widget)
     // Remove from loaded list
     QString name = widget->getName();
 
-    qInfo() << "Closing widget " << name << " (" << widget->getFullPath() << ")";
+    qInfo().noquote().nospace() << "Closing widget \"" << name << "\" (" << widget->getFullPath() << ")";
 
     std::unique_lock<std::shared_mutex> lk(m_mutex);
 

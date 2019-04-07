@@ -74,7 +74,8 @@ DataServer::DataServer(QObject* parent) :
     }
     else
     {
-        qInfo() << (secureSock ? "Secure" : "") << "Data server running locally on port" << port;
+        qInfo().noquote().nospace() << (secureSock ? "Secure" : "Insecure") << " Data Server running locally on port " << port;
+
         connect(m_pWebSocketServer, &QWebSocketServer::newConnection, this, &DataServer::onNewConnection);
 
         loadExtensions();
@@ -149,15 +150,15 @@ void DataServer::loadExtensions()
         }
         else if (m_InternalQueryTargets.count(extn->getName()))
         {
-            qWarning() << "The extension code" << extn->getName() << " is reserved. Unloading " << libpath;
+            qWarning() << "The extension code" << extn->getName() << "is reserved. Unloading" << libpath;
         }
         else if (m_Extensions.count(extn->getName()))
         {
-            qWarning() << "Extension with code " << extn->getName() << " already loaded. Unloading" << libpath;
+            qWarning() << "Extension with code" << extn->getName() << "already loaded. Unloading" << libpath;
         }
         else
         {
-            qInfo() << "Extension " << extn->getName() << " loaded.";
+            qInfo() << "Extension" << extn->getName() << "loaded.";
             m_Extensions[extn->getName()].reset(extn);
             extn = nullptr;
         }
@@ -236,7 +237,7 @@ void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sende
     {
         if (m_Extensions[extcode]->addSubscriber(src, sender, widgetName))
         {
-            qInfo() << "Widget " << widgetName << " subscribed to extension " << extcode << " data " << src;
+            qInfo() << "Widget" << widgetName << "subscribed to extension" << extcode << "data" << src;
         }
         else
         {
@@ -329,7 +330,7 @@ void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
     std::unique_lock<std::shared_mutex> lkm(m_AuthedClientsMtx);
     m_AuthedClientsSet.insert(sender);
 
-    qInfo() << "Widget ident " << clident.ident << " authenticated.";
+    qInfo() << "Widget identity" << clident.ident << "authenticated.";
 }
 
 void DataServer::handleMethodMutate(const QJsonObject& req, QWebSocket* sender)
@@ -553,7 +554,7 @@ void DataServer::handleQueryLauncher(QString params, client_data_t client, QWebS
 
     if (!m_LauncherMap.contains(params))
     {
-        qWarning() << "Launcher command " << params << " not defined";
+        qWarning() << "Launcher command" << params << "not defined";
         return;
     }
 
@@ -570,12 +571,12 @@ void DataServer::handleQueryLauncher(QString params, client_data_t client, QWebS
         if (cmd.contains("://"))
         {
             // treat as url
-            qInfo() << "Launching URL " << cmd;
+            qInfo() << "Launching URL" << cmd;
             QDesktopServices::openUrl(QUrl(cmd));
         }
         else
         {
-            qInfo() << "Launching " << cmd << d.arguments;
+            qInfo() << "Launching" << cmd << d.arguments;
 
             // treat as file/command
             QFileInfo info(cmd);
@@ -589,7 +590,7 @@ void DataServer::handleQueryLauncher(QString params, client_data_t client, QWebS
 
             if (!result)
             {
-                qWarning() << "Failed to launch " << cmd;
+                qWarning() << "Failed to launch" << cmd;
             }
         }
     }
@@ -653,7 +654,7 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                 if (!m_Extensions.count(extkey))
                 {
                     // Extension doesn't exist
-                    qWarning() << "Unknown extension code " << extkey;
+                    qWarning() << "Unknown extension name" << extkey;
                     continue;
                 }
 
@@ -727,7 +728,7 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
         }
         else
         {
-            qWarning() << "Unknown setting key " << key;
+            qWarning() << "Unknown setting key" << key;
             continue;
         }
     }

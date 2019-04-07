@@ -220,7 +220,7 @@ DataExtension* DataExtension::load(QString libpath, QObject* parent)
         return extension;
     } catch (std::exception e)
     {
-        qWarning() << "Exception: '" << e.what() << "' while initializing " << libpath;
+        qWarning() << "Exception:" << e.what() << "while initializing" << libpath;
     }
 
     return nullptr;
@@ -236,7 +236,7 @@ bool DataExtension::addSubscriber(QString source, QWebSocket* subscriber, QStrin
 
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_name << " by widget " << widgetName;
+        qWarning() << "Unknown data source" << source << "requested in extension" << m_name << "by widget" << widgetName;
         return false;
     }
 
@@ -245,7 +245,7 @@ bool DataExtension::addSubscriber(QString source, QWebSocket* subscriber, QStrin
 
     if (dsrc.rate == QUASAR_POLLING_CLIENT)
     {
-        qWarning() << "Polling data source " << source << " in extension " << m_name << " requested by widget " << widgetName << " does not accept subscribers";
+        qWarning() << "Polling data source" << source << "in extension" << m_name << "requested by widget" << widgetName << "does not accept subscribers";
         return false;
     }
 
@@ -282,7 +282,7 @@ void DataExtension::removeSubscriber(QWebSocket* subscriber)
         // Log if unsubscribed succeeded
         if (it.value().subscribers.erase(subscriber))
         {
-            qInfo() << "Widget unsubscribed from extension " << m_name << " data source " << it.key();
+            qInfo() << "Widget unsubscribed from extension" << m_name << "data source" << it.key();
         }
 
         // Stop timer if no subscribers
@@ -312,7 +312,7 @@ void DataExtension::pollAndSendData(QString source, QWebSocket* client, QString 
         {
             QString m = "Unknown data source " + src + " requested in extension " + m_name + " by widget " + widgetName;
             errs.append(m);
-            qWarning() << m;
+            qWarning().noquote() << m;
             continue;
         }
 
@@ -326,7 +326,7 @@ void DataExtension::pollAndSendData(QString source, QWebSocket* client, QString 
             {
                 QString m = "getDataFromSource(" + src + ") failed in extension " + m_name + " requested by widget " + widgetName;
                 errs.append(m);
-                qWarning() << m;
+                qWarning().noquote() << m;
             }
             break;
             case GET_DATA_DELAYED:
@@ -503,7 +503,7 @@ void DataExtension::setDataSourceEnabled(QString source, bool enabled)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
+        qWarning() << "Unknown data source" << source << "requested in extension" << m_name;
         return;
     }
 
@@ -535,7 +535,7 @@ void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
+        qWarning() << "Unknown data source" << source << "requested in extension" << m_name;
         return;
     }
 
@@ -543,7 +543,7 @@ void DataExtension::setDataSourceRefresh(QString source, int64_t msec)
 
     if (msec <= 0)
     {
-        qWarning() << "Tried to set invalid refresh rate in data source " << source;
+        qWarning() << "Tried to set invalid refresh rate in data source" << source;
         return;
     }
 
@@ -575,7 +575,7 @@ void DataExtension::setAllSettings(const QJsonObject& setjs)
         if (parts.length() < 2 || parts.length() > 3)
         {
             // invalid key
-            qWarning() << "Invalid setting key " << setkey;
+            qWarning() << "Invalid setting key" << setkey;
             continue;
         }
 
@@ -666,7 +666,7 @@ void DataExtension::emitDataReady(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
+        qWarning() << "Unknown data source" << source << "requested in extension" << m_name;
         return;
     }
 
@@ -682,7 +682,7 @@ void DataExtension::waitDataProcessed(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
+        qWarning() << "Unknown data source" << source << "requested in extension" << m_name;
         return;
     }
 
@@ -700,7 +700,7 @@ void DataExtension::handleDataReadySignal(QString source)
 {
     if (!m_datasources.count(source))
     {
-        qWarning() << "Unknown data source " << source << " requested in extension " << m_name;
+        qWarning() << "Unknown data source" << source << "requested in extension" << m_name;
         return;
     }
 
@@ -715,10 +715,10 @@ void DataExtension::handleDataReadySignal(QString source)
         switch (result)
         {
             case GET_DATA_FAILED:
-                qWarning() << "getDataFromSource(" << source << ") in extension " << m_name << " failed";
+                qWarning().nospace() << "getDataFromSource(" << source << ") in extension " << m_name << " failed";
                 break;
             case GET_DATA_DELAYED:
-                qWarning() << "getDataFromSource(" << source << ") in extension " << m_name << " returns delayed data on signal ready";
+                qWarning().nospace() << "getDataFromSource(" << source << ") in extension " << m_name << " returns delayed data on signal ready";
                 break;
             case GET_DATA_SUCCESS:
             {
@@ -808,7 +808,7 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
     if (!src.enabled)
     {
         // honour enabled flag
-        qWarning() << "Data source " << src.name << " is disabled";
+        qWarning() << "Data source" << src.name << "is disabled";
         return GET_DATA_FAILED;
     }
 
@@ -817,7 +817,7 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
     // Poll extension for data source
     if (!m_extension->get_data(src.uid, &dat))
     {
-        qWarning() << "get_data(" << m_name << ", " << src.name << ") failed";
+        qWarning().nospace() << "get_data(" << m_name << ", " << src.name << ") failed";
         return GET_DATA_FAILED;
     }
 
@@ -829,7 +829,7 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
             return GET_DATA_DELAYED;
         }
 
-        qWarning() << "get_data(" << m_name << ", " << src.name << ") returned no data as a non async-polled source";
+        qWarning().nospace() << "get_data(" << m_name << ", " << src.name << ") returned no data as a non async-polled source";
         return GET_DATA_FAILED;
     }
 
