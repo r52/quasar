@@ -95,7 +95,7 @@ public:
 
     static bool    validateWidgetDefinition(const QJsonObject& dat);
     static bool    acceptSecurityWarnings(const QJsonObject& dat);
-    static QString getGlobalScript();
+    static QString getGlobalScript(QString authcode);
 
     QJsonObject getData() { return data; }
     QString     getName() { return m_Name; }

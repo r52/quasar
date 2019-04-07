@@ -6,6 +6,9 @@ Right-click the Quasar icon in your notification bar, and click **Settings** to 
 General Settings
 -----------------
 
+Secure WebSocket
+    Sets whether the Data Server uses the secure (``wss``) or insecure (``ws``) WebSocket protocol. Since Quasar does not actually have a valid certificate (since it runs locally), external clients may require this setting to be turned **off** in order to successfully connect to the Data Server without triggering certificate errors. *(default On)*
+
 Data Server port
     The port the WebSocket Data Server runs on. *(default 13337)*
 

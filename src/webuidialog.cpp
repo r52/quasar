@@ -30,12 +30,7 @@ WebUiDialog::WebUiDialog(DataServer* server, QString title, QUrl url, ClientAcce
 
     QString authcode = server->generateAuthCode(url.toString(), lvl);
 
-    QString gscript = WebWidget::getGlobalScript();
-
-    QSettings settings;
-    quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
-
-    QString pageGlobals = gscript.arg(port).arg(authcode);
+    QString pageGlobals = WebWidget::getGlobalScript(authcode);
 
     QWebEngineScript script;
     script.setName("PageGlobals");

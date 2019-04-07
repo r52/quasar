@@ -19,10 +19,7 @@
 uintmax_t DataExtension::_uid = 0;
 
 DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent) :
-    QObject(parent),
-    m_extension(p),
-    m_destroyfunc(destroyfunc),
-    m_libpath(path)
+    QObject(parent), m_extension(p), m_destroyfunc(destroyfunc), m_libpath(path)
 {
     if (nullptr == m_extension)
     {
@@ -63,11 +60,11 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
 
             if (m_datasources.count(srcname))
             {
-                qWarning() << "Extension " << m_name << " tried to register more than one data source '" << srcname << "'";
+                qWarning() << "Extension" << m_name << "tried to register more than one data source" << srcname;
                 continue;
             }
 
-            qInfo() << "Extension " << m_name << " registering data source '" << srcname << "'";
+            qInfo() << "Extension" << m_name << "registering data source" << srcname;
 
             DataSource& source = m_datasources[srcname];
             source.enabled     = settings.value(getSettingsKey(source.name + QUASAR_DP_ENABLED), true).toBool();

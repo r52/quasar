@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     splash.showMessage("Loading widgets...", align, color);
     a.processEvents();
 
-    QThread::sleep(1);
+    QThread::msleep(500);
 
     // Load widgets
     QSettings   settings;

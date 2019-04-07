@@ -190,10 +190,7 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, DataServer* ser
     {
         QString authcode = server->generateAuthCode(m_Name);
 
-        QString gscript = getGlobalScript();
-        quint16 port    = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
-
-        QString pageGlobals = gscript.arg(port).arg(authcode);
+        QString pageGlobals = getGlobalScript(authcode);
 
         script.setName("PageGlobals");
         script.setInjectionPoint(QWebEngineScript::DocumentCreation);
@@ -312,7 +309,7 @@ bool WebWidget::acceptSecurityWarnings(const QJsonObject& dat)
     return accept;
 }
 
-QString WebWidget::getGlobalScript()
+QString WebWidget::getGlobalScript(QString authcode)
 {
     if (PageGlobalScript.isEmpty())
     {
@@ -326,7 +323,13 @@ QString WebWidget::getGlobalScript()
         PageGlobalScript = in.readAll();
     }
 
-    return PageGlobalScript;
+    QSettings settings;
+    bool      secure = settings.value(QUASAR_CONFIG_SECURE, true).toBool();
+    quint16   port   = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+
+    QString pscript = PageGlobalScript.arg(secure ? "wss" : "ws").arg(port).arg(authcode);
+
+    return pscript;
 }
 
 QString WebWidget::getFullPath()
@@ -362,13 +365,9 @@ void WebWidget::createContextMenuActions()
             webview->page()->scripts().remove(script);
 
             // Insert refreshed script
-            QString authcode = server->generateAuthCode(m_Name);
-            QString gscript  = getGlobalScript();
+            QString authcode    = server->generateAuthCode(m_Name);
+            QString pageGlobals = getGlobalScript(authcode);
 
-            QSettings settings;
-            quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
-
-            QString pageGlobals = gscript.arg(port).arg(authcode);
             script.setSourceCode(pageGlobals);
 
             webview->page()->scripts().insert(script);

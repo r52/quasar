@@ -77,7 +77,7 @@ However, **external clients** must manually establish the connection to Quasar:
 
     var websocket = new WebSocket("wss://localhost:<port>");
 
-Where ``<port>`` is the port that the Data Server is running on, as set in :doc:`settings`.
+Where ``<port>`` is the port that the Data Server is running on, as set in :doc:`settings`. If the **Secure WebSocket** setting is turned off in :doc:`settings`, the protocol must also be replaced with the insecure ``ws``.
 
 Once the connection is established, we then need to authenticate with the Data Server to establish our widget's identity.
 

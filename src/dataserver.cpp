@@ -42,25 +42,31 @@ DataServer::DataServer(QObject* parent) :
     qRegisterMetaType<AppLauncherData>("AppLauncherData");
     qRegisterMetaTypeStreamOperators<AppLauncherData>("AppLauncherData");
 
-    m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"), QWebSocketServer::SecureMode, this);
-
-    QSslConfiguration sslConfiguration;
-    QFile             certFile(QStringLiteral(":/Resources/localhost.crt"));
-    QFile             keyFile(QStringLiteral(":/Resources/localhost.key"));
-    certFile.open(QIODevice::ReadOnly);
-    keyFile.open(QIODevice::ReadOnly);
-    QSslCertificate certificate(&certFile, QSsl::Pem);
-    QSslKey         sslKey(&keyFile, QSsl::Rsa, QSsl::Pem);
-    certFile.close();
-    keyFile.close();
-    sslConfiguration.setPeerVerifyMode(QSslSocket::VerifyNone);
-    sslConfiguration.setLocalCertificate(certificate);
-    sslConfiguration.setPrivateKey(sslKey);
-    sslConfiguration.setProtocol(QSsl::TlsV1SslV3);
-    m_pWebSocketServer->setSslConfiguration(sslConfiguration);
-
     QSettings settings;
-    quint16   port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
+
+    bool secureSock = settings.value(QUASAR_CONFIG_SECURE, true).toBool();
+
+    m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"), secureSock ? QWebSocketServer::SecureMode : QWebSocketServer::NonSecureMode, this);
+
+    if (secureSock)
+    {
+        QSslConfiguration sslConfiguration;
+        QFile             certFile(QStringLiteral(":/Resources/localhost.crt"));
+        QFile             keyFile(QStringLiteral(":/Resources/localhost.key"));
+        certFile.open(QIODevice::ReadOnly);
+        keyFile.open(QIODevice::ReadOnly);
+        QSslCertificate certificate(&certFile, QSsl::Pem);
+        QSslKey         sslKey(&keyFile, QSsl::Rsa, QSsl::Pem);
+        certFile.close();
+        keyFile.close();
+        sslConfiguration.setPeerVerifyMode(QSslSocket::VerifyNone);
+        sslConfiguration.setLocalCertificate(certificate);
+        sslConfiguration.setPrivateKey(sslKey);
+        sslConfiguration.setProtocol(QSsl::TlsV1SslV3);
+        m_pWebSocketServer->setSslConfiguration(sslConfiguration);
+    }
+
+    quint16 port = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
     if (!m_pWebSocketServer->listen(QHostAddress::LocalHost, port))
     {
@@ -68,7 +74,7 @@ DataServer::DataServer(QObject* parent) :
     }
     else
     {
-        qInfo() << "Data server running locally on port" << port;
+        qInfo() << (secureSock ? "Secure" : "") << "Data server running locally on port" << port;
         connect(m_pWebSocketServer, &QWebSocketServer::newConnection, this, &DataServer::onNewConnection);
 
         loadExtensions();
@@ -394,6 +400,7 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
     {
         QJsonObject global;
 
+        global["secure"]   = settings.value(QUASAR_CONFIG_SECURE, true).toBool();
         global["dataport"] = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
         global["loglevel"] = settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
         global["savelog"]  = settings.value(QUASAR_CONFIG_LOGFILE, false).toBool();

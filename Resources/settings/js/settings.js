@@ -13,11 +13,12 @@ function getTableSelections(table, key) {
 
 function initialize_global(data) {
     var dat = data["data"]["settings"]["global"];
+    $("input#global\\/secure").prop("checked", dat.secure);
     $("input#global\\/dataport").val(dat.dataport);
     $("input[name='global\\/loglevel']").val([dat.loglevel]);
     $("textarea#global\\/cookies").val(dat.cookies);
-    $("input#global\\/savelog").checked = dat.savelog;
-    $("input#global\\/startup").checked = dat.startup;
+    $("input#global\\/savelog").prop("checked", dat.savelog);
+    $("input#global\\/startup").prop("checked", dat.startup);
 }
 
 function createExtensionTab(ext) {
@@ -609,6 +610,6 @@ $(function () {
 
     // close button
     $('#settings-close').click(function () {
-        close();
+        window.close();
     });
 });

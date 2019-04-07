@@ -2,7 +2,7 @@ function quasar_authenticate(socket) {
     var auth = {
         method: "auth",
         params: {
-            code: "%2"
+            code: "%3"
         }
     };
 
@@ -10,5 +10,5 @@ function quasar_authenticate(socket) {
 }
 
 function quasar_create_websocket() {
-    return new WebSocket("wss://127.0.0.1:%1");
+    return new WebSocket("%1://127.0.0.1:%2");
 }
