@@ -12,11 +12,11 @@
 #include <mutex>
 
 /*
-* This is a fake singleton unique pointer hybrid monster thing
-* designed to work around the fact that Qt widget parents take
-* ownership of added child widgets, so that the lifetime of
-* the logedit widget can be maximized and ensure proper clean up
-*/
+ * This is a fake singleton unique pointer hybrid monster thing
+ * designed to work around the fact that Qt widget parents take
+ * ownership of added child widgets, so that the lifetime of
+ * the logedit widget can be maximized and ensure proper clean up
+ */
 
 namespace
 {
@@ -114,8 +114,7 @@ LogWindow::~LogWindow()
     s_logEdit = nullptr;
 }
 
-LogWindow::LogWindow(QObject* parent)
-    : QObject(parent)
+LogWindow::LogWindow(QObject* parent) : QObject(parent)
 {
     if (nullptr != s_logEdit)
     {

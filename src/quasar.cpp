@@ -20,12 +20,7 @@
 #include <QVBoxLayout>
 
 Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) :
-    QMainWindow(parent),
-    logWindow(log),
-    service(s),
-    setdlg(nullptr),
-    condlg(nullptr),
-    netmanager(new QNetworkAccessManager(this))
+    QMainWindow(parent), logWindow(log), service(s), setdlg(nullptr), condlg(nullptr), netmanager(new QNetworkAccessManager(this))
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
