@@ -271,3 +271,6 @@ docs/xml/
 
 # vscode
 .vscode/
+
+# VS2019 intellisense
+*.hint
