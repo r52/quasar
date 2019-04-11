@@ -44,7 +44,7 @@ DataServer::DataServer(QObject* parent) :
 
     QSettings settings;
 
-    bool secureSock = settings.value(QUASAR_CONFIG_SECURE, true).toBool();
+    bool secureSock = settings.value(QUASAR_CONFIG_SECURE, QUASAR_DATA_SERVER_DEFAULT_SECURE).toBool();
 
     m_pWebSocketServer = new QWebSocketServer(QStringLiteral("Data Server"), secureSock ? QWebSocketServer::SecureMode : QWebSocketServer::NonSecureMode, this);
 
@@ -74,7 +74,7 @@ DataServer::DataServer(QObject* parent) :
     }
     else
     {
-        qInfo().noquote().nospace() << (secureSock ? "Secure" : "Insecure") << " Data Server running locally on port " << port;
+        qInfo().noquote().nospace() << "Data Server " << (secureSock ? "(wss)" : "(ws)") << " running locally on port " << port;
 
         connect(m_pWebSocketServer, &QWebSocketServer::newConnection, this, &DataServer::onNewConnection);
 
@@ -401,7 +401,7 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
     {
         QJsonObject global;
 
-        global["secure"]   = settings.value(QUASAR_CONFIG_SECURE, true).toBool();
+        global["secure"]   = settings.value(QUASAR_CONFIG_SECURE, QUASAR_DATA_SERVER_DEFAULT_SECURE).toBool();
         global["dataport"] = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toInt();
         global["loglevel"] = settings.value(QUASAR_CONFIG_LOGLEVEL, QUASAR_CONFIG_DEFAULT_LOGLEVEL).toInt();
         global["savelog"]  = settings.value(QUASAR_CONFIG_LOGFILE, false).toBool();

@@ -26,6 +26,7 @@ constexpr auto QUASAR_CONFIG_LASTPATH    = "global/lastpath";
 constexpr auto QUASAR_CONFIG_LAUNCHERMAP = "launcher/map";
 constexpr auto QUASAR_CONFIG_USERKEYSMAP = "userkeys/map";
 
-constexpr auto QUASAR_DATA_SERVER_DEFAULT_PORT = 13337;
+constexpr auto QUASAR_DATA_SERVER_DEFAULT_PORT   = 13337;
+constexpr auto QUASAR_DATA_SERVER_DEFAULT_SECURE = true;
 
 #define QUASAR_CONFIG_DEFAULT_LOGLEVEL QUASAR_LOG_WARNING

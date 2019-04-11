@@ -324,7 +324,7 @@ QString WebWidget::getGlobalScript(QString authcode)
     }
 
     QSettings settings;
-    bool      secure = settings.value(QUASAR_CONFIG_SECURE, true).toBool();
+    bool      secure = settings.value(QUASAR_CONFIG_SECURE, QUASAR_DATA_SERVER_DEFAULT_SECURE).toBool();
     quint16   port   = settings.value(QUASAR_CONFIG_PORT, QUASAR_DATA_SERVER_DEFAULT_PORT).toUInt();
 
     QString pscript = PageGlobalScript.arg(secure ? "wss" : "ws").arg(port).arg(authcode);
