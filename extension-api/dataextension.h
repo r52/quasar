@@ -167,6 +167,11 @@ public:
     */
     QString getUrl() { return m_url; };
 
+    /*! Gets extension settings prefix for use with internal Quasar settings store
+        \return extension settings prefix
+    */
+    QString getSettingsKey(QString name) { return getName() + "/" + name; };
+
     //! Gets all of this extension's metadata and settings as a JSON object
     /*!
         \param[in]  settings_only   Retrieve only the settings if true, otherwise retrieves extension's full metadata
@@ -223,11 +228,6 @@ private:
     DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent = nullptr);
 
     // Helpers
-
-    /*! Gets extension settings prefix for use with internal Quasar settings store
-        \return extension settings prefix
-    */
-    QString getSettingsKey(QString name) { return getName() + "/" + name; };
 
     /*! Set Data Source enabled/disabled
         \param[in]  source  Data Source identifier

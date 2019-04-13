@@ -1186,6 +1186,7 @@ quasar_settings_t* win_audio_viz_create_settings()
     settings = quasar_create_settings();
 
     quasar_add_selection(settings, "device", "Audio Device (requires restart)", devSelect);
+    devSelect = nullptr;
 
     // RMS options
     quasar_add_int(settings, "RMSAttack", "RMSAttack", 0, 100000, 1, 300);

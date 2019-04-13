@@ -181,8 +181,7 @@ SAPI_EXPORT quasar_settings_t* quasar_add_string(quasar_settings_t* settings, co
     \param[in]  select      Handle to the selection setting instance (takes ownership)
     \return The settings handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t*
-            quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t*& select);
+SAPI_EXPORT quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t* select);
 
 //! Creates a selection type setting in extension settings
 /*!
@@ -268,6 +267,67 @@ SAPI_EXPORT void quasar_signal_data_ready(quasar_ext_handle handle, const char* 
     \sa quasar_data_source_t.rate
 */
 SAPI_EXPORT void quasar_signal_wait_processed(quasar_ext_handle handle, const char* source);
+
+//! Stores a string type data
+/*! \param[in]  handle  Extension handle
+    \param[in]  name    Data name
+    \param[in]  data    Data to set
+*/
+SAPI_EXPORT void quasar_set_storage_string(quasar_ext_handle handle, const char* name, const char* data);
+
+//! Stores a int type data
+/*! \param[in]  handle  Extension handle
+    \param[in]  name    Data name
+    \param[in]  data    Data to set
+*/
+SAPI_EXPORT void quasar_set_storage_int(quasar_ext_handle handle, const char* name, int data);
+
+//! Stores a double type data
+/*! \param[in]  handle  Extension handle
+    \param[in]  name    Data name
+    \param[in]  data    Data to set
+*/
+SAPI_EXPORT void quasar_set_storage_double(quasar_ext_handle handle, const char* name, double data);
+
+//! Stores a bool type data
+/*! \param[in]  handle  Extension handle
+    \param[in]  name    Data name
+    \param[in]  data    Data to set
+*/
+SAPI_EXPORT void quasar_set_storage_bool(quasar_ext_handle handle, const char* name, bool data);
+
+//! Gets a string type data from storage
+/*! \param[in]  handle  Extension handle
+    \param[in]  name    Data name
+    \param[in]  buf     Buffer to copy results to
+    \param[in]  size    Size of buffer
+    \return true if successful, false otherwise
+*/
+SAPI_EXPORT bool quasar_get_storage_string(quasar_ext_handle handle, const char* name, char* buf, size_t size);
+
+//! Gets a int type data from storage
+/*! \param[in]  handle  Extension handle
+    \param[in]  name    Data name
+    \param[in]  buf     Buffer to copy results to
+    \return true if successful, false otherwise
+*/
+SAPI_EXPORT bool quasar_get_storage_int(quasar_ext_handle handle, const char* name, int* buf);
+
+//! Gets a double type data from storage
+/*! \param[in]  handle  Extension handle
+    \param[in]  name    Data name
+    \param[in]  buf     Buffer to copy results to
+    \return true if successful, false otherwise
+*/
+SAPI_EXPORT bool quasar_get_storage_double(quasar_ext_handle handle, const char* name, double* buf);
+
+//! Gets a bool type data from storage
+/*! \param[in]  handle  Extension handle
+    \param[in]  name    Data name
+    \param[in]  buf     Buffer to copy results to
+    \return true if successful, false otherwise
+*/
+SAPI_EXPORT bool quasar_get_storage_bool(quasar_ext_handle handle, const char* name, bool* buf);
 
 #if defined(__cplusplus)
 }

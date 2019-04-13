@@ -10,6 +10,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QSettings>
 
 void quasar_log(quasar_log_level_t level, const char* msg)
 {
@@ -65,7 +66,7 @@ quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* 
 }
 
 template <typename T, typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T>, T>>
-quasar_data_handle set_basic_json_type(quasar_data_handle hData, T data)
+quasar_data_handle _set_basic_json_type(quasar_data_handle hData, T data)
 {
     QJsonValue* ref = static_cast<QJsonValue*>(hData);
 
@@ -81,17 +82,17 @@ quasar_data_handle set_basic_json_type(quasar_data_handle hData, T data)
 
 quasar_data_handle quasar_set_data_int(quasar_data_handle hData, int data)
 {
-    return set_basic_json_type(hData, data);
+    return _set_basic_json_type(hData, data);
 }
 
 quasar_data_handle quasar_set_data_double(quasar_data_handle hData, double data)
 {
-    return set_basic_json_type(hData, data);
+    return _set_basic_json_type(hData, data);
 }
 
 quasar_data_handle quasar_set_data_bool(quasar_data_handle hData, bool data)
 {
-    return set_basic_json_type(hData, data);
+    return _set_basic_json_type(hData, data);
 }
 
 quasar_data_handle quasar_set_data_json(quasar_data_handle hData, const char* data)
@@ -302,7 +303,7 @@ quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* na
     return nullptr;
 }
 
-quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t*& select)
+quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t* select)
 {
     if (settings)
     {
@@ -428,4 +429,118 @@ void quasar_signal_wait_processed(quasar_ext_handle handle, const char* source)
     {
         ext->waitDataProcessed(source);
     }
+}
+
+template <typename T,
+          typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T> || std::is_same_v<const char*, T>, T>>
+void _set_basic_storage(quasar_ext_handle handle, const char* name, T data)
+{
+    DataExtension* ext = static_cast<DataExtension*>(handle);
+
+    if (ext)
+    {
+        QSettings settings;
+
+        settings.setValue(ext->getSettingsKey(name), data);
+    }
+}
+
+void quasar_set_storage_string(quasar_ext_handle handle, const char* name, const char* data)
+{
+    _set_basic_storage(handle, name, data);
+}
+
+void quasar_set_storage_int(quasar_ext_handle handle, const char* name, int data)
+{
+    _set_basic_storage(handle, name, data);
+}
+
+void quasar_set_storage_double(quasar_ext_handle handle, const char* name, double data)
+{
+    _set_basic_storage(handle, name, data);
+}
+
+void quasar_set_storage_bool(quasar_ext_handle handle, const char* name, bool data)
+{
+    _set_basic_storage(handle, name, data);
+}
+
+bool quasar_get_storage_string(quasar_ext_handle handle, const char* name, char* buf, size_t size)
+{
+    DataExtension* ext = static_cast<DataExtension*>(handle);
+
+    if (ext && buf && size)
+    {
+        QSettings settings;
+        auto      val = settings.value(ext->getSettingsKey(name));
+
+        if (val.isValid())
+        {
+            auto str = val.toString();
+            auto ba  = str.toUtf8();
+
+            strcpy_s(buf, size, ba.data());
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool quasar_get_storage_int(quasar_ext_handle handle, const char* name, int* buf)
+{
+    DataExtension* ext = static_cast<DataExtension*>(handle);
+
+    if (ext && buf)
+    {
+        QSettings settings;
+        auto      val = settings.value(ext->getSettingsKey(name));
+
+        if (val.isValid())
+        {
+            *buf = val.toInt();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool quasar_get_storage_double(quasar_ext_handle handle, const char* name, double* buf)
+{
+    DataExtension* ext = static_cast<DataExtension*>(handle);
+
+    if (ext && buf)
+    {
+        QSettings settings;
+        auto      val = settings.value(ext->getSettingsKey(name));
+
+        if (val.isValid())
+        {
+            *buf = val.toDouble();
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool quasar_get_storage_bool(quasar_ext_handle handle, const char* name, bool* buf)
+{
+    DataExtension* ext = static_cast<DataExtension*>(handle);
+
+    if (ext && buf)
+    {
+        QSettings settings;
+        auto      val = settings.value(ext->getSettingsKey(name));
+
+        if (val.isValid())
+        {
+            *buf = val.toBool();
+            return true;
+        }
+    }
+
+    return false;
 }
