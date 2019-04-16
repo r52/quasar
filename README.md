@@ -41,13 +41,13 @@ Source code is [available on GitHub](https://github.com/r52/quasar).
 
 [Visual Studio 2017 or later](https://www.visualstudio.com/) is required.
 
-[Qt 5.9 or later](http://www.qt.io/) is required.
+[Qt 5.12 or later](http://www.qt.io/) is required.
 
 Build using the Visual Studio Solution file.
 
 ### Building on Linux
 
-Qt 5.9 or later, GCC 7+ or Clang 4+, and CMake 3.9+ is required. Quasar has been tested to build and work successfully under Ubuntu 17.10 using packages available in the official repository.
+Qt 5.12 or later, GCC 7+ or Clang 4+, and CMake 3.9+ is required.
 
 Build using the supplied CMake project file.
 

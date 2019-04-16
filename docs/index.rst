@@ -49,14 +49,14 @@ Building on Windows
 
 `Visual Studio 2017 or later <https://www.visualstudio.com/>`_ is required.
 
-`Qt 5.9 or later <http://www.qt.io/>`_ is required.
+`Qt 5.12 or later <http://www.qt.io/>`_ is required.
 
 Build using the Visual Studio Solution file.
 
 Building on Linux
 ~~~~~~~~~~~~~~~~~
 
-Qt 5.9 or later, GCC 7+ or Clang 4+, and CMake 3.9+ is required. Quasar has been tested to build and work successfully under Ubuntu 17.10 using packages available in the official repository.
+Qt 5.12 or later, GCC 7+ or Clang 4+, and CMake 3.9+ is required.
 
 Build using the supplied CMake project file.
 
