@@ -5,6 +5,7 @@
 #include <QMainWindow>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
+#include <QOAuth2AuthorizationCodeFlow>
 #include <QSystemTrayIcon>
 
 QT_FORWARD_DECLARE_CLASS(DataServices)
@@ -68,4 +69,7 @@ private:
     // Networking
     QNetworkAccessManager* netmanager;
     QNetworkRequest        updrequest;
+
+    // This is just here atm to force NetworkAuth to be linked, for future oauth2 purposes
+    QOAuth2AuthorizationCodeFlow oauth2;
 };
