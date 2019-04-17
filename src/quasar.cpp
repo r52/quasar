@@ -104,17 +104,26 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
     switch (reason)
     {
+        case QSystemTrayIcon::Trigger:
         case QSystemTrayIcon::Context:
         {
             // Regenerate widget list menu
             widgetListMenu->clear();
 
-            auto widgets = service->getRegistry()->getWidgets();
-
-            for (auto& w : *widgets)
             {
-                widgetListMenu->addMenu(w.second->getMenu());
+                auto widgets = service->getRegistry()->getWidgets();
+
+                for (auto& w : *widgets)
+                {
+                    widgetListMenu->addMenu(w.second->getMenu());
+                }
             }
+
+            if (reason == QSystemTrayIcon::Trigger)
+            {
+                trayIcon->contextMenu()->popup(QCursor::pos());
+            }
+
             break;
         }
 
