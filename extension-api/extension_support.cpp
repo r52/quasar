@@ -307,6 +307,13 @@ quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char*
 {
     if (settings)
     {
+        if (select->list.empty())
+        {
+            qWarning() << "Failed to create option" << name << ". Selection has no options.";
+            delete select;
+            return nullptr;
+        }
+
         quasar_setting_def_t entry;
 
         entry.type        = QUASAR_SETTING_ENTRY_SELECTION;
