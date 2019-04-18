@@ -88,7 +88,14 @@ Quasar::~Quasar()
 void Quasar::openWebWidget()
 {
     QSettings settings;
-    QString   lastpath = settings.value(QUASAR_CONFIG_LASTPATH, QDir::currentPath()).toString();
+
+    QString defpath = QDir::currentPath();
+
+#ifdef Q_OS_WIN
+    defpath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Quasar/widgets";
+#endif // Q_OS_WIN
+
+    QString lastpath = settings.value(QUASAR_CONFIG_LASTPATH, defpath).toString();
 
     QString fname = QFileDialog::getOpenFileName(this, tr("Load Widget"), lastpath, tr("Widget Definitions (*.json)"));
 
