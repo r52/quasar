@@ -1,10 +1,8 @@
-function Component()
-{
+function Component() {
     // default constructor
 }
 
-Component.prototype.createOperations = function()
-{
+Component.prototype.createOperations = function () {
     // call default implementation
     component.createOperations();
 

@@ -129,3 +129,5 @@ if ($portable) {
         Get-ChildItem $pkgname | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
     }
 }
+
+Write-Host "Done!"
