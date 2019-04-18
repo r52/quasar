@@ -126,6 +126,12 @@ void DataServer::loadExtensions()
                                                          << "*.dylib",
                                            QDir::Files);
 
+#ifdef Q_OS_WIN
+    // check windows doc path
+    auto extdir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Quasar/extensions");
+    list.append(extdir.entryInfoList(QStringList() << "*.dll", QDir::Files));
+#endif
+
     if (list.count() == 0)
     {
         qInfo() << "No data extensions found";

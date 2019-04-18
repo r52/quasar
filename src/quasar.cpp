@@ -61,6 +61,7 @@ Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) :
 
     resize(800, 400);
 
+    createDirectories();
     checkForUpdates();
 }
 
@@ -133,6 +134,28 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
             break;
         }
     }
+}
+
+void Quasar::createDirectories()
+{
+#ifdef Q_OS_WIN
+    // Windows paths only
+    auto extdir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Quasar/extensions");
+
+    if (!extdir.exists())
+    {
+        // create folder
+        extdir.mkpath(".");
+    }
+
+    auto wdir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Quasar/widgets");
+
+    if (!wdir.exists())
+    {
+        // create folder
+        wdir.mkpath(".");
+    }
+#endif
 }
 
 void Quasar::createTrayIcon()

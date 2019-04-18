@@ -22,9 +22,10 @@ public:
     ~Quasar();
 
 protected:
-    virtual void closeEvent(QCloseEvent* event) Q_DECL_OVERRIDE;
+    virtual void closeEvent(QCloseEvent* event) override;
 
 private:
+    void createDirectories();
     void createTrayIcon();
     void createActions();
     void checkForUpdates();
