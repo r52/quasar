@@ -16,7 +16,7 @@ Write-Host "`nVisual Studio 2017 Command Prompt variables set." -ForegroundColor
 
 $qtpath = $env:QTDIR
 if ($null -eq $qtpath) {
-    $qtpath = "C:\Qt\5.12.2\msvc2017_64"
+    $qtpath = "C:\Qt\5.12.3\msvc2017_64"
 }
 
 $windeployqt = "$($qtpath)\bin\windeployqt.exe"
