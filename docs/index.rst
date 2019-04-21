@@ -73,6 +73,7 @@ Resources
    :caption: Main
 
    usage
+   extensions
    settings
    launcher
    userkeys
