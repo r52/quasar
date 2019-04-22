@@ -19,5 +19,6 @@ DataServices::DataServices(QObject* parent) : QObject(parent), server(new DataSe
     {
         throw std::runtime_error("Another instance already created");
     }
+
     s_service = this;
 }

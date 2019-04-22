@@ -34,7 +34,7 @@ WidgetRegistry::~WidgetRegistry()
     m_widgetMap.clear();
 }
 
-bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
+bool WidgetRegistry::loadWebWidget(QString filename, bool userAction, QWidget* parent)
 {
     if (filename.isNull())
     {
@@ -112,7 +112,7 @@ bool WidgetRegistry::loadWebWidget(QString filename, bool userAction)
 
     qInfo().noquote().nospace() << "Loading widget \"" << widgetName << "\" (" << dat[WGT_DEF_FULLPATH].toString() << ")";
 
-    WebWidget* widget = new WebWidget(widgetName, dat, server);
+    WebWidget* widget = new WebWidget(widgetName, dat, server, parent);
 
     m_widgetMap.insert(std::make_pair(widgetName, widget));
 

@@ -104,7 +104,7 @@ void Quasar::openWebWidget()
         QFileInfo info(fname);
         settings.setValue(QUASAR_CONFIG_LASTPATH, info.canonicalPath());
 
-        service->getRegistry()->loadWebWidget(fname);
+        service->getRegistry()->loadWebWidget(fname, true);
     }
 }
 

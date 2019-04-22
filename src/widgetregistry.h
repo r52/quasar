@@ -21,7 +21,7 @@ class WidgetRegistry : public QObject
 public:
     ~WidgetRegistry();
 
-    bool loadWebWidget(QString filename, bool userAction = true);
+    bool loadWebWidget(QString filename, bool userAction, QWidget* parent = nullptr);
 
     auto getWidgets() { return make_shared_locker<WidgetMapType>(&m_widgetMap, &m_mutex); }
 
