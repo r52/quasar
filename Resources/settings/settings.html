@@ -17,7 +17,7 @@
     <script src="qrc:/js/bootstrap-notify.min.js"></script>
 </head>
 
-<body class="d-flex flex-column h-100">
+<body class="d-flex flex-column h-100" ondragstart="return false">
     <div id="cover">
         <div id="lds-pos">
             <div class="lds-default">
@@ -38,10 +38,10 @@
     </div>
     <!-- Tab menu -->
     <nav class="navbar fixed-top navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">
+        <span class="navbar-brand mb-0 h1">
             <img src="qrc:/Resources/q.png" width="30" height="30" class="d-inline-block align-top" alt="">
             Quasar
-        </a>
+        </span>
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
             <ul class="navbar-nav nav" role="tablist">
                 <li class="nav-item">
