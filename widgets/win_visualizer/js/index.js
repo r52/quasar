@@ -72,9 +72,9 @@ $(document).ready(function () {
             parseMsg(evt.data);
         };
         websocket.onerror = function (evt) {
-            console.log('ERROR: ' + evt.data);
+            console.warn('ERROR: ' + evt.data);
         };
     } catch (exception) {
-        console.log('Exception: ' + exception);
+        console.warn('Exception: ' + exception);
     }
 });

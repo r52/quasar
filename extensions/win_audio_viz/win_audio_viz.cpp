@@ -11,6 +11,7 @@
 #include <cassert>
 #include <codecvt>
 #include <locale>
+#include <numeric>
 #include <unordered_map>
 #include <vector>
 
@@ -1004,6 +1005,8 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
     {
         case Measure::TYPE_RMS:
         {
+            static bool last_acc_is_not_zero = true;
+
             static std::vector<double> output;
 
             output.resize(m->m_wfx->nChannels);
@@ -1013,12 +1016,21 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
                 output[i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
             }
 
-            quasar_set_data_double_array(hData, output.data(), output.size());
+            double acc = std::accumulate(output.begin(), output.end(), 0.0);
+
+            if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
+            {
+                quasar_set_data_double_array(hData, output.data(), output.size());
+                last_acc_is_not_zero = (acc > 0.0);
+            }
+
             return true;
         }
 
         case Measure::TYPE_PEAK:
         {
+            static bool last_acc_is_not_zero = true;
+
             static std::vector<double> output;
 
             output.resize(m->m_wfx->nChannels);
@@ -1028,12 +1040,21 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
                 output[i] = CLAMP01(m->m_peak[i] * m->m_gainPeak);
             }
 
-            quasar_set_data_double_array(hData, output.data(), output.size());
+            double acc = std::accumulate(output.begin(), output.end(), 0.0);
+
+            if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
+            {
+                quasar_set_data_double_array(hData, output.data(), output.size());
+                last_acc_is_not_zero = (acc > 0.0);
+            }
+
             return true;
         }
 
         case Measure::TYPE_FFT:
         {
+            static bool last_acc_is_not_zero = true;
+
             static std::vector<double> output;
 
             if (m->m_clCapture && m->m_fftSize)
@@ -1065,7 +1086,14 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
                     output[i] = x;
                 }
 
-                quasar_set_data_double_array(hData, output.data(), output.size());
+                double acc = std::accumulate(output.begin(), output.end(), 0.0);
+
+                if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
+                {
+                    quasar_set_data_double_array(hData, output.data(), output.size());
+                    last_acc_is_not_zero = (acc > 0.0);
+                }
+
                 return true;
             }
             break;
@@ -1073,6 +1101,8 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
 
         case Measure::TYPE_BAND:
         {
+            static bool last_acc_is_not_zero = true;
+
             static std::vector<double> output;
 
             if (m->m_clCapture && m->m_nBands)
@@ -1104,7 +1134,13 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
                     output[i] = x;
                 }
 
-                quasar_set_data_double_array(hData, output.data(), output.size());
+                double acc = std::accumulate(output.begin(), output.end(), 0.0);
+
+                if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
+                {
+                    quasar_set_data_double_array(hData, output.data(), output.size());
+                    last_acc_is_not_zero = (acc > 0.0);
+                }
 
                 return true;
             }

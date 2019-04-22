@@ -718,7 +718,7 @@ void DataExtension::handleDataReadySignal(QString source)
                 qWarning().nospace() << "getDataFromSource(" << source << ") in extension " << m_name << " failed";
                 break;
             case GET_DATA_DELAYED:
-                qWarning().nospace() << "getDataFromSource(" << source << ") in extension " << m_name << " returns delayed data on signal ready";
+                qWarning().nospace() << "getDataFromSource(" << source << ") in extension " << m_name << " returned delayed data on signal ready";
                 break;
             case GET_DATA_SUCCESS:
             {
@@ -829,8 +829,8 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
             return GET_DATA_DELAYED;
         }
 
-        qWarning().nospace() << "get_data(" << m_name << ", " << src.name << ") returned no data as a non async-polled source";
-        return GET_DATA_FAILED;
+        // extension consciously set no data while get_data() returns true, allow it
+        return GET_DATA_SUCCESS;
     }
 
     // If we have valid data here:
