@@ -3,9 +3,15 @@
 #include "dataserver.h"
 #include "widgetdefs.h"
 
+#include <QAbstractButton>
 #include <QAction>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QFormLayout>
+#include <QLabel>
 #include <QMenu>
 #include <QMessageBox>
+#include <QSpinBox>
 #include <QtWebEngineWidgets/QWebEngineCertificateError>
 #include <QtWebEngineWidgets/QWebEngineScriptCollection>
 #include <QtWebEngineWidgets/QWebEngineSettings>
@@ -176,14 +182,17 @@ WebWidget::WebWidget(QString widgetName, const QJsonObject& dat, DataServer* ser
 
     // Custom context menu
     setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(this, &QWidget::customContextMenuRequested, [=](const QPoint& pos) { m_Menu->exec(mapToGlobal(pos)); });
+    connect(this, &QWidget::customContextMenuRequested, [&](const QPoint& pos) { m_Menu->exec(mapToGlobal(pos)); });
 
     // Set flags
     setWindowFlags(flags);
 
     // resize
-    webview->resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
-    resize(data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt());
+    m_defaultsize    = {data[WGT_DEF_WIDTH].toInt(), data[WGT_DEF_HEIGHT].toInt()};
+    QSize customsize = settings.value(getSettingKey("customSize"), m_defaultsize).toSize();
+
+    webview->resize(customsize);
+    resize(customsize);
 
     // Inject global script
     if (data[WGT_DEF_DATASERVER].toBool())
@@ -352,13 +361,13 @@ void WebWidget::createContextMenuActions()
     QFont f = rName->font();
     f.setBold(true);
     rName->setFont(f);
-    connect(rName, &QAction::triggered, [=](bool e) {
+    connect(rName, &QAction::triggered, [&](bool e) {
         QFileInfo info(this->getFullPath());
         QDesktopServices::openUrl(QUrl(info.absolutePath()));
     });
 
     rReload = new QAction(tr("&Reload"), this);
-    connect(rReload, &QAction::triggered, [=] {
+    connect(rReload, &QAction::triggered, [&] {
         if (webview->page()->scripts().size())
         {
             // Delete old script if it exists
@@ -375,8 +384,8 @@ void WebWidget::createContextMenuActions()
         webview->reload();
     });
 
-    rResetPos = new QAction(tr("Re&set Position"), this);
-    connect(rResetPos, &QAction::triggered, [=](bool e) { this->move(0, 0); });
+    rResetPos = new QAction(tr("Reset &Position"), this);
+    connect(rResetPos, &QAction::triggered, [&] { this->move(0, 0); });
 
     rOnTop = new QAction(tr("&Always on Top"), this);
     rOnTop->setCheckable(true);
@@ -384,7 +393,7 @@ void WebWidget::createContextMenuActions()
 
     rFixedPos = new QAction(tr("&Fixed Position"), this);
     rFixedPos->setCheckable(true);
-    connect(rFixedPos, &QAction::triggered, [=](bool enabled) {
+    connect(rFixedPos, &QAction::triggered, [&](bool enabled) {
         m_fixedposition = enabled;
 
         QSettings settings;
@@ -393,15 +402,68 @@ void WebWidget::createContextMenuActions()
 
     rClickable = new QAction(tr("&Clickable"), this);
     rClickable->setCheckable(true);
-    connect(rClickable, &QAction::triggered, [=](bool enabled) {
+    connect(rClickable, &QAction::triggered, [&](bool enabled) {
         overlay->setVisible(!enabled);
 
         QSettings settings;
         settings.setValue(getSettingKey("clickable"), enabled);
     });
 
+    rResize = new QAction(tr("Custom &Size"), this);
+    connect(rResize, &QAction::triggered, [&] {
+        QDialog     dialog(this);
+        QFormLayout form(&dialog);
+
+        dialog.setWindowTitle("Cusom Size");
+
+        form.addRow(new QLabel("Warning: Setting a custom size may break the widget's styling!"));
+
+        QSpinBox* wEdit = new QSpinBox(&dialog);
+        wEdit->setRange(1, 8192);
+        wEdit->setSuffix("px");
+        wEdit->setValue(size().width());
+        QString wLabel = QString("Width (default %1px)").arg(m_defaultsize.width());
+        form.addRow(wLabel, wEdit);
+
+        QSpinBox* hEdit = new QSpinBox(&dialog);
+        hEdit->setRange(1, 8192);
+        hEdit->setSuffix("px");
+        hEdit->setValue(size().height());
+        QString hLabel = QString("Height (default %1px)").arg(m_defaultsize.height());
+        form.addRow(hLabel, hEdit);
+
+        QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::RestoreDefaults, Qt::Horizontal, &dialog);
+        form.addRow(&buttonBox);
+
+        connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+        connect(&buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        connect(&buttonBox, &QDialogButtonBox::clicked, [&](QAbstractButton* button) {
+            auto role = buttonBox.buttonRole(button);
+            if (role == QDialogButtonBox::ResetRole)
+            {
+                wEdit->setValue(m_defaultsize.width());
+                hEdit->setValue(m_defaultsize.height());
+            }
+        });
+
+        // Show the dialog as modal
+        if (dialog.exec() == QDialog::Accepted)
+        {
+            QSize nsize = {wEdit->value(), hEdit->value()};
+
+            if (nsize != size())
+            {
+                webview->resize(nsize);
+                resize(nsize);
+
+                QSettings settings;
+                settings.setValue(getSettingKey("customSize"), nsize);
+            }
+        }
+    });
+
     rClose = new QAction(tr("&Close"), this);
-    connect(rClose, &QAction::triggered, [=] {
+    connect(rClose, &QAction::triggered, [&] {
         // Remove from loaded
         QSettings   settings;
         QStringList loaded = settings.value(QUASAR_CONFIG_LOADED).toStringList();
@@ -420,6 +482,7 @@ void WebWidget::createContextMenu()
     m_Menu->addSeparator();
     m_Menu->addAction(rReload);
     m_Menu->addAction(rResetPos);
+    m_Menu->addAction(rResize);
     m_Menu->addSeparator();
     m_Menu->addAction(rOnTop);
     m_Menu->addAction(rFixedPos);

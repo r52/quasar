@@ -26,7 +26,7 @@ WebUiDialog::WebUiDialog(DataServer* server, QString title, QUrl url, ClientAcce
     layout->addWidget(view);
     setLayout(layout);
 
-    connect(page, &QWebEnginePage::windowCloseRequested, [=] { this->close(); });
+    connect(page, &QWebEnginePage::windowCloseRequested, [&] { this->close(); });
 
     QString authcode = server->generateAuthCode(url.toString(), lvl);
 

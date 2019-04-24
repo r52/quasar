@@ -194,11 +194,11 @@ void Quasar::createActions()
     widgetListMenu = new QMenu(tr("Widgets"), this);
 
     settingsAction = new QAction(tr("&Settings"), this);
-    connect(settingsAction, &QAction::triggered, [=] {
+    connect(settingsAction, &QAction::triggered, [&] {
         if (setdlg == nullptr)
         {
             setdlg = new WebUiDialog(service->getServer(), tr("Settings"), WebUiHandler::settingsUrl, CAL_SETTINGS);
-            connect(setdlg, &QObject::destroyed, [=] { this->setdlg = nullptr; });
+            connect(setdlg, &QObject::destroyed, [&] { this->setdlg = nullptr; });
 
             setdlg->show();
         }
@@ -208,11 +208,11 @@ void Quasar::createActions()
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);
 
     consoleAction = new QAction(tr("&Console"), this);
-    connect(consoleAction, &QAction::triggered, [=] {
+    connect(consoleAction, &QAction::triggered, [&] {
         if (condlg == nullptr)
         {
             condlg = new WebUiDialog(service->getServer(), tr("Debug Console"), WebUiHandler::consoleUrl, CAL_DEBUG);
-            connect(condlg, &QObject::destroyed, [=] { this->condlg = nullptr; });
+            connect(condlg, &QObject::destroyed, [&] { this->condlg = nullptr; });
 
             condlg->show();
         }
@@ -220,7 +220,7 @@ void Quasar::createActions()
 
     aboutAction = new QAction(tr("&About Quasar"), this);
 
-    connect(aboutAction, &QAction::triggered, [=] {
+    connect(aboutAction, &QAction::triggered, [&] {
         static QString aboutMsg = "Quasar " GIT_VER_STRING "<br/>"
 #ifndef NDEBUG
                                   "DEBUG BUILD<br/>"
@@ -237,10 +237,10 @@ void Quasar::createActions()
     });
 
     aboutQtAction = new QAction(tr("About &Qt"), this);
-    connect(aboutQtAction, &QAction::triggered, [=] { QMessageBox::aboutQt(this, "About Qt"); });
+    connect(aboutQtAction, &QAction::triggered, [&] { QMessageBox::aboutQt(this, "About Qt"); });
 
     docAction = new QAction(tr("Quasar &Documentation"), this);
-    connect(docAction, &QAction::triggered, [=] { QDesktopServices::openUrl(QUrl("https://quasardoc.readthedocs.io")); });
+    connect(docAction, &QAction::triggered, [] { QDesktopServices::openUrl(QUrl("https://quasardoc.readthedocs.io")); });
 
     quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
@@ -263,7 +263,7 @@ void Quasar::closeEvent(QCloseEvent* event)
 
 void Quasar::checkForUpdates()
 {
-    connect(netmanager, &QNetworkAccessManager::finished, this, [=](QNetworkReply* reply) {
+    connect(netmanager, &QNetworkAccessManager::finished, [](QNetworkReply* reply) {
         if (reply->error())
         {
             qInfo() << reply->errorString();
@@ -300,7 +300,7 @@ void Quasar::checkForUpdates()
         }
     });
 
-    QTimer::singleShot(5000, [=] {
+    QTimer::singleShot(5000, [&] {
         updrequest.setUrl(QUrl("https://api.github.com/repos/r52/quasar/releases/latest"));
         netmanager->get(updrequest);
     });

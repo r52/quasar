@@ -156,7 +156,11 @@ private:
     QAction* rOnTop;
     QAction* rFixedPos;
     QAction* rClickable;
+    QAction* rResize;
     QAction* rClose;
+
+    // Default size
+    QSize m_defaultsize;
 
     Q_DISABLE_COPY(WebWidget);
 };

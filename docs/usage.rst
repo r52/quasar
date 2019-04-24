@@ -34,6 +34,9 @@ Reload
 Reset Position
     Resets the position of the widget to a visible position on your monitor
 
+Custom Size
+    Resizes the widget to a custom size. **Warning: Setting a custom size may break the widget's styling!**
+
 Always on Top
     Forces the widget to be on top of all other windows
 
