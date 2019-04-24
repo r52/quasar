@@ -384,11 +384,21 @@ void WebWidget::createContextMenuActions()
 
     rFixedPos = new QAction(tr("&Fixed Position"), this);
     rFixedPos->setCheckable(true);
-    connect(rFixedPos, &QAction::triggered, [=](bool enabled) { this->m_fixedposition = enabled; });
+    connect(rFixedPos, &QAction::triggered, [=](bool enabled) {
+        m_fixedposition = enabled;
+
+        QSettings settings;
+        settings.setValue(getSettingKey("fixedPosition"), m_fixedposition);
+    });
 
     rClickable = new QAction(tr("&Clickable"), this);
     rClickable->setCheckable(true);
-    connect(rClickable, &QAction::triggered, [=](bool enabled) { overlay->setVisible(!enabled); });
+    connect(rClickable, &QAction::triggered, [=](bool enabled) {
+        overlay->setVisible(!enabled);
+
+        QSettings settings;
+        settings.setValue(getSettingKey("clickable"), enabled);
+    });
 
     rClose = new QAction(tr("&Close"), this);
     connect(rClose, &QAction::triggered, [=] {
@@ -457,6 +467,9 @@ void WebWidget::toggleOnTop(bool ontop)
     QPoint pos = this->pos();
     move(pos);
     show();
+
+    QSettings settings;
+    settings.setValue(getSettingKey("alwaysOnTop"), ontop);
 }
 
 QString WebWidget::getSettingKey(QString key)
