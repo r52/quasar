@@ -3,6 +3,7 @@
 #include <qstring_hash_impl.h>
 
 #include <QObject>
+#include <QThread>
 #include <QVariant>
 
 #include <chrono>
@@ -67,13 +68,32 @@ struct client_data_t
 Q_DECLARE_METATYPE(system_clock::time_point);
 Q_DECLARE_METATYPE(client_data_t);
 
+class ExtensionControl : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit ExtensionControl(DataExtension* ext);
+    ~ExtensionControl();
+
+    DataExtension* getExtension() { return m_ext; }
+    DataExtension* operator->() { return m_ext; }
+
+private:
+    QThread        extThread;
+    DataExtension* m_ext;
+
+    ExtensionControl() = delete;
+    Q_DISABLE_COPY(ExtensionControl);
+};
+
 class DataServer : public QObject
 {
     friend class DataServices;
 
     Q_OBJECT
 
-    using DataExtensionMapType   = std::unordered_map<QString, std::unique_ptr<DataExtension>>;
+    using ExtensionsMapType      = std::unordered_map<QString, std::unique_ptr<ExtensionControl>>;
     using MethodFuncType         = std::function<void(const QJsonObject&, QWebSocket*)>;
     using MethodCallMapType      = std::unordered_map<QString, MethodFuncType>;
     using AuthedClientsSetType   = std::unordered_set<QWebSocket*>;
@@ -155,6 +175,6 @@ private:
     mutable std::shared_mutex m_AuthedClientsMtx;
 
     // Extensions management
-    DataExtensionMapType      m_Extensions;
+    ExtensionsMapType         m_Extensions;
     mutable std::shared_mutex m_ExtensionsMtx;
 };
