@@ -57,19 +57,7 @@ protected:
 class QuasarWebView : public QWebEngineView
 {
 public:
-    QuasarWebView(QWidget* parent = nullptr) : QWebEngineView{parent} {}
-
-protected:
-    virtual void contextMenuEvent(QContextMenuEvent* event) override
-    {
-        // Block default context menu and send to parent if exist
-        if (parent())
-        {
-            parent()->event(event);
-        }
-
-        event->accept();
-    }
+    QuasarWebView(QWidget* parent = nullptr) : QWebEngineView{parent} { setContextMenuPolicy(Qt::NoContextMenu); }
 };
 
 class QuasarWebPage : public QWebEnginePage

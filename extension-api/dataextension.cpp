@@ -261,7 +261,7 @@ bool DataExtension::addSubscriber(QString source, QWebSocket* subscriber, QStrin
 
     if (!payload.isEmpty())
     {
-        subscriber->sendTextMessage(payload);
+        QMetaObject::invokeMethod(subscriber, [=] { subscriber->sendTextMessage(payload); });
     }
 
     return true;
@@ -343,7 +343,7 @@ void DataExtension::pollAndSendData(QString source, QWebSocket* client, QString 
 
     if (!message.isEmpty())
     {
-        client->sendTextMessage(message);
+        QMetaObject::invokeMethod(client, [=] { client->sendTextMessage(message); });
     }
 }
 
@@ -364,7 +364,7 @@ void DataExtension::sendDataToSubscribers(DataSource& source)
         {
             for (auto sub : source.subscribers)
             {
-                sub->sendTextMessage(message);
+                QMetaObject::invokeMethod(sub, [=] { sub->sendTextMessage(message); });
             }
         }
     }
@@ -729,7 +729,8 @@ void DataExtension::handleDataReadySignal(QString source)
                     // XXX maybe needs locks
                     while (!dsrc.pollqueue.empty())
                     {
-                        dsrc.pollqueue.front()->sendTextMessage(message);
+                        auto sub = dsrc.pollqueue.front();
+                        QMetaObject::invokeMethod(sub, [=] { sub->sendTextMessage(message); });
                         dsrc.pollqueue.pop_front();
                     }
                 }
@@ -881,7 +882,7 @@ void DataExtension::propagateSettingsToAllUniqueSubscribers()
             // Send the payload
             for (auto sub : unique_subs)
             {
-                sub->sendTextMessage(payload);
+                QMetaObject::invokeMethod(sub, [=] { sub->sendTextMessage(payload); });
             }
         }
     }

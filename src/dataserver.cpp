@@ -148,7 +148,7 @@ void DataServer::loadExtensions()
 
         qInfo() << "Loading data extension" << libpath;
 
-        DataExtension* extn = DataExtension::load(libpath, this);
+        DataExtension* extn = DataExtension::load(libpath);
 
         if (!extn)
         {
@@ -165,7 +165,7 @@ void DataServer::loadExtensions()
         else
         {
             qInfo() << "Extension" << extn->getName() << "loaded.";
-            m_Extensions[extn->getName()].reset(extn);
+            m_Extensions[extn->getName()].reset(new ExtensionControl(extn));
             extn = nullptr;
         }
 
@@ -241,7 +241,13 @@ void DataServer::handleMethodSubscribe(const QJsonObject& req, QWebSocket* sende
 
     for (QString& src : dlist)
     {
-        if (m_Extensions[extcode]->addSubscriber(src, sender, widgetName))
+        bool result = false;
+        auto extn   = m_Extensions[extcode]->getExtension();
+
+        QMetaObject::invokeMethod(
+            extn, [=] { return extn->addSubscriber(src, sender, widgetName); }, Qt::BlockingQueuedConnection, &result);
+
+        if (result)
         {
             qInfo() << "Widget" << widgetName << "subscribed to extension" << extcode << "data" << src;
         }
@@ -299,7 +305,9 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
         return;
     }
 
-    m_Extensions[extcode]->pollAndSendData(extparm, sender, clidat.ident);
+    auto extn = m_Extensions[extcode]->getExtension();
+
+    QMetaObject::invokeMethod(extn, [=] { extn->pollAndSendData(extparm, sender, clidat.ident); });
 }
 
 void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)
@@ -442,7 +450,13 @@ void DataServer::handleQuerySettings(QString params, client_data_t client, QWebS
 
             for (auto& iext : m_Extensions)
             {
-                extensions.append(iext.second->getMetadataJSON(false));
+                QJsonObject result;
+                auto        extn = iext.second->getExtension();
+
+                QMetaObject::invokeMethod(
+                    extn, [=] { return extn->getMetadataJSON(false); }, Qt::BlockingQueuedConnection, &result);
+
+                extensions.append(result);
             }
         }
 
@@ -664,8 +678,9 @@ void DataServer::handleMutateSettings(QJsonValue val, QWebSocket* sender)
                     continue;
                 }
 
-                auto& ext = m_Extensions[extkey];
-                ext->setAllSettings(exts[extkey].toObject());
+                auto extn   = m_Extensions[extkey]->getExtension();
+                auto setobj = exts[extkey].toObject();
+                QMetaObject::invokeMethod(extn, [=] { extn->setAllSettings(setobj); });
             }
         }
         else if (key.startsWith("global"))
@@ -885,7 +900,9 @@ void DataServer::socketDisconnected()
             std::shared_lock<std::shared_mutex> lk(m_ExtensionsMtx);
             for (auto& p : m_Extensions)
             {
-                p.second->removeSubscriber(pClient);
+                auto extn = p.second->getExtension();
+
+                QMetaObject::invokeMethod(extn, [=] { extn->removeSubscriber(pClient); });
             }
         }
 
@@ -905,4 +922,23 @@ void DataServer::socketDisconnected()
 
         pClient->deleteLater();
     }
+}
+
+ExtensionControl::ExtensionControl(DataExtension* ext) : m_ext(ext)
+{
+    if (!m_ext)
+    {
+        throw std::invalid_argument("null extension");
+    }
+
+    m_ext->moveToThread(&extThread);
+    connect(&extThread, &QThread::finished, m_ext, &QObject::deleteLater);
+    extThread.setObjectName(ext->getName() + " thread");
+    extThread.start();
+}
+
+ExtensionControl::~ExtensionControl()
+{
+    extThread.quit();
+    extThread.wait();
 }
