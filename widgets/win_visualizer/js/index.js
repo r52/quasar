@@ -1,11 +1,29 @@
 var websocket = null;
 
+// acceptable sources
+var sources = {
+    "band": {
+        "size": "Bands",
+        "calc": function (e) {
+            return e.val;
+        }
+    },
+    "fft": {
+        "size": "FFTSize",
+        "calc": function (e) {
+            return ((e.val / 2) + 1);
+        }
+    }
+};
+
+var rate = 90; // milliseconds
+
 function subscribe() {
     var msg = {
         "method": "subscribe",
         "params": {
             "target": "win_audio_viz",
-            "params": "band"
+            "params": src
         }
     }
 
@@ -15,19 +33,32 @@ function subscribe() {
 function initialize(dat) {
     var element = `<div><i></i></div>`;
 
-    if ("win_audio_viz" in dat["data"]["settings"] && "settings" in dat["data"]["settings"]["win_audio_viz"]) {
-        var settings = dat["data"]["settings"]["win_audio_viz"]["settings"];
+    if ("win_audio_viz" in dat["data"]["settings"]) {
+        if ("settings" in dat["data"]["settings"]["win_audio_viz"]) {
+            var settings = dat["data"]["settings"]["win_audio_viz"]["settings"];
 
-        settings.forEach(function (e) {
-            if (e.name === "Bands") {
-                var main = $(".wav");
-                main.empty();
+            settings.forEach(function (e) {
+                if (e.name === sources[src].size) {
+                    var main = $(".wav");
+                    main.empty();
 
-                for (var i = 0; i < e.val; i++) {
-                    main.append(element);
+                    var size = sources[src].calc(e);
+                    for (var i = 0; i < size; i++) {
+                        main.append(element);
+                    }
                 }
-            }
-        });
+            });
+        }
+
+        if ("rates" in dat["data"]["settings"]["win_audio_viz"]) {
+            var rates = dat["data"]["settings"]["win_audio_viz"]["rates"];
+
+            rates.forEach(function (e) {
+                if (e.name === src) {
+                    rate = Math.round(e.rate * 0.9);
+                }
+            });
+        }
     }
 }
 
@@ -40,7 +71,7 @@ function bounce(dat) {
         background: function (el, i) {
             return 'hsl(' + (120 - Math.min(Math.round(dat[i] * 135.0), 120)) + ', 100%, 66%)'
         },
-        duration: 90,
+        duration: rate,
         easing: 'linear'
     });
 }
