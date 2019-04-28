@@ -25,8 +25,6 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/quasar")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-include_directories(include)
-
 add_subdirectory(extension-api)
 
 set(CMAKE_AUTOMOC ON)
