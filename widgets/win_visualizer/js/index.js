@@ -79,8 +79,8 @@ function bounce(dat) {
 function parseMsg(msg) {
     var data = JSON.parse(msg);
 
-    if ("data" in data && "win_audio_viz" in data["data"] && "band" in data["data"]["win_audio_viz"]) {
-        bounce(data["data"]["win_audio_viz"]["band"]);
+    if ("data" in data && "win_audio_viz" in data["data"] && src in data["data"]["win_audio_viz"]) {
+        bounce(data["data"]["win_audio_viz"][src]);
         return;
     }
 
