@@ -1,11 +1,11 @@
 main {
-    height: 180px;
+    height: 100%;
     left: 50%;
     overflow: hidden;
     position: absolute;
     transform: translate3d(-50%, -50%, 0);
     top: 50%;
-    width: 448px;
+    width: 100%;
 }
 
 .wav {
@@ -24,7 +24,7 @@ main {
     width: 100%;
     background: #ffffff;
     opacity: 1.0;
-    will-change: height, background;
+    will-change: height, background-color;
 }
 
 .wav>div>i:before {
