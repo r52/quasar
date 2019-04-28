@@ -62,15 +62,27 @@
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
 
+# quasar folders
 QtMsBuild/* linguist-vendored
 docs/* linguist-documentation
+
+# jquery
 jquery-3.3.1.slim.min.js linguist-vendored
+
+# anime.js
 anime.min.js linguist-vendored
+
+# codemirror
 codemirror.js linguist-vendored
 codemirror.css linguist-vendored
 javascript.js linguist-vendored
+
+# bootstrap
 bootstrap.bundle.min.js linguist-vendored
 bootstrap-notify.min.js linguist-vendored
 bootstrap-table.min.js linguist-vendored
 bootstrap.min.css linguist-vendored
 bootstrap-table.min.css linguist-vendored
+
+#three.js
+three.min.js linguist-vendored
