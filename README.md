@@ -11,7 +11,7 @@ Quasar provides a WebSocket-based Data Server that is extensible using extension
 
 Refer to the [Quasar documentation](https://quasardoc.readthedocs.io) for more information on how to build a widget or a Data Server extension.
 
-Quasar is licensed under GPL-3.0.
+Quasar is licensed under GPL-3.0. All sample widgets are licensed under the MIT license.
 
 ## System Requirements
 
