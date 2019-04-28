@@ -1,5 +1,5 @@
 Creating an Extension Quickstart
-=============================
+================================
 
 .. contents::
     :local:

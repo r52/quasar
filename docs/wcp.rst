@@ -146,7 +146,7 @@ Server to Client
 The following is the basic message format used by the Data Server to send data and messages to client widgets.
 
 Basic Message Format
-###############
+#####################
 
 ::
 

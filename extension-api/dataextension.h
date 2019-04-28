@@ -182,7 +182,7 @@ public:
     /*! Sets all settings returned by the settings dialog
         This function is only called by the relevant GUI can should not be used otherwise.
 
-        \param[in]  settings    JSON object containing extension settings being changed
+        \param[in]  setjs   JSON object containing extension settings being changed
 
         \sa quasar_settings_t, DataSource.rate, DataSource.timer
     */
