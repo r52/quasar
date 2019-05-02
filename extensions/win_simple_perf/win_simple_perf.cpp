@@ -115,7 +115,7 @@ bool simple_perf_shutdown(quasar_ext_handle handle)
     return true;
 }
 
-bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData)
+bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 {
     if (calltable.count(srcUid) == 0)
     {

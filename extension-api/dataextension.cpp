@@ -293,7 +293,7 @@ void DataExtension::removeSubscriber(QWebSocket* subscriber)
     }
 }
 
-void DataExtension::pollAndSendData(QString source, QWebSocket* client, QString widgetName)
+void DataExtension::pollAndSendData(QString source, QString args, QWebSocket* client, QString widgetName)
 {
     if (!client)
     {
@@ -318,7 +318,7 @@ void DataExtension::pollAndSendData(QString source, QWebSocket* client, QString 
 
         // XXX maybe needs locks
         DataSource& dsrc   = m_datasources[src];
-        auto        result = getDataFromSource(data, dsrc);
+        auto        result = getDataFromSource(data, dsrc, args);
 
         switch (result)
         {
@@ -789,7 +789,7 @@ QString DataExtension::craftDataMessage(const QJsonObject& data, const QJsonArra
     return QString::fromUtf8(doc.toJson());
 }
 
-DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObject& data, DataSource& src)
+DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObject& data, DataSource& src, QString args)
 {
     using namespace std::chrono;
 
@@ -814,9 +814,15 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
     }
 
     QJsonValue dat;
+    QByteArray chargs;
+
+    if (!args.isEmpty())
+    {
+        chargs = args.toUtf8();
+    }
 
     // Poll extension for data source
-    if (!m_extension->get_data(src.uid, &dat))
+    if (!m_extension->get_data(src.uid, &dat, chargs.isEmpty() ? nullptr : chargs.data()))
     {
         qWarning().nospace() << "get_data(" << m_name << ", " << src.name << ") failed";
         return GET_DATA_FAILED;

@@ -290,6 +290,7 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
 
     QString extcode = parms["target"].toString();
     QString extparm = parms["params"].toString();
+    QString extargs = parms["args"].toString();
 
     if (m_InternalQueryTargets.count(extcode))
     {
@@ -307,7 +308,7 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
 
     auto extn = m_Extensions[extcode]->getExtension();
 
-    QMetaObject::invokeMethod(extn, [=] { extn->pollAndSendData(extparm, sender, clidat.ident); });
+    QMetaObject::invokeMethod(extn, [=] { extn->pollAndSendData(extparm, extargs, sender, clidat.ident); });
 }
 
 void DataServer::handleMethodAuth(const QJsonObject& req, QWebSocket* sender)

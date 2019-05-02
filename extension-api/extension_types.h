@@ -76,7 +76,7 @@ typedef void (*ext_settings_call_t)(quasar_settings_t*);
 
 //! Function pointer type for the \ref quasar_ext_info_t.get_data function.
 /*! \sa quasar_ext_info_t.get_data */
-typedef bool (*ext_get_data_call_t)(size_t, quasar_data_handle);
+typedef bool (*ext_get_data_call_t)(size_t, quasar_data_handle, char*);
 
 //! Struct for defining Data Sources.
 /*! Defines the Data Sources available to widgets provided by this extension.
@@ -160,7 +160,7 @@ struct quasar_ext_info_t
     */
     ext_info_call_t shutdown;
 
-    /*! **bool get_data(size_t uid, #quasar_data_handle handle)**
+    /*! **bool get_data(size_t uid, #quasar_data_handle handle, char* args)**
         \verbatim embed:rst
 
         .. attention::
@@ -170,7 +170,11 @@ struct quasar_ext_info_t
 
         Retrieves the data of a specific Data Source entry.
 
-        Use support functions in extension_support.h to populate data.
+        args contains a null terminate string that consists of any arguments
+        passed to the Data Source entry, if arguments are accepted.
+        args is null if no arguments are passed.
+
+        Use support functions in extension_support.h to populate data into handle.
 
         \verbatim embed:rst
         .. important::

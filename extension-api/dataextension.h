@@ -127,10 +127,11 @@ public:
     //! Polls the extension for data and sends it to the requesting widget
     /*! Called when the extension receives a widget "poll" request
         \param[in]  source      Data Source identifier
+        \param[in]  args        Any arguments passed to the Data Source, if accepted
         \param[in]  client      Requesting widget's websocket connection instance
         \param[in]  widgetName  Widget name
     */
-    void pollAndSendData(QString source, QWebSocket* client, QString widgetName);
+    void pollAndSendData(QString source, QString args, QWebSocket* client, QString widgetName);
 
     /*! Gets path to library file
         \return path to library file
@@ -265,10 +266,11 @@ private:
     /*! Retrieves data from a data source and saves it to the supplied JSON object as JSON data
         \param[in]  data    Reference to the JSON object to save data to
         \param[in]  src     Reference to the Data Source object
+        \param[in]  args    Arguments, if any
         \return DataSourceReturnState value determining state of data retrieval
         \sa DataSourceReturnState
     */
-    DataSourceReturnState getDataFromSource(QJsonObject& data, DataSource& src);
+    DataSourceReturnState getDataFromSource(QJsonObject& data, DataSource& src, QString args = QString());
 
     /*! Crafts the custom settings message to be sent to subscribers
         \return The settings message

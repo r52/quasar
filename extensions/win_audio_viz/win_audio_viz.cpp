@@ -572,7 +572,7 @@ bool win_audio_viz_shutdown(quasar_ext_handle handle)
     return true;
 }
 
-bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData)
+bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 {
     size_t type = m_typemap[srcUid];
 
