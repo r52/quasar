@@ -45,6 +45,7 @@ Basic Message Format
         params: {
             target: <target>,
             params: <target params>
+            args: <param args>
         }
     }
 
@@ -72,6 +73,10 @@ Field Descriptions
     Parameters sent to the target.
     Typically, these are Data Source identifiers.
     For App Launcher widgets, these are App Launcher commands, or ``get`` to retrieve the command list.
+
+``param args``
+    Optional arguments for the specified parameters sent to the target.
+    Only supported by queried/client polled sources, if arguments are supported by the source.
 
 Sample Usages
 #################

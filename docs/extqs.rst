@@ -25,7 +25,7 @@ These are:
 
 * ``bool shutdown(quasar_ext_handle handle)``
 
-* ``bool get_data(size_t uid, quasar_data_handle dataHandle)``
+* ``bool get_data(size_t uid, quasar_data_handle dataHandle, char* args)``
 
 Within the :cpp:class:`quasar_ext_info_t` structure.
 
@@ -68,7 +68,7 @@ Adapted from the sample extension `win_simple_perf <https://github.com/r52/quasa
 
             simple_perf_init,                                       // bool init(quasar_ext_handle handle)
             simple_perf_shutdown,                                   // bool shutdown(quasar_ext_handle handle)
-            simple_perf_get_data,                                   // bool get_data(size_t uid, quasar_data_handle dataHandle)
+            simple_perf_get_data,                                   // bool get_data(size_t uid, quasar_data_handle dataHandle, char* args)
             nullptr,                                                // quasar_settings_t* create_settings()
             nullptr                                                 // void update(quasar_settings_t* settings)
         };
@@ -186,7 +186,7 @@ This function is responsible for retrieving the data requested by the ``uid`` ar
         return true;
     }
 
-    bool simple_perf_get_data(size_t uid, quasar_data_handle hData)
+    bool simple_perf_get_data(size_t uid, quasar_data_handle hData, char* args)
     {
         // the "cpu" source
         if (uid == sources[0].uid)
