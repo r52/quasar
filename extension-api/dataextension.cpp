@@ -682,7 +682,7 @@ void DataExtension::emitDataReady(QString source)
 
     DataSource& data = m_datasources[source];
 
-    if (data.locks)
+    if (data.rate == QUASAR_POLLING_SIGNALED || data.rate == QUASAR_POLLING_CLIENT)
     {
         emit dataReady(source);
     }
