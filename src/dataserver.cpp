@@ -936,6 +936,10 @@ ExtensionControl::ExtensionControl(DataExtension* ext) : m_ext(ext)
     connect(&extThread, &QThread::finished, m_ext, &QObject::deleteLater);
     extThread.setObjectName(ext->getName() + " thread");
     extThread.start();
+
+    // Initialize and wait until finished
+    QMetaObject::invokeMethod(
+        m_ext, [=] { m_ext->initialize(); }, Qt::BlockingQueuedConnection);
 }
 
 ExtensionControl::~ExtensionControl()

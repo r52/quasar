@@ -109,6 +109,11 @@ public:
     */
     static DataExtension* load(QString libpath, QObject* parent = nullptr);
 
+    /*! Initializes the extension
+        Throws an exception if failed.
+    */
+    void initialize();
+
     //! Adds a subscriber to a Data Source
     /*!
         \param[in]  source      Data Source identifier
@@ -306,4 +311,6 @@ private:
     QString m_url;      //!< Extension url, if any
 
     DataSourceMapType m_datasources; //!< Map of Data Sources provided by this extension
+
+    bool m_initialized; //!< Extension successfully initialized;
 };

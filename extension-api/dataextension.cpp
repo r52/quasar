@@ -19,7 +19,7 @@
 uintmax_t DataExtension::_uid = 0;
 
 DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc, QString path, QObject* parent) :
-    QObject(parent), m_extension(p), m_destroyfunc(destroyfunc), m_libpath(path)
+    QObject(parent), m_extension(p), m_destroyfunc(destroyfunc), m_libpath(path), m_initialized(false)
 {
     if (nullptr == m_extension)
     {
@@ -153,17 +153,6 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
 
         updateExtensionSettings();
     }
-
-    // initialize the extension
-    if (!m_extension->init(this))
-    {
-        throw std::runtime_error("extension init() failed");
-    }
-
-    if (m_settings)
-    {
-        updateExtensionSettings();
-    }
 }
 
 DataExtension::~DataExtension()
@@ -224,6 +213,27 @@ DataExtension* DataExtension::load(QString libpath, QObject* parent)
     }
 
     return nullptr;
+}
+
+void DataExtension::initialize()
+{
+    if (!m_initialized)
+    {
+        // initialize the extension
+        if (!m_extension->init(this))
+        {
+            throw std::runtime_error("extension init() failed");
+        }
+
+        if (m_settings)
+        {
+            updateExtensionSettings();
+        }
+
+        m_initialized = true;
+
+        qInfo() << "Extension" << getName() << "initialized.";
+    }
 }
 
 bool DataExtension::addSubscriber(QString source, QWebSocket* subscriber, QString widgetName)
