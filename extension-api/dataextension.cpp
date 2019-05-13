@@ -328,7 +328,7 @@ void DataExtension::pollAndSendData(QString source, QString args, QWebSocket* cl
 
         // XXX maybe needs locks
         DataSource& dsrc   = m_datasources[src];
-        auto        result = getDataFromSource(data, dsrc, args);
+        auto        result = getDataFromSource(data, errs, dsrc, args);
 
         switch (result)
         {
@@ -365,10 +365,11 @@ void DataExtension::sendDataToSubscribers(DataSource& source)
     if (!source.subscribers.empty())
     {
         QJsonObject data;
+        QJsonArray  errs;
 
-        getDataFromSource(data, source);
+        getDataFromSource(data, errs, source);
 
-        QString message = craftDataMessage(data);
+        QString message = craftDataMessage(data, errs);
 
         if (!message.isEmpty())
         {
@@ -720,7 +721,8 @@ void DataExtension::handleDataReadySignal(QString source)
     {
         // pop poll queue
         QJsonObject data;
-        auto        result = getDataFromSource(data, dsrc);
+        QJsonArray  errs;
+        auto        result = getDataFromSource(data, errs, dsrc);
 
         switch (result)
         {
@@ -732,7 +734,7 @@ void DataExtension::handleDataReadySignal(QString source)
                 break;
             case GET_DATA_SUCCESS:
             {
-                QString message = craftDataMessage(data);
+                QString message = craftDataMessage(data, errs);
 
                 if (!message.isEmpty())
                 {
@@ -799,7 +801,7 @@ QString DataExtension::craftDataMessage(const QJsonObject& data, const QJsonArra
     return QString::fromUtf8(doc.toJson());
 }
 
-DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObject& data, DataSource& src, QString args)
+DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObject& data, QJsonArray& errs, DataSource& src, QString args)
 {
     using namespace std::chrono;
 
@@ -823,7 +825,11 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
         return GET_DATA_FAILED;
     }
 
-    QJsonValue dat(QJsonValue::Undefined);
+    quasar_return_data_t rett;
+
+    // Init to undefined
+    rett.val = QJsonValue(QJsonValue::Undefined);
+
     QByteArray chargs;
 
     if (!args.isEmpty())
@@ -832,19 +838,19 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
     }
 
     // Poll extension for data source
-    if (!m_extension->get_data(src.uid, &dat, chargs.isEmpty() ? nullptr : chargs.data()))
+    if (!m_extension->get_data(src.uid, &rett, chargs.isEmpty() ? nullptr : chargs.data()))
     {
         qWarning().nospace() << "get_data(" << m_name << ", " << src.name << ") failed";
         return GET_DATA_FAILED;
     }
 
-    if (dat.isNull())
+    if (rett.val.isNull())
     {
         // Data is purposely set to a null return
         return GET_DATA_SUCCESS;
     }
 
-    if (dat.isUndefined())
+    if (rett.val.isUndefined())
     {
         if (src.rate == QUASAR_POLLING_CLIENT)
         {
@@ -860,11 +866,11 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
     if (src.rate == QUASAR_POLLING_CLIENT && src.validtime)
     {
         // If validity time duration is set, cache the data
-        src.cacheddat = dat;
+        src.cacheddat = rett.val;
         src.expiry    = system_clock::now() + milliseconds(src.validtime);
     }
 
-    data[src.name] = dat;
+    data[src.name] = rett.val;
 
     return GET_DATA_SUCCESS;
 }

@@ -270,12 +270,13 @@ private:
 
     /*! Retrieves data from a data source and saves it to the supplied JSON object as JSON data
         \param[in]  data    Reference to the JSON object to save data to
+        \param[in]  errs    Reference to the JSON array to store errors
         \param[in]  src     Reference to the Data Source object
         \param[in]  args    Arguments, if any
         \return DataSourceReturnState value determining state of data retrieval
         \sa DataSourceReturnState
     */
-    DataSourceReturnState getDataFromSource(QJsonObject& data, DataSource& src, QString args = QString());
+    DataSourceReturnState getDataFromSource(QJsonObject& data, QJsonArray& errs, DataSource& src, QString args = QString());
 
     /*! Crafts the custom settings message to be sent to subscribers
         \return The settings message

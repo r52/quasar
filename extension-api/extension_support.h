@@ -132,6 +132,13 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_double_array(quasar_data_handle h
 */
 SAPI_EXPORT quasar_data_handle quasar_set_data_null(quasar_data_handle hData);
 
+//! Adds an error to the return data to be sent back to the client
+/*! \param[in]  hData   Data handle
+    \param[in]  err     Error to add
+    \return Data handle if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_data_handle quasar_append_error(quasar_data_handle hData, const char* err);
+
 //! Creates an integer setting in extension settings
 /*!
     \param[in]  settings    The extension settings handle

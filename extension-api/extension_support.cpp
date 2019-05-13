@@ -53,11 +53,11 @@ quasar_selection_options_t* quasar_create_selection_setting(void)
 
 quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* data)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
-        (*ref) = QString::fromUtf8(data);
+        ref->val = QString::fromUtf8(data);
 
         return ref;
     }
@@ -68,11 +68,11 @@ quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* 
 template <typename T, typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T>, T>>
 quasar_data_handle _set_basic_json_type(quasar_data_handle hData, T data)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
-        (*ref) = data;
+        ref->val = data;
 
         return ref;
     }
@@ -97,12 +97,12 @@ quasar_data_handle quasar_set_data_bool(quasar_data_handle hData, bool data)
 
 quasar_data_handle quasar_set_data_json(quasar_data_handle hData, const char* data)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
         QString str = QString::fromUtf8(data);
-        (*ref)      = QJsonDocument::fromJson(str.toUtf8()).object();
+        ref->val    = QJsonDocument::fromJson(str.toUtf8()).object();
 
         return ref;
     }
@@ -112,11 +112,11 @@ quasar_data_handle quasar_set_data_json(quasar_data_handle hData, const char* da
 
 quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, const char* data, size_t len)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
-        (*ref) = QJsonDocument::fromRawData(data, len).object();
+        ref->val = QJsonDocument::fromRawData(data, len).object();
 
         return ref;
     }
@@ -126,7 +126,7 @@ quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, const char* 
 
 quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char** arr, size_t len)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
@@ -137,7 +137,7 @@ quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char**
             jarr.append(QString::fromUtf8(arr[i]));
         }
 
-        (*ref) = jarr;
+        ref->val = jarr;
 
         return ref;
     }
@@ -147,7 +147,7 @@ quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char**
 
 quasar_data_handle quasar_set_data_int_array(quasar_data_handle hData, int* arr, size_t len)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
@@ -158,7 +158,7 @@ quasar_data_handle quasar_set_data_int_array(quasar_data_handle hData, int* arr,
             jarr.append(arr[i]);
         }
 
-        (*ref) = jarr;
+        ref->val = jarr;
 
         return ref;
     }
@@ -168,7 +168,7 @@ quasar_data_handle quasar_set_data_int_array(quasar_data_handle hData, int* arr,
 
 quasar_data_handle quasar_set_data_float_array(quasar_data_handle hData, float* arr, size_t len)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
@@ -179,7 +179,7 @@ quasar_data_handle quasar_set_data_float_array(quasar_data_handle hData, float* 
             jarr.append((double) arr[i]);
         }
 
-        (*ref) = jarr;
+        ref->val = jarr;
 
         return ref;
     }
@@ -189,7 +189,7 @@ quasar_data_handle quasar_set_data_float_array(quasar_data_handle hData, float* 
 
 quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double* arr, size_t len)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
@@ -200,7 +200,7 @@ quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double
             jarr.append(arr[i]);
         }
 
-        (*ref) = jarr;
+        ref->val = jarr;
 
         return ref;
     }
@@ -210,11 +210,25 @@ quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double
 
 quasar_data_handle quasar_set_data_null(quasar_data_handle hData)
 {
-    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
     if (ref)
     {
-        (*ref) = QJsonValue(QJsonValue::Null);
+        ref->val = QJsonValue(QJsonValue::Null);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_append_error(quasar_data_handle hData, const char* err)
+{
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
+
+    if (ref)
+    {
+        ref->errs.append(err);
 
         return ref;
     }

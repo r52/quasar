@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <QJsonArray>
+#include <QJsonValue>
 #include <QVariant>
 #include <qstring_hash_impl.h>
 
@@ -69,6 +71,13 @@ struct quasar_selection_options_t
 {
     QList<esi_select_option_t> list; //!< Possible values
     QString                    val;  //!< Current value
+};
+
+//! Internal struct holding return value and any errors
+struct quasar_return_data_t
+{
+    QJsonValue val;  //!< Return value
+    QJsonArray errs; //!< Array of errors
 };
 
 Q_DECLARE_METATYPE(esi_inttype_t);
