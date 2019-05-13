@@ -823,7 +823,7 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
         return GET_DATA_FAILED;
     }
 
-    QJsonValue dat;
+    QJsonValue dat(QJsonValue::Undefined);
     QByteArray chargs;
 
     if (!args.isEmpty())
@@ -840,14 +840,20 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
 
     if (dat.isNull())
     {
+        // Data is purposely set to a null return
+        return GET_DATA_SUCCESS;
+    }
+
+    if (dat.isUndefined())
+    {
         if (src.rate == QUASAR_POLLING_CLIENT)
         {
             // Allow empty return (for async data)
             return GET_DATA_DELAYED;
         }
 
-        // extension consciously set no data while get_data() returns true, allow it
-        return GET_DATA_SUCCESS;
+        // Disallow any other source types from setting no data
+        return GET_DATA_FAILED;
     }
 
     // If we have valid data here:

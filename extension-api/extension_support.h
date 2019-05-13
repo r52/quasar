@@ -126,6 +126,12 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_float_array(quasar_data_handle hD
 */
 SAPI_EXPORT quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double* arr, size_t len);
 
+//! Sets the return data to be null
+/*! \param[in]  hData   Data handle
+    \return Data handle if successful, nullptr otherwise
+*/
+SAPI_EXPORT quasar_data_handle quasar_set_data_null(quasar_data_handle hData);
+
 //! Creates an integer setting in extension settings
 /*!
     \param[in]  settings    The extension settings handle

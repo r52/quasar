@@ -208,6 +208,20 @@ quasar_data_handle quasar_set_data_double_array(quasar_data_handle hData, double
     return nullptr;
 }
 
+quasar_data_handle quasar_set_data_null(quasar_data_handle hData)
+{
+    QJsonValue* ref = static_cast<QJsonValue*>(hData);
+
+    if (ref)
+    {
+        (*ref) = QJsonValue(QJsonValue::Null);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
 quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt)
 {
     if (settings)

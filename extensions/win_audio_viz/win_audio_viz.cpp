@@ -1023,6 +1023,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 quasar_set_data_double_array(hData, output.data(), output.size());
                 last_acc_is_not_zero = (acc > 0.0);
             }
+            else
+            {
+                quasar_set_data_null(hData);
+            }
 
             return true;
         }
@@ -1046,6 +1050,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             {
                 quasar_set_data_double_array(hData, output.data(), output.size());
                 last_acc_is_not_zero = (acc > 0.0);
+            }
+            else
+            {
+                quasar_set_data_null(hData);
             }
 
             return true;
@@ -1092,6 +1100,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 {
                     quasar_set_data_double_array(hData, output.data(), output.size());
                     last_acc_is_not_zero = (acc > 0.0);
+                }
+                else
+                {
+                    quasar_set_data_null(hData);
                 }
 
                 return true;
@@ -1140,6 +1152,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 {
                     quasar_set_data_double_array(hData, output.data(), output.size());
                     last_acc_is_not_zero = (acc > 0.0);
+                }
+                else
+                {
+                    quasar_set_data_null(hData);
                 }
 
                 return true;
