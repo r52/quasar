@@ -10,10 +10,10 @@
 
 #include <chrono>
 #include <condition_variable>
-#include <deque>
 #include <memory>
 #include <mutex>
 #include <set>
+#include <unordered_set>
 
 #include <tsl/ordered_map.h>
 
@@ -62,9 +62,9 @@ struct DataSource
     std::set<QWebSocket*>   subscribers; //!< Set of widgets (i.e. its WebSocket instance) subscribed to this source
 
     // poll type
-    std::deque<QWebSocket*> pollqueue; //!< Queue of widgets (i.e. its WebSocket instance) waiting for polled data
-    QJsonValue              cacheddat; //!< Cached data for polled data with a validity duration \sa quasar_data_source_t.rate, quasar_data_source_t.validtime,
-                                       //!< quasar_polling_type_t
+    std::unordered_set<QWebSocket*> pollqueue; //!< Queue of widgets (i.e. its WebSocket instance) waiting for polled data
+    QJsonValue                      cacheddat; //!< Cached data for polled data with a validity duration
+                                               //!< \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
     std::chrono::system_clock::time_point
         expiry; //!< Expiry time of cached data \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
 

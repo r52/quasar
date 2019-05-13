@@ -341,7 +341,7 @@ void DataExtension::pollAndSendData(QString source, QString args, QWebSocket* cl
             break;
             case GET_DATA_DELAYED:
                 // add to poll queue
-                dsrc.pollqueue.push_back(client);
+                dsrc.pollqueue.insert(client);
                 break;
             case GET_DATA_SUCCESS:
                 // done. do nothing
@@ -737,11 +737,11 @@ void DataExtension::handleDataReadySignal(QString source)
                 if (!message.isEmpty())
                 {
                     // XXX maybe needs locks
-                    while (!dsrc.pollqueue.empty())
+                    for (auto it = dsrc.pollqueue.begin(); it != dsrc.pollqueue.end();)
                     {
-                        auto sub = dsrc.pollqueue.front();
+                        auto sub = *it;
                         QMetaObject::invokeMethod(sub, [=] { sub->sendTextMessage(message); });
-                        dsrc.pollqueue.pop_front();
+                        it = dsrc.pollqueue.erase(it);
                     }
                 }
                 break;
