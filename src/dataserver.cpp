@@ -282,7 +282,7 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
 
     auto parms = req["params"].toObject();
 
-    if (parms.count() != 2)
+    if (parms.count() < 2 || parms.count() > 3)
     {
         DS_SEND_WARN(sender, "Invalid parameters for method 'query'");
         return;
