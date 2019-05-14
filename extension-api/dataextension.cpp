@@ -83,13 +83,9 @@ DataExtension::DataExtension(quasar_ext_info_t* p, extension_destroy destroyfunc
             {
                 source.expiry = std::chrono::system_clock::now();
             }
-
-            // If data source is extension signaled or async poll
-            if (source.rate <= QUASAR_POLLING_CLIENT)
-            {
-                connect(this, &DataExtension::dataReady, this, &DataExtension::handleDataReadySignal, Qt::QueuedConnection);
-            }
         }
+
+        connect(this, &DataExtension::dataReady, this, &DataExtension::handleDataReadySignal, Qt::QueuedConnection);
     }
 
     // create settings
@@ -840,8 +836,18 @@ DataExtension::DataSourceReturnState DataExtension::getDataFromSource(QJsonObjec
     // Poll extension for data source
     if (!m_extension->get_data(src.uid, &rett, chargs.isEmpty() ? nullptr : chargs.data()))
     {
+        if (!rett.errs.isEmpty())
+        {
+            errs.append(rett.errs);
+        }
+
         qWarning().nospace() << "get_data(" << m_name << ", " << src.name << ") failed";
         return GET_DATA_FAILED;
+    }
+
+    if (!rett.errs.isEmpty())
+    {
+        errs.append(rett.errs);
     }
 
     if (rett.val.isNull())

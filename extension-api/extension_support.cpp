@@ -452,7 +452,7 @@ void quasar_signal_data_ready(quasar_ext_handle handle, const char* source)
 
     if (ext)
     {
-        ext->emitDataReady(source);
+        QMetaObject::invokeMethod(ext, [=] { ext->emitDataReady(source); });
     }
 }
 
