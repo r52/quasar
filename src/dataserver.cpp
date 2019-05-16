@@ -290,7 +290,19 @@ void DataServer::handleMethodQuery(const QJsonObject& req, QWebSocket* sender)
 
     QString extcode = parms["target"].toString();
     QString extparm = parms["params"].toString();
-    QString extargs = parms["args"].toString();
+    QString extargs;
+
+    auto args = parms["args"];
+
+    if (args.isObject())
+    {
+        QJsonDocument d(args.toObject());
+        extargs = QString::fromUtf8(d.toJson());
+    }
+    else
+    {
+        extargs = args.toString();
+    }
 
     if (m_InternalQueryTargets.count(extcode))
     {
