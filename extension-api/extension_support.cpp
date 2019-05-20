@@ -308,7 +308,7 @@ quasar_settings_t* quasar_add_double(quasar_settings_t* settings, const char* na
     return nullptr;
 }
 
-quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* name, const char* description, const char* dflt)
+quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* name, const char* description, const char* dflt, bool password)
 {
     if (settings)
     {
@@ -319,7 +319,8 @@ quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* na
 
         esi_stringtype_t c;
 
-        c.def = dflt;
+        c.def      = dflt;
+        c.password = password;
 
         entry.var.setValue(c);
 

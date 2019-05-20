@@ -471,9 +471,10 @@ QJsonObject DataExtension::getMetadataJSON(bool settings_only)
 
                 case QUASAR_SETTING_ENTRY_STRING:
                 {
-                    auto c   = entry.var.value<esi_stringtype_t>();
-                    s["def"] = c.def;
-                    s["val"] = c.val;
+                    auto c        = entry.var.value<esi_stringtype_t>();
+                    s["def"]      = c.def;
+                    s["val"]      = c.val;
+                    s["password"] = c.password;
                     break;
                 }
 

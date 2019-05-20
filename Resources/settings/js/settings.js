@@ -65,6 +65,10 @@ function createExtensionTab(ext) {
                     type = "checkbox";
                 } else if (s.type === "string") {
                     type = "text";
+
+                    if (s.password) {
+                        type = "password";
+                    }
                 }
 
                 element = `<input type="${type}" class="form-control" id="${ext.name}/${s.name}" ${minmax} value="${s.val}">`;

@@ -56,8 +56,9 @@ struct esi_booltype_t
 //! Internal struct holding a string type setting
 struct esi_stringtype_t
 {
-    QString def; //!< Default value
-    QString val; //!< Current value
+    QString def;      //!< Default value
+    QString val;      //!< Current value
+    bool    password; //!< Password field?
 };
 
 struct esi_select_option_t

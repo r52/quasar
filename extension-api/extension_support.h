@@ -182,9 +182,10 @@ SAPI_EXPORT quasar_settings_t*
     \param[in]  name        Name of the setting
     \param[in]  description Description for the setting
     \param[in]  dflt        Default value (if any)
+    \param[in]  password    Whether this field is a password/obscured field in the UI
     \return The settings handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* name, const char* description, const char* dflt);
+SAPI_EXPORT quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* name, const char* description, const char* dflt, bool password);
 
 //! Creates a selection type setting in extension settings
 /*!
