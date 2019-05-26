@@ -19,7 +19,13 @@ if ($null -eq $qtpath) {
     $qtpath = "C:\Qt\5.12.3\msvc2017_64"
 }
 
+$ifwpath = $env:QTIFW
+if ($null -eq $ifwpath) {
+    $ifwpath = "C:\Qt\Tools\QtInstallerFramework\3.1\bin"
+}
+
 $windeployqt = "$($qtpath)\bin\windeployqt.exe"
+$binarycreator = "$($ifwpath)\binarycreator.exe"
 
 $package_paths = (".\deploy\packages\quasar.main\data\"),
 (".\deploy\packages\quasar.api\data\"),
@@ -107,7 +113,7 @@ Write-Host "Deploying Qt..."
 $pkgname = "quasar_$($name)_x64_installer.exe"
 Write-Host "Creating installer $($pkgname)..."
 
-& C:\Qt\Tools\QtInstallerFramework\3.0\bin\binarycreator.exe --offline-only -c deploy\config\config.xml -p deploy\packages $pkgname
+& $binarycreator --offline-only -c deploy\config\config.xml -p deploy\packages $pkgname
 
 if ($env:APPVEYOR -eq $true) {
     Get-ChildItem $pkgname | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
