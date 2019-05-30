@@ -32,7 +32,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR})
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt5 COMPONENTS Core Gui Widgets Network NetworkAuth WebSockets WebEngine WebEngineCore WebEngineWidgets REQUIRED)
+find_package(Qt5 5.12 COMPONENTS Core Gui Widgets Network NetworkAuth WebSockets WebEngine WebEngineCore WebEngineWidgets REQUIRED)
 find_package(Git)
 find_package(Threads REQUIRED)
 

@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 
 include_directories(../include)
 
-find_package(Qt5 COMPONENTS Core WebSockets REQUIRED)
+find_package(Qt5 5.12 COMPONENTS Core WebSockets REQUIRED)
 
 set(SOURCES
     dataextension.cpp
