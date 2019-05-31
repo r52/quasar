@@ -9,6 +9,6 @@ Component.prototype.createOperations = function()
     component.createOperations();
 
     if (systemInfo.productType === "windows") {
-        component.addOperation("Execute", "@TargetDir@/vc_redist.x64.exe", "/install", "/passive", "/norestart");
+        component.addOperation("Execute", "{0,1638}", "@TargetDir@/vc_redist.x64.exe", "/install", "/passive", "/norestart");
     }
 }
