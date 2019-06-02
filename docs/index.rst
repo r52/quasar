@@ -27,7 +27,7 @@ System Requirements
 
 An OS and computer capable of running Chrome.
 
-`Microsoft Visual C++ Redistributable for Visual Studio 2017 <https://go.microsoft.com/fwlink/?LinkId=746572>`_ is required on Windows.
+`Microsoft Visual C++ Redistributable for Visual Studio 2017 <https://aka.ms/vs/16/release/VC_redist.x64.exe>`_ is required on Windows.
 
 Getting Started
 ---------------
