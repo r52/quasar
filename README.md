@@ -22,9 +22,13 @@ An OS and computer capable of running Chrome.
 
 ## Getting Started
 
-Both an installer and a portable package is provided for Windows x64 under [GitHub Releases](https://github.com/r52/quasar/releases>).
+[Download the latest release here](https://github.com/r52/quasar/releases), available as an installer or portable package for Windows x64.
 
-Simply install or extract Quasar and run the application. The Quasar icon will then show up in your desktop's notification bar. Right-click the icon, load your desired widgets, and enjoy! See the [documentation](https://quasardoc.readthedocs.io) for more details.
+Simply install or extract Quasar and run the application.
+
+**NOTE:** A Windows SmartScreen warning may popup when running the installer, since Quasar does not have a code signing license. Click **More info -> Run anyway** to proceed with the installation.
+
+The Quasar icon will then show up in your desktop's notification bar. Right-click the icon, load your desired widgets, and enjoy! See the [documentation](https://quasardoc.readthedocs.io) for more details.
 
 For developers who wishes to build a Data Server extension, or those who wants to create their own widget, please refer to the [Quasar documentation](https://quasardoc.readthedocs.io). The documentation contains examples and other resources on how to build your first extension or widget.
 
