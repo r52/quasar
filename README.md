@@ -3,6 +3,8 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/yd5l7u53ufo4mur1?svg=true)](https://ci.appveyor.com/project/r52/quasar)
 [![Documentation Status](https://readthedocs.org/projects/quasardoc/badge/?version=latest)](https://quasardoc.readthedocs.io/en/latest/?badge=latest)
 
+**Looking for stuff to use with Quasar? [Click here](https://github.com/r52/things-for-quasar)**
+
 ![](https://i.imgur.com/NX2SNUD.png)
 
 **Quasar** is a cross-platform desktop application that displays web-based widgets on your desktop. Quasar takes full advantage of the Chromium engine to allow even for complex, fully dynamic web apps.
