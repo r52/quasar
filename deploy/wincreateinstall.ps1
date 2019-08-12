@@ -4,7 +4,7 @@ param (
     [switch]$clean = $false
 )
 
-pushd "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\Tools"
+pushd "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\Tools"
 cmd /c "VsDevCmd.bat&set" |
 foreach {
   if ($_ -match "=") {
@@ -12,11 +12,11 @@ foreach {
   }
 }
 popd
-Write-Host "`nVisual Studio 2017 Command Prompt variables set." -ForegroundColor Yellow
+Write-Host "`nVisual Studio 2019 Command Prompt variables set." -ForegroundColor Yellow
 
 $qtpath = $env:QTDIR
 if ($null -eq $qtpath) {
-    $qtpath = "C:\Qt\5.12.3\msvc2017_64"
+    $qtpath = "C:\Qt\5.12.4\msvc2017_64"
 }
 
 $ifwpath = $env:QTIFW
@@ -47,8 +47,8 @@ $release_path = ".\build\x64\Release\"
 
 $release_files = ("Quasar.exe"),
 ("extension-api.dll"),
-("ssleay32.dll"),
-("libeay32.dll"),
+("libcrypto-1_1-x64.dll"),
+("libssl-1_1-x64.dll"),
 ("extensions\win_simple_perf.dll"),
 ("extensions\win_audio_viz.dll")
 
@@ -101,8 +101,8 @@ Copy-Item .\widgets\ -Destination ($package_paths[$widget_path] + "widgets\") -r
 
 # Copy SSL lib
 if (($env:OPENSSL) -and (Test-Path $env:OPENSSL -pathType container)) {
-    Copy-Item $env:OPENSSL\libeay32.dll -Destination $package_paths[$data_path] -Force
-    Copy-Item $env:OPENSSL\ssleay32.dll -Destination $package_paths[$data_path] -Force
+    Copy-Item $env:OPENSSL\libcrypto-1_1-x64.dll -Destination $package_paths[$data_path] -Force
+    Copy-Item $env:OPENSSL\libssl-1_1-x64.dll -Destination $package_paths[$data_path] -Force
 }
 
 # Deploy Qt
