@@ -16,7 +16,7 @@ Write-Host "`nVisual Studio 2019 Command Prompt variables set." -ForegroundColor
 
 $qtpath = $env:QTDIR
 if ($null -eq $qtpath) {
-    $qtpath = "C:\Qt\5.12.4\msvc2017_64"
+    $qtpath = "C:\Qt\5.12.5\msvc2017_64"
 }
 
 $ifwpath = $env:QTIFW

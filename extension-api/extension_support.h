@@ -8,7 +8,7 @@
 
 #include "extension_types.h"
 
-#ifdef PLUGINAPI_LIB
+#ifdef EXTENSIONAPI_LIB
 #    ifdef _WIN32
 #        define SAPI_EXPORT __declspec(dllexport)
 #    else
@@ -16,7 +16,7 @@
 #    endif // _WIN32
 #else
 #    define SAPI_EXPORT
-#endif // PLUGINAPI_LIB
+#endif // EXTENSIONAPI_LIB
 
 #if defined(__cplusplus)
 extern "C" {

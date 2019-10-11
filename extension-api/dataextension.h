@@ -28,11 +28,11 @@
 //! Internal setting prefix for Data Source refresh rate UI
 #define QUASAR_DP_RATE_PREFIX "/rate"
 
-#ifdef PLUGINAPI_LIB
+#ifdef EXTENSIONAPI_LIB
 #    define PAPI_EXPORT Q_DECL_EXPORT
 #else
 #    define PAPI_EXPORT Q_DECL_IMPORT
-#endif // PLUGINAPI_LIB
+#endif // EXTENSIONAPI_LIB
 
 QT_FORWARD_DECLARE_CLASS(QWebSocket)
 

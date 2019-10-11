@@ -23,97 +23,86 @@
       <Extensions>qrc;*</Extensions>
       <ParseFiles>false</ParseFiles>
     </Filter>
-    <Filter Include="Generated Files">
-      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
-      <Extensions>moc;h;cpp</Extensions>
-      <SourceControlFiles>False</SourceControlFiles>
-    </Filter>
-    <Filter Include="Generated Files\Debug">
-      <UniqueIdentifier>{68dcef8a-d2d7-46e4-81cf-b71610516e75}</UniqueIdentifier>
-      <Extensions>cpp;moc</Extensions>
-      <SourceControlFiles>False</SourceControlFiles>
-    </Filter>
-    <Filter Include="Generated Files\Release">
-      <UniqueIdentifier>{9be0575f-2193-414e-bcd3-f387324e6f6e}</UniqueIdentifier>
-      <Extensions>cpp;moc</Extensions>
-      <SourceControlFiles>False</SourceControlFiles>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\main.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\quasar.cpp">
+    <ClCompile Include="quasar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\webwidget.cpp">
+    <ClCompile Include="dataserver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\widgetregistry.cpp">
+    <ClCompile Include="dataservices.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\dataserver.cpp">
+    <ClCompile Include="logwindow.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\logwindow.cpp">
+    <ClCompile Include="runguard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\runguard.cpp">
+    <ClCompile Include="webuidialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\dataservices.cpp">
+    <ClCompile Include="webuihandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\webuihandler.cpp">
+    <ClCompile Include="webwidget.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\webuidialog.cpp">
+    <ClCompile Include="widgetregistry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="quasar.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="dataserver.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="dataservices.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="logwindow.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="webuihandler.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="webwidget.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
+    <QtMoc Include="widgetregistry.h">
+      <Filter>Header Files</Filter>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <QtUic Include="quasar.ui">
       <Filter>Form Files</Filter>
     </QtUic>
+  </ItemGroup>
+  <ItemGroup>
     <QtRcc Include="quasar.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-    <QtMoc Include="src\quasar.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="src\widgetregistry.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="src\webwidget.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="src\dataserver.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="src\logwindow.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
-    <QtMoc Include="src\dataservices.h">
-      <Filter>Header Files</Filter>
-    </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GeneratedFiles\version.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\widgetdefs.h">
+    <ClInclude Include="preproc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\runguard.h">
+    <ClInclude Include="runguard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\preproc.h">
+    <ClInclude Include="sharedlocker.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\sharedlocker.h">
+    <ClInclude Include="webuidialog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\webuidialog.h">
+    <ClInclude Include="widgetdefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -123,8 +112,8 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="src\webuihandler.h">
+    <CustomBuild Include="version.h.in">
       <Filter>Header Files</Filter>
-    </QtMoc>
+    </CustomBuild>
   </ItemGroup>
 </Project>

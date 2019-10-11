@@ -10,30 +10,18 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="dataextension.h" />
-    <ClInclude Include="extension_api.h" />
-    <ClInclude Include="extension_support.h" />
-    <ClInclude Include="extension_support_internal.h" />
-    <ClInclude Include="extension_types.h" />
-    <ClInclude Include="qstring_hash_impl.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="dataextension.cpp" />
-    <ClCompile Include="extension_support.cpp" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B12702AD-ABFB-343A-A199-8E24837244A3}</ProjectGuid>
+    <ProjectGuid>{099BBE79-90A5-4B69-944F-CB4AD7060E0E}</ProjectGuid>
     <Keyword>QtVS_v301</Keyword>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -63,11 +51,11 @@
   </ImportGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <QtInstall>C:\Qt\5.12.5\msvc2017_64</QtInstall>
-    <QtModules>core;websockets</QtModules>
+    <QtModules>core;gui;network;networkauth;websockets;webengine;webenginewidgets;widgets</QtModules>
   </PropertyGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <QtInstall>C:\Qt\5.12.5\msvc2017_64</QtInstall>
-    <QtModules>core;websockets</QtModules>
+    <QtModules>core;gui;network;networkauth;websockets;webengine;webenginewidgets;widgets</QtModules>
   </PropertyGroup>
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')">
     <Import Project="$(QtMsBuild)\qt.props" />
@@ -79,13 +67,12 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <PreprocessorDefinitions>EXTENSIONAPI_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)extension-api;$(SolutionDir)include;GeneratedFiles\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <OutputFile>$(OutDir)\$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -95,25 +82,77 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
-      <PreprocessorDefinitions>EXTENSIONAPI_LIB;NDEBUG;QT_MESSAGELOGCONTEXT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)extension-api;$(SolutionDir)include;GeneratedFiles\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NDEBUG;QT_MESSAGELOGCONTEXT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <OutputFile>$(OutDir)\$(ProjectName).dll</OutputFile>
+      <OutputFile>$(OutDir)\$(ProjectName).exe</OutputFile>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="dataserver.cpp" />
+    <ClCompile Include="dataservices.cpp" />
+    <ClCompile Include="logwindow.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="quasar.cpp" />
+    <ClCompile Include="runguard.cpp" />
+    <ClCompile Include="webuidialog.cpp" />
+    <ClCompile Include="webuihandler.cpp" />
+    <ClCompile Include="webwidget.cpp" />
+    <ClCompile Include="widgetregistry.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="quasar.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="quasar.ui" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="quasar.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\extension-api\extension-api.vcxproj">
+      <Project>{b12702ad-abfb-343a-a199-8e24837244a3}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="dataserver.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="dataservices.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="logwindow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="preproc.h" />
+    <ClInclude Include="runguard.h" />
+    <ClInclude Include="sharedlocker.h" />
+    <ClInclude Include="webuidialog.h" />
+    <ClInclude Include="widgetdefs.h" />
+    <QtMoc Include="widgetregistry.h" />
+    <QtMoc Include="webwidget.h" />
+    <QtMoc Include="webuihandler.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="quasar.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="version.h.in">
+      <FileType>Document</FileType>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">powershell -NoProfile -ExecutionPolicy Unrestricted -file $(SolutionDir)deploy\winversion.ps1</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">powershell -NoProfile -ExecutionPolicy Unrestricted -file $(SolutionDir)deploy\winversion.ps1</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">version.h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">version.h</Outputs>
+    </CustomBuild>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">
     <Import Project="$(QtMsBuild)\qt.targets" />
   </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <ProjectExtensions>
-    <VisualStudio>
-      <UserProperties MocDir=".\GeneratedFiles\$(ConfigurationName)" UicDir=".\GeneratedFiles" RccDir=".\GeneratedFiles" lupdateOptions="" lupdateOnBuild="0" lreleaseOptions="" MocOptions="" />
-    </VisualStudio>
-  </ProjectExtensions>
 </Project>

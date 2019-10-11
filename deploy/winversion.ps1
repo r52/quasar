@@ -2,8 +2,8 @@
 Write-Host "Generating version.h..."
 $gitdesc = (git describe --tags --always)
 
-$versionfile = Get-Item .\src\version.h.in
-$outpath = ".\GeneratedFiles"
+$versionfile = Get-Item version.h.in
+$outpath = "."
 
 if (!(Test-Path $outpath))
 {

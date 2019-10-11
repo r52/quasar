@@ -274,3 +274,6 @@ docs/xml/
 
 # VS2019 intellisense
 *.hint
+
+# quasar specific
+version.h
