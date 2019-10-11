@@ -7,7 +7,7 @@ Component.prototype.createOperations = function () {
     component.createOperations();
 
     if (systemInfo.productType === "windows") {
-        component.addOperation("CreateShortcut", "@TargetDir@/Quasar.exe", "@StartMenuDir@/Quasar.lnk",
+        component.addOperation("CreateShortcut", "@TargetDir@/quasar.exe", "@StartMenuDir@/Quasar.lnk",
             "workingDirectory=@TargetDir@");
         component.addOperation("CreateShortcut", "@TargetDir@/maintenancetool.exe", "@StartMenuDir@/Uninstall Quasar.lnk",
             "workingDirectory=@TargetDir@");

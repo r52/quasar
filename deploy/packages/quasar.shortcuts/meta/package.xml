@@ -2,8 +2,8 @@
 <Package>
     <DisplayName>Start Menu Shortcuts</DisplayName>
     <Description>Adds Start Menu shortcuts for Quasar.</Description>
-    <Version>1</Version>
-    <ReleaseDate>2019-05-30</ReleaseDate>
+    <Version>2</Version>
+    <ReleaseDate>2019-10-11</ReleaseDate>
     <Default>true</Default>
     <Script>installscript.qs</Script>
     <SortingPriority>100</SortingPriority>
