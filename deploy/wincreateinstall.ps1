@@ -58,7 +58,7 @@ $api_files = (".\extension-api\extension_types.h"),
 (".\build\x64\Release\extension-api.lib"),
 (".\build\x64\Release\extension-api.exp")
 
-$debug_files = ("Quasar.pdb"),
+$debug_files = ("quasar.pdb"),
 ("extension-api.pdb"),
 ("extensions\win_simple_perf.pdb"),
 ("extensions\win_audio_viz.pdb")
