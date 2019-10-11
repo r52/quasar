@@ -45,7 +45,7 @@ if ($clean) {
 
 $release_path = ".\build\x64\Release\"
 
-$release_files = ("Quasar.exe"),
+$release_files = ("quasar.exe"),
 ("extension-api.dll"),
 ("libcrypto-1_1-x64.dll"),
 ("libssl-1_1-x64.dll"),
@@ -107,7 +107,7 @@ if (($env:OPENSSL) -and (Test-Path $env:OPENSSL -pathType container)) {
 
 # Deploy Qt
 Write-Host "Deploying Qt..."
-& $windeployqt --no-quick-import --release ($package_paths[$data_path] + "\Quasar.exe")
+& $windeployqt --no-quick-import --release ($package_paths[$data_path] + "\quasar.exe")
 
 # Create installer
 $pkgname = "quasar_$($name)_x64_installer.exe"

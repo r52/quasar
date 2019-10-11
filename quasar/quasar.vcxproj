@@ -19,10 +19,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup Condition="'$(QtMsBuild)'=='' or !Exists('$(QtMsBuild)\qt.targets')">
@@ -51,11 +53,11 @@
   </ImportGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <QtInstall>C:\Qt\5.12.5\msvc2017_64</QtInstall>
-    <QtModules>core;gui;network;networkauth;websockets;webengine;webenginewidgets;widgets</QtModules>
+    <QtModules>core;gui;network;networkauth;webengine;webenginewidgets;websockets;widgets</QtModules>
   </PropertyGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <QtInstall>C:\Qt\5.12.5\msvc2017_64</QtInstall>
-    <QtModules>core;gui;network;networkauth;websockets;webengine;webenginewidgets;widgets</QtModules>
+    <QtModules>core;gui;network;networkauth;webengine;webenginewidgets;websockets;widgets</QtModules>
   </PropertyGroup>
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.props')">
     <Import Project="$(QtMsBuild)\qt.props" />
@@ -83,7 +85,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
       <AdditionalIncludeDirectories>$(SolutionDir)extension-api;$(SolutionDir)include;GeneratedFiles\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;QT_MESSAGELOGCONTEXT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>QT_MESSAGELOGCONTEXT;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
@@ -112,11 +114,6 @@
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="quasar.qrc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\extension-api\extension-api.vcxproj">
-      <Project>{b12702ad-abfb-343a-a199-8e24837244a3}</Project>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="dataserver.h" />
@@ -148,6 +145,11 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">version.h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">version.h</Outputs>
     </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\extension-api\extension-api.vcxproj">
+      <Project>{b12702ad-abfb-343a-a199-8e24837244a3}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

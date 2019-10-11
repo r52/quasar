@@ -21,6 +21,6 @@ if ($null -eq $qtpath)
 $windeploy = "$($qtpath)\bin\windeployqt.exe"
 
 $curpath = (Get-Item -Path ".\" -Verbose).FullName
-$binpath = "$($curpath)\build\x64\$($rel)\Quasar.exe"
+$binpath = "$($curpath)\build\x64\$($rel)\quasar.exe"
 
 & $windeploy --no-quick-import $rels $binpath

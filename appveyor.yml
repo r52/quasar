@@ -23,7 +23,9 @@ environment:
   QTDIR: C:\Qt\5.12.5\msvc2017_64
   OPENSSL: C:\OpenSSL-v111-Win64\bin
   QTIFW: C:\Qt\Tools\QtInstallerFramework\3.1\bin
+# Gotta run this twice because a fresh qtvars build results in unresolved WinMainCRTStartup for some stupid reason
 build_script:
+  - cmd: msbuild "C:\projects\quasar\Quasar.sln" /m /verbosity:normal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /p:QtInstall=%QTDIR% & exit 0
   - cmd: msbuild "C:\projects\quasar\Quasar.sln" /m /verbosity:normal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /p:QtInstall=%QTDIR%
 after_build:
 - ps: .\deploy\wincreateinstall.ps1 -portable -name "$($env:APPVEYOR_BUILD_VERSION)"

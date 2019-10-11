@@ -222,9 +222,6 @@ void Quasar::createActions()
 
     connect(aboutAction, &QAction::triggered, [&] {
         static QString aboutMsg = "Quasar " GIT_VER_STRING "<br/>"
-#ifndef NDEBUG
-                                  "DEBUG BUILD<br/>"
-#endif
                                   "<br/>"
                                   "Compiled on: " __DATE__ "<br/>"
                                   "Compiler: " COMPILER_STRING "<br/>"
