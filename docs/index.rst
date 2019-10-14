@@ -32,7 +32,7 @@ An OS and computer capable of running Chrome.
 Getting Started
 ---------------
 
-`Download the latest release here<https://github.com/r52/quasar/releases>`_, available as an installer or portable package for Windows x64.
+`Download the latest release here <https://github.com/r52/quasar/releases>`_, available as an installer or portable package for Windows x64.
 
 Simply install or extract Quasar and run the application.
 
