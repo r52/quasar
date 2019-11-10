@@ -86,9 +86,10 @@
   // -->
   <Target Name="QtMocInit">
     <!--// Initialize %(OutputFile) -->
-    <ItemGroup Condition="'$(QtVsProjectSettings)' == 'true'">
+    <ItemGroup Condition="'$(QtVsProjectSettings)' == 'true' AND '@(QtMoc)' != ''">
       <QtMocAux Include="@(QtMoc)">
-        <OutputFile>%(QtMoc.QtMocDir)\%(QtMoc.QtMocFileName)</OutputFile>
+        <OutputFile
+          >$([System.IO.Path]::Combine('%(QtMoc.QtMocDir)','%(QtMoc.QtMocFileName)'))</OutputFile>
       </QtMocAux>
       <QtMoc Remove="@(QtMoc)"/>
       <QtMoc Include="@(QtMocAux)"/>
@@ -98,7 +99,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Add moc output dir to C++ include path
     // -->
-    <ItemGroup>
+    <ItemGroup Condition="'@(QtMoc)' != ''">
       <QtIncludePath Include="$([System.IO.Path]::GetDirectoryName('%(QtMoc.OutputFile)'))"/>
     </ItemGroup>
   </Target>

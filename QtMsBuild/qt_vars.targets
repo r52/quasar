@@ -35,21 +35,9 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <QtDependsOn>QtVars;$(QtDependsOn)</QtDependsOn>
-  </PropertyGroup>
-  <ItemGroup>
-    <QtModuleList Include="$(QtModules)"/>
-    <QtVariableList Include="$(QtVariables)"/>
-    <QMakeCodeLine Include="$(QMakeCodeLines)"/>
-    <QtVarProp Include="@(QtVariableList->'Qt_%(Identity)_')"/>
-    <QtIncludesList Include="$(QtHeaderSearchPath)"/>
-    <QtLibsList Include="$(QtLibrarySearchPath)"/>
-  </ItemGroup>
-
-  <PropertyGroup>
+    <QtDependsOn>QtVarsPrepare;QtVars;$(QtDependsOn)</QtDependsOn>
     <QtSkipBuildTargets>QtSkipBuild;$(QtSkipBuildTargets)</QtSkipBuildTargets>
-    <QtModuleNames>@(QtModuleList->'%(Identity)', ' ')</QtModuleNames>
-    <QtVarNames>@(QtVariableList->'%(Identity)', ' ')</QtVarNames>
+    <CleanDependsOn>$(CleanDependsOn);QtVarsClean</CleanDependsOn>
   </PropertyGroup>
 
   <!--
@@ -61,7 +49,8 @@
   <Target
     Name="QtVars"
     Condition="'$(QtVsProjectSettings)' == 'true'"
-    Inputs="$(MSBuildProjectFile)" Outputs="$(QtVarsFilePath);$(QtVarsDesignTime)">
+    DependsOnTargets="QtMocInit;QtUicInit"
+    Inputs="$(MSBuildProjectFile)" Outputs="$(QtVarsFilePath)">
 
     <CreateProperty
       Condition="Exists('$(QtInstall)')"
@@ -94,10 +83,18 @@
       <Output TaskParameter="ValueSetByTask" PropertyName="QtToolsPath" />
     </CreateProperty>
 
+    <!--// Modules and additional .pro file lines -->
+    <ItemGroup>
+      <QtModuleList Include="$(QtModules)"/>
+      <QMakeCodeLine Include="$(QMakeCodeLines)"/>
+    </ItemGroup>
+
     <!--// Generate INCLUDEPATH value -->
     <ItemGroup>
+      <QtIncludesList Include="$(QtHeaderSearchPath)"/>
       <QtIncludes Include=
 "$([System.IO.Path]::Combine($(QtInstallDir),$([System.String]::Copy('%(QtIncludesList.Identity)'))))"/>
+      <QtIncludesList Remove="@(QtIncludesList)"/>
     </ItemGroup>
     <PropertyGroup>
       <QtIncludes>@(QtIncludes->'&quot;%(Identity)&quot;', ' ')</QtIncludes>
@@ -105,8 +102,10 @@
 
     <!--// Generate LIBS value -->
     <ItemGroup>
+      <QtLibsList Include="$(QtLibrarySearchPath)"/>
       <QtLibs Include=
 "$([System.IO.Path]::Combine($(QtInstallDir),$([System.String]::Copy('%(QtLibsList.Identity)'))))"/>
+      <QtLibsList Include="@(QtLibsList)"/>
     </ItemGroup>
     <PropertyGroup>
       <QtLibs>@(QtLibs->'&quot;-L%(Identity)&quot;', ' ')</QtLibs>
@@ -133,14 +132,8 @@
       <!--// .pro file input parameters -->
       <QtVarsProFileInput>
         <!--
-# Qt vars data file name -->
-        fileName = "qtvars_$(PlatformEscaped)_$(ConfigurationEscaped).props"
-        <!--
 # Selected Qt modules -->
-        modules = $(QtModuleNames)
-        <!--
-# Selected Qt variables -->
-        varNames = $(QtVarNames)
+        QT += @(QtModuleList->'%(Identity)', ' ')
         <!--
 # Custom additional .pro file code (from property page) -->
         @(QMakeCodeLine->'%(Identity)','%0D%0A')
@@ -157,73 +150,12 @@
         $(QtVarsProFileInput)
         LIBS += $(QtLibs)
       </QtVarsProFileInput>
-
-      <!--// Generate .pro file -->
       <!--
-######## BEGIN generated qmake project #############################################################
-##    -->
-      <QtVarsProFileText>
-        <![CDATA[
-## Escape string for use by MSBuild
-#
-defineReplace(formatMsBuildString) {
-    exprValue = $$1
-    exprText = ""
-    sep = ""
-    for (value, exprValue) {
-        value = $$replace(value, "%",    "%2525")
-        value = $$replace(value, "%3B",  "%253B")
-        value = $$replace(value, "\x24", "%2524")
-        value = $$replace(value, "@",    "%2540")
-        exprText = "$$exprText$$sep$$value"
-        sep = "%3B"
-    }
-    return($$exprText)
-}
-
-## Fetch information from required modules through dependency relation
-#
-defined(modules, var) {
-    INCLUDEPATH += $$[INCLUDEPATH]
-    QT = $$resolve_depends(modules, "QT.")
-    for (module, $$list($${QT})) {
-        INCLUDEPATH *= $$eval($$"QT.$${module}.includes")
-        DEFINES *= $$eval($$"QT.$${module}.DEFINES")
-    }
-}
-
-## Add "qtvars" make target: append "late-bound" variables (e.g. LIBS) to .props (XML) file.
-#
-contains(varNames, LIBS) {
-    varNames -= LIBS
-    nop = "(ECHO>NUL)"
-    qtvars.target = qtvars
-    qtvars.commands = CMD /V:ON /C \
-        \"@ECHO OFF &\
-        SET VALUE= &\
-        (FOR %%x IN (%24(LIBS)) DO (\
-            SET y=%%x&\
-            IF NOT \"!y:~0,9!\"==\"/LIBPATH:\"\
-                SET VALUE=!y!%3B!VALUE!& $$nop \
-        ))&\
-        SET PROP=^<Qt_LIBS_^>!VALUE:~0,-2!^</Qt_LIBS_^>&\
-        ECHO !PROP!>>$$fileName&\"
-    QMAKE_EXTRA_TARGETS += qtvars
-}
-
-## Append Qt variables to .props (XML) file
-#
-for (varName, $$list($$sorted(varNames))) {
-    propName = "Qt_$${varName}_"
-    text = "<$${propName}>"$$formatMsBuildString($$eval($$varName))"</$${propName}>"
-    write_file($$fileName, text, append)
-}
-        ]]>
-      </QtVarsProFileText>
-      <!--
-##
-######## END generated qmake project ###############################################################
-      -->
+# Undef UNICODE macro if project is configured with multi-byte char set -->
+      <QtVarsProFileInput Condition="'$(CharacterSet)' == 'MultiByte'">
+        $(QtVarsProFileInput)
+        DEFINES -= UNICODE _UNICODE
+      </QtVarsProFileInput>
     </PropertyGroup>
 
     <!--// Write .pro file to temp path -->
@@ -234,8 +166,7 @@ for (varName, $$list($$sorted(varNames))) {
     <WriteLinesToFile
       File="$(QtVarsWorkDir)\qtvars.pro"
       Lines="$(QtVarsProFileConfig)
-            ;$(QtVarsProFileInput)
-            ;$(QtVarsProFileText)"/>
+            ;$(QtVarsProFileInput)"/>
 
     <!--// Write start of Qt vars data file:
         //  * Open property group tag -->
@@ -256,35 +187,91 @@ for (varName, $$list($$sorted(varNames))) {
     </PropertyGroup>
     <WriteLinesToFile File="$(QtVarsWorkPath)" Lines="$(QtVarsDataFileText)" Overwrite="true"/>
 
-    <!--// Run qmake && nmake: append output to .props (XML) file -->
-    <SetEnv Name="PATH" Prefix="true" Value="$(ExecutablePath)"/>
+    <!--// Ensure C++ compiler in PATH -->
+    <Exec Command="WHERE /Q cl.exe"
+      WorkingDirectory="$(QtVarsWorkDir)" IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="ErrorLevel"/>
+    </Exec>
+    <SetEnv Condition="'$(ErrorLevel)' != '0'"
+      Name="PATH" Prefix="true" Value="$(ExecutablePath)"/>
+
+    <!--// Run qmake: convert Makefile vars to .props (XML) file -->
     <PropertyGroup>
-      <Cmd><![CDATA[("$(QtToolsPath)\qmake.exe" && nmake qtvars) 1> qtvars.log 2>&1]]></Cmd>
+      <Cmd><![CDATA[("$(QtToolsPath)\qmake.exe") 1> qtvars.log 2>&1]]></Cmd>
     </PropertyGroup>
     <Exec WorkingDirectory="$(QtVarsWorkDir)" IgnoreExitCode="true" Command="$(Cmd)">
       <Output TaskParameter="ExitCode" PropertyName="ErrorLevel"/>
     </Exec>
 
-    <!--// If error, show qmake/nmake console output and stop build -->
+    <!--// Check qmake result -->
+    <PropertyGroup Condition="'$(ErrorLevel)' != '0' OR !Exists('$(QtVarsWorkDir)\Makefile')">
+      <QMakeError>true</QMakeError>
+    </PropertyGroup>
+
+    <!--// Get qmake console output -->
+    <ItemGroup>
+      <QMakeError Include="($(QtToolsPath)\qmake.exe)"/>
+      <QMakeError Include="%24PWD=$(QtVarsWorkDir)"/>
+    </ItemGroup>
     <ReadLinesFromFile
         File="$(QtVarsWorkDir)\qtvars.log">
       <Output TaskParameter="Lines" ItemName="QMakeError"/>
     </ReadLinesFromFile>
-    <ItemGroup Condition="'$(ErrorLevel)' != '0'">
+    <ItemGroup>
       <QMakeError
         Condition="$([System.String]::Copy('%(Identity)').StartsWith('Info: creating stash file'))"
         Remove="@(QMakeError)"/>
+      <QMakeError
+        Condition="!Exists('$(QtVarsWorkDir)\Makefile')"
+        Include="Error creating Makefile"/>
     </ItemGroup>
+
+    <!--// If error, show qmake console output and stop build -->
+    <Error
+      Condition="'$(QMakeError)' == 'true'"
+      File="$(MSBuildProjectFile)"
+      Text="ERROR running qmake%0D%0Aqmake: @(QMakeError->'%(Identity)','%0D%0Aqmake: ')%0D%0A"/>
     <Message
       Importance="high"
-      Condition="'$(QtVarsDebug)' == 'true'"
-      Text="@(QMakeError->'%(Identity)','%0D%0A')"/>
-    <Error
-      Condition="'$(ErrorLevel)' != '0' AND '$(DesignTimeBuild)' != 'true'"
-      File="$(MSBuildProjectFile)"
-      Text="@(QMakeError->'%(Identity)','%0D%0A')"/>
+      Condition="'$(QMakeError)' != 'true' AND '$(QtVarsDebug)' == 'true'"
+      Text="qmake: @(QMakeError->'%(Identity)','%0D%0Aqmake: ')"/>
+
+    <!--// Parse variable definition expressions -->
+    <ParseVarDefs
+      Condition="'$(QtVars)' != ''" QtVars="$(QtVars)">
+      <Output TaskParameter="OutVarDefs" ItemName="QtVarDef"/>
+    </ParseVarDefs>
+
+    <!--// Read variables from Makefile -->
+    <GetVarsFromMakefile
+      Makefile="$(QtVarsWorkDir)\Makefile" VarDefs="@(QtVarDef)">
+      <Output TaskParameter="OutVars" ItemName="QtVar"/>
+    </GetVarsFromMakefile>
+
+    <!--// Write variables as MSBuild properties to .props file -->
+    <PropertyGroup>
+      <QtMakefileVars Condition="'@(QtVar)' != ''">
+        <![CDATA[@(QtVar->'<Qt_%(Identity)_>%(Value)</Qt_%(Identity)_>','%0D%0A')]]>
+      </QtMakefileVars>
+    </PropertyGroup>
+    <WriteLinesToFile Condition="'$(QtMakefileVars)' != ''"
+      File="$(QtVarsWorkPath)" Lines="$([System.String]::Copy($(QtMakefileVars)))"/>
+
+    <!--// Qt settings list for backup -->
+    <ItemGroup>
+      <QtInstall Include="$(QtInstall)"/>
+      <QtModules Include="$(QtModules)"/>
+      <QtPathBinaries Include="$(QtPathBinaries)"/>
+      <QtPathLibraryExecutables Include="$(QtPathLibraryExecutables)"/>
+      <QtHeaderSearchPath Include="$(QtHeaderSearchPath)"/>
+      <QtLibrarySearchPath Include="$(QtLibrarySearchPath)"/>
+      <QtVariables Include="$(QtVars)"/>
+      <QMakeCodeLines Include="$(QMakeCodeLines)"/>
+    </ItemGroup>
 
     <!--// Write end of .props (XML) file
+        //  * Add Qt tools output directories to include path
+        //  * Save settings backup
         //  * Close property group tag
         //  * Create QtVar items to export Qt variables to the calling instance of MSBuild
         //  * Close project tag -->
@@ -294,10 +281,25 @@ for (varName, $$list($$sorted(varNames))) {
 ##    -->
       <QtVarsDataFileText>
         <![CDATA[
+    <Qt_INCLUDEPATH_
+      >%24(Qt_INCLUDEPATH_)%3B@(QtIncludePath->Distinct(),'%3B')</Qt_INCLUDEPATH_>
+    <QtBkup_QtInstall
+      >@(QtInstall,'%3B')</QtBkup_QtInstall>
+    <QtBkup_QtModules
+      >@(QtModules,'%3B')</QtBkup_QtModules>
+    <QtBkup_QtPathBinaries
+      >@(QtPathBinaries,'%3B')</QtBkup_QtPathBinaries>
+    <QtBkup_QtPathLibraryExecutables
+      >@(QtPathLibraryExecutables,'%3B')</QtBkup_QtPathLibraryExecutables>
+    <QtBkup_QtHeaderSearchPath
+      >@(QtHeaderSearchPath,'%3B')</QtBkup_QtHeaderSearchPath>
+    <QtBkup_QtLibrarySearchPath
+      >@(QtLibrarySearchPath,'%3B')</QtBkup_QtLibrarySearchPath>
+    <QtBkup_QtVars
+      >@(QtVariables,'%3B')</QtBkup_QtVars>
+    <QtBkup_QMakeCodeLines
+      >@(QMakeCodeLines,'%3B')</QtBkup_QMakeCodeLines>
   </PropertyGroup>
-  <ItemGroup>
-    @(QtVarProp->'<QtVar Include="%(Identity)"><Value>%24(%(Identity))</Value></QtVar>', '%0D%0A')
-  </ItemGroup>
 </Project>
         ]]>
       </QtVarsDataFileText>
@@ -308,22 +310,25 @@ for (varName, $$list($$sorted(varNames))) {
     </PropertyGroup>
     <WriteLinesToFile File="$(QtVarsWorkPath)" Lines="$(QtVarsDataFileText)"/>
 
-    <!--// Copy generated .props to $(IntDir) -->
+    <!--// Create $(QtVarsOutputDir) -->
+    <MakeDir Directories="$(QtVarsOutputDir)"/>
+
+    <!--// Copy generated .props to $(QtVarsOutputDir) -->
     <Delete
       Condition="'$(ErrorLevel)' == '0'"
-      Files="$(IntDir)qtvars_$(PlatformEscaped)_$(ConfigurationEscaped).props"/>
+      Files="$(QtVarsFilePath)"/>
     <Copy
       Condition="'$(ErrorLevel)' == '0'"
       SourceFiles="$(QtVarsWorkPath)" DestinationFiles="$(QtVarsFilePath)"/>
 
-    <!--// Copy generated qtvars_plugin_import.cpp to $(IntDir)\qmake -->
+    <!--// Copy generated qtvars_plugin_import.cpp to $(QtVarsOutputDir) -->
     <Delete
       Condition="'$(ErrorLevel)' == '0'"
-      Files="$(IntDir)qmake\qtvars_plugin_import.cpp"/>
+      Files="$(QtVarsOutputDir)\qtvars_plugin_import.cpp"/>
     <Copy
       Condition="'$(ErrorLevel)' == '0' AND Exists('$(QtVarsWorkDir)\qtvars_plugin_import.cpp')"
       SourceFiles="$(QtVarsWorkDir)\qtvars_plugin_import.cpp"
-      DestinationFiles="$(IntDir)qmake\qtvars_plugin_import.cpp"/>
+      DestinationFiles="$(QtVarsOutputDir)\qtvars_plugin_import.cpp"/>
 
     <!--// Remove work dir -->
     <RemoveDir
@@ -347,14 +352,6 @@ for (varName, $$list($$sorted(varNames))) {
       Condition="'$(ErrorLevel)' == '0'"
       File="$(QtVarsIndexPathDesignTime)" Overwrite="true" Lines="$(QtVarsDesignTimeNew)"/>
 
-    <!--// Skip remaining build -->
-    <CreateProperty Value="true">
-      <Output TaskParameter="ValueSetByTask" PropertyName="QtSkipWork" />
-    </CreateProperty>
-    <CallTarget
-      Condition="'$(QtSkipBuildTargets)' != ''"
-      Targets="$(QtSkipBuildTargets)"/>
-
     <!--// Restart build in second MSBuild instance with updated Qt variables -->
     <MSBuild
       Condition="'$(DesignTimeBuild)' != 'true'"
@@ -363,22 +360,76 @@ for (varName, $$list($$sorted(varNames))) {
       Properties="RandomFileName=$([System.IO.Path]::GetRandomFileName())">
     </MSBuild>
 
+    <!--// Skip remaining build -->
+    <CreateProperty Value="true">
+      <Output TaskParameter="ValueSetByTask" PropertyName="QtSkipWork" />
+    </CreateProperty>
+    <CallTarget
+      Condition="'$(QtSkipBuildTargets)' != ''"
+      Targets="$(QtSkipBuildTargets)"/>
+
     <!--// Clean-up -->
     <ItemGroup>
-      <ProjectItem Remove="@(ProjectItem)"/>
       <QtModuleList Remove="@(QtModuleList)"/>
-      <QtVariableList Remove="@(QtVariableList)"/>
       <QMakeCodeLine Remove="@(QMakeCodeLine)"/>
+      <QtIncludes Remove="@(QtIncludes)"/>
+      <QtLibs Remove="@(QtLibs)"/>
+      <QMakeError Remove="@(QMakeError)"/>
+      <QtInstall Remove="@(QtInstall)"/>
+      <QtModules Remove="@(QtModules)"/>
+      <QtPathBinaries Remove="@(QtPathBinaries)"/>
+      <QtPathLibraryExecutables Remove="@(QtPathLibraryExecutables)"/>
+      <QtHeaderSearchPath Remove="@(QtHeaderSearchPath)"/>
+      <QtLibrarySearchPath Remove="@(QtLibrarySearchPath)"/>
+      <QtVariables Remove="@(QtVariables)"/>
+      <QMakeCodeLines Remove="@(QMakeCodeLines)"/>
+      <QtVarDef Remove="@(QtVarDef)"/>
+      <QtVar Remove="@(QtVar)"/>
     </ItemGroup>
     <PropertyGroup>
-      <QMakeProjTempDir/>
-      <QtVarsTempPath/>
-      <QtModuleNames/>
-      <QMakeVarNames/>
-      <QMakeAdditionalCode/>
-      <QtVarsProFileText/>
+      <QtIncludes/>
+      <QtLibs/>
+      <QtVarsProFileConfig/>
+      <QtVarsProFileInput/>
+      <QtVarsDataFileText/>
       <Cmd/>
+      <QtMakefileVars/>
     </PropertyGroup>
+  </Target>
+
+  <!--
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  /// TARGET QtVarsPrepare
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // Force QtVars target to run when Qt settings have changed
+  // -->
+  <Target Name="QtVarsPrepare" BeforeTargets="QtVars" Condition="Exists('$(QtVarsFilePath)')">
+    <Delete Files="$(QtVarsFilePath)" Condition="Exists('$(QtVarsFilePath)')
+        AND '$(QtBkup_QtInstall)' != '$(QtInstall)'" />
+    <Delete Files="$(QtVarsFilePath)" Condition="Exists('$(QtVarsFilePath)')
+        AND '$(QtBkup_QtModules)' != '$(QtModules)'" />
+    <Delete Files="$(QtVarsFilePath)" Condition="Exists('$(QtVarsFilePath)')
+        AND '$(QtBkup_QtPathBinaries)' != '$(QtPathBinaries)'" />
+    <Delete Files="$(QtVarsFilePath)" Condition="Exists('$(QtVarsFilePath)')
+        AND '$(QtBkup_QtPathLibraryExecutables)' != '$(QtPathLibraryExecutables)'" />
+    <Delete Files="$(QtVarsFilePath)" Condition="Exists('$(QtVarsFilePath)')
+        AND '$(QtBkup_QtHeaderSearchPath)' != '$(QtHeaderSearchPath)'" />
+    <Delete Files="$(QtVarsFilePath)" Condition="Exists('$(QtVarsFilePath)')
+        AND '$(QtBkup_QtLibrarySearchPath)' != '$(QtLibrarySearchPath)'" />
+    <Delete Files="$(QtVarsFilePath)" Condition="Exists('$(QtVarsFilePath)')
+        AND '$(QtBkup_QtVars)' != '$(QtVars)'" />
+    <Delete Files="$(QtVarsFilePath)" Condition="Exists('$(QtVarsFilePath)')
+        AND '$(QtBkup_QMakeCodeLines)' != '$(QMakeCodeLines)'" />
+  </Target>
+
+  <!--
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  /// TARGET QtVarsClean
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // Delete all files generated by the QtVars target
+  // -->
+  <Target Name="QtVarsClean">
+    <RemoveDir Directories="$(QtVarsOutputDir)"/>
   </Target>
 
   <!--
@@ -388,7 +439,7 @@ for (varName, $$list($$sorted(varNames))) {
   // Force QtVars target to run (called when project properties change)
   // -->
   <Target Name="QtVarsDesignTime">
-    <Delete Files="$(QtVarsFilePath)"/>
+    <CallTarget Targets="QtVarsClean"/>
     <CallTarget Targets="QtVars"/>
   </Target>
 
@@ -406,6 +457,7 @@ for (varName, $$list($$sorted(varNames))) {
       <QtUic Remove="@(QtUic)"/>
       <ClCompile Remove="@(ClCompile)"/>
       <Link Remove="@(Link)"/>
+      <ProjectReference Remove="@(ProjectReference)"/>
     </ItemGroup>
   </Target>
 

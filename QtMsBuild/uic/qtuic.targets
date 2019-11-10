@@ -86,9 +86,10 @@
   // -->
   <Target Name="QtUicInit">
     <!--// Initialize %(OutputFile) -->
-    <ItemGroup Condition="'$(QtVsProjectSettings)' == 'true'">
+    <ItemGroup Condition="'$(QtVsProjectSettings)' == 'true' AND '@(QtUic)' != ''">
       <QtUicAux Include="@(QtUic)">
-        <OutputFile>%(QtUic.QtUicDir)\%(QtUic.QtUicFileName)</OutputFile>
+        <OutputFile
+          >$([System.IO.Path]::Combine('%(QtUic.QtUicDir)','%(QtUic.QtUicFileName)'))</OutputFile>
       </QtUicAux>
       <QtUic Remove="@(QtUic)"/>
       <QtUic Include="@(QtUicAux)"/>
@@ -98,7 +99,7 @@
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // Add uic output dir to C++ include path
     // -->
-    <ItemGroup>
+    <ItemGroup Condition="'@(QtUic)' != ''">
       <QtIncludePath Include="$([System.IO.Path]::GetDirectoryName('%(QtUic.OutputFile)'))"/>
     </ItemGroup>
   </Target>

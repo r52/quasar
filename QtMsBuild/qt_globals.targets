@@ -56,11 +56,11 @@
     </DesignTimeBuildInitTargets>
     <ComputeCompileInputsTargets>
       $(ComputeCompileInputsTargets);
-      QtWork
+      Qt
     </ComputeCompileInputsTargets>
     <ComputeLinkInputsTargets>
       $(ComputeLinkInputsTargets);
-      QtWork
+      Qt
     </ComputeLinkInputsTargets>
   </PropertyGroup>
 
@@ -77,6 +77,18 @@
     <QtMaxProcs Condition="'$(QtMaxProcs)' == ''"
       >$([System.Environment]::ProcessorCount)</QtMaxProcs>
   </PropertyGroup>
+
+  <!--
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  /// TARGET QtGetDefaultClCompile
+  /////////////////////////////////////////////////////////////////////////////////////////////////
+  // Get default C++ properties
+  // -->
+  <Target Name="QtGetDefaultClCompile" BeforeTargets="FixupCLCompileOptions">
+    <ItemGroup>
+      <ClCompile Include="DefaultClCompile"/>
+    </ItemGroup>
+  </Target>
 
   <!--
   /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,13 +120,10 @@
   // -->
   <Target Name="QtPrepare"
     Condition="'$(QtSkipWork)' != 'true'"
-    DependsOnTargets="$(QtDependsOn)">
+    DependsOnTargets="$(QtDependsOn)"
+    BeforeTargets="QtWorkPrepare">
 
     <Message Importance="High" Condition="'$(QtDebug)' == 'true'" Text="#### QtPrepare"/>
-
-    <ItemGroup>
-      <ClCompile Include="DefaultClCompile" />
-    </ItemGroup>
 
     <ReadLinesFromFile File="$(QtLogFilePath)">
       <Output TaskParameter="Lines" ItemName="QtLogData"/>
@@ -243,7 +252,7 @@
   // -->
   <Target Name="QtWork"
     Condition="'$(QtSkipWork)' != 'true'"
-    DependsOnTargets="QtPrepare;QtWorkPrepare">
+    DependsOnTargets="QtWorkPrepare;QtGetDefaultClCompile">
 
     <Message Importance="High" Condition="'$(QtDebug)' == 'true'"
       Text="## Qt Build $(QtBuildTargets.Replace(';',' ').Trim())" />
@@ -357,11 +366,20 @@
     // Add dynamic C++ sources to build
     // -->
     <ItemGroup>
-      <ClCompile Include="@(QtWorkResult->'%(ClCompile)')"
-        Condition="'%(QtWorkResult.ExitCode)' == '0' AND '%(QtWorkResult.ClCompile)' != ''"/>
-      <ClCompile
-        Condition="Exists('$(IntDir)qmake\qtvars_plugin_import.cpp')"
-        Include="$(IntDir)qmake\qtvars_plugin_import.cpp"/>
+      <QtWork_ClCompile
+        Condition="'%(QtWorkResult.ExitCode)' == '0' AND '%(QtWorkResult.ClCompile)' != ''"
+        Include="@(QtWorkResult->'%(ClCompile)')"/>
+      <QtWork_ClCompile
+        Condition="Exists('$(QtVarsOutputDir)\qtvars_plugin_import.cpp')"
+        Include="$(QtVarsOutputDir)\qtvars_plugin_import.cpp"/>
+    </ItemGroup>
+    <Expand Condition="'@(QtWork_ClCompile)' != ''"
+      Items="@(QtWork_ClCompile)"
+      BaseItem="@(ClCompile->WithMetadataValue('Identity', 'DefaultClCompile'))">
+      <Output TaskParameter="Result" ItemName="ClCompile"/>
+    </Expand>
+    <ItemGroup>
+      <QtWork_ClCompile Remove="@(QtWork_ClCompile)"/>
     </ItemGroup>
 
     <!--// If sources were manually selected (e.g. by the 'Compile' option in the context menu for
@@ -404,7 +422,6 @@
       <read_log     Remove="@(read_log)"/>
       <write_log    Remove="@(write_log)"/>
       <clean_log    Remove="@(clean_log)"/>
-      <ClCompile    Remove="DefaultClCompile" />
     </ItemGroup>
   </Target>
 
@@ -414,6 +431,10 @@
   /////////////////////////////////////////////////////////////////////////////////////////////////
   // Root Qt target
   // -->
-  <Target Name="Qt" DependsOnTargets="QtWork"/>
+  <Target Name="Qt" DependsOnTargets="QtPrepare;QtWork">
+    <ItemGroup>
+      <ClCompile Remove="DefaultClCompile" />
+    </ItemGroup>
+  </Target>
 
 </Project>
