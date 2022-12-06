@@ -1,29 +1,47 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.21)
 
-project(quasar)
+project(quasar VERSION 3.0.0)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR})
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt5 5.12 COMPONENTS Core Gui Widgets Network NetworkAuth WebSockets WebEngine WebEngineCore WebEngineWidgets REQUIRED)
-find_package(Git)
-find_package(Threads REQUIRED)
-
-execute_process(COMMAND ${GIT_EXECUTABLE} describe --tags --always
-    OUTPUT_VARIABLE QUASAR_GIT_VER
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+find_package(Qt6 6.4 COMPONENTS Core Gui Widgets Network NetworkAuth WebEngineCore WebEngineWidgets REQUIRED)
+find_package(spdlog REQUIRED)
+qt_standard_project_setup()
 
 configure_file(version.h.in version.h @ONLY)
 
-file(GLOB SOURCES "*.cpp")
+add_executable(quasar
+  # Source
+  main.cpp
+  quasar.cpp
 
-add_executable(quasar ${SOURCES} quasar.qrc)
+  # UI files
+  quasar.ui
+
+  # Qt resources
+  quasar.qrc
+
+  # Windows rc
+  quasar.rc
+)
 target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-target_compile_features(quasar PUBLIC cxx_std_17)
-target_link_libraries(quasar quasar-extensionapi)
-target_link_libraries(quasar Threads::Threads)
-target_link_libraries(quasar Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network Qt5::NetworkAuth Qt5::WebSockets Qt5::WebEngine Qt5::WebEngineCore Qt5::WebEngineWidgets)
+target_compile_features(quasar PRIVATE cxx_std_20)
+#target_link_libraries(quasar quasar-extensionapi)
+target_link_libraries(quasar PRIVATE common)
+target_link_libraries(quasar PRIVATE spdlog::spdlog)
+target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::WebEngineCore Qt6::WebEngineWidgets)
+
+# Copy library
+add_custom_command(TARGET quasar POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:common> $<TARGET_FILE_DIR:quasar>
+)
+
+#add_custom_command(TARGET quasar POST_BUILD 
+#    COMMAND Qt6::windeployqt
+#    ARGS $<TARGET_FILE:quasar>
+#)
 
 install(TARGETS quasar DESTINATION quasar)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.21)
 
 project(quasar-project)
 
@@ -13,17 +13,11 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    message("DEBUG BUILD")
-else()
-    add_definitions(-DQT_MESSAGELOGCONTEXT)
-    add_definitions(-DNDEBUG)
-endif()
+#set(CMAKE_SKIP_BUILD_RPATH FALSE)
+#set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+#set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/quasar")
+#set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/quasar")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-add_subdirectory(extension-api)
+#add_subdirectory(extension-api)
+add_subdirectory(common)
 add_subdirectory(quasar)
