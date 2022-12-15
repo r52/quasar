@@ -25,6 +25,7 @@ void Config::ReadInteralSettings()
     ReadSetting(Settings::internal.log_level);
     ReadSetting(Settings::internal.port);
     ReadSetting(Settings::internal.loaded_widgets);
+    ReadSetting(Settings::internal.lastpath);
 }
 
 QByteArray Config::ReadGeometry(const QString& name)
@@ -39,12 +40,37 @@ void Config::WriteGeometry(const QString& name, const QByteArray& geometry)
     cfg->setValue(name + "/geometry", geometry);
 }
 
+Settings::WidgetSettings& Config::ReadWidgetSettings(const QString& name, Settings::WidgetSettings& settings) const
+{
+    Settings::WidgetSettings ws;
+
+    cfg->beginGroup(name);
+    ws.alwaysOnTop   = cfg->value("alwaysOnTop").toBool();
+    ws.fixedPosition = cfg->value("fixedPosition").toBool();
+    ws.clickable     = cfg->value("clickable", settings.clickable).toBool();
+    ws.customSize    = cfg->value("customSize", settings.defaultSize).toSize();
+    cfg->endGroup();
+
+    return ws;
+}
+
+void Config::WriteWidgetSettings(const QString& name, const Settings::WidgetSettings& settings)
+{
+    cfg->beginGroup(name);
+    cfg->setValue("alwaysOnTop", settings.alwaysOnTop);
+    cfg->setValue("fixedPosition", settings.fixedPosition);
+    cfg->setValue("clickable", settings.clickable);
+    cfg->setValue("customSize", settings.customSize);
+    cfg->endGroup();
+}
+
 void Config::WriteInternalSettings()
 {
     WriteSetting(Settings::internal.log_file);
     WriteSetting(Settings::internal.log_level);
     WriteSetting(Settings::internal.port);
     WriteSetting(Settings::internal.loaded_widgets);
+    WriteSetting(Settings::internal.lastpath);
 }
 
 template<typename T, bool ranged>

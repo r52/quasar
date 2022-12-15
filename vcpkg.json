@@ -1,7 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json",
   "name": "quasar",
-  "builtin-baseline": "d7c68eea3888e285e4e51b028c13efa1c5229029",
+  "builtin-baseline": "56765209ec0e92c58a5fd91aa09c46a16d660026",
   "version": "3.0.0",
   "dependencies": ["spdlog", "daw-json-link"]
 }

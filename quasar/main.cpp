@@ -11,7 +11,8 @@ int main(int argc, char* argv[])
     QCoreApplication::setApplicationName("quasar");
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
-    QApplication  a(argc, argv);
+    QApplication a(argc, argv);
+    a.setQuitOnLastWindowClosed(false);
 
     QPixmap       pixmap(":/Resources/splash.png");
     QSplashScreen splash(pixmap);

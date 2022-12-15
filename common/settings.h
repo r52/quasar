@@ -9,6 +9,8 @@
 #include <utility>
 #include <vector>
 
+#include <QSize>
+
 namespace Settings
 {
 
@@ -147,6 +149,15 @@ namespace Settings
     };
 
     extern common_API InternalSettings internal;
+
+    struct WidgetSettings
+    {
+        bool  alwaysOnTop;
+        bool  fixedPosition;
+        bool  clickable;
+        QSize customSize;
+        QSize defaultSize;
+    };
 
     // TODO extension settings
 }  // namespace Settings

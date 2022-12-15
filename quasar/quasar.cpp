@@ -3,10 +3,15 @@
 #include "version.h"
 
 #include "config.h"
+#include "quasarwidget.h"
+#include "server.h"
+#include "widgetmanager.h"
 
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDesktopServices>
+#include <QDir>
+#include <QFileDialog>
 #include <QMenu>
 #include <QMessageBox>
 #include <QStandardPaths>
@@ -18,7 +23,11 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
 
-Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config(std::make_unique<Config>())
+Quasar::Quasar(QWidget* parent) :
+    QMainWindow(parent),
+    config{std::make_shared<Config>()},
+    server{std::make_shared<Server>()},
+    manager{std::make_shared<WidgetManager>(server)}
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
@@ -51,6 +60,9 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config(std::make_unique<C
     {
         restoreGeometry(geometry);
     }
+
+    // Load widgets
+    manager->LoadStartupWidgets(config);
 }
 
 void Quasar::initializeLogger(QTextEdit* edit)
@@ -73,10 +85,8 @@ void Quasar::initializeLogger(QTextEdit* edit)
 
     auto logger = Log::setup_logger(sinks);
 
-    // spdlog::register_logger(logger);
     spdlog::set_default_logger(logger);
 
-    // TODO settings
     spdlog::set_level((spdlog::level::level_enum) Settings::internal.log_level.GetValue());
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [thread %t] [%^%l%$] %v - %!:L%#");
 
@@ -87,12 +97,12 @@ void Quasar::initializeLogger(QTextEdit* edit)
 
 void Quasar::createTrayMenu()
 {
+    loadAction = new QAction(tr("&Load"), this);
+    connect(loadAction, &QAction::triggered, this, &Quasar::openWidget);
+
+    widgetListMenu = new QMenu(tr("Widgets"), this);
+
     // TODO
-    // loadAction = new QAction(tr("&Load"), this);
-    // connect(loadAction, &QAction::triggered, this, &Quasar::openWebWidget);
-
-    // widgetListMenu = new QMenu(tr("Widgets"), this);
-
     // settingsAction = new QAction(tr("&Settings"), this);
     // connect(settingsAction, &QAction::triggered, [&] {
     //     if (setdlg == nullptr)
@@ -154,9 +164,11 @@ void Quasar::createTrayIcon()
 {
     // TODO
     trayIconMenu = new QMenu(this);
-    // trayIconMenu->addAction(loadAction);
-    // trayIconMenu->addMenu(widgetListMenu);
+    trayIconMenu->addAction(loadAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addMenu(widgetListMenu);
     // trayIconMenu->addAction(settingsAction);
+    trayIconMenu->addSeparator();
     trayIconMenu->addAction(logAction);
     // trayIconMenu->addAction(consoleAction);
     trayIconMenu->addSeparator();
@@ -172,25 +184,45 @@ void Quasar::createTrayIcon()
     connect(trayIcon, &QSystemTrayIcon::activated, this, &Quasar::trayIconActivated);
 }
 
+void Quasar::openWidget()
+{
+    QString defpath  = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    QString lastpath = QString::fromStdString(Settings::internal.lastpath.GetValue());
+
+    if (lastpath.isEmpty())
+    {
+        lastpath = defpath;
+    }
+
+    QString fname = QFileDialog::getOpenFileName(this, tr("Load Widget"), lastpath, tr("Widget Definitions (*.json)"));
+
+    if (!fname.isNull())
+    {
+        QFileInfo info(fname);
+        Settings::internal.lastpath.SetValue(info.canonicalPath().toStdString());
+
+        manager->LoadWidget(fname.toStdString(), config, true);
+    }
+}
+
 void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 {
-    // TODO
     switch (reason)
     {
         case QSystemTrayIcon::Trigger:
         case QSystemTrayIcon::Context:
             {
                 // Regenerate widget list menu
-                // widgetListMenu->clear();
+                widgetListMenu->clear();
 
-                //{
-                //    auto widgets = service->getRegistry()->getWidgets();
+                {
+                    auto widgets = manager->GetWidgets();
 
-                //    for (auto& w : *widgets)
-                //    {
-                //        widgetListMenu->addMenu(w.second->getMenu());
-                //    }
-                //}
+                    for (auto& w : widgets)
+                    {
+                        widgetListMenu->addMenu(w->GetContextMenu());
+                    }
+                }
 
                 if (reason == QSystemTrayIcon::Trigger)
                 {
@@ -202,7 +234,7 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 
         case QSystemTrayIcon::DoubleClick:
             {
-                // openWebWidget();
+                openWidget();
                 break;
             }
     }

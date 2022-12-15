@@ -7,6 +7,8 @@
 #include <QtWidgets/QMainWindow>
 
 class Config;
+class Server;
+class WidgetManager;
 
 class Quasar : public QMainWindow
 {
@@ -26,6 +28,7 @@ private:
     void initializeLogger(QTextEdit* edit);
 
 private slots:
+    void openWidget();
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
 
 private:
@@ -45,5 +48,7 @@ private:
     QAction*         quitAction{};
 
     //
-    std::unique_ptr<Config> config{};
+    std::shared_ptr<Config>        config{};
+    std::shared_ptr<Server>        server{};
+    std::shared_ptr<WidgetManager> manager{};
 };
