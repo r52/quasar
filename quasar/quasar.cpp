@@ -3,9 +3,9 @@
 #include "version.h"
 
 #include "config.h"
-#include "quasarwidget.h"
-#include "server.h"
-#include "widgetmanager.h"
+#include "server/server.h"
+#include "widgets/quasarwidget.h"
+#include "widgets/widgetmanager.h"
 
 #include <QApplication>
 #include <QCloseEvent>
@@ -88,7 +88,7 @@ void Quasar::initializeLogger(QTextEdit* edit)
     spdlog::set_default_logger(logger);
 
     spdlog::set_level((spdlog::level::level_enum) Settings::internal.log_level.GetValue());
-    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [thread %t] [%^%l%$] %v - %!:L%#");
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [thread %t] [%^%l%$] %v - %s:L%#");
 
     SPDLOG_DEBUG("Log level: {}", Settings::internal.log_level.GetValue());
     SPDLOG_DEBUG("Logging to: {}", path.toStdString());

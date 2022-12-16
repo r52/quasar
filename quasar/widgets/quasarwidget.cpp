@@ -1,7 +1,7 @@
 #include "quasarwidget.h"
 
+#include "../server/server.h"
 #include "config.h"
-#include "server.h"
 #include "widgetmanager.h"
 
 #include <QAbstractButton>
@@ -19,23 +19,23 @@
 
 void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
 {
-    QString msg = "CONSOLE: " + message + " (" + sourceID + ":" + QString::number(lineNumber) + ")";
+    std::string msg = "CONSOLE: " + message.toStdString() + " (" + sourceID.toStdString() + ":" + std::to_string(lineNumber) + ")";
 
     switch (level)
     {
         case InfoMessageLevel:
-            SPDLOG_INFO(msg.toStdString());
+            SPDLOG_INFO(msg);
             break;
         case WarningMessageLevel:
-            SPDLOG_WARN(msg.toStdString());
+            SPDLOG_WARN(msg);
             break;
         case ErrorMessageLevel:
-            SPDLOG_ERROR(msg.toStdString());
+            SPDLOG_ERROR(msg);
             break;
     }
 }
 
-QuasarWidget::QuasarWidget(std::string                    widgetName,
+QuasarWidget::QuasarWidget(const std::string&             widgetName,
                            const WidgetDefinition&        def,
                            std::shared_ptr<Server>        serv,
                            std::shared_ptr<WidgetManager> man,

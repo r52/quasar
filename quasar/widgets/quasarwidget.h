@@ -77,10 +77,10 @@ protected:
 
 class QuasarWidget : public QWidget
 {
-    Q_OBJECT
+    Q_OBJECT;
 
 public:
-    QuasarWidget(std::string                    widgetName,
+    QuasarWidget(const std::string&             widgetName,
                  const WidgetDefinition&        def,
                  std::shared_ptr<Server>        serv,
                  std::shared_ptr<WidgetManager> man,

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "widgetdefinition.h"
+
 #include <memory>
 #include <shared_mutex>
 #include <string>
@@ -17,7 +19,7 @@ public:
     WidgetManager(std::shared_ptr<Server> serv);
     ~WidgetManager();
 
-    bool                       LoadWidget(std::string filename, std::shared_ptr<Config> config, bool userAction);
+    bool                       LoadWidget(const std::string& filename, std::shared_ptr<Config> config, bool userAction);
     void                       CloseWidget(QuasarWidget* widget);
 
     void                       LoadStartupWidgets(std::shared_ptr<Config> config);
@@ -25,11 +27,12 @@ public:
     std::vector<QuasarWidget*> GetWidgets();
 
 private:
+    bool                      acceptSecurityWarnings(const WidgetDefinition& def);
     std::vector<std::string>  getLoadedWidgetsList();
     void                      saveLoadedWidgetsList(const std::vector<std::string>& list);
 
     WidgetMapType             widgetMap;
     std::weak_ptr<Server>     server;
 
-    mutable std::shared_mutex m_mutex;
+    mutable std::shared_mutex mutex;
 };

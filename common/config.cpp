@@ -40,7 +40,7 @@ void Config::WriteGeometry(const QString& name, const QByteArray& geometry)
     cfg->setValue(name + "/geometry", geometry);
 }
 
-Settings::WidgetSettings& Config::ReadWidgetSettings(const QString& name, Settings::WidgetSettings& settings) const
+Settings::WidgetSettings Config::ReadWidgetSettings(const QString& name, Settings::WidgetSettings& settings) const
 {
     Settings::WidgetSettings ws;
 

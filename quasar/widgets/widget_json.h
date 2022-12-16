@@ -4,6 +4,9 @@
 
 #include <daw/json/daw_json_link.h>
 
+// XXX: This is separated out into its own file because including daw_json_link.h
+// in a Qt class header that needs to be MOC'd will screw up the namespaces
+
 namespace daw::json
 {
     template<>

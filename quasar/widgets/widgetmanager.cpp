@@ -1,8 +1,7 @@
 #include "widgetmanager.h"
 
+#include "../server/server.h"
 #include "quasarwidget.h"
-#include "server.h"
-#include "widgetdefinition.h"
 
 #include "settings.h"
 
@@ -24,7 +23,7 @@ WidgetManager::~WidgetManager()
     widgetMap.clear();
 }
 
-bool WidgetManager::LoadWidget(std::string filename, std::shared_ptr<Config> config, bool userAction)
+bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Config> config, bool userAction)
 {
     if (filename.empty())
     {
@@ -89,23 +88,21 @@ bool WidgetManager::LoadWidget(std::string filename, std::shared_ptr<Config> con
         }
     }
 
-    // TODO
-    // if (userAction && !QuasarWidget::acceptSecurityWarnings(def))
-    // {
-    //     SPDLOG_WARN("Denied loading widget {}", filename);
-    //     return false;
-    // }
+    if (userAction && !acceptSecurityWarnings(def))
+    {
+        SPDLOG_WARN("Denied loading widget {}", filename);
+        return false;
+    }
 
     // Generate unique widget name
-    std::string                         defName    = def.name;
-    std::string                         widgetName = defName;
+    std::string                         widgetName = def.name;
     int                                 idx        = 2;
 
-    std::unique_lock<std::shared_mutex> lk(m_mutex);
+    std::unique_lock<std::shared_mutex> lk(mutex);
 
     while (widgetMap.count(widgetName) > 0)
     {
-        widgetName = defName + std::to_string(idx++);
+        widgetName = def.name + std::to_string(idx++);
     }
 
     SPDLOG_INFO("Loading widget \"{}\" ({})", widgetName, def.fullpath);
@@ -134,7 +131,7 @@ void WidgetManager::CloseWidget(QuasarWidget* widget)
     SPDLOG_INFO("Closing widget \"{}\" ({})", widget->GetName(), widget->GetFullPath());
 
     {
-        std::unique_lock<std::shared_mutex> lk(m_mutex);
+        std::unique_lock<std::shared_mutex> lk(mutex);
 
         // Remove from registry
         auto it = widgetMap.find(name);
@@ -177,7 +174,7 @@ std::vector<QuasarWidget*> WidgetManager::GetWidgets()
     std::vector<QuasarWidget*> widgets;
 
     {
-        std::unique_lock<std::shared_mutex> lk(m_mutex);
+        std::unique_lock<std::shared_mutex> lk(mutex);
 
         std::transform(widgetMap.begin(), widgetMap.end(), std::back_inserter(widgets), [](auto& pair) {
             return pair.second.get();
@@ -185,6 +182,23 @@ std::vector<QuasarWidget*> WidgetManager::GetWidgets()
     }
 
     return widgets;
+}
+
+bool WidgetManager::acceptSecurityWarnings(const WidgetDefinition& def)
+{
+    if (!def.remoteAccess.value_or(false))
+    {
+        return true;
+    }
+
+    bool accept = false;
+
+    auto reply  = QMessageBox::warning(nullptr,
+                                      QObject::tr("Remote Access"),
+                                      QObject::tr("This widget requires remote access to external URLs. This may pose a security risk.\n\nContinue loading?"),
+                                      QMessageBox::Ok | QMessageBox::Cancel);
+
+    return (reply == QMessageBox::Ok);
 }
 
 std::vector<std::string> WidgetManager::getLoadedWidgetsList()

@@ -15,15 +15,15 @@ public:
     Config();
     ~Config();
 
-    void                      Save();
+    void                     Save();
 
-    void                      ReadInteralSettings();
+    void                     ReadInteralSettings();
 
-    QByteArray                ReadGeometry(const QString& name);
-    void                      WriteGeometry(const QString& name, const QByteArray& geometry);
+    QByteArray               ReadGeometry(const QString& name);
+    void                     WriteGeometry(const QString& name, const QByteArray& geometry);
 
-    Settings::WidgetSettings& ReadWidgetSettings(const QString& name, Settings::WidgetSettings& settings) const;
-    void                      WriteWidgetSettings(const QString& name, const Settings::WidgetSettings& settings);
+    Settings::WidgetSettings ReadWidgetSettings(const QString& name, Settings::WidgetSettings& settings) const;
+    void                     WriteWidgetSettings(const QString& name, const Settings::WidgetSettings& settings);
 
 private:
     void WriteInternalSettings();
