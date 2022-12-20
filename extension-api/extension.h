@@ -6,6 +6,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -13,7 +14,7 @@
 #include "api/extension_types.h"
 #include "extension_exports.h"
 
-#include <daw/json/daw_json_link.h>
+#include <jsoncons/json.hpp>
 
 class Config;
 class Server;
@@ -45,10 +46,12 @@ struct DataSource
 
     // poll type
     std::unordered_set<void*> pollqueue;  //!< Queue of widgets (i.e. its WebSocket instance) waiting for polled data
-    daw::json::json_value     cacheddat;  //!< Cached data for polled data with a validity duration
+    jsoncons::json            cacheddat;  //!< Cached data for polled data with a validity duration
                                           //!< \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
     std::chrono::system_clock::time_point
-        expiry;  //!< Expiry time of cached data \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
+                              expiry;  //!< Expiry time of cached data \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
+
+    mutable std::shared_mutex mutex;  //!< Data Source level lock
 
     // signaled type source fields
     std::unique_ptr<DataLock> locks;  //!< Mutex/cv for asynchronous or extension signaled sources \sa DataLock
@@ -56,6 +59,14 @@ struct DataSource
 
 class extension_API Extension
 {
+    //! Defines valid return values for getDataFromSource()
+    enum DataSourceReturnState : int8_t
+    {
+        GET_DATA_FAILED  = -1,  //!< get_data failed
+        GET_DATA_DELAYED = 0,   //!< get_data delayed
+        GET_DATA_SUCCESS = 1    //!< data successfully retrieved
+    };
+
     //! Shorthand type for quasar_extension_load()
     using extension_load = std::add_pointer_t<quasar_ext_info_t*(void)>;
 
@@ -79,12 +90,21 @@ public:
         \param[in]  libpath Path to library file
         \return Pointer to a Extension instance if successful, nullptr otherwise
     */
-    static Extension* load(const std::string& libpath, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv);
+    static Extension* Load(const std::string& libpath, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv);
 
     /*! Initializes the extension
         Throws an exception if failed.
     */
-    void initialize();
+    void Initialize();
+
+    //! Polls the extension for data to be sent to the requesting client
+    /*! Called when the extension receives a widget "poll" request
+        \param[in]  sources     Data Source identifiers
+        \param[in]  args        Any arguments passed to the Data Source, if accepted
+        \param[in]  client      Requesting widget's websocket connection instance
+        \param[in]  widgetName  Widget name
+    */
+    std::string PollDataForSending(const std::vector<std::string>& sources, const std::string& args, void* client);
 
     /*! Gets extension identifier
     \return extension identifier
@@ -101,6 +121,16 @@ private:
     */
     Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const std::string& path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg);
 
+    /*! Retrieves data from a data source and saves it to the supplied JSON object as JSON data
+        \param[in]  msg     Reference to the JSON object to save data to
+        \param[in]  src     Reference to the Data Source object
+        \param[in]  args    Arguments, if any
+        \return DataSourceReturnState value determining state of data retrieval
+        \sa DataSourceReturnState
+    */
+    DataSourceReturnState getDataFromSource(jsoncons::json& msg, DataSource& src, std::string args = {});
+
+    // Members
     quasar_ext_info_t*    extensionInfo;  //!< Extension info data \sa quasar_ext_info_t
     extension_destroy     destroyFunc;    //!< Extension destroy function \sa quasar_ext_destroy()
 

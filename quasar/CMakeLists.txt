@@ -56,6 +56,12 @@ add_custom_command(TARGET quasar POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:extension> $<TARGET_FILE_DIR:quasar>
 )
 
+if(WIN32)
+  add_custom_command(TARGET quasar POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:win_simple_perf> $<TARGET_FILE_DIR:quasar>/extensions/win_simple_perf.dll
+  )
+endif()
+
 #add_custom_command(TARGET quasar POST_BUILD 
 #    COMMAND Qt6::windeployqt
 #    ARGS $<TARGET_FILE:quasar>

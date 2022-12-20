@@ -12,6 +12,7 @@ struct ClientMsgParams
     std::optional<std::string>              target;
     std::optional<std::vector<std::string>> params;
     std::optional<std::string>              code;
+    std::optional<std::string>              args;
 };
 
 struct ClientMessage
@@ -25,7 +26,7 @@ ClientMessage parse_client_message(std::string_view json_document);
 
 struct ServerMessage
 {
-    std::optional<daw::json::json_value>    data;
+    std::optional<std::string>              data;
     std::optional<std::vector<std::string>> errors;
 };
 
@@ -36,9 +37,12 @@ namespace daw::json
     template<>
     struct json_data_contract<ClientMsgParams>
     {
-        using type = json_member_list<json_string_null<"target">, json_array_null<"params", std::optional<std::vector<std::string>>>, json_string_null<"code">>;
+        using type = json_member_list<json_string_null<"target">,
+            json_array_null<"params", std::optional<std::vector<std::string>>>,
+            json_string_null<"code">,
+            json_raw_null<"args", std::string>>;
 
-        static inline auto to_json_data(ClientMsgParams const& value) { return std::forward_as_tuple(value.target, value.params, value.code); }
+        static inline auto to_json_data(ClientMsgParams const& value) { return std::forward_as_tuple(value.target, value.params, value.code, value.args); }
     };
 
     template<>
@@ -52,7 +56,7 @@ namespace daw::json
     template<>
     struct json_data_contract<ServerMessage>
     {
-        using type = json_member_list<json_raw_null<"data">, json_array_null<"errors", std::optional<std::vector<std::string>>>>;
+        using type = json_member_list<json_raw_null<"data", std::string>, json_array_null<"errors", std::optional<std::vector<std::string>>>>;
 
         static inline auto to_json_data(ServerMessage const& value) { return std::forward_as_tuple(value.data, value.errors); }
     };

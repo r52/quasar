@@ -160,7 +160,7 @@ void Quasar::createTrayMenu()
     });
 
     quitAction = new QAction(tr("&Quit"), this);
-    connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
+    connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::exit, Qt::QueuedConnection);
 }
 
 void Quasar::createDirectories()
@@ -261,7 +261,7 @@ void Quasar::closeEvent(QCloseEvent* event)
     config->WriteGeometry("main", saveGeometry());
 
 #ifdef Q_OS_OSX
-    if (!event->spontaneous() || !isVisible())
+    if (!event->spontaneous() or !isVisible())
     {
         return;
     }

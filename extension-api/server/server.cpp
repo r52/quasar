@@ -5,8 +5,8 @@
 #include "util.h"
 
 #include "extension.h"
-#include "protocol.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QStandardPaths>
 #include <QUrl>
@@ -35,7 +35,14 @@ namespace
     constexpr int                  shutdownCode = 4444;
 }  // namespace
 
-Server::Server(std::shared_ptr<Config> cfg) : config{cfg}
+Server::Server(std::shared_ptr<Config> cfg) :
+    config{
+        cfg
+},
+    methods{
+        {"subscribe", std::bind(&Server::handleMethodSubscribe, this, std::placeholders::_1, std::placeholders::_2)},
+        {"query", std::bind(&Server::handleMethodQuery, this, std::placeholders::_1, std::placeholders::_2)},
+    }
 {
     using namespace std::literals;
     websocketServer = std::jthread{[this]() {
@@ -136,14 +143,20 @@ bool Server::FindExtension(const std::string& extcode)
 
 void Server::loadExtensions()
 {
-    auto path = Util::GetCommonAppDataPath();
-    path.append("extensions/");
+    auto          path = Util::GetCommonAppDataPath() + "extensions/";
 
     QDir          dir(path);
     QFileInfoList list = dir.entryInfoList(QStringList() << "*.dll"
                                                          << "*.so"
                                                          << "*.dylib",
         QDir::Files);
+
+    // Also check executable path
+    auto extdir = QDir(QCoreApplication::applicationDirPath() + "/extensions/");
+    list.append(extdir.entryInfoList(QStringList() << "*.dll"
+                                                   << "*.so"
+                                                   << "*.dylib",
+        QDir::Files));
 
     if (list.count() == 0)
     {
@@ -153,7 +166,7 @@ void Server::loadExtensions()
 
     // just lock the whole thing while initializing extensions at startup
     // to prevent out of order reads
-    std::unique_lock<std::shared_mutex> lk(extensionMutex);
+    std::lock_guard<std::shared_mutex> lk(extensionMutex);
 
     for (QFileInfo& file : list)
     {
@@ -161,7 +174,7 @@ void Server::loadExtensions()
 
         SPDLOG_INFO("Loading data extension {}", libpath);
 
-        Extension* extn = Extension::load(libpath, config.lock(), shared_from_this());
+        Extension* extn = Extension::Load(libpath, config.lock(), shared_from_this());
 
         if (!extn)
         {
@@ -180,7 +193,7 @@ void Server::loadExtensions()
         {
             try
             {
-                extn->initialize();
+                extn->Initialize();
             } catch (std::exception e)
             {
                 SPDLOG_WARN("Exception: {} while initializing {}", e.what(), libpath);
@@ -201,6 +214,80 @@ void Server::loadExtensions()
     }
 }
 
+void Server::handleMethodSubscribe(PerSocketData* data, const ClientMessage& msg)
+{
+    // TODO subscribe
+}
+
+void Server::handleMethodQuery(PerSocketData* data, const ClientMessage& msg)
+{
+    // TODO client auth?
+    // {
+    //     std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
+
+    //     auto it = m_AuthedClientsSet.find(sender);
+    //     if (it == m_AuthedClientsSet.end())
+    //     {
+    //         DS_SEND_WARN(sender, "Unauthenticated client");
+    //         return;
+    //     }
+    // }
+
+    // auto qvar = sender->property(WGT_PROP_IDENTITY);
+    // if (!qvar.isValid())
+    // {
+    //     qCritical() << "Invalid identity in authenticated WebSocket connection.";
+    //     return;
+    // }
+
+    // client_data_t clidat = qvar.value<client_data_t>();
+
+    auto& parms = msg.params;
+
+    if (!(parms.target and parms.params))
+    {
+        SEND_CLIENT_ERROR(data, "Invalid parameters for method 'query'");
+        return;
+    }
+
+    if (parms.target.value().empty())
+    {
+        SEND_CLIENT_ERROR(data, "Invalid target for method 'query'");
+        return;
+    }
+
+    auto& target = parms.target.value();
+    auto& params = parms.params.value();
+    auto  args   = parms.args ? parms.args.value() : "";
+
+    // TODO internal targets
+    // if (m_InternalQueryTargets.count(extcode))
+    // {
+    //     m_InternalQueryTargets[extcode](extparm, clidat, sender);
+    //     return;
+    // }
+
+    std::shared_lock<std::shared_mutex> lk(extensionMutex);
+
+    if (!extensions.count(target))
+    {
+        SEND_CLIENT_ERROR(data, "Unknown extension identifier " + target);
+        return;
+    }
+
+    auto        extn   = extensions[target].get();
+
+    std::string result = extn->PollDataForSending(params, args, data);
+
+    if (!result.empty())
+    {
+        loop->defer([=]() {
+            auto ws = static_cast<UWSSocket*>(data->socket);
+            ws->send(result, uWS::TEXT);
+        });
+    }
+}
+
 void Server::processMessage(PerSocketData* dat, const std::string& msg)
 {
     SPDLOG_DEBUG("Raw WebSocket message: {}", msg);
@@ -216,22 +303,19 @@ void Server::processMessage(PerSocketData* dat, const std::string& msg)
         return;
     }
 
-    // TODO handle request
     if (doc.method.empty())
     {
         SEND_CLIENT_ERROR(dat, "Invalid JSON request");
         return;
     }
 
-    // QString mtd = req["method"].toString();
+    if (!methods.count(doc.method))
+    {
+        SEND_CLIENT_ERROR(dat, "Unknown method type " + doc.method);
+        return;
+    }
 
-    // if (!m_Methods.count(mtd))
-    // {
-    //     DS_SEND_WARN(sender, "Unknown method type " + mtd);
-    //     return;
-    // }
-
-    // m_Methods[mtd](req, sender);
+    methods[doc.method](dat, doc);
 }
 
 void Server::sendErrorToClient(PerSocketData* dat, const std::string& err)
@@ -242,6 +326,6 @@ void Server::sendErrorToClient(PerSocketData* dat, const std::string& err)
     auto          socket = static_cast<UWSSocket*>(dat->socket);
 
     loop->defer([=]() {
-        socket->send(json, uWS::OpCode::TEXT);
+        socket->send(json, uWS::TEXT);
     });
 }

@@ -351,7 +351,7 @@ void QuasarWidget::createContextMenu()
 
 void QuasarWidget::mousePressEvent(QMouseEvent* evt)
 {
-    if (!settings.fixedPosition && evt->button() == Qt::LeftButton)
+    if (!settings.fixedPosition and evt->button() == Qt::LeftButton)
     {
         dragPosition = evt->globalPos() - frameGeometry().topLeft();
         evt->accept();
@@ -360,7 +360,7 @@ void QuasarWidget::mousePressEvent(QMouseEvent* evt)
 
 void QuasarWidget::mouseMoveEvent(QMouseEvent* evt)
 {
-    if (!settings.fixedPosition && evt->buttons() & Qt::LeftButton)
+    if (!settings.fixedPosition and evt->buttons() & Qt::LeftButton)
     {
         move(evt->globalPos() - dragPosition);
         evt->accept();

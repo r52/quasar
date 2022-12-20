@@ -9,14 +9,14 @@
 #include <extension_support.h>
 
 #define EXT_FULLNAME "Simple Performance Query"
-#define EXT_NAME "win_simple_perf"
+#define EXT_NAME     "win_simple_perf"
 
-#define qlog(l, f, ...)                                             \
-    {                                                               \
-        char msg[256];                                              \
-        snprintf(msg, sizeof(msg), EXT_NAME ": " f, ##__VA_ARGS__); \
-        quasar_log(l, msg);                                         \
-    }
+#define qlog(l, f, ...)                                         \
+  {                                                             \
+    char msg[256];                                              \
+    snprintf(msg, sizeof(msg), EXT_NAME ": " f, ##__VA_ARGS__); \
+    quasar_log(l, msg);                                         \
+  }
 
 #define info(f, ...) qlog(QUASAR_LOG_INFO, f, ##__VA_ARGS__)
 #define warn(f, ...) qlog(QUASAR_LOG_WARNING, f, ##__VA_ARGS__)
@@ -32,21 +32,24 @@ enum PerfDataSources
     PERF_SRC_RAM
 };
 
-quasar_data_source_t sources[2] = {{"cpu", QUASAR_POLLING_CLIENT, 1000, 0}, {"ram", QUASAR_POLLING_CLIENT, 1000, 0}};
+quasar_data_source_t sources[2] = {
+    {"cpu", QUASAR_POLLING_CLIENT, 1000, 0},
+    {"ram", QUASAR_POLLING_CLIENT, 1000, 0}
+};
 
 // From https://stackoverflow.com/questions/23143693/retrieving-cpu-load-percent-total-in-windows-with-c
 static float CalculateCPULoad(unsigned long long idleTicks, unsigned long long totalTicks)
 {
-    static unsigned long long _previousTotalTicks = 0;
-    static unsigned long long _previousIdleTicks  = 0;
+    static unsigned long long _previousTotalTicks     = 0;
+    static unsigned long long _previousIdleTicks      = 0;
 
-    unsigned long long totalTicksSinceLastTime = totalTicks - _previousTotalTicks;
-    unsigned long long idleTicksSinceLastTime  = idleTicks - _previousIdleTicks;
+    unsigned long long        totalTicksSinceLastTime = totalTicks - _previousTotalTicks;
+    unsigned long long        idleTicksSinceLastTime  = idleTicks - _previousIdleTicks;
 
-    float ret = 1.0f - ((totalTicksSinceLastTime > 0) ? ((float) idleTicksSinceLastTime) / totalTicksSinceLastTime : 0);
+    float                     ret                     = 1.0f - ((totalTicksSinceLastTime > 0) ? ((float) idleTicksSinceLastTime) / totalTicksSinceLastTime : 0);
 
-    _previousTotalTicks = totalTicks;
-    _previousIdleTicks  = idleTicks;
+    _previousTotalTicks                               = totalTicks;
+    _previousIdleTicks                                = idleTicks;
     return ret;
 }
 
@@ -85,10 +88,9 @@ bool getRAMData(quasar_data_handle hData)
     DWORDLONG totalPhysMem = memInfo.ullTotalPhys;
     DWORDLONG physMemUsed  = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
 
-    std::stringstream ss;
-    ss << "{ \"total\": " << totalPhysMem << ", \"used\": " << physMemUsed << " }";
+    auto      res          = R"({"total":)" + std::to_string(totalPhysMem) + R"(, "used":)" + std::to_string(physMemUsed) + R"(})";
 
-    quasar_set_data_json(hData, ss.str().c_str());
+    quasar_set_data_json(hData, res.data());
 
     return true;
 }
@@ -128,19 +130,19 @@ bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
 quasar_ext_info_fields_t fields = {EXT_NAME, EXT_FULLNAME, "2.0", "r52", "Provides basic PC performance metrics", "https://github.com/r52/quasar"};
 
-quasar_ext_info_t info = {QUASAR_API_VERSION,
-                          &fields,
+quasar_ext_info_t        info   = {QUASAR_API_VERSION,
+             &fields,
 
-                          std::size(sources),
-                          sources,
+             std::size(sources),
+             sources,
 
-                          simple_perf_init,
-                          simple_perf_shutdown,
-                          simple_perf_get_data,
-                          nullptr,
-                          nullptr};
+             simple_perf_init,
+             simple_perf_shutdown,
+             simple_perf_get_data,
+             nullptr,
+             nullptr};
 
-quasar_ext_info_t* quasar_ext_load(void)
+quasar_ext_info_t*       quasar_ext_load(void)
 {
     return &info;
 }
