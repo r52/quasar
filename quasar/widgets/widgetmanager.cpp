@@ -1,7 +1,7 @@
 #include "widgetmanager.h"
 
-#include "../server/server.h"
 #include "quasarwidget.h"
+#include "server/server.h"
 
 #include "settings.h"
 
@@ -79,10 +79,10 @@ bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Conf
             SPDLOG_ERROR("Missing extension \"{}\" for widget \"{}\"", failext, filename);
 
             QMessageBox::warning(nullptr,
-                                 QObject::tr("Missing Extension"),
-                                 QObject::tr("Extension \"%1\" is required for widget \"%2\". Please install this extension and try again.")
-                                     .arg(QString::fromStdString(failext), QString::fromStdString(filename)),
-                                 QMessageBox::Ok);
+                QObject::tr("Missing Extension"),
+                QObject::tr("Extension \"%1\" is required for widget \"%2\". Please install this extension and try again.")
+                    .arg(QString::fromStdString(failext), QString::fromStdString(filename)),
+                QMessageBox::Ok);
 
             return false;
         }
@@ -174,7 +174,7 @@ std::vector<QuasarWidget*> WidgetManager::GetWidgets()
     std::vector<QuasarWidget*> widgets;
 
     {
-        std::unique_lock<std::shared_mutex> lk(mutex);
+        std::shared_lock<std::shared_mutex> lk(mutex);
 
         std::transform(widgetMap.begin(), widgetMap.end(), std::back_inserter(widgets), [](auto& pair) {
             return pair.second.get();
@@ -194,9 +194,9 @@ bool WidgetManager::acceptSecurityWarnings(const WidgetDefinition& def)
     bool accept = false;
 
     auto reply  = QMessageBox::warning(nullptr,
-                                      QObject::tr("Remote Access"),
-                                      QObject::tr("This widget requires remote access to external URLs. This may pose a security risk.\n\nContinue loading?"),
-                                      QMessageBox::Ok | QMessageBox::Cancel);
+        QObject::tr("Remote Access"),
+        QObject::tr("This widget requires remote access to external URLs. This may pose a security risk.\n\nContinue loading?"),
+        QMessageBox::Ok | QMessageBox::Cancel);
 
     return (reply == QMessageBox::Ok);
 }

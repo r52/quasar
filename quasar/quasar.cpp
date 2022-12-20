@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "server/server.h"
+#include "util.h"
 #include "widgets/quasarwidget.h"
 #include "widgets/widgetmanager.h"
 
@@ -26,7 +27,7 @@
 Quasar::Quasar(QWidget* parent) :
     QMainWindow(parent),
     config{std::make_shared<Config>()},
-    server{std::make_shared<Server>()},
+    server{std::make_shared<Server>(config)},
     manager{std::make_shared<WidgetManager>(server)}
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
@@ -60,6 +61,8 @@ Quasar::Quasar(QWidget* parent) :
     {
         restoreGeometry(geometry);
     }
+
+    createDirectories();
 
     // Load widgets
     manager->LoadStartupWidgets(config);
@@ -102,7 +105,7 @@ void Quasar::createTrayMenu()
 
     widgetListMenu = new QMenu(tr("Widgets"), this);
 
-    // TODO
+    // TODO settings ui
     // settingsAction = new QAction(tr("&Settings"), this);
     // connect(settingsAction, &QAction::triggered, [&] {
     //     if (setdlg == nullptr)
@@ -160,9 +163,22 @@ void Quasar::createTrayMenu()
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
 }
 
+void Quasar::createDirectories()
+{
+    auto path = Util::GetCommonAppDataPath();
+    path.append("extensions/");
+
+    QDir dir(path);
+    if (!dir.exists())
+    {
+        // create folder
+        dir.mkpath(".");
+    }
+}
+
 void Quasar::createTrayIcon()
 {
-    // TODO
+    // TODO settings ui
     trayIconMenu = new QMenu(this);
     trayIconMenu->addAction(loadAction);
     trayIconMenu->addSeparator();

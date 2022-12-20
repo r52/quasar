@@ -24,6 +24,7 @@ protected:
 private:
     void createTrayIcon();
     void createTrayMenu();
+    void createDirectories();
 
     void initializeLogger(QTextEdit* edit);
 

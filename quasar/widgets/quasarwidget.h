@@ -80,11 +80,11 @@ class QuasarWidget : public QWidget
     Q_OBJECT;
 
 public:
-    QuasarWidget(const std::string&             widgetName,
-                 const WidgetDefinition&        def,
-                 std::shared_ptr<Server>        serv,
-                 std::shared_ptr<WidgetManager> man,
-                 std::shared_ptr<Config>        cfg);
+    QuasarWidget(const std::string&    widgetName,
+        const WidgetDefinition&        def,
+        std::shared_ptr<Server>        serv,
+        std::shared_ptr<WidgetManager> man,
+        std::shared_ptr<Config>        cfg);
     ~QuasarWidget();
 
     const std::string& GetFullPath() const { return widget_definition.fullpath; };

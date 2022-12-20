@@ -12,6 +12,7 @@ add_library(common SHARED
   settings.cpp
   config.cpp
   log.cpp
+  util.cpp
 )
 
 target_include_directories(common PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")

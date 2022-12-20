@@ -1,7 +1,7 @@
 #include "quasarwidget.h"
 
-#include "../server/server.h"
 #include "config.h"
+#include "server/server.h"
 #include "widgetmanager.h"
 
 #include <QAbstractButton>
@@ -35,11 +35,11 @@ void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level
     }
 }
 
-QuasarWidget::QuasarWidget(const std::string&             widgetName,
-                           const WidgetDefinition&        def,
-                           std::shared_ptr<Server>        serv,
-                           std::shared_ptr<WidgetManager> man,
-                           std::shared_ptr<Config>        cfg) :
+QuasarWidget::QuasarWidget(const std::string& widgetName,
+    const WidgetDefinition&                   def,
+    std::shared_ptr<Server>                   serv,
+    std::shared_ptr<WidgetManager>            man,
+    std::shared_ptr<Config>                   cfg) :
     name{widgetName},
     widget_definition{def},
     server{serv},
