@@ -3,5 +3,6 @@
         <file>Resources/q.png</file>
         <file>quasar.ico</file>
         <file>Resources/splash.png</file>
+        <file>scripts/quasar.js</file>
     </qresource>
 </RCC>

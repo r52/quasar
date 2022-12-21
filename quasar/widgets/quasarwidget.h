@@ -4,6 +4,7 @@
 #include "widgetdefinition.h"
 
 #include <QtGui>
+#include <QWebEngineScript>
 #include <QWebEngineView>
 #include <QWidget>
 
@@ -87,6 +88,8 @@ public:
         std::shared_ptr<Config>        cfg);
     ~QuasarWidget();
 
+    static QString     GetGlobalScript();
+
     const std::string& GetFullPath() const { return widget_definition.fullpath; };
 
     const std::string& GetName() const { return name; };
@@ -107,13 +110,18 @@ protected slots:
     void toggleOnTop(bool ontop);
 
 private:
-    std::string name;
+    static QString GlobalScript;
+
+    std::string    name;
 
     // Web engine widget
     QuasarWebView* webview{};
 
     // Widget overlay
     OverlayWidget* overlay{};
+
+    // Page script
+    QWebEngineScript script;
 
     // Drag and drop pos
     QPoint dragPosition{};

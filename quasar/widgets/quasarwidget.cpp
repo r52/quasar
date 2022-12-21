@@ -15,11 +15,14 @@
 #include <QWebEngineScriptCollection>
 #include <QWebEngineSettings>
 
+#include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
-void QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
+QString QuasarWidget::GlobalScript{};
+
+void    QuasarWebPage::javaScriptConsoleMessage(JavaScriptConsoleMessageLevel level, const QString& message, int lineNumber, const QString& sourceID)
 {
-    std::string msg = "CONSOLE: " + message.toStdString() + " (" + sourceID.toStdString() + ":" + std::to_string(lineNumber) + ")";
+    std::string msg = fmt::format("CONSOLE: {} ({}:{})", message.toStdString(), sourceID.toStdString(), lineNumber);
 
     switch (level)
     {
@@ -191,17 +194,16 @@ QuasarWidget::QuasarWidget(const std::string& widgetName,
     // Inject global script
     if (widget_definition.dataserver.value_or(false))
     {
-        // TODO not sure if keeping this
         // QString authcode    = server->generateAuthCode(m_Name);
 
-        // QString pageGlobals = getGlobalScript(authcode);
+        QString scriptSrc = GetGlobalScript();
 
-        // script.setName("PageGlobals");
-        // script.setInjectionPoint(QWebEngineScript::DocumentCreation);
-        // script.setWorldId(0);
-        // script.setSourceCode(pageGlobals);
+        script.setName("GlobalScript");
+        script.setInjectionPoint(QWebEngineScript::DocumentCreation);
+        script.setWorldId(0);
+        script.setSourceCode(scriptSrc);
 
-        // webview->page()->scripts().insert(script);
+        webview->page()->scripts().insert(script);
     }
 
     setWindowTitle(qname);
@@ -210,6 +212,28 @@ QuasarWidget::QuasarWidget(const std::string& widgetName,
 QuasarWidget::~QuasarWidget()
 {
     SaveSettings();
+}
+
+QString QuasarWidget::GetGlobalScript()
+{
+    if (GlobalScript.isEmpty())
+    {
+        QFile file(":/scripts/quasar.js");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            throw std::runtime_error("Quasar global script load failure");
+        }
+
+        QTextStream in(&file);
+        GlobalScript = in.readAll();
+    }
+
+    int port = Settings::internal.port.GetValue();
+
+    // TODO auth maybe
+    QString pscript = GlobalScript.arg(port).arg("authcode");
+
+    return pscript;
 }
 
 void QuasarWidget::SaveSettings()
@@ -235,18 +259,18 @@ void QuasarWidget::createContextMenuActions()
     connect(aReload, &QAction::triggered, [&] {
         if (webview->page()->scripts().count())
         {
-            // TODO not sure if keeping this
-            // // Delete old script if it exists
-            // webview->page()->scripts().remove(script);
+            // Delete old script if it exists
+            webview->page()->scripts().remove(script);
 
-            // // Insert refreshed script
+            // Insert refreshed script
             // QString authcode    = server.lock()->generateAuthCode(name);
-            // QString pageGlobals = getGlobalScript(authcode);
+            QString pageGlobals = GetGlobalScript();
 
-            // script.setSourceCode(pageGlobals);
+            script.setSourceCode(pageGlobals);
 
-            // webview->page()->scripts().insert(script);
+            webview->page()->scripts().insert(script);
         }
+
         webview->reload();
     });
 
