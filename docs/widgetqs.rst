@@ -128,7 +128,7 @@ Where the function ``poll()`` can be something like:
             "method": "query",
             "params": {
                 "target": "win_simple_perf",
-                "params": "cpu"
+                "params": ["cpu"]
             }
         }
 
@@ -171,7 +171,7 @@ Putting everything together, your widget's script may end up looking something l
             "method": "query",
             "params": {
                 "target": "win_simple_perf",
-                "params": "cpu"
+                "params": ["cpu"]
             }
         }
 

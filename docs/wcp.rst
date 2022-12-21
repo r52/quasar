@@ -44,7 +44,7 @@ Basic Message Format
         method: <method>,
         params: {
             target: <target>,
-            params: <target params>
+            params: <list of target params>
             args: <param args>
         }
     }
@@ -70,7 +70,7 @@ Field Descriptions
     See :ref:`app-launcher-protocol` for more details.
 
 ``target params``
-    Parameters sent to the target.
+    List of parameters sent to the target.
     Typically, these are Data Source identifiers.
     For App Launcher widgets, these are App Launcher commands, or ``get`` to retrieve the command list.
 
@@ -88,7 +88,7 @@ Sample Usages
             "method": "subscribe",
             "params": {
                 "target": "win_audio_viz",
-                "params": "band"
+                "params": ["band"]
             }
         }
 
@@ -100,7 +100,7 @@ Sample Usages
             "method": "query",
             "params": {
                 "target": "win_simple_perf",
-                "params": "cpu,ram"
+                "params": ["cpu","ram"]
             }
         }
 
@@ -112,7 +112,7 @@ Sample Usages
             "method": "query",
             "params": {
                 "target": "launcher",
-                "params": "get"
+                "params": ["get"]
             }
         }
 
@@ -124,7 +124,7 @@ Sample Usages
             "method": "query",
             "params": {
                 "target": "launcher",
-                "params": cmd
+                "params": [cmd]
             }
         }
 
@@ -269,7 +269,7 @@ For example, sending the following message:
         "method": "query",
         "params": {
             "target": "launcher",
-            "params": "get"
+            "params": ["get"]
         }
     }
 
@@ -300,7 +300,7 @@ Where ``chrome``, ``spotify``, and ``steam`` are commands preconfigured in the :
         "method": "query",
         "params": {
             "target": "launcher",
-            "params": "chrome"
+            "params": ["chrome"]
         }
     }
 
