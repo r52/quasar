@@ -6,11 +6,17 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt6 6.4 COMPONENTS Core REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(daw-json-link REQUIRED)
 find_package(ZLIB REQUIRED)
 find_library(USOCKETS_LIB uSockets)
 find_path(UWEBSOCKETS_INCLUDE_DIRS "uwebsockets/App.h")
+find_path(JSONCONS_INCLUDE_DIRS "jsoncons/json.hpp" PATHS ../include)
 find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
+
+CPMFindPackage(
+   NAME glaze
+   GIT_REPOSITORY https://github.com/stephenberry/glaze
+   GIT_TAG main
+)
 
 qt_standard_project_setup()
 
@@ -29,18 +35,22 @@ add_library(extension SHARED
   extension_support.cpp
 
   server/server.cpp
-  server/protocol.cpp
+)
+
+target_sources(extension PUBLIC
+  FILE_SET HEADERS
+    FILES server/protocol.h
 )
 
 add_dependencies(extension common)
 target_include_directories(extension PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
 target_include_directories(extension PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
-target_include_directories(extension PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 # Replace with jsoncons vcpkg lib when VS2022 compile bugs fixed
-target_include_directories(extension PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>/../include")
+target_include_directories(extension PRIVATE ${JSONCONS_INCLUDE_DIRS})
+target_include_directories(extension PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 target_compile_features(extension PRIVATE cxx_std_20)
 target_link_libraries(extension PRIVATE common extension-api)
-target_link_libraries(extension PRIVATE daw::daw-json-link)
+target_link_libraries(extension PRIVATE glaze::glaze)
 target_link_libraries(extension PRIVATE ZLIB::ZLIB ${USOCKETS_LIB})
 target_link_libraries(extension PRIVATE spdlog::spdlog)
 target_link_libraries(extension PRIVATE Qt6::Core)

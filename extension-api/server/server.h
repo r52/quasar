@@ -29,15 +29,17 @@ public:
 
     bool FindExtension(const std::string& extcode);
 
+    void SendDataToClient(PerSocketData* client, const std::string& msg);
+
 private:
     void loadExtensions();
 
     // Method handling
-    void         handleMethodSubscribe(PerSocketData* data, const ClientMessage& msg);
-    void         handleMethodQuery(PerSocketData* data, const ClientMessage& msg);
+    void         handleMethodSubscribe(PerSocketData* client, const ClientMessage& msg);
+    void         handleMethodQuery(PerSocketData* client, const ClientMessage& msg);
 
-    void         processMessage(PerSocketData* dat, const std::string& msg);
-    void         sendErrorToClient(PerSocketData* dat, const std::string& err);
+    void         processMessage(PerSocketData* client, const std::string& msg);
+    void         sendErrorToClient(PerSocketData* client, const std::string& err);
 
     std::jthread websocketServer;
 

@@ -9,7 +9,12 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 6.4 COMPONENTS Core Gui Widgets Network NetworkAuth WebEngineCore WebEngineWidgets REQUIRED)
 find_package(spdlog REQUIRED)
-find_package(daw-json-link REQUIRED)
+
+CPMFindPackage(
+   NAME glaze
+   GIT_REPOSITORY https://github.com/stephenberry/glaze
+   GIT_TAG main
+)
 
 qt_standard_project_setup()
 
@@ -21,7 +26,6 @@ add_executable(quasar
   quasar.cpp
   widgets/widgetmanager.cpp
   widgets/quasarwidget.cpp
-  widgets/widgetdefinition.cpp
 
   # UI files
   quasar.ui
@@ -33,10 +37,10 @@ add_executable(quasar
   quasar.rc
 )
 
- # Headers for integration only
-target_sources(quasar PRIVATE
-  FILE_SET HEADERS
-    FILES widgets/widget_json.h
+ # Headers for integration
+ target_sources(quasar PRIVATE
+ FILE_SET HEADERS
+   FILES widgets/widgetdefinition.h
 )
 
 add_dependencies(quasar common extension)
@@ -45,7 +49,7 @@ target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(quasar PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 target_link_libraries(quasar PRIVATE common extension)
 target_link_libraries(quasar PRIVATE spdlog::spdlog)
-target_link_libraries(quasar PRIVATE daw::daw-json-link)
+target_link_libraries(quasar PRIVATE glaze::glaze)
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
 # Copy libraries

@@ -3,8 +3,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <daw/json/daw_json_link.h>
-
 void quasar_log(quasar_log_level_t level, const char* msg)
 {
     switch (level)

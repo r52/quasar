@@ -1,5 +1,7 @@
 #include "server.h"
 
+#include "uwebsockets/App.h"
+
 #include "config.h"
 #include "settings.h"
 #include "util.h"
@@ -11,15 +13,19 @@
 #include <QStandardPaths>
 #include <QUrl>
 
-#include "uwebsockets/App.h"
-
 #include <BS_thread_pool.hpp>
-#include <daw/json/daw_json_link.h>
+#include <glaze/glaze.hpp>
 #include <spdlog/spdlog.h>
+
+#include <glaze/core/macros.hpp>
 
 #define SEND_CLIENT_ERROR(d, e) \
   sendErrorToClient(d, e);      \
   SPDLOG_WARN(e);
+
+GLZ_META(ClientMsgParams, target, params, code, args);
+GLZ_META(ClientMessage, method, params);
+GLZ_META(ServerMessage, data, errors);
 
 using UWSSocket = uWS::WebSocket<false, true, PerSocketData>;
 
@@ -141,6 +147,15 @@ bool Server::FindExtension(const std::string& extcode)
     return (extensions.count(extcode) > 0);
 }
 
+void Server::SendDataToClient(PerSocketData* client, const std::string& msg)
+{
+    auto socket = static_cast<UWSSocket*>(client->socket);
+
+    loop->defer([=]() {
+        socket->send(msg, uWS::TEXT);
+    });
+}
+
 void Server::loadExtensions()
 {
     auto          path = Util::GetCommonAppDataPath() + "extensions/";
@@ -214,12 +229,12 @@ void Server::loadExtensions()
     }
 }
 
-void Server::handleMethodSubscribe(PerSocketData* data, const ClientMessage& msg)
+void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& msg)
 {
     // TODO subscribe
 }
 
-void Server::handleMethodQuery(PerSocketData* data, const ClientMessage& msg)
+void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
 {
     // TODO client auth?
     // {
@@ -246,13 +261,13 @@ void Server::handleMethodQuery(PerSocketData* data, const ClientMessage& msg)
 
     if (!(parms.target and parms.params))
     {
-        SEND_CLIENT_ERROR(data, "Invalid parameters for method 'query'");
+        SEND_CLIENT_ERROR(client, "Invalid parameters for method 'query'");
         return;
     }
 
     if (parms.target.value().empty())
     {
-        SEND_CLIENT_ERROR(data, "Invalid target for method 'query'");
+        SEND_CLIENT_ERROR(client, "Invalid target for method 'query'");
         return;
     }
 
@@ -271,61 +286,56 @@ void Server::handleMethodQuery(PerSocketData* data, const ClientMessage& msg)
 
     if (!extensions.count(target))
     {
-        SEND_CLIENT_ERROR(data, "Unknown extension identifier " + target);
+        SEND_CLIENT_ERROR(client, "Unknown extension identifier " + target);
         return;
     }
 
     auto        extn   = extensions[target].get();
 
-    std::string result = extn->PollDataForSending(params, args, data);
+    std::string result = extn->PollDataForSending(params, args, client);
 
     if (!result.empty())
     {
-        loop->defer([=]() {
-            auto ws = static_cast<UWSSocket*>(data->socket);
-            ws->send(result, uWS::TEXT);
-        });
+        SendDataToClient(client, result);
     }
 }
 
-void Server::processMessage(PerSocketData* dat, const std::string& msg)
+void Server::processMessage(PerSocketData* client, const std::string& msg)
 {
     SPDLOG_DEBUG("Raw WebSocket message: {}", msg);
 
-    ClientMessage doc;
+    ClientMessage doc{};
 
     try
     {
-        doc = parse_client_message(msg);
-    } catch (daw::json::json_exception const& je)
+        glz::read_json(doc, msg);
+    } catch (std::exception const& je)
     {
-        SPDLOG_ERROR("Error parsing JSON message: {}", to_formatted_string(je));
+        SPDLOG_ERROR("Error parsing JSON message: {}", je.what());
         return;
     }
 
     if (doc.method.empty())
     {
-        SEND_CLIENT_ERROR(dat, "Invalid JSON request");
+        SEND_CLIENT_ERROR(client, "Invalid JSON request");
         return;
     }
 
     if (!methods.count(doc.method))
     {
-        SEND_CLIENT_ERROR(dat, "Unknown method type " + doc.method);
+        SEND_CLIENT_ERROR(client, "Unknown method type " + doc.method);
         return;
     }
 
-    methods[doc.method](dat, doc);
+    methods[doc.method](client, doc);
 }
 
-void Server::sendErrorToClient(PerSocketData* dat, const std::string& err)
+void Server::sendErrorToClient(PerSocketData* client, const std::string& err)
 {
     // Craft error json msg
     ServerMessage msg{.errors = {{err}}};
-    std::string   json   = daw::json::to_json(msg);
-    auto          socket = static_cast<UWSSocket*>(dat->socket);
+    std::string   json{};
+    glz::write_json(msg, json);
 
-    loop->defer([=]() {
-        socket->send(json, uWS::TEXT);
-    });
+    SendDataToClient(client, json);
 }

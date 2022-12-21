@@ -1,11 +1,6 @@
 {
   "name": "quasar",
-  "builtin-baseline": "56765209ec0e92c58a5fd91aa09c46a16d660026",
+  "builtin-baseline": "e07c62d05970d7d89e336bdb278b02242e8bda7c",
   "version": "3.0.0",
-  "dependencies": [
-    "spdlog",
-    "daw-json-link",
-    "uwebsockets",
-    "bshoshany-thread-pool"
-  ]
+  "dependencies": ["fmt", "spdlog", "uwebsockets", "bshoshany-thread-pool"]
 }

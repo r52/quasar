@@ -13,8 +13,12 @@
 #include <QMessageBox>
 #include <QObject>
 
-#include <daw/json/daw_json_link.h>
+#include <glaze/glaze.hpp>
 #include <spdlog/spdlog.h>
+
+#include <glaze/core/macros.hpp>
+
+GLZ_META(WidgetDefinition, name, width, height, startFile, transparentBg, clickable, dataserver, remoteAccess, required);
 
 WidgetManager::WidgetManager(std::shared_ptr<Server> serv) : server{serv} {}
 
@@ -42,15 +46,14 @@ bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Conf
     std::string json_doc;
     std::copy(std::istreambuf_iterator<char>(def_file), std::istreambuf_iterator<char>(), std::back_inserter(json_doc));
 
-    WidgetDefinition def;
+    WidgetDefinition def{};
 
     try
     {
-        def = parse_definition(json_doc);
-
-    } catch (daw::json::json_exception const& je)
+        glz::read_json(def, json_doc);
+    } catch (std::exception const& je)
     {
-        SPDLOG_ERROR("Error parsing widget definition file '{}': {}", filename, to_formatted_string(je));
+        SPDLOG_ERROR("Error parsing widget definition file '{}': {}", filename, je.what());
         return false;
     }
 
