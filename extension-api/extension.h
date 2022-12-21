@@ -29,6 +29,15 @@ struct DataLock
     bool                    processed = false;  //!< Bool value to trigger conditional variable notification
 };
 
+//! Struct containing cached data for a Data Source
+struct DataCache
+{
+    jsoncons::json data;  //!< Cached data for polled data with a validity duration
+                          //!< \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
+    std::chrono::system_clock::time_point
+        expiry;  //!< Expiry time of cached data \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
+};
+
 //! Struct containing internal resources for a Data Source
 struct DataSource
 {
@@ -46,10 +55,7 @@ struct DataSource
 
     // poll type
     std::unordered_set<void*> pollqueue;  //!< Queue of widgets (i.e. its WebSocket instance) waiting for polled data
-    jsoncons::json            cacheddat;  //!< Cached data for polled data with a validity duration
-                                          //!< \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
-    std::chrono::system_clock::time_point
-                              expiry;  //!< Expiry time of cached data \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
+    DataCache                 cache;      //!< Cached data for polled data with a validity duration
 
     mutable std::shared_mutex mutex;  //!< Data Source level lock
 

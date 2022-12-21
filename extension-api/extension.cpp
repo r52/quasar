@@ -83,7 +83,7 @@ Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const 
 
             if (source.rate == QUASAR_POLLING_CLIENT)
             {
-                source.expiry = std::chrono::system_clock::now();
+                source.cache.expiry = std::chrono::system_clock::now();
             }
         }
     }
@@ -163,10 +163,10 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
         // If this source is client polled and a validity duration is specified,
         // first check for expiry time and cached data
 
-        if (src.expiry >= system_clock::now())
+        if (src.cache.expiry >= system_clock::now())
         {
             // If data hasn't expired yet, use the cached data
-            j[src.name] = src.cacheddat;
+            j[src.name] = src.cache.data;
             return GET_DATA_SUCCESS;
         }
     }
@@ -219,8 +219,8 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
     if (src.rate == QUASAR_POLLING_CLIENT && src.validtime)
     {
         // If validity time duration is set, cache the data
-        src.cacheddat = rett.val.value();
-        src.expiry    = system_clock::now() + milliseconds(src.validtime);
+        src.cache.data   = rett.val.value();
+        src.cache.expiry = system_clock::now() + milliseconds(src.validtime);
     }
 
     j[src.name] = rett.val.value();

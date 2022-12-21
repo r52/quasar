@@ -17,11 +17,12 @@
 #include <glaze/glaze.hpp>
 #include <spdlog/spdlog.h>
 
+#include <fmt/core.h>
 #include <glaze/core/macros.hpp>
 
-#define SEND_CLIENT_ERROR(d, e) \
-  sendErrorToClient(d, e);      \
-  SPDLOG_WARN(e);
+#define SEND_CLIENT_ERROR(d, ...)                 \
+  sendErrorToClient(d, fmt::format(__VA_ARGS__)); \
+  SPDLOG_WARN(__VA_ARGS__);
 
 GLZ_META(ClientMsgParams, target, params, code, args);
 GLZ_META(ClientMessage, method, params);
@@ -55,7 +56,7 @@ Server::Server(std::shared_ptr<Config> cfg) :
         loop = uWS::Loop::get();
         app  = new uWS::App();
 
-        std::this_thread::sleep_for(1s);
+        std::this_thread::sleep_for(100ms);
 
         app->ws<PerSocketData>("/*",
                {/* Settings */
@@ -286,7 +287,7 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
 
     if (!extensions.count(target))
     {
-        SEND_CLIENT_ERROR(client, "Unknown extension identifier " + target);
+        SEND_CLIENT_ERROR(client, "Unknown extension identifier {}", target);
         return;
     }
 
@@ -302,7 +303,7 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
 
 void Server::processMessage(PerSocketData* client, const std::string& msg)
 {
-    SPDLOG_DEBUG("Raw WebSocket message: {}", msg);
+    // SPDLOG_DEBUG("Raw WebSocket message: {}", msg);
 
     ClientMessage doc{};
 
@@ -323,7 +324,7 @@ void Server::processMessage(PerSocketData* client, const std::string& msg)
 
     if (!methods.count(doc.method))
     {
-        SEND_CLIENT_ERROR(client, "Unknown method type " + doc.method);
+        SEND_CLIENT_ERROR(client, "Unknown method type {}", doc.method);
         return;
     }
 
