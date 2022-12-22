@@ -24,11 +24,7 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
 
-Quasar::Quasar(QWidget* parent) :
-    QMainWindow(parent),
-    config{std::make_shared<Config>()},
-    server{std::make_shared<Server>(config)},
-    manager{std::make_shared<WidgetManager>(server)}
+Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<Config>()}
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
@@ -40,6 +36,10 @@ Quasar::Quasar(QWidget* parent) :
     // Setup logger
     ui.logEdit->document()->setMaximumBlockCount(250);
     initializeLogger(ui.logEdit);
+
+    // Initialize late components
+    server  = std::make_shared<Server>(config);
+    manager = std::make_shared<WidgetManager>(server);
 
     // Setup system tray
     createTrayMenu();
@@ -273,4 +273,9 @@ void Quasar::closeEvent(QCloseEvent* event)
     }
 }
 
-Quasar::~Quasar() {}
+Quasar::~Quasar()
+{
+    manager.reset();
+    server.reset();
+    config.reset();
+}

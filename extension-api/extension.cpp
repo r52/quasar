@@ -1,6 +1,7 @@
 #include "extension.h"
 
 #include "extension_support_internal.h"
+#include "server/server.h"
 
 #include <QLibrary>
 
@@ -57,11 +58,11 @@ Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const 
 
             if (datasources.count(srcname))
             {
-                SPDLOG_WARN("Extension {} tried to register more than one data source {}", name, srcname);
+                SPDLOG_WARN("Extension {} tried to register more than one data source '{}'", name, srcname);
                 continue;
             }
 
-            SPDLOG_INFO("Extension {} registering data source {}", name, srcname);
+            SPDLOG_INFO("Extension {} registering data source '{}'", name, srcname);
 
             DataSource& source = datasources[srcname];
 
@@ -152,11 +153,95 @@ Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const 
     }
 }
 
+bool Extension::SourceExists(const std::string& src) const
+{
+    return (datasources.count(src) > 0);
+}
+
+bool Extension::AddSubscriber(void* subscriber, const std::string& src)
+{
+    if (!subscriber)
+    {
+        SPDLOG_CRITICAL("Unknown subscriber.");
+        return false;
+    }
+
+    if (!datasources.count(src))
+    {
+        SPDLOG_WARN("Unknown data source {} requested in extension {}", src, name);
+        return false;
+    }
+
+    DataSource&                        dsrc = datasources[src];
+
+    std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
+
+    if (dsrc.rate == QUASAR_POLLING_CLIENT)
+    {
+        SPDLOG_WARN("Data source '{}' in extension {} requested by widget does not accept subscribers", src, name);
+        return false;
+    }
+
+    dsrc.subscribers.insert(subscriber);
+
+    if (dsrc.rate > QUASAR_POLLING_CLIENT)
+    {
+        createTimer(dsrc);
+    }
+
+    // TODO: Send settings if applicable
+    // auto payload = craftSettingsMessage();
+
+    // if (!payload.isEmpty())
+    // {
+    //     QMetaObject::invokeMethod(subscriber, [=] { subscriber->sendTextMessage(payload); });
+    // }
+
+    return true;
+}
+
+void Extension::RemoveSubscriber(void* subscriber)
+{
+    if (!subscriber)
+    {
+        SPDLOG_WARN("Null subscriber.");
+        return;
+    }
+
+    // Removes subscriber from all data sources
+
+    for (auto it = datasources.begin(); it != datasources.end(); ++it)
+    {
+        auto&                              dsrc = it->second;
+
+        std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
+
+        // Log if unsubscribed succeeded
+        if (dsrc.subscribers.erase(subscriber))
+        {
+            SPDLOG_INFO("Widget unsubscribed from topic {}/{}", name, it->first);
+        }
+
+        // Stop timer if no subscribers
+        if (dsrc.subscribers.empty())
+        {
+            dsrc.timer.reset();
+        }
+    }
+}
+
 Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& msg, DataSource& src, std::string args)
 {
     using namespace std::chrono;
 
     jsoncons::json& j = msg["data"][GetName()];
+
+    if (!src.enabled)
+    {
+        // honour enabled flag
+        SPDLOG_WARN("Data source {} is disabled", src.name);
+        return GET_DATA_FAILED;
+    }
 
     if (src.rate == QUASAR_POLLING_CLIENT && src.validtime)
     {
@@ -169,13 +254,6 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
             j[src.name] = src.cache.data;
             return GET_DATA_SUCCESS;
         }
-    }
-
-    if (!src.enabled)
-    {
-        // honour enabled flag
-        SPDLOG_WARN("Data source {} is disabled", src.name);
-        return GET_DATA_FAILED;
     }
 
     quasar_return_data_t rett;
@@ -228,6 +306,60 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
     return GET_DATA_SUCCESS;
 }
 
+void Extension::sendDataToSubscribers(DataSource& src)
+{
+    std::lock_guard<std::shared_mutex> lk(src.mutex);
+
+    jsoncons::json                     j;
+    j["data"]   = jsoncons::json(jsoncons::json_object_arg,
+          {
+            {GetName(), {}}
+    });
+    j["errors"] = jsoncons::json(jsoncons::json_array_arg);
+
+    // Only send if there are subscribers
+    if (!src.subscribers.empty())
+    {
+        getDataFromSource(j, src);
+
+        std::string message{};
+        auto        topic = fmt::format("{}/{}", GetName(), src.name);
+
+        j.dump(message);
+
+        if (!message.empty())
+        {
+            server.lock()->PublishData(topic, message);
+        }
+    }
+
+    // Signal data processed
+    if (nullptr != src.locks)
+    {
+        {
+            std::lock_guard<std::mutex> lk(src.locks->mutex);
+            src.locks->processed = true;
+        }
+
+        src.locks->cv.notify_one();
+    }
+}
+
+void Extension::createTimer(DataSource& src)
+{
+    if (src.enabled && !src.timer)
+    {
+        // Timer creation required
+        src.timer = std::make_unique<Timer>();
+
+        src.timer->setInterval(
+            [this, &src] {
+                sendDataToSubscribers(src);
+            },
+            src.rate);
+    }
+}
+
 Extension::~Extension()
 {
     if (nullptr != extensionInfo->shutdown)
@@ -238,9 +370,7 @@ Extension::~Extension()
     // Do some explicit cleanup
     for (auto it = datasources.begin(); it != datasources.end(); ++it)
     {
-        // TODO timers
-        // it.value().timer.reset();
-
+        it->second.timer.reset();
         it->second.locks.reset();
         it->second.subscribers.clear();
     }
@@ -358,7 +488,7 @@ std::string Extension::PollDataForSending(const std::vector<std::string>& source
         }
     }
 
-    jsoncons::encode_json(j, message);
+    j.dump(message);
 
     return message;
 }

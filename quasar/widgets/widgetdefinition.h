@@ -20,5 +20,3 @@ struct WidgetDefinition
     // Internal
     std::string fullpath;
 };
-
-WidgetDefinition parse_definition(std::string_view json_document);

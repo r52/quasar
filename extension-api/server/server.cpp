@@ -56,8 +56,6 @@ Server::Server(std::shared_ptr<Config> cfg) :
         loop = uWS::Loop::get();
         app  = new uWS::App();
 
-        std::this_thread::sleep_for(100ms);
-
         app->ws<PerSocketData>("/*",
                {/* Settings */
                    .maxPayloadLength = 16 * 1024,
@@ -88,10 +86,9 @@ Server::Server(std::shared_ptr<Config> cfg) :
                            });
                        },
                    .close =
-                       [](UWSSocket* ws, int code, std::string_view message) {
-                           // Unnecessary cleanup, but just in case
-                           auto data    = ws->getUserData();
-                           data->socket = nullptr;
+                       [this](UWSSocket* ws, int code, std::string_view message) {
+                           auto data = ws->getUserData();
+                           this->processClose(data);
 
                            if (code != shutdownCode)
                            {
@@ -99,6 +96,8 @@ Server::Server(std::shared_ptr<Config> cfg) :
                                // so don't modify the container if called during exit cleanup
                                connections.erase(ws);
                            }
+
+                           SPDLOG_INFO("Client disconnected.");
                        }})
             .listen(Settings::internal.port.GetValue(),
                 [this](auto* socket) {
@@ -152,9 +151,21 @@ void Server::SendDataToClient(PerSocketData* client, const std::string& msg)
 {
     auto socket = static_cast<UWSSocket*>(client->socket);
 
-    loop->defer([=]() {
+    RunOnServer([=]() {
         socket->send(msg, uWS::TEXT);
     });
+}
+
+void Server::PublishData(const std::string& topic, const std::string& data)
+{
+    RunOnServer([=]() {
+        app->publish(topic, data, uWS::TEXT);
+    });
+}
+
+void Server::RunOnServer(auto&& cb)
+{
+    loop->defer(cb);
 }
 
 void Server::loadExtensions()
@@ -232,7 +243,85 @@ void Server::loadExtensions()
 
 void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& msg)
 {
-    // TODO subscribe
+    // TODO client auth?
+    // {
+    //     std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
+
+    //     auto it = m_AuthedClientsSet.find(sender);
+    //     if (it == m_AuthedClientsSet.end())
+    //     {
+    //         DS_SEND_WARN(sender, "Unauthenticated client");
+    //         return;
+    //     }
+    // }
+
+    // auto qvar = sender->property(WGT_PROP_IDENTITY);
+    // if (!qvar.isValid())
+    // {
+    //     qCritical() << "Invalid identity in authenticated WebSocket connection.";
+    //     return;
+    // }
+
+    // client_data_t clidat     = qvar.value<client_data_t>();
+    // QString       widgetName = clidat.ident;
+
+    auto& parms = msg.params;
+
+    if (!(parms.target and parms.params))
+    {
+        SEND_CLIENT_ERROR(client, "Invalid parameters for method 'subscribe'");
+        return;
+    }
+
+    if (parms.target.value().empty())
+    {
+        SEND_CLIENT_ERROR(client, "Invalid target for method 'subscribe'");
+        return;
+    }
+
+    auto&                               target = parms.target.value();
+    auto&                               params = parms.params.value();
+
+    std::shared_lock<std::shared_mutex> lk(extensionMutex);
+
+    if (!extensions.count(target))
+    {
+        SEND_CLIENT_ERROR(client, "Unknown extension identifier {}", target);
+        return;
+    }
+
+    auto extn = extensions[target].get();
+
+    for (auto& src : params)
+    {
+        if (!extn->SourceExists(src))
+        {
+            SEND_CLIENT_ERROR(client, "Nonexistent Data Source '{}' in target {}", src, target);
+            continue;
+        }
+
+        auto result = extn->AddSubscriber(client, src);
+
+        if (result)
+        {
+            auto topic  = fmt::format("{}/{}", target, src);
+            auto socket = static_cast<UWSSocket*>(client->socket);
+
+            loop->defer([=, this]() {
+                auto res = socket->subscribe(topic);
+
+                if (res)
+                {
+                    client->topics.push_back(topic);
+                    SPDLOG_INFO("Widget subscribed to topic {}/{}", target, src);
+                }
+                else
+                {
+                    SEND_CLIENT_ERROR(client, "Failed to subscribed to topic {}/{}", target, src);
+                }
+            });
+        }
+    }
 }
 
 void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
@@ -339,4 +428,34 @@ void Server::sendErrorToClient(PerSocketData* client, const std::string& err)
     glz::write_json(msg, json);
 
     SendDataToClient(client, json);
+}
+
+void Server::processClose(PerSocketData* client)
+{
+    // If client has subscribed topics, unsub
+    if (!client->topics.empty())
+    {
+        std::unordered_set<std::string> extns{};
+
+        for (auto& topic : client->topics)
+        {
+            auto target = topic.substr(0, topic.find_first_of("/"));
+            extns.insert(target);
+        }
+
+        std::shared_lock<std::shared_mutex> lk(extensionMutex);
+
+        for (auto& ex : extns)
+        {
+            if (!extensions.count(ex))
+            {
+                SEND_CLIENT_ERROR(client, "Unknown extension identifier {}", ex);
+                return;
+            }
+
+            auto extn = extensions[ex].get();
+
+            extn->RemoveSubscriber(client);
+        }
+    }
 }

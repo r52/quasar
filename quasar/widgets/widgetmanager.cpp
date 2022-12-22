@@ -4,14 +4,15 @@
 #include "server/server.h"
 
 #include "settings.h"
+#include "util.h"
 
-#include <algorithm>
 #include <fstream>
-#include <ranges>
-#include <regex>
 
 #include <QMessageBox>
 #include <QObject>
+
+#include <fmt/core.h>
+#include <fmt/ranges.h>
 
 #include <glaze/glaze.hpp>
 #include <spdlog/spdlog.h>
@@ -206,19 +207,14 @@ bool WidgetManager::acceptSecurityWarnings(const WidgetDefinition& def)
 
 std::vector<std::string> WidgetManager::getLoadedWidgetsList()
 {
-    auto                     loaded = Settings::internal.loaded_widgets.GetValue();
+    auto loaded = Settings::internal.loaded_widgets.GetValue();
 
-    const std::regex         delimiter{","};
-    std::vector<std::string> list(std::sregex_token_iterator(loaded.begin(), loaded.end(), delimiter, -1), {});
-
-    return list;
+    return Util::SplitString(loaded, ",");
 }
 
 void WidgetManager::saveLoadedWidgetsList(const std::vector<std::string>& list)
 {
-    std::string amend = std::accumulate(list.begin(), list.end(), std::string{}, [](std::string a, std::string b) {
-        return a.empty() ? b : a + "," + b;
-    });
+    auto amend = fmt::format("{}", fmt::join(list, ","));
 
     Settings::internal.loaded_widgets.SetValue(amend);
 }

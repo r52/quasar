@@ -25,9 +25,8 @@ endif()
 
 add_subdirectory(common)
 add_subdirectory(extension-api)
+add_subdirectory(quasar)
 
 if(WIN32)
     add_subdirectory(extensions/win_simple_perf)
 endif()
-
-add_subdirectory(quasar)

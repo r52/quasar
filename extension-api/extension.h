@@ -8,6 +8,7 @@
 #include <set>
 #include <shared_mutex>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -38,6 +39,39 @@ struct DataCache
         expiry;  //!< Expiry time of cached data \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
 };
 
+class Timer
+{
+public:
+    void setInterval(auto fn, int interval)
+    {
+        thread = std::jthread{[=](std::stop_token token) {
+            while (not token.stop_requested())
+            {
+                if (token.stop_requested())
+                    return;
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
+
+                if (token.stop_requested())
+                    return;
+
+                fn();
+            }
+        }};
+
+        thread.detach();
+    }
+
+    void stop()
+    {
+        thread.request_stop();
+        thread.join();
+    }
+
+private:
+    std::jthread thread;
+};
+
 //! Struct containing internal resources for a Data Source
 struct DataSource
 {
@@ -50,8 +84,8 @@ struct DataSource
                             //!< quasar_polling_type_t
 
     // subscription type source fields
-    // std::unique_ptr<QTimer> timer;        //!< QTimer for timer based subscription sources
-    std::set<void*> subscribers;  //!< Set of widgets (i.e. its WebSocket instance) subscribed to this source
+    std::unique_ptr<Timer> timer;        //!< Timer for timer based subscription sources
+    std::set<void*>        subscribers;  //!< Set of widgets (i.e. its WebSocket instance) subscribed to this source
 
     // poll type
     std::unordered_set<void*> pollqueue;  //!< Queue of widgets (i.e. its WebSocket instance) waiting for polled data
@@ -117,6 +151,27 @@ public:
     */
     const std::string& GetName() const { return name; };
 
+    /*! Checks to see whether a Data Source exists
+        \param[in]  src     Data Source identifier
+        \return Data Source exists
+    */
+    bool SourceExists(const std::string& src) const;
+
+    //! Adds a subscriber to a Data Source
+    /*!
+        \param[in]  subscriber  Subscriber's websocket connection instance
+        \param[in]  src         Data Source identifier
+        \param[in]  widgetName  Widget name
+        \return true if successful, false otherwise
+    */
+    bool AddSubscriber(void* subscriber, const std::string& src);
+
+    //! Removes a subscriber from all Data Sources
+    /*! Invoked when a widget is closed or disconnects
+        \param[in]  subscriber  Subscriber's websocket connection instance
+    */
+    void RemoveSubscriber(void* subscriber);
+
 private:
     //! Extension constructor
     /*! Extension::load() should be used to load and create a Extension instance
@@ -135,6 +190,18 @@ private:
         \sa DataSourceReturnState
     */
     DataSourceReturnState getDataFromSource(jsoncons::json& msg, DataSource& src, std::string args = {});
+
+    //! Retrieves data from the extension and sends it to all subscribers
+    /*! Called when extension data is ready to be sent (by both timer and signal)
+        \param[in]  src     Data Source
+    */
+    void sendDataToSubscribers(DataSource& src);
+
+    /*! Creates and initializes the timer for a timer-based source (if it does not exist)
+        \param[in,out]  src     Reference to the Data Source object
+        \sa DataSource.timer
+    */
+    void createTimer(DataSource& src);
 
     // Members
     quasar_ext_info_t*    extensionInfo;  //!< Extension info data \sa quasar_ext_info_t

@@ -14,7 +14,8 @@ class Config;
 
 struct PerSocketData
 {
-    void* socket = nullptr;
+    void*                    socket = nullptr;
+    std::vector<std::string> topics;
 };
 
 class extension_API Server : public std::enable_shared_from_this<Server>
@@ -31,6 +32,10 @@ public:
 
     void SendDataToClient(PerSocketData* client, const std::string& msg);
 
+    void PublishData(const std::string& topic, const std::string& data);
+
+    void RunOnServer(auto&& cb);
+
 private:
     void loadExtensions();
 
@@ -40,6 +45,7 @@ private:
 
     void         processMessage(PerSocketData* client, const std::string& msg);
     void         sendErrorToClient(PerSocketData* client, const std::string& err);
+    void         processClose(PerSocketData* client);
 
     std::jthread websocketServer;
 
