@@ -8,33 +8,22 @@
 #include <extension_api.h>
 #include <extension_support.h>
 
+#include <fmt/core.h>
+
 #define EXT_FULLNAME "Simple Performance Query"
 #define EXT_NAME     "win_simple_perf"
 
-#define qlog(l, f, ...)                                         \
-  {                                                             \
-    char msg[256];                                              \
-    snprintf(msg, sizeof(msg), EXT_NAME ": " f, ##__VA_ARGS__); \
-    quasar_log(l, msg);                                         \
+#define qlog(l, ...)                                                      \
+  {                                                                       \
+    auto msg = fmt::format("{}: {}", EXT_NAME, fmt::format(__VA_ARGS__)); \
+    quasar_log(l, msg.c_str());                                           \
   }
 
-#define info(f, ...) qlog(QUASAR_LOG_INFO, f, ##__VA_ARGS__)
-#define warn(f, ...) qlog(QUASAR_LOG_WARNING, f, ##__VA_ARGS__)
+#define info(...) qlog(QUASAR_LOG_INFO, __VA_ARGS__)
+#define warn(...) qlog(QUASAR_LOG_WARNING, __VA_ARGS__)
 
-using GetDataFnType = std::function<bool(quasar_data_handle hData)>;
-using DataCallTable = std::unordered_map<size_t, GetDataFnType>;
-
-static DataCallTable calltable;
-
-enum PerfDataSources
-{
-    PERF_SRC_CPU = 0,
-    PERF_SRC_RAM
-};
-
-quasar_data_source_t sources[2] = {
-    {"cpu", QUASAR_POLLING_CLIENT, 1000, 0},
-    {"ram", QUASAR_POLLING_CLIENT, 1000, 0}
+quasar_data_source_t sources[1] = {
+    {"sysinfo", 5000, 0, 0}
 };
 
 // From https://stackoverflow.com/questions/23143693/retrieving-cpu-load-percent-total-in-windows-with-c
@@ -69,45 +58,9 @@ float GetCPULoad()
                -1.0f;
 }
 
-bool getCPUData(quasar_data_handle hData)
-{
-    double cpu = GetCPULoad() * 100.0;
-
-    quasar_set_data_int(hData, (int) cpu);
-
-    return true;
-}
-
-bool getRAMData(quasar_data_handle hData)
-{
-    // https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
-    // collect ram
-    MEMORYSTATUSEX memInfo;
-    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
-    GlobalMemoryStatusEx(&memInfo);
-    DWORDLONG totalPhysMem = memInfo.ullTotalPhys;
-    DWORDLONG physMemUsed  = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
-
-    auto      res          = R"({"total":)" + std::to_string(totalPhysMem) + R"(, "used":)" + std::to_string(physMemUsed) + R"(})";
-
-    quasar_set_data_json(hData, res.data());
-
-    return true;
-}
-
 bool simple_perf_init(quasar_ext_handle handle)
 {
-    // Process uid entries.
-    if (sources[PERF_SRC_CPU].uid != 0)
-    {
-        calltable[sources[PERF_SRC_CPU].uid] = getCPUData;
-    }
-
-    if (sources[PERF_SRC_RAM].uid != 0)
-    {
-        calltable[sources[PERF_SRC_RAM].uid] = getRAMData;
-    }
-
+    // Nothing to do
     return true;
 }
 
@@ -119,16 +72,31 @@ bool simple_perf_shutdown(quasar_ext_handle handle)
 
 bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 {
-    if (calltable.count(srcUid) == 0)
+    if (srcUid != sources[0].uid)
     {
-        warn("Unknown source %Iu", srcUid);
+        warn("Unknown source {}", srcUid);
         return false;
     }
 
-    return calltable[srcUid](hData);
+    // CPU data
+    double cpu = GetCPULoad() * 100.0;
+
+    // https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
+    // RAM data
+    MEMORYSTATUSEX memInfo;
+    memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+    GlobalMemoryStatusEx(&memInfo);
+    DWORDLONG totalPhysMem = memInfo.ullTotalPhys;
+    DWORDLONG physMemUsed  = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
+
+    auto      res          = fmt::format("{{\"cpu\":{},\"ram\":{{\"total\":{},\"used\":{}}}}}", (int) cpu, totalPhysMem, physMemUsed);
+
+    quasar_set_data_json(hData, res.data());
+
+    return true;
 }
 
-quasar_ext_info_fields_t fields = {EXT_NAME, EXT_FULLNAME, "2.0", "r52", "Provides basic PC performance metrics", "https://github.com/r52/quasar"};
+quasar_ext_info_fields_t fields = {EXT_NAME, EXT_FULLNAME, "2.1", "r52", "Provides basic PC performance metrics", "https://github.com/r52/quasar"};
 
 quasar_ext_info_t        info   = {QUASAR_API_VERSION,
              &fields,

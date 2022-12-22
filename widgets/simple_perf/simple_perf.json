@@ -1,9 +1,10 @@
 {
-    "name": "simple_perf",
-    "width": 400,
-    "height": 120,
-    "startFile": "index.html",
-    "transparentBg": true,
-    "dataserver": true,
-    "required": ["win_simple_perf"]
+  "name": "simple_perf",
+  "width": 400,
+  "height": 120,
+  "startFile": "index.html",
+  "transparentBg": true,
+  "dataserver": true,
+  "remoteAccess": true,
+  "required": ["win_simple_perf"]
 }
