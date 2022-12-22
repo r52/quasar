@@ -72,6 +72,7 @@ Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const 
 
             source.enabled   = true;
             source.name      = srcname;
+            source.topic     = fmt::format("{}/{}", name, srcname);
             source.rate      = extensionInfo->dataSources[i].rate;
             source.validtime = extensionInfo->dataSources[i].validtime;
             source.uid = extensionInfo->dataSources[i].uid = ++Extension::_uid;
@@ -310,26 +311,23 @@ void Extension::sendDataToSubscribers(DataSource& src)
 {
     std::lock_guard<std::shared_mutex> lk(src.mutex);
 
-    jsoncons::json                     j;
-    j["data"]   = jsoncons::json(jsoncons::json_object_arg,
-          {
-            {GetName(), {}}
-    });
-    j["errors"] = jsoncons::json(jsoncons::json_array_arg);
-
     // Only send if there are subscribers
     if (!src.subscribers.empty())
     {
+        jsoncons::json j{
+            jsoncons::json_object_arg,
+            {{"data", jsoncons::json{jsoncons::json_object_arg, {{GetName(), {}}}}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
+        };
+
         getDataFromSource(j, src);
 
         std::string message{};
-        auto        topic = fmt::format("{}/{}", GetName(), src.name);
 
         j.dump(message);
 
         if (!message.empty())
         {
-            server.lock()->PublishData(topic, message);
+            server.lock()->PublishData(src.topic, message);
         }
     }
 
@@ -443,12 +441,10 @@ void Extension::Initialize()
 
 std::string Extension::PollDataForSending(const std::vector<std::string>& sources, const std::string& args, void* client)
 {
-    jsoncons::json j;
-    j["data"]   = jsoncons::json(jsoncons::json_object_arg,
-          {
-            {GetName(), {}}
-    });
-    j["errors"] = jsoncons::json(jsoncons::json_array_arg);
+    jsoncons::json j{
+        jsoncons::json_object_arg,
+        {{"data", jsoncons::json{jsoncons::json_object_arg, {{GetName(), {}}}}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
+    };
 
     std::string message{};
 
