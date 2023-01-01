@@ -11,10 +11,14 @@
   x[sizeof(x) - 1] = 0;    \
   d                = std::string(x);
 
-uintmax_t Extension::_uid = 0;
+size_t Extension::_uid = 0;
 
-Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const std::string& path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg) :
-    extensionInfo{p},
+Extension::Extension(quasar_ext_info_t* info,
+    extension_destroy                   destroyfunc,
+    const std::string&                  path,
+    std::shared_ptr<Server>             srv,
+    std::shared_ptr<Config>             cfg) :
+    extensionInfo{info},
     destroyFunc{destroyfunc},
     libpath{path},
     initialized{false},
@@ -62,7 +66,7 @@ Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const 
                 continue;
             }
 
-            SPDLOG_INFO("Extension {} registering data source '{}'", name, srcname);
+            auto        tpc    = fmt::format("{}/{}", name, srcname);
 
             DataSource& source = datasources[srcname];
 
@@ -72,7 +76,7 @@ Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const 
 
             source.enabled   = true;
             source.name      = srcname;
-            source.topic     = fmt::format("{}/{}", name, srcname);
+            source.topic     = tpc;
             source.rate      = extensionInfo->dataSources[i].rate;
             source.validtime = extensionInfo->dataSources[i].validtime;
             source.uid = extensionInfo->dataSources[i].uid = ++Extension::_uid;
@@ -87,6 +91,10 @@ Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const 
             {
                 source.cache.expiry = std::chrono::system_clock::now();
             }
+
+            topics.insert(tpc);
+
+            SPDLOG_INFO("Extension {} registering data source '{}' as topic '{}'", name, srcname, tpc);
         }
     }
 
@@ -154,18 +162,52 @@ Extension::Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const 
     }
 }
 
-bool Extension::SourceExists(const std::string& src) const
+bool Extension::TopicExists(const std::string& topic) const
 {
-    return (datasources.count(src) > 0);
+    return (topics.count(topic) > 0);
 }
 
-bool Extension::AddSubscriber(void* subscriber, const std::string& src)
+bool Extension::TopicAcceptsSubscribers(const std::string& topic)
+{
+    if (!TopicExists(topic))
+    {
+        return false;
+    }
+
+    auto src = topic.substr(topic.find_first_of("/") + 1);
+
+    if (!datasources.count(src))
+    {
+        return false;
+    }
+
+    DataSource&                        dsrc = datasources[src];
+
+    std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
+
+    if (dsrc.rate == QUASAR_POLLING_CLIENT)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool Extension::AddSubscriber(void* subscriber, const std::string& topic, int count)
 {
     if (!subscriber)
     {
         SPDLOG_CRITICAL("Unknown subscriber.");
         return false;
     }
+
+    if (!TopicExists(topic))
+    {
+        SPDLOG_WARN("Unknown topic {} requested in extension {}", topic, name);
+        return false;
+    }
+
+    auto src = topic.substr(topic.find_first_of("/") + 1);
 
     if (!datasources.count(src))
     {
@@ -183,7 +225,7 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& src)
         return false;
     }
 
-    dsrc.subscribers.insert(subscriber);
+    dsrc.subscribers = count;
 
     if (dsrc.rate > QUASAR_POLLING_CLIENT)
     {
@@ -201,7 +243,7 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& src)
     return true;
 }
 
-void Extension::RemoveSubscriber(void* subscriber)
+void Extension::RemoveSubscriber(void* subscriber, const std::string& topic, int count)
 {
     if (!subscriber)
     {
@@ -209,25 +251,26 @@ void Extension::RemoveSubscriber(void* subscriber)
         return;
     }
 
-    // Removes subscriber from all data sources
+    auto src = topic.substr(topic.find_first_of("/") + 1);
 
-    for (auto it = datasources.begin(); it != datasources.end(); ++it)
+    if (!datasources.count(src))
     {
-        auto&                              dsrc = it->second;
+        SPDLOG_WARN("Unknown data source {} requested in extension {}", src, name);
+        return;
+    }
 
-        std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
+    DataSource&                        dsrc = datasources[src];
 
-        // Log if unsubscribed succeeded
-        if (dsrc.subscribers.erase(subscriber))
-        {
-            SPDLOG_INFO("Widget unsubscribed from topic {}/{}", name, it->first);
-        }
+    std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
-        // Stop timer if no subscribers
-        if (dsrc.subscribers.empty())
-        {
-            dsrc.timer.reset();
-        }
+    SPDLOG_INFO("Widget unsubscribed from topic {}", dsrc.topic);
+
+    dsrc.subscribers = count;
+
+    // Stop timer if no subscribers
+    if (dsrc.subscribers <= 0)
+    {
+        dsrc.timer.reset();
     }
 }
 
@@ -235,7 +278,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
 {
     using namespace std::chrono;
 
-    jsoncons::json& j = msg["data"][GetName()];
+    jsoncons::json& j = msg[src.topic];
 
     if (!src.enabled)
     {
@@ -252,7 +295,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
         if (src.cache.expiry >= system_clock::now())
         {
             // If data hasn't expired yet, use the cached data
-            j[src.name] = src.cache.data;
+            j = src.cache.data;
             return GET_DATA_SUCCESS;
         }
     }
@@ -302,7 +345,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
         src.cache.expiry = system_clock::now() + milliseconds(src.validtime);
     }
 
-    j[src.name] = rett.val.value();
+    j = rett.val.value();
 
     return GET_DATA_SUCCESS;
 }
@@ -312,11 +355,11 @@ void Extension::sendDataToSubscribers(DataSource& src)
     std::lock_guard<std::shared_mutex> lk(src.mutex);
 
     // Only send if there are subscribers
-    if (!src.subscribers.empty())
+    if (src.subscribers > 0)
     {
         jsoncons::json j{
             jsoncons::json_object_arg,
-            {{"data", jsoncons::json{jsoncons::json_object_arg, {{GetName(), {}}}}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
+            {{src.topic, jsoncons::json{jsoncons::json_object_arg}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
         };
 
         getDataFromSource(j, src);
@@ -370,7 +413,6 @@ Extension::~Extension()
     {
         it->second.timer.reset();
         it->second.locks.reset();
-        it->second.subscribers.clear();
     }
 
     // extension is responsible for cleanup of quasar_ext_info_t*
@@ -439,21 +481,16 @@ void Extension::Initialize()
     }
 }
 
-std::string Extension::PollDataForSending(const std::vector<std::string>& sources, const std::string& args, void* client)
+void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::string>& topics, const std::string& args, void* client)
 {
-    jsoncons::json j{
-        jsoncons::json_object_arg,
-        {{"data", jsoncons::json{jsoncons::json_object_arg, {{GetName(), {}}}}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
-    };
-
-    std::string message{};
-
-    for (auto& src : sources)
+    for (auto& topic : topics)
     {
+        auto src = topic.substr(topic.find_first_of("/") + 1);
+
         if (!datasources.count(src))
         {
             auto m = "Unknown data source " + src + " requested in extension " + name;  // + " by widget " + widgetName;
-            j["errors"].push_back(m);
+            json["errors"].push_back(m);
 
             SPDLOG_WARN(m);
             continue;
@@ -463,14 +500,16 @@ std::string Extension::PollDataForSending(const std::vector<std::string>& source
 
         std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
-        auto                               result = getDataFromSource(j, dsrc, args);
+        json[dsrc.topic] = jsoncons::json{jsoncons::json_object_arg};
+
+        auto result      = getDataFromSource(json, dsrc, args);
 
         switch (result)
         {
             case GET_DATA_FAILED:
                 {
                     auto m = "getDataFromSource(" + src + ") failed in extension " + name;  // + " requested by widget " + widgetName;
-                    j["errors"].push_back(m);
+                    json["errors"].push_back(m);
                     SPDLOG_WARN(m);
                 }
                 break;
@@ -483,8 +522,4 @@ std::string Extension::PollDataForSending(const std::vector<std::string>& source
                 break;
         }
     }
-
-    j.dump(message);
-
-    return message;
 }

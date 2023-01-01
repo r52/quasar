@@ -7,7 +7,7 @@
 
 struct ClientMsgParams
 {
-    std::optional<std::string>              target;
+    std::optional<std::vector<std::string>> topics;
     std::optional<std::vector<std::string>> params;
     std::optional<std::string>              code;
     std::optional<std::string>              args;
@@ -20,8 +20,7 @@ struct ClientMessage
     ClientMsgParams params;
 };
 
-struct ServerMessage
+struct ErrorOnlyMessage
 {
-    std::optional<std::string>              data;
     std::optional<std::vector<std::string>> errors;
 };

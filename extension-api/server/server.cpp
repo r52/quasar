@@ -24,22 +24,18 @@
   sendErrorToClient(d, fmt::format(__VA_ARGS__)); \
   SPDLOG_WARN(__VA_ARGS__);
 
-GLZ_META(ClientMsgParams, target, params, code, args);
+GLZ_META(ClientMsgParams, topics, params, code, args);
 GLZ_META(ClientMessage, method, params);
-GLZ_META(ServerMessage, data, errors);
+GLZ_META(ErrorOnlyMessage, errors);
 
 using UWSSocket = uWS::WebSocket<false, true, PerSocketData>;
 
 namespace
 {
     // Server data
-    uWS::App*                      app           = nullptr;
-    uWS::Loop*                     loop          = nullptr;
-    us_listen_socket_t*            listen_socket = nullptr;
-    std::unordered_set<UWSSocket*> connections;
-    const int                      _SSL = 0;
-    BS::thread_pool                pool;
-    constexpr int                  shutdownCode = 4444;
+    uWS::App*       app  = nullptr;
+    uWS::Loop*      loop = nullptr;
+    BS::thread_pool pool;
 }  // namespace
 
 Server::Server(std::shared_ptr<Config> cfg) :
@@ -61,6 +57,7 @@ Server::Server(std::shared_ptr<Config> cfg) :
                    .maxPayloadLength = 16 * 1024,
                    .idleTimeout      = 0,
                    .maxBackpressure  = 1 * 1024 * 1024,
+                   .maxLifetime      = 0,
                    /* Handlers */
                    .upgrade =
                        [](auto* res, auto* req, auto* context) {
@@ -75,8 +72,6 @@ Server::Server(std::shared_ptr<Config> cfg) :
                            auto data    = ws->getUserData();
                            data->socket = ws;
 
-                           connections.insert(ws);
-
                            SPDLOG_INFO("New client connected!");
                        },
                    .message =
@@ -85,17 +80,17 @@ Server::Server(std::shared_ptr<Config> cfg) :
                                this->processMessage(data, msg);
                            });
                        },
+                   .subscription =
+                       [this](UWSSocket* ws, std::string_view topic, int nSize, int oSize) {
+                           pool.push_task([=, data = ws->getUserData(), this, tpc = std::string{topic}] {
+                               this->processSubscription(data, tpc, nSize, oSize);
+                           });
+                       },
                    .close =
                        [this](UWSSocket* ws, int code, std::string_view message) {
                            auto data = ws->getUserData();
-                           this->processClose(data);
 
-                           if (code != shutdownCode)
-                           {
-                               // This gets called during socket closure at destruction time as well
-                               // so don't modify the container if called during exit cleanup
-                               connections.erase(ws);
-                           }
+                           this->processClose(data);
 
                            SPDLOG_INFO("Client disconnected.");
                        }})
@@ -103,7 +98,6 @@ Server::Server(std::shared_ptr<Config> cfg) :
                 [this](auto* socket) {
                     if (socket)
                     {
-                        listen_socket = socket;
                         SPDLOG_INFO("WebSocket Thread listening on port {}", Settings::internal.port.GetValue());
 
                         pool.push_task([this] {
@@ -125,16 +119,7 @@ Server::Server(std::shared_ptr<Config> cfg) :
 Server::~Server()
 {
     loop->defer([]() {
-        for (auto* s : connections)
-        {
-            s->end(shutdownCode);
-        }
-
-        if (listen_socket)
-        {
-            us_listen_socket_close(_SSL, listen_socket);
-            listen_socket = nullptr;
-        }
+        app->close();
     });
     websocketServer.join();
 
@@ -267,60 +252,60 @@ void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& m
 
     auto& parms = msg.params;
 
-    if (!(parms.target and parms.params))
+    if (!parms.topics)
     {
         SEND_CLIENT_ERROR(client, "Invalid parameters for method 'subscribe'");
         return;
     }
 
-    if (parms.target.value().empty())
+    if (parms.topics.value().empty())
     {
-        SEND_CLIENT_ERROR(client, "Invalid target for method 'subscribe'");
+        SEND_CLIENT_ERROR(client, "Invalid topics for method 'subscribe'");
         return;
     }
 
-    auto&                               target = parms.target.value();
-    auto&                               params = parms.params.value();
+    auto&                               topics = parms.topics.value();
 
     std::shared_lock<std::shared_mutex> lk(extensionMutex);
 
-    if (!extensions.count(target))
+    for (auto& topic : topics)
     {
-        SEND_CLIENT_ERROR(client, "Unknown extension identifier {}", target);
-        return;
-    }
+        auto target = topic.substr(0, topic.find_first_of("/"));
 
-    auto extn = extensions[target].get();
-
-    for (auto& src : params)
-    {
-        if (!extn->SourceExists(src))
+        if (!extensions.count(target))
         {
-            SEND_CLIENT_ERROR(client, "Nonexistent Data Source '{}' in target {}", src, target);
+            SEND_CLIENT_ERROR(client, "Unknown extension '{}'", target);
             continue;
         }
 
-        auto result = extn->AddSubscriber(client, src);
+        auto extn = extensions[target].get();
 
-        if (result)
+        if (!extn->TopicExists(topic))
         {
-            auto topic  = fmt::format("{}/{}", target, src);
-            auto socket = static_cast<UWSSocket*>(client->socket);
-
-            loop->defer([=, this]() {
-                auto res = socket->subscribe(topic);
-
-                if (res)
-                {
-                    client->topics.push_back(topic);
-                    SPDLOG_INFO("Widget subscribed to topic {}/{}", target, src);
-                }
-                else
-                {
-                    SEND_CLIENT_ERROR(client, "Failed to subscribed to topic {}/{}", target, src);
-                }
-            });
+            SEND_CLIENT_ERROR(client, "Nonexistent topic '{}'", topic);
+            continue;
         }
+
+        if (!extn->TopicAcceptsSubscribers(topic))
+        {
+            SEND_CLIENT_ERROR(client, "Topic '{}' does not accept subscribers", topic);
+            continue;
+        }
+
+        auto socket = static_cast<UWSSocket*>(client->socket);
+
+        loop->defer([=, this]() {
+            auto res = socket->subscribe(topic);
+
+            if (res)
+            {
+                SPDLOG_INFO("Widget subscribed to topic {}", topic);
+            }
+            else
+            {
+                SEND_CLIENT_ERROR(client, "Failed to subscribed to topic {}", topic);
+            }
+        });
     }
 }
 
@@ -349,20 +334,20 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
 
     auto& parms = msg.params;
 
-    if (!(parms.target and parms.params))
+    if (!parms.topics)
     {
         SEND_CLIENT_ERROR(client, "Invalid parameters for method 'query'");
         return;
     }
 
-    if (parms.target.value().empty())
+    if (parms.topics.value().empty())
     {
-        SEND_CLIENT_ERROR(client, "Invalid target for method 'query'");
+        SEND_CLIENT_ERROR(client, "Invalid topics for method 'query'");
         return;
     }
 
-    auto& target = parms.target.value();
-    auto& params = parms.params.value();
+    auto& topics = parms.topics.value();
+    auto  params = parms.params ? parms.params.value() : std::vector<std::string>{};
     auto  args   = parms.args ? parms.args.value() : "";
 
     // TODO internal targets
@@ -372,21 +357,40 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
     //     return;
     // }
 
-    std::shared_lock<std::shared_mutex> lk(extensionMutex);
+    std::unordered_map<std::string, std::vector<std::string>> extns{};
 
-    if (!extensions.count(target))
+    for (auto& topic : topics)
     {
-        SEND_CLIENT_ERROR(client, "Unknown extension identifier {}", target);
-        return;
+        auto target = topic.substr(0, topic.find_first_of("/"));
+        extns[target].push_back(topic);
     }
 
-    auto        extn   = extensions[target].get();
+    std::shared_lock<std::shared_mutex> lk(extensionMutex);
 
-    std::string result = extn->PollDataForSending(params, args, client);
+    jsoncons::json                      j{jsoncons::json_object_arg, {{"errors", jsoncons::json{jsoncons::json_array_arg}}}};
+    std::string                         message{};
 
-    if (!result.empty())
+    for (auto& ex : extns)
     {
-        SendDataToClient(client, result);
+        auto& target = ex.first;
+        auto& tpcs   = ex.second;
+
+        if (!extensions.count(target))
+        {
+            SEND_CLIENT_ERROR(client, "Unknown extension {}", target);
+            continue;
+        }
+
+        auto extn = extensions[target].get();
+
+        extn->PollDataForSending(j, tpcs, args, client);
+    }
+
+    j.dump(message);
+
+    if (!message.empty())
+    {
+        SendDataToClient(client, message);
     }
 }
 
@@ -423,8 +427,8 @@ void Server::processMessage(PerSocketData* client, const std::string& msg)
 void Server::sendErrorToClient(PerSocketData* client, const std::string& err)
 {
     // Craft error json msg
-    ServerMessage msg{.errors = {{err}}};
-    std::string   json{};
+    ErrorOnlyMessage msg{.errors = {{err}}};
+    std::string      json{};
     glz::write_json(msg, json);
 
     SendDataToClient(client, json);
@@ -432,30 +436,37 @@ void Server::sendErrorToClient(PerSocketData* client, const std::string& err)
 
 void Server::processClose(PerSocketData* client)
 {
-    // If client has subscribed topics, unsub
-    if (!client->topics.empty())
+    // Currently nothing
+}
+
+void Server::processSubscription(PerSocketData* client, const std::string& topic, int nSize, int oSize)
+{
+    std::shared_lock<std::shared_mutex> lk(extensionMutex);
+
+    auto                                target = topic.substr(0, topic.find_first_of("/"));
+
+    if (!extensions.count(target))
     {
-        std::unordered_set<std::string> extns{};
+        SEND_CLIENT_ERROR(client, "Unknown extension '{}'", target);
+        return;
+    }
 
-        for (auto& topic : client->topics)
-        {
-            auto target = topic.substr(0, topic.find_first_of("/"));
-            extns.insert(target);
-        }
+    auto extn = extensions[target].get();
 
-        std::shared_lock<std::shared_mutex> lk(extensionMutex);
+    if (nSize > oSize)
+    {
+        // New subscriber
 
-        for (auto& ex : extns)
-        {
-            if (!extensions.count(ex))
-            {
-                SEND_CLIENT_ERROR(client, "Unknown extension identifier {}", ex);
-                return;
-            }
-
-            auto extn = extensions[ex].get();
-
-            extn->RemoveSubscriber(client);
-        }
+        extn->AddSubscriber(client, topic, nSize);
+    }
+    else if (nSize < oSize)
+    {
+        // Remove subscriber
+        extn->RemoveSubscriber(client, topic, nSize);
+    }
+    else
+    {
+        // Undefined behaviour
+        SPDLOG_WARN("Undefined subscription behaviour");
     }
 }

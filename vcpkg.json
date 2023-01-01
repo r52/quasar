@@ -1,6 +1,5 @@
 {
   "name": "quasar",
-  "builtin-baseline": "e07c62d05970d7d89e336bdb278b02242e8bda7c",
   "version": "3.0.0",
   "dependencies": ["fmt", "spdlog", "uwebsockets", "bshoshany-thread-pool"]
 }

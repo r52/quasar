@@ -4,27 +4,14 @@ function subscribe() {
   var msg = {
     method: "subscribe",
     params: {
-      target: "win_simple_perf",
-      params: ["sysinfo"],
+      topics: ["win_simple_perf/sysinfo"],
     },
   };
 
   websocket.send(JSON.stringify(msg));
 }
 
-function setData(source, value) {
-  var elm = null;
-
-  switch (source) {
-    case "cpu":
-      elm = document.getElementById("cpu");
-      break;
-    case "ram":
-      value = Math.round((value["used"] / value["total"]) * 100);
-      elm = document.getElementById("ram");
-      break;
-  }
-
+function setData(elm, value) {
   if (elm != null) {
     elm.setAttribute("aria-valuenow", value);
     elm.textContent = value + "%";
@@ -44,14 +31,13 @@ function setData(source, value) {
 function parseMsg(msg) {
   var data = JSON.parse(msg);
 
-  if (
-    "data" in data &&
-    "win_simple_perf" in data["data"] &&
-    "sysinfo" in data["data"]["win_simple_perf"]
-  ) {
-    var vals = data["data"]["win_simple_perf"]["sysinfo"];
-    setData("cpu", vals["cpu"]);
-    setData("ram", vals["ram"]);
+  if ("win_simple_perf/sysinfo" in data) {
+    var vals = data["win_simple_perf/sysinfo"];
+    setData(document.getElementById("cpu"), vals["cpu"]);
+    setData(
+      document.getElementById("ram"),
+      Math.round((vals["ram"]["used"] / vals["ram"]["total"]) * 100),
+    );
   }
 }
 

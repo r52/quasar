@@ -78,7 +78,7 @@ struct DataSource
     // basic data source fields
     bool        enabled;    //!< Whether this data source is enabled
     std::string name;       //!< Data Source identifier
-    std::string topic;      //!< Topic name (used by WebSocket server)
+    std::string topic;      //!< Topic identifier (used by WebSocket server)
     size_t      uid;        //!< Data Source uid
     int64_t     rate;       //!< Data Source refresh rate \sa quasar_data_source_t.rate, quasar_polling_type_t
     uint64_t    validtime;  //!< Data validity duration for \ref QUASAR_POLLING_CLIENT. \sa quasar_data_source_t.rate, quasar_data_source_t.validtime,
@@ -86,7 +86,7 @@ struct DataSource
 
     // subscription type source fields
     std::unique_ptr<Timer> timer;        //!< Timer for timer based subscription sources
-    std::set<void*>        subscribers;  //!< Set of widgets (i.e. its WebSocket instance) subscribed to this source
+    int                    subscribers;  //!< Number of subscribers currently subscribed to this source
 
     // poll type
     std::unordered_set<void*> pollqueue;  //!< Queue of widgets (i.e. its WebSocket instance) waiting for polled data
@@ -124,7 +124,7 @@ public:
     ~Extension();
 
     //! Data Source uid counter
-    static uintmax_t _uid;
+    static size_t _uid;
 
     //! Load an extension
     /*!
@@ -140,48 +140,58 @@ public:
 
     //! Polls the extension for data to be sent to the requesting client
     /*! Called when the extension receives a widget "poll" request
-        \param[in]  sources     Data Source identifiers
-        \param[in]  args        Any arguments passed to the Data Source, if accepted
-        \param[in]  client      Requesting widget's websocket connection instance
-        \param[in]  widgetName  Widget name
+        \param[in,out]  json        JSON data
+        \param[in]      topics      Topics
+        \param[in]      args        Any arguments passed to the Data Source, if accepted
+        \param[in]      client      Requesting widget's websocket connection instance
+        \param[in]      widgetName  Widget name
     */
-    std::string PollDataForSending(const std::vector<std::string>& sources, const std::string& args, void* client);
+    void PollDataForSending(jsoncons::json& json, const std::vector<std::string>& topics, const std::string& args, void* client);
 
     /*! Gets extension identifier
     \return extension identifier
     */
     const std::string& GetName() const { return name; };
 
-    /*! Checks to see whether a Data Source exists
-        \param[in]  src     Data Source identifier
-        \return Data Source exists
+    /*! Checks to see whether a Topic exists
+        \param[in]  topic   Topic identifier
+        \return Topic exists
     */
-    bool SourceExists(const std::string& src) const;
+    bool TopicExists(const std::string& topic) const;
+
+    /*! Checks to see whether a Topic accepts subscribers
+        \param[in]  topic   Topic identifier
+        \return Topic accepts subscribers
+    */
+    bool TopicAcceptsSubscribers(const std::string& topic);
 
     //! Adds a subscriber to a Data Source
     /*!
         \param[in]  subscriber  Subscriber's websocket connection instance
-        \param[in]  src         Data Source identifier
+        \param[in]  topic       Topic
+        \param[in]  count       Current subscriber count
         \param[in]  widgetName  Widget name
         \return true if successful, false otherwise
     */
-    bool AddSubscriber(void* subscriber, const std::string& src);
+    bool AddSubscriber(void* subscriber, const std::string& topic, int count);
 
-    //! Removes a subscriber from all Data Sources
+    //! Removes a subscriber from a Data Sources
     /*! Invoked when a widget is closed or disconnects
         \param[in]  subscriber  Subscriber's websocket connection instance
+        \param[in]  topic       Topic
+        \param[in]  count       Current subscriber count
     */
-    void RemoveSubscriber(void* subscriber);
+    void RemoveSubscriber(void* subscriber, const std::string& topic, int count);
 
 private:
     //! Extension constructor
     /*! Extension::load() should be used to load and create a Extension instance
-        \param[in]  p           extension info struct
+        \param[in]  info        Extension info struct
         \param[in]  destroyfunc Function pointer to the extension destroy function
         \param[in]  path        Library path
         \sa quasar_ext_info_t, quasar_extension_destroy()
     */
-    Extension(quasar_ext_info_t* p, extension_destroy destroyfunc, const std::string& path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg);
+    Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, const std::string& path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg);
 
     /*! Retrieves data from a data source and saves it to the supplied JSON object as JSON data
         \param[in]  msg     Reference to the JSON object to save data to
@@ -205,21 +215,22 @@ private:
     void createTimer(DataSource& src);
 
     // Members
-    quasar_ext_info_t*    extensionInfo;  //!< Extension info data \sa quasar_ext_info_t
-    extension_destroy     destroyFunc;    //!< Extension destroy function \sa quasar_ext_destroy()
+    quasar_ext_info_t*              extensionInfo;  //!< Extension info data \sa quasar_ext_info_t
+    extension_destroy               destroyFunc;    //!< Extension destroy function \sa quasar_ext_destroy()
 
-    std::string           libpath;      //!< Path to library file
-    std::string           name;         //!< Extension identifier
-    std::string           fullname;     //!< Extension full name
-    std::string           description;  //!< Extension description
-    std::string           author;       //!< Extension author
-    std::string           version;      //!< Extension version string
-    std::string           url;          //!< Extension url, if any
+    std::string                     libpath;      //!< Path to library file
+    std::string                     name;         //!< Extension identifier
+    std::string                     fullname;     //!< Extension full name
+    std::string                     description;  //!< Extension description
+    std::string                     author;       //!< Extension author
+    std::string                     version;      //!< Extension version string
+    std::string                     url;          //!< Extension url, if any
 
-    DataSourceMapType     datasources;  //!< Map of Data Sources provided by this extension
+    DataSourceMapType               datasources;  //!< Map of Data Sources in this extension
+    std::unordered_set<std::string> topics;       //!< Set of topics exposed by this extension
 
-    bool                  initialized;  //!< Extension successfully initialized;
+    bool                            initialized;  //!< Extension successfully initialized;
 
-    std::weak_ptr<Server> server{};
-    std::weak_ptr<Config> config{};
+    std::weak_ptr<Server>           server{};
+    std::weak_ptr<Config>           config{};
 };
