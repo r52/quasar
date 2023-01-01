@@ -60,23 +60,22 @@ Extension::Extension(quasar_ext_info_t* info,
         {
             CHAR_TO_UTF8(std::string srcname, extensionInfo->dataSources[i].name);
 
-            if (datasources.count(srcname))
+            auto topic = fmt::format("{}/{}", name, srcname);
+
+            if (datasources.count(topic))
             {
-                SPDLOG_WARN("Extension {} tried to register more than one data source '{}'", name, srcname);
+                SPDLOG_WARN("Extension {} tried to register more than one topic '{}'", name, topic);
                 continue;
             }
 
-            auto        tpc    = fmt::format("{}/{}", name, srcname);
-
-            DataSource& source = datasources[srcname];
+            DataSource& source = datasources[topic];
 
             // TODO get extension settings
 
             // TODO rewrite this garbage
 
             source.enabled   = true;
-            source.name      = srcname;
-            source.topic     = tpc;
+            source.topic     = topic;
             source.rate      = extensionInfo->dataSources[i].rate;
             source.validtime = extensionInfo->dataSources[i].validtime;
             source.uid = extensionInfo->dataSources[i].uid = ++Extension::_uid;
@@ -92,9 +91,7 @@ Extension::Extension(quasar_ext_info_t* info,
                 source.cache.expiry = std::chrono::system_clock::now();
             }
 
-            topics.insert(tpc);
-
-            SPDLOG_INFO("Extension {} registering data source '{}' as topic '{}'", name, srcname, tpc);
+            SPDLOG_INFO("Extension {} registering topic '{}'", name, topic);
         }
     }
 
@@ -164,7 +161,7 @@ Extension::Extension(quasar_ext_info_t* info,
 
 bool Extension::TopicExists(const std::string& topic) const
 {
-    return (topics.count(topic) > 0);
+    return (datasources.count(topic) > 0);
 }
 
 bool Extension::TopicAcceptsSubscribers(const std::string& topic)
@@ -174,14 +171,7 @@ bool Extension::TopicAcceptsSubscribers(const std::string& topic)
         return false;
     }
 
-    auto src = topic.substr(topic.find_first_of("/") + 1);
-
-    if (!datasources.count(src))
-    {
-        return false;
-    }
-
-    DataSource&                        dsrc = datasources[src];
+    DataSource&                        dsrc = datasources[topic];
 
     std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
@@ -207,21 +197,13 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& topic, int co
         return false;
     }
 
-    auto src = topic.substr(topic.find_first_of("/") + 1);
-
-    if (!datasources.count(src))
-    {
-        SPDLOG_WARN("Unknown data source {} requested in extension {}", src, name);
-        return false;
-    }
-
-    DataSource&                        dsrc = datasources[src];
+    DataSource&                        dsrc = datasources[topic];
 
     std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
     if (dsrc.rate == QUASAR_POLLING_CLIENT)
     {
-        SPDLOG_WARN("Data source '{}' in extension {} requested by widget does not accept subscribers", src, name);
+        SPDLOG_WARN("Topic '{}' in extension {} requested by widget does not accept subscribers", topic, name);
         return false;
     }
 
@@ -251,15 +233,13 @@ void Extension::RemoveSubscriber(void* subscriber, const std::string& topic, int
         return;
     }
 
-    auto src = topic.substr(topic.find_first_of("/") + 1);
-
-    if (!datasources.count(src))
+    if (!datasources.count(topic))
     {
-        SPDLOG_WARN("Unknown data source {} requested in extension {}", src, name);
+        SPDLOG_WARN("Unknown topic {} requested in extension {}", topic, name);
         return;
     }
 
-    DataSource&                        dsrc = datasources[src];
+    DataSource&                        dsrc = datasources[topic];
 
     std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
@@ -283,7 +263,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
     if (!src.enabled)
     {
         // honour enabled flag
-        SPDLOG_WARN("Data source {} is disabled", src.name);
+        SPDLOG_WARN("Topic {} is disabled", src.topic);
         return GET_DATA_FAILED;
     }
 
@@ -310,7 +290,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
             msg["errors"].insert(msg["errors"].end_elements(), rett.errors.begin(), rett.errors.end());
         }
 
-        SPDLOG_WARN("get_data({}, {}) failed", name, src.name);
+        SPDLOG_WARN("get_data({}, {}) failed", name, src.topic);
         return GET_DATA_FAILED;
     }
 
@@ -485,18 +465,16 @@ void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::
 {
     for (auto& topic : topics)
     {
-        auto src = topic.substr(topic.find_first_of("/") + 1);
-
-        if (!datasources.count(src))
+        if (!datasources.count(topic))
         {
-            auto m = "Unknown data source " + src + " requested in extension " + name;  // + " by widget " + widgetName;
+            auto m = "Unknown topic " + topic + " requested in extension " + name;  // + " by widget " + widgetName;
             json["errors"].push_back(m);
 
             SPDLOG_WARN(m);
             continue;
         }
 
-        DataSource&                        dsrc = datasources[src];
+        DataSource&                        dsrc = datasources[topic];
 
         std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
@@ -508,7 +486,7 @@ void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::
         {
             case GET_DATA_FAILED:
                 {
-                    auto m = "getDataFromSource(" + src + ") failed in extension " + name;  // + " requested by widget " + widgetName;
+                    auto m = "getDataFromSource(" + topic + ") failed in extension " + name;  // + " requested by widget " + widgetName;
                     json["errors"].push_back(m);
                     SPDLOG_WARN(m);
                 }

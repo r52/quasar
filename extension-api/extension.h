@@ -77,7 +77,6 @@ struct DataSource
 {
     // basic data source fields
     bool        enabled;    //!< Whether this data source is enabled
-    std::string name;       //!< Data Source identifier
     std::string topic;      //!< Topic identifier (used by WebSocket server)
     size_t      uid;        //!< Data Source uid
     int64_t     rate;       //!< Data Source refresh rate \sa quasar_data_source_t.rate, quasar_polling_type_t
@@ -215,22 +214,21 @@ private:
     void createTimer(DataSource& src);
 
     // Members
-    quasar_ext_info_t*              extensionInfo;  //!< Extension info data \sa quasar_ext_info_t
-    extension_destroy               destroyFunc;    //!< Extension destroy function \sa quasar_ext_destroy()
+    quasar_ext_info_t*    extensionInfo;  //!< Extension info data \sa quasar_ext_info_t
+    extension_destroy     destroyFunc;    //!< Extension destroy function \sa quasar_ext_destroy()
 
-    std::string                     libpath;      //!< Path to library file
-    std::string                     name;         //!< Extension identifier
-    std::string                     fullname;     //!< Extension full name
-    std::string                     description;  //!< Extension description
-    std::string                     author;       //!< Extension author
-    std::string                     version;      //!< Extension version string
-    std::string                     url;          //!< Extension url, if any
+    std::string           libpath;      //!< Path to library file
+    std::string           name;         //!< Extension identifier
+    std::string           fullname;     //!< Extension full name
+    std::string           description;  //!< Extension description
+    std::string           author;       //!< Extension author
+    std::string           version;      //!< Extension version string
+    std::string           url;          //!< Extension url, if any
 
-    DataSourceMapType               datasources;  //!< Map of Data Sources in this extension
-    std::unordered_set<std::string> topics;       //!< Set of topics exposed by this extension
+    DataSourceMapType     datasources;  //!< Map of Topics in this extension
 
-    bool                            initialized;  //!< Extension successfully initialized;
+    bool                  initialized;  //!< Extension successfully initialized;
 
-    std::weak_ptr<Server>           server{};
-    std::weak_ptr<Config>           config{};
+    std::weak_ptr<Server> server{};
+    std::weak_ptr<Config> config{};
 };
