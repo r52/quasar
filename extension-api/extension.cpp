@@ -3,6 +3,8 @@
 #include "extension_support_internal.h"
 #include "server/server.h"
 
+#include "config.h"
+
 #include <QLibrary>
 
 #include <spdlog/spdlog.h>
@@ -74,19 +76,22 @@ Extension::Extension(quasar_ext_info_t* info,
 
             // TODO rewrite this garbage
 
-            source.enabled   = true;
-            source.topic     = topic;
-            source.rate      = extensionInfo->dataSources[i].rate;
-            source.validtime = extensionInfo->dataSources[i].validtime;
+            source.settings.enabled = true;
+            source.settings.rate    = extensionInfo->dataSources[i].rate;
+
+            source.topic            = topic;
+            source.validtime        = extensionInfo->dataSources[i].validtime;
             source.uid = extensionInfo->dataSources[i].uid = ++Extension::_uid;
 
+            config.lock()->AddDataSourceSetting(topic, &source.settings);
+
             // Initialize type specific fields
-            if (source.rate == QUASAR_POLLING_SIGNALED)
+            if (source.settings.rate == QUASAR_POLLING_SIGNALED)
             {
                 source.locks = std::make_unique<DataLock>();
             }
 
-            if (source.rate == QUASAR_POLLING_CLIENT)
+            if (source.settings.rate == QUASAR_POLLING_CLIENT)
             {
                 source.cache.expiry = std::chrono::system_clock::now();
             }
@@ -175,7 +180,7 @@ bool Extension::TopicAcceptsSubscribers(const std::string& topic)
 
     std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
-    if (dsrc.rate == QUASAR_POLLING_CLIENT)
+    if (dsrc.settings.rate == QUASAR_POLLING_CLIENT)
     {
         return false;
     }
@@ -201,7 +206,7 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& topic, int co
 
     std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
-    if (dsrc.rate == QUASAR_POLLING_CLIENT)
+    if (dsrc.settings.rate == QUASAR_POLLING_CLIENT)
     {
         SPDLOG_WARN("Topic '{}' in extension {} requested by widget does not accept subscribers", topic, name);
         return false;
@@ -209,7 +214,7 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& topic, int co
 
     dsrc.subscribers = count;
 
-    if (dsrc.rate > QUASAR_POLLING_CLIENT)
+    if (dsrc.settings.rate > QUASAR_POLLING_CLIENT)
     {
         createTimer(dsrc);
     }
@@ -260,14 +265,14 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
 
     jsoncons::json& j = msg[src.topic];
 
-    if (!src.enabled)
+    if (!src.settings.enabled)
     {
         // honour enabled flag
         SPDLOG_WARN("Topic {} is disabled", src.topic);
         return GET_DATA_FAILED;
     }
 
-    if (src.rate == QUASAR_POLLING_CLIENT && src.validtime)
+    if (src.settings.rate == QUASAR_POLLING_CLIENT && src.validtime)
     {
         // If this source is client polled and a validity duration is specified,
         // first check for expiry time and cached data
@@ -301,7 +306,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
 
     if (not rett.val)
     {
-        if (src.rate == QUASAR_POLLING_CLIENT)
+        if (src.settings.rate == QUASAR_POLLING_CLIENT)
         {
             // Allow empty return (for async data)
             return GET_DATA_DELAYED;
@@ -318,7 +323,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
     }
 
     // If we have valid data here:
-    if (src.rate == QUASAR_POLLING_CLIENT && src.validtime)
+    if (src.settings.rate == QUASAR_POLLING_CLIENT && src.validtime)
     {
         // If validity time duration is set, cache the data
         src.cache.data   = rett.val.value();
@@ -368,7 +373,7 @@ void Extension::sendDataToSubscribers(DataSource& src)
 
 void Extension::createTimer(DataSource& src)
 {
-    if (src.enabled && !src.timer)
+    if (src.settings.enabled && !src.timer)
     {
         // Timer creation required
         src.timer = std::make_unique<Timer>();
@@ -377,7 +382,7 @@ void Extension::createTimer(DataSource& src)
             [this, &src] {
                 sendDataToSubscribers(src);
             },
-            src.rate);
+            src.settings.rate);
     }
 }
 
@@ -389,10 +394,11 @@ Extension::~Extension()
     }
 
     // Do some explicit cleanup
-    for (auto it = datasources.begin(); it != datasources.end(); ++it)
+    for (auto& [name, src] : datasources)
     {
-        it->second.timer.reset();
-        it->second.locks.reset();
+        config.lock()->WriteDataSourceSetting(name, &src.settings);
+        src.timer.reset();
+        src.locks.reset();
     }
 
     // extension is responsible for cleanup of quasar_ext_info_t*

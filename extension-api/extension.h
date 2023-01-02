@@ -15,6 +15,8 @@
 #include "api/extension_types.h"
 #include "extension_exports.h"
 
+#include "settings.h"
+
 #include <jsoncons/json.hpp>
 
 class Config;
@@ -76,10 +78,11 @@ private:
 struct DataSource
 {
     // basic data source fields
-    bool        enabled;    //!< Whether this data source is enabled
+    Settings::DataSourceSettings settings;  //!< Contains the enabled flag and refresh rate flag for this Data Source
+                                            //!< \sa quasar_data_source_t.rate, quasar_polling_type_t
+
     std::string topic;      //!< Topic identifier (used by WebSocket server)
     size_t      uid;        //!< Data Source uid
-    int64_t     rate;       //!< Data Source refresh rate \sa quasar_data_source_t.rate, quasar_polling_type_t
     uint64_t    validtime;  //!< Data validity duration for \ref QUASAR_POLLING_CLIENT. \sa quasar_data_source_t.rate, quasar_data_source_t.validtime,
                             //!< quasar_polling_type_t
 

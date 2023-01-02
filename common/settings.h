@@ -150,6 +150,7 @@ namespace Settings
 
     extern common_API InternalSettings internal;
 
+    // Widget settings
     struct WidgetSettings
     {
         bool  alwaysOnTop;
@@ -160,4 +161,12 @@ namespace Settings
     };
 
     // TODO extension settings
+    struct DataSourceSettings
+    {
+        bool    enabled;
+        int64_t rate;
+    };
+
+    extern common_API std::unordered_map<std::string, DataSourceSettings*> datasource;
+
 }  // namespace Settings

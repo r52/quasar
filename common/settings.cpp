@@ -2,5 +2,6 @@
 
 namespace Settings
 {
-    InternalSettings internal;
-}
+    InternalSettings                                     internal;
+    std::unordered_map<std::string, DataSourceSettings*> datasource;
+}  // namespace Settings

@@ -64,6 +64,33 @@ void Config::WriteWidgetSettings(const QString& name, const Settings::WidgetSett
     cfg->endGroup();
 }
 
+void Config::AddDataSourceSetting(const std::string& name, Settings::DataSourceSettings* settings)
+{
+    auto qname = QString::fromStdString(name);
+
+    if (!Settings::datasource.contains(name))
+    {
+        Settings::datasource.insert({name, settings});
+    }
+
+    Settings::DataSourceSettings cpy = *settings;
+
+    cfg->beginGroup(qname);
+    settings->enabled = cfg->value("enabled", cpy.enabled).toBool();
+    settings->rate    = cfg->value("rate", QVariant{cpy.rate}).toLongLong();
+    cfg->endGroup();
+}
+
+void Config::WriteDataSourceSetting(const std::string& name, Settings::DataSourceSettings* const& settings)
+{
+    auto qname = QString::fromStdString(name);
+
+    cfg->beginGroup(qname);
+    cfg->setValue("enabled", settings->enabled);
+    cfg->setValue("rate", QVariant{settings->rate});
+    cfg->endGroup();
+}
+
 void Config::WriteInternalSettings()
 {
     WriteSetting(Settings::internal.log_file);
