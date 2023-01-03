@@ -22,6 +22,8 @@
 class Config;
 class Server;
 
+using SettingsVariantVector = std::vector<Settings::SettingsVariant>;
+
 /*! Holds the mutex and accompanying conditional variable for
     asynchronous or extension signaled Data Sources.
 */
@@ -183,7 +185,9 @@ public:
         \param[in]  topic       Topic
         \param[in]  count       Current subscriber count
     */
-    void RemoveSubscriber(void* subscriber, const std::string& topic, int count);
+    void                   RemoveSubscriber(void* subscriber, const std::string& topic, int count);
+
+    SettingsVariantVector& GetSettings() { return settings; };
 
 private:
     //! Extension constructor
@@ -231,6 +235,8 @@ private:
     DataSourceMapType     datasources;  //!< Map of Topics in this extension
 
     bool                  initialized;  //!< Extension successfully initialized;
+
+    SettingsVariantVector settings;  //!< Collection of extension settings
 
     std::weak_ptr<Server> server{};
     std::weak_ptr<Config> config{};

@@ -76,13 +76,13 @@ Server::Server(std::shared_ptr<Config> cfg) :
                        },
                    .message =
                        [this](UWSSocket* ws, std::string_view message, uWS::OpCode opCode) {
-                           pool.push_task([data = ws->getUserData(), this, msg = std::string{message}] {
+                           RunOnPool([data = ws->getUserData(), this, msg = std::string{message}] {
                                this->processMessage(data, msg);
                            });
                        },
                    .subscription =
                        [this](UWSSocket* ws, std::string_view topic, int nSize, int oSize) {
-                           pool.push_task([=, data = ws->getUserData(), this, tpc = std::string{topic}] {
+                           RunOnPool([=, data = ws->getUserData(), this, tpc = std::string{topic}] {
                                this->processSubscription(data, tpc, nSize, oSize);
                            });
                        },
@@ -100,7 +100,7 @@ Server::Server(std::shared_ptr<Config> cfg) :
                     {
                         SPDLOG_INFO("WebSocket Thread listening on port {}", Settings::internal.port.GetValue());
 
-                        pool.push_task([this] {
+                        RunOnPool([this] {
                             this->loadExtensions();
                         });
                     }
@@ -151,6 +151,11 @@ void Server::PublishData(const std::string& topic, const std::string& data)
 void Server::RunOnServer(auto&& cb)
 {
     loop->defer(cb);
+}
+
+void Server::RunOnPool(auto&& cb)
+{
+    pool.push_task(cb);
 }
 
 void Server::loadExtensions()

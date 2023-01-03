@@ -36,9 +36,10 @@ SAPI_EXPORT void quasar_free(void* handle);
 /*! Use in \ref quasar_ext_info_t.create_settings to create extension settings.
     Ensure that only a single instance is created and used per extension.
 
+    \param[in]  handle  Extension handle
     \return quasar_settings_t instance if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t* quasar_create_settings(void);
+SAPI_EXPORT quasar_settings_t* quasar_create_settings(quasar_ext_handle handle);
 
 //! Creates a new \ref quasar_selection_options_t setting.
 /*! Use with \ref quasar_add_selection() after populating options.
@@ -81,14 +82,6 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_bool(quasar_data_handle hData, bo
     \return Data handle if successful, nullptr otherwise
 */
 SAPI_EXPORT quasar_data_handle quasar_set_data_json(quasar_data_handle hData, const char* data);
-
-//! Sets the return data to be a binary payload
-/*! \param[in]  hData   Data handle
-    \param[in]  data    Data to set
-    \param[in]  len     Data length
-    \return Data handle if successful, nullptr otherwise
-*/
-SAPI_EXPORT quasar_data_handle quasar_set_data_binary(quasar_data_handle hData, const char* data, size_t len);
 
 //! Sets the return data to be an array of null terminated strings
 /*! \param[in]  hData   Data handle
@@ -146,7 +139,8 @@ SAPI_EXPORT quasar_data_handle quasar_append_error(quasar_data_handle hData, con
     \param[in]  dflt        Default value
     \return The settings handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt);
+SAPI_EXPORT quasar_settings_t*
+quasar_add_int_setting(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt);
 
 //! Creates a bool setting in extension settings
 /*!
@@ -156,7 +150,7 @@ SAPI_EXPORT quasar_settings_t* quasar_add_int(quasar_settings_t* settings, const
     \param[in]  dflt        Default value
     \return The settings handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, const char* name, const char* description, bool dflt);
+SAPI_EXPORT quasar_settings_t* quasar_add_bool_setting(quasar_settings_t* settings, const char* name, const char* description, bool dflt);
 
 //! Creates a double setting in extension settings
 /*!
@@ -170,7 +164,7 @@ SAPI_EXPORT quasar_settings_t* quasar_add_bool(quasar_settings_t* settings, cons
     \return The settings handle if successful, nullptr otherwise
 */
 SAPI_EXPORT quasar_settings_t*
-quasar_add_double(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt);
+quasar_add_double_setting(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt);
 
 //! Creates a string type setting in extension settings
 /*!
@@ -181,7 +175,8 @@ quasar_add_double(quasar_settings_t* settings, const char* name, const char* des
     \param[in]  password    Whether this field is a password/obscured field in the UI
     \return The settings handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t* quasar_add_string(quasar_settings_t* settings, const char* name, const char* description, const char* dflt, bool password);
+SAPI_EXPORT quasar_settings_t*
+quasar_add_string_setting(quasar_settings_t* settings, const char* name, const char* description, const char* dflt, bool password);
 
 //! Creates a selection type setting in extension settings
 /*!
@@ -191,7 +186,8 @@ SAPI_EXPORT quasar_settings_t* quasar_add_string(quasar_settings_t* settings, co
     \param[in]  select      Handle to the selection setting instance (takes ownership)
     \return The settings handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_settings_t* quasar_add_selection(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t* select);
+SAPI_EXPORT quasar_settings_t*
+quasar_add_selection_setting(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t* select);
 
 //! Creates a selection type setting in extension settings
 /*!
@@ -208,7 +204,7 @@ SAPI_EXPORT quasar_selection_options_t* quasar_add_selection_option(quasar_selec
     \param[in]  name        Name of the setting
     \return Value of the setting if successful, default value otherwise
 */
-SAPI_EXPORT intmax_t quasar_get_int(quasar_settings_t* settings, const char* name);
+SAPI_EXPORT intmax_t quasar_get_int_setting(quasar_settings_t* settings, const char* name);
 
 //! Retrieves an unsigned integer setting from Quasar
 /*!
@@ -216,7 +212,7 @@ SAPI_EXPORT intmax_t quasar_get_int(quasar_settings_t* settings, const char* nam
     \param[in]  name        Name of the setting
     \return Value of the setting if successful, default value otherwise
 */
-SAPI_EXPORT uintmax_t quasar_get_uint(quasar_settings_t* settings, const char* name);
+SAPI_EXPORT uintmax_t quasar_get_uint_setting(quasar_settings_t* settings, const char* name);
 
 //! Retrieves a bool setting from Quasar
 /*!
@@ -224,7 +220,7 @@ SAPI_EXPORT uintmax_t quasar_get_uint(quasar_settings_t* settings, const char* n
     \param[in]  name        Name of the setting
     \return Value of the setting if successful, default value otherwise
 */
-SAPI_EXPORT bool quasar_get_bool(quasar_settings_t* settings, const char* name);
+SAPI_EXPORT bool quasar_get_bool_setting(quasar_settings_t* settings, const char* name);
 
 //! Retrieves a double setting from Quasar
 /*!
@@ -232,7 +228,7 @@ SAPI_EXPORT bool quasar_get_bool(quasar_settings_t* settings, const char* name);
     \param[in]  name        Name of the setting
     \return Value of the setting if successful, default value otherwise
 */
-SAPI_EXPORT double quasar_get_double(quasar_settings_t* settings, const char* name);
+SAPI_EXPORT double quasar_get_double_setting(quasar_settings_t* settings, const char* name);
 
 //! Retrieves a string setting from Quasar
 /*!
@@ -242,7 +238,7 @@ SAPI_EXPORT double quasar_get_double(quasar_settings_t* settings, const char* na
     \param[in]  size        Size of buffer
     \return true if successful, false otherwise
 */
-SAPI_EXPORT bool quasar_get_string(quasar_settings_t* settings, const char* name, char* buf, size_t size);
+SAPI_EXPORT bool quasar_get_string_setting(quasar_settings_t* settings, const char* name, char* buf, size_t size);
 
 //! Retrieves a selection setting from Quasar
 /*!
@@ -252,7 +248,7 @@ SAPI_EXPORT bool quasar_get_string(quasar_settings_t* settings, const char* name
     \param[in]  size        Size of buffer
     \return true if successful, false otherwise
 */
-SAPI_EXPORT bool quasar_get_selection(quasar_settings_t* settings, const char* name, char* buf, size_t size);
+SAPI_EXPORT bool quasar_get_selection_setting(quasar_settings_t* settings, const char* name, char* buf, size_t size);
 
 //! Signals to Quasar that data is ready to be sent to clients
 /*! This function is for Data Sources with \ref quasar_data_source_t.rate

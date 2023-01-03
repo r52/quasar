@@ -72,8 +72,6 @@ Extension::Extension(quasar_ext_info_t* info,
 
             DataSource& source = datasources[topic];
 
-            // TODO get extension settings
-
             // TODO rewrite this garbage
 
             source.settings.enabled = true;
@@ -176,9 +174,9 @@ bool Extension::TopicAcceptsSubscribers(const std::string& topic)
         return false;
     }
 
-    DataSource&                        dsrc = datasources[topic];
+    DataSource&                         dsrc = datasources[topic];
 
-    std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
+    std::shared_lock<std::shared_mutex> lk(dsrc.mutex);
 
     if (dsrc.settings.rate == QUASAR_POLLING_CLIENT)
     {

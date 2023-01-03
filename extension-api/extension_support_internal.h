@@ -12,9 +12,11 @@
 #include <variant>
 #include <vector>
 
+#include "settings.h"
+
 #include <jsoncons/json.hpp>
 
-using var_t = std::variant<int, double, bool, std::string, std::vector<std::string>, std::vector<int>, std::vector<double>, void*>;
+using SelectionOptionsVector = std::vector<std::pair<std::string, std::string>>;
 
 //! Internal struct holding return value and any errors
 struct quasar_return_data_t

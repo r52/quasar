@@ -28,6 +28,7 @@ enum quasar_log_level_t
     QUASAR_LOG_DEBUG,    //!< Debug level.
     QUASAR_LOG_INFO,     //!< Info level.
     QUASAR_LOG_WARNING,  //!< Warning level.
+    QUASAR_LOG_ERROR,    //!< Error level.
     QUASAR_LOG_CRITICAL  //!< Critical level.
 };
 
@@ -41,17 +42,17 @@ enum quasar_polling_type_t
     QUASAR_POLLING_CLIENT   = 0    //!< Data is polled on-demand by the client
 };
 
-//! Struct for creating and storing extension settings.
-/*! This struct is opaque to the front facing API.
+//! Handle for creating and storing extension settings.
+/*! This handle is opaque to the front facing API.
     \sa extension_support.h, extension_support_internal.h
 */
-struct quasar_settings_t;
+typedef void* quasar_settings_t;
 
-//! Struct for creating and storing selection options in a selection type setting.
-/*! This struct is opaque to the front facing API.
+//! Handle for creating and storing selection options in a selection type setting.
+/*! This handle is opaque to the front facing API.
     \sa extension_support.h, extension_support_internal.h
 */
-struct quasar_selection_options_t;
+typedef void* quasar_selection_options_t;
 
 // Typedefs
 
@@ -68,7 +69,7 @@ typedef bool (*ext_info_call_t)(quasar_ext_handle);
 
 //! Function pointer type for the \ref quasar_ext_info_t.create_settings function.
 /*! \sa quasar_ext_info_t.create_settings */
-typedef quasar_settings_t* (*ext_create_settings_call_t)();
+typedef quasar_settings_t* (*ext_create_settings_call_t)(quasar_ext_handle);
 
 //! Function pointer type for settings related functions, like \ref quasar_ext_info_t.update.
 /*! \sa quasar_ext_info_t.update */
@@ -182,14 +183,15 @@ struct quasar_ext_info_t
             This function needs to be both re-entrant and thread-safe.
         \endverbatim
 
-        \sa quasar_set_data_string(), quasar_set_data_json(), quasar_set_data_binary(),
+        \sa quasar_set_data_string(), quasar_set_data_json(), quasar_set_data_int(),
+            quasar_set_data_double(), quasar_set_data_bool(),
             quasar_set_data_string_array(), quasar_set_data_int_array(), quasar_set_data_float_array(),
             quasar_set_data_double_array()
         \return true if success, false otherwise
     */
     ext_get_data_call_t get_data;
 
-    //! quasar_settings_t* create_settings(), **OPTIONAL**
+    //! quasar_settings_t* create_settings(#quasar_ext_handle handle), **OPTIONAL**
     /*! Creates extension settings (and corresponding UI elements) if any.
 
         \sa quasar_create_settings(), quasar_add_int(), quasar_add_bool(), quasar_add_double()

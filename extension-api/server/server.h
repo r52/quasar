@@ -34,6 +34,7 @@ public:
     void PublishData(const std::string& topic, const std::string& data);
 
     void RunOnServer(auto&& cb);
+    void RunOnPool(auto&& cb);
 
 private:
     void loadExtensions();
