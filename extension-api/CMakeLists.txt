@@ -53,7 +53,7 @@ target_compile_features(extension PRIVATE cxx_std_20)
 target_link_libraries(extension PRIVATE common extension-api)
 target_link_libraries(extension PRIVATE fmt::fmt)
 target_link_libraries(extension PRIVATE glaze::glaze)
-target_link_libraries(extension PRIVATE ZLIB::ZLIB ${USOCKETS_LIB})
+target_link_libraries(extension PUBLIC ZLIB::ZLIB ${USOCKETS_LIB})
 target_link_libraries(extension PRIVATE spdlog::spdlog)
 target_link_libraries(extension PRIVATE Qt6::Core)
 

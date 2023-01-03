@@ -21,7 +21,7 @@ qt_standard_project_setup()
 
 configure_file(version.h.in version.h @ONLY)
 
-add_executable(quasar
+add_executable(quasar WIN32
   # Source
   main.cpp
   quasar.cpp
@@ -62,9 +62,9 @@ add_custom_command(TARGET quasar POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:extension> $<TARGET_FILE_DIR:quasar>
 )
 
-#add_custom_command(TARGET quasar POST_BUILD 
-#    COMMAND Qt6::windeployqt
-#    ARGS $<TARGET_FILE:quasar>
-#)
+add_custom_command(TARGET quasar POST_BUILD 
+    COMMAND $<$<CONFIG:Release>:Qt6::windeployqt>
+    ARGS $<TARGET_FILE:quasar>
+)
 
 install(TARGETS quasar DESTINATION quasar)

@@ -4,7 +4,7 @@ project(win_simple_perf)
 
 find_package(fmt REQUIRED)
 
-add_library(win_simple_perf SHARED
+add_library(win_simple_perf MODULE
   win_simple_perf.cpp
 )
 
