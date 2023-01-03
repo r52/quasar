@@ -1,9 +1,9 @@
 #include "extension.h"
 
 #include "extension_support_internal.h"
-#include "server/server.h"
 
-#include "config.h"
+#include "common/config.h"
+#include "server/server.h"
 
 #include <QLibrary>
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "exports.h"
-
 #include <algorithm>
 #include <concepts>
 #include <map>
@@ -35,7 +33,7 @@ namespace Settings
 
     // Settings class adapted from https://github.com/yuzu-emu/yuzu
     template<SettingTypes T, bool ranged = IsRanged<T>>
-    class common_API Setting
+    class Setting
     {
     protected:
         Setting() = default;
@@ -98,7 +96,7 @@ namespace Settings
     };
 
     template<SettingTypes T, bool ranged = false>
-    class common_API SelectionSetting : virtual public Setting<T, ranged>
+    class SelectionSetting : virtual public Setting<T, ranged>
     {
         using SelectOption = std::pair<T, std::string>;
 
@@ -164,7 +162,7 @@ namespace Settings
         Setting<std::string> lastpath{"main/lastpath", "Last used file path", ""};
     };
 
-    extern common_API InternalSettings internal;
+    extern InternalSettings internal;
 
     // Widget settings
     struct WidgetSettings
@@ -183,17 +181,17 @@ namespace Settings
         int64_t rate;
     };
 
-    extern common_API std::unordered_map<std::string, DataSourceSettings*> datasource;
+    extern std::unordered_map<std::string, DataSourceSettings*> datasource;
 
     using SettingsVariant = std::variant<Setting<int>, Setting<double>, Setting<bool>, Setting<std::string>, SelectionSetting<std::string>>;
 
     // Template instatiators for supported types
-    template common_API class Setting<int>;
-    template common_API class Setting<double>;
-    template common_API class Setting<bool>;
-    template common_API class Setting<std::string>;
-    template common_API class SelectionSetting<int>;
-    template common_API class SelectionSetting<double>;
-    template common_API class SelectionSetting<std::string>;
+    template class Setting<int>;
+    template class Setting<double>;
+    template class Setting<bool>;
+    template class Setting<std::string>;
+    template class SelectionSetting<int>;
+    template class SelectionSetting<double>;
+    template class SelectionSetting<std::string>;
 
 }  // namespace Settings

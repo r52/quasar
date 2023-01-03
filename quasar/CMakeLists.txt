@@ -6,9 +6,15 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR})
 set(CMAKE_AUTORCC ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(ZLIB REQUIRED)
+find_library(USOCKETS_LIB uSockets)
+find_path(UWEBSOCKETS_INCLUDE_DIRS "uwebsockets/App.h")
+find_path(JSONCONS_INCLUDE_DIRS "jsoncons/json.hpp" PATHS ../include)
+find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
 find_package(Qt6 6.4 COMPONENTS Core Gui Widgets Network NetworkAuth WebEngineCore WebEngineWidgets REQUIRED)
 
 CPMFindPackage(
@@ -21,12 +27,31 @@ qt_standard_project_setup()
 
 configure_file(version.h.in version.h @ONLY)
 
+# API files
+add_library(extension-api INTERFACE)
+
+target_sources(extension-api INTERFACE
+  FILE_SET HEADERS
+    BASE_DIRS api
+    FILES api/extension_api.h api/extension_types.h api/extension_support.h
+)
+
 add_executable(quasar WIN32
   # Source
   main.cpp
   quasar.cpp
   widgets/widgetmanager.cpp
   widgets/quasarwidget.cpp
+
+  extension/extension.cpp
+  extension/extension_support.cpp
+
+  server/server.cpp
+
+  common/settings.cpp
+  common/config.cpp
+  common/log.cpp
+  common/util.cpp
 
   # UI files
   quasar.ui
@@ -44,27 +69,28 @@ add_executable(quasar WIN32
    FILES widgets/widgetdefinition.h
 )
 
-add_dependencies(quasar common extension)
 target_compile_features(quasar PRIVATE cxx_std_20)
+
 target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(quasar PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
-target_link_libraries(quasar PRIVATE common extension)
+target_include_directories(quasar PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
+target_include_directories(quasar PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
+# Replace with jsoncons vcpkg lib when VS2022 compile bugs fixed
+target_include_directories(quasar PRIVATE ${JSONCONS_INCLUDE_DIRS})
+
+target_compile_definitions(quasar PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+
+target_link_libraries(quasar PRIVATE extension-api)
 target_link_libraries(quasar PRIVATE fmt::fmt)
 target_link_libraries(quasar PRIVATE spdlog::spdlog)
 target_link_libraries(quasar PRIVATE glaze::glaze)
+target_link_libraries(quasar PRIVATE ZLIB::ZLIB ${USOCKETS_LIB})
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::WebEngineCore Qt6::WebEngineWidgets)
-
-# Copy libraries
-add_custom_command(TARGET quasar POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:common> $<TARGET_FILE_DIR:quasar>
-)
-add_custom_command(TARGET quasar POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:extension> $<TARGET_FILE_DIR:quasar>
-)
 
 add_custom_command(TARGET quasar POST_BUILD 
     COMMAND $<$<CONFIG:Release>:Qt6::windeployqt>
     ARGS $<TARGET_FILE:quasar>
 )
 
+install(TARGETS extension-api FILE_SET HEADERS DESTINATION quasar/include)
 install(TARGETS quasar DESTINATION quasar)

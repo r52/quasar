@@ -1,6 +1,6 @@
 #pragma once
 
-#include "settings.h"
+#include "common/settings.h"
 #include "widgetdefinition.h"
 
 #include <QtGui>

@@ -2,11 +2,11 @@
 
 #include "uwebsockets/App.h"
 
-#include "config.h"
-#include "settings.h"
-#include "util.h"
+#include "common/config.h"
+#include "common/settings.h"
+#include "common/util.h"
 
-#include "extension.h"
+#include "extension/extension.h"
 
 #include <QCoreApplication>
 #include <QDir>

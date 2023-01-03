@@ -6,7 +6,6 @@
 #include <thread>
 #include <unordered_map>
 
-#include "extension_exports.h"
 #include "protocol.h"
 
 class Extension;
@@ -17,7 +16,7 @@ struct PerSocketData
     void* socket = nullptr;
 };
 
-class extension_API Server : public std::enable_shared_from_this<Server>
+class Server : public std::enable_shared_from_this<Server>
 {
     using ExtensionsMapType = std::unordered_map<std::string, std::unique_ptr<Extension>>;
     using MethodFuncType    = std::function<void(PerSocketData*, const ClientMessage&)>;

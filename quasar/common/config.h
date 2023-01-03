@@ -2,14 +2,13 @@
 
 #include <memory>
 
-#include "exports.h"
 #include "settings.h"
 
 #include <QVariant>
 
 class QSettings;
 
-class common_API Config
+class Config
 {
 public:
     Config();

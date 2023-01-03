@@ -8,7 +8,7 @@
 
 #include "extension_types.h"
 
-#ifdef extension_EXPORTS
+#ifdef quasar_EXPORTS
 #  define SAPI_EXPORT __declspec(dllexport)
 #else
 #  define SAPI_EXPORT __declspec(dllimport)

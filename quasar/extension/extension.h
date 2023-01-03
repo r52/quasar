@@ -13,9 +13,7 @@
 #include <unordered_set>
 
 #include "api/extension_types.h"
-#include "extension_exports.h"
-
-#include "settings.h"
+#include "common/settings.h"
 
 #include <jsoncons/json.hpp>
 
@@ -102,7 +100,7 @@ struct DataSource
     std::unique_ptr<DataLock> locks;  //!< Mutex/cv for asynchronous or extension signaled sources \sa DataLock
 };
 
-class extension_API Extension
+class Extension
 {
     //! Defines valid return values for getDataFromSource()
     enum DataSourceReturnState : int8_t

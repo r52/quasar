@@ -1,6 +1,6 @@
 #include "quasarwidget.h"
 
-#include "config.h"
+#include "common/config.h"
 #include "server/server.h"
 #include "widgetmanager.h"
 

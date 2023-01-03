@@ -1,10 +1,10 @@
 #include "quasar.h"
-#include "log.h"
 #include "version.h"
 
-#include "config.h"
+#include "common/config.h"
+#include "common/log.h"
+#include "common/util.h"
 #include "server/server.h"
-#include "util.h"
 #include "widgets/quasarwidget.h"
 #include "widgets/widgetmanager.h"
 

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.21)
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
     CACHE STRING "Vcpkg toolchain file")
 
+set(CMAKE_ENABLE_EXPORTS ON)
+
 project(quasar-project)
 
 include(cmake/CPM.cmake)
@@ -23,8 +25,6 @@ endif()
 #set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/quasar")
 #set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-add_subdirectory(common)
-add_subdirectory(extension-api)
 add_subdirectory(quasar)
 
 if(WIN32)

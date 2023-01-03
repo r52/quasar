@@ -1,11 +1,11 @@
 #include <algorithm>
 
 #include "api/extension_support.h"
-#include "extension_support_internal.h"
 
 #include "extension.h"
-
 #include "extension_support.h"
+#include "extension_support_internal.h"
+
 #include <spdlog/spdlog.h>
 
 void quasar_log(quasar_log_level_t level, const char* msg)

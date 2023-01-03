@@ -1,10 +1,10 @@
 #include "widgetmanager.h"
 
 #include "quasarwidget.h"
-#include "server/server.h"
 
-#include "settings.h"
-#include "util.h"
+#include "server/server.h"
+#include "common/settings.h"
+#include "common/util.h"
 
 #include <fstream>
 
