@@ -2,8 +2,6 @@
 
 #include <string>
 
-#include <QSettings>
-
 Config::Config() : cfg{std::make_unique<QSettings>()}
 {
     ReadInteralSettings();
@@ -98,39 +96,4 @@ void Config::WriteInternalSettings()
     WriteSetting(Settings::internal.port);
     WriteSetting(Settings::internal.loaded_widgets);
     WriteSetting(Settings::internal.lastpath);
-}
-
-template<typename T, bool ranged>
-void Config::ReadSetting(Settings::Setting<T, ranged>& setting) const
-{
-    QString  name = QString::fromStdString(setting.GetLabel());
-    QVariant val  = cfg->value(name, QVariant::fromValue<T>(setting.GetDefault()));
-
-    if constexpr (std::same_as<T, std::string>)
-    {
-        setting.SetValue(val.toString().toStdString());
-    }
-    else
-    {
-        setting.SetValue(val.value<T>());
-    }
-}
-
-template<typename T, bool ranged>
-void Config::WriteSetting(Settings::Setting<T, ranged>& setting)
-{
-    QString  name = QString::fromStdString(setting.GetLabel());
-
-    QVariant result;
-
-    if constexpr (std::same_as<T, std::string>)
-    {
-        result = QString::fromStdString(setting.GetValue());
-    }
-    else
-    {
-        result = QVariant::fromValue<T>(setting.GetValue());
-    }
-
-    cfg->setValue(name, result);
 }

@@ -11,7 +11,9 @@
 
 #define CHAR_TO_UTF8(d, x) \
   x[sizeof(x) - 1] = 0;    \
-  d                = std::string(x);
+  d                = std::string{x};
+
+#define EXTKEY(key) fmt::format("{}/{}", GetName(), key)
 
 size_t Extension::_uid = 0;
 
@@ -55,14 +57,16 @@ Extension::Extension(quasar_ext_info_t* info,
         throw std::runtime_error("Invalid extension identifier or name");
     }
 
+    auto cfl = config.lock();
+
     // register data sources
     if (nullptr != extensionInfo->dataSources)
     {
         for (size_t i = 0; i < extensionInfo->numDataSources; i++)
         {
-            CHAR_TO_UTF8(std::string srcname, extensionInfo->dataSources[i].name);
+            CHAR_TO_UTF8(const std::string srcname, extensionInfo->dataSources[i].name);
 
-            auto topic = fmt::format("{}/{}", name, srcname);
+            const auto topic = fmt::format("{}/{}", name, srcname);
 
             if (datasources.count(topic))
             {
@@ -81,7 +85,7 @@ Extension::Extension(quasar_ext_info_t* info,
             source.validtime        = extensionInfo->dataSources[i].validtime;
             source.uid = extensionInfo->dataSources[i].uid = ++Extension::_uid;
 
-            config.lock()->AddDataSourceSetting(topic, &source.settings);
+            cfl->AddDataSourceSetting(topic, &source.settings);
 
             // Initialize type specific fields
             if (source.settings.rate == QUASAR_POLLING_SIGNALED)
@@ -101,64 +105,25 @@ Extension::Extension(quasar_ext_info_t* info,
     // create settings
     if (extensionInfo->create_settings)
     {
-        // TODO extension settings
-        // m_settings.reset(m_extension->create_settings());
+        // extension settings
+        auto result = extensionInfo->create_settings(this);
 
-        // if (!m_settings)
-        // {
-        //     throw std::runtime_error("extension create_settings() failed");
-        // }
+        if (!result)
+        {
+            throw std::runtime_error("extension create_settings() failed");
+        }
 
-        // // Fill saved settings if any
-        // for (auto it = m_settings->map.begin(); it != m_settings->map.end(); ++it)
-        // {
-        //     auto& def = it.value();
+        // Fill saved settings if any
+        for (auto& def : settings)
+        {
+            std::visit(
+                [&](auto&& arg) {
+                    cfl->ReadSetting(arg);
+                },
+                def);
+        }
 
-        //     switch (def.type)
-        //     {
-        //         case QUASAR_SETTING_ENTRY_INT:
-        //             {
-        //                 auto c = def.var.value<esi_inttype_t>();
-        //                 c.val  = settings.value(getSettingsKey(it.key()), c.def).toInt();
-        //                 def.var.setValue(c);
-        //                 break;
-        //             }
-
-        //         case QUASAR_SETTING_ENTRY_DOUBLE:
-        //             {
-        //                 auto c = def.var.value<esi_doubletype_t>();
-        //                 c.val  = settings.value(getSettingsKey(it.key()), c.def).toDouble();
-        //                 def.var.setValue(c);
-        //                 break;
-        //             }
-
-        //         case QUASAR_SETTING_ENTRY_BOOL:
-        //             {
-        //                 auto c = def.var.value<esi_doubletype_t>();
-        //                 c.val  = settings.value(getSettingsKey(it.key()), c.def).toBool();
-        //                 def.var.setValue(c);
-        //                 break;
-        //             }
-
-        //         case QUASAR_SETTING_ENTRY_STRING:
-        //             {
-        //                 auto c = def.var.value<esi_stringtype_t>();
-        //                 c.val  = settings.value(getSettingsKey(it.key()), c.def).toString();
-        //                 def.var.setValue(c);
-        //                 break;
-        //             }
-
-        //         case QUASAR_SETTING_ENTRY_SELECTION:
-        //             {
-        //                 auto c = def.var.value<quasar_selection_options_t>();
-        //                 c.val  = settings.value(getSettingsKey(it.key()), c.list.at(0).value).toString();
-        //                 def.var.setValue(c);
-        //                 break;
-        //             }
-        //     }
-        // }
-
-        // updateExtensionSettings();
+        updateExtensionSettings();
     }
 }
 
@@ -200,9 +165,7 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& topic, int co
         return false;
     }
 
-    DataSource&                        dsrc = datasources[topic];
-
-    std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
+    DataSource& dsrc = datasources[topic];
 
     if (dsrc.settings.rate == QUASAR_POLLING_CLIENT)
     {
@@ -210,20 +173,25 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& topic, int co
         return false;
     }
 
-    dsrc.subscribers = count;
-
-    if (dsrc.settings.rate > QUASAR_POLLING_CLIENT)
     {
-        createTimer(dsrc);
+        std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
+
+        dsrc.subscribers = count;
+
+        if (dsrc.settings.rate > QUASAR_POLLING_CLIENT)
+        {
+            createTimer(dsrc);
+        }
     }
 
-    // TODO: Send settings if applicable
-    // auto payload = craftSettingsMessage();
+    // Send settings if applicable
+    auto payload = craftSettingsMessage();
 
-    // if (!payload.isEmpty())
-    // {
-    //     QMetaObject::invokeMethod(subscriber, [=] { subscriber->sendTextMessage(payload); });
-    // }
+    if (!payload.empty())
+    {
+        // Send the payload
+        server.lock()->SendDataToClient((PerSocketData*) subscriber, payload);
+    }
 
     return true;
 }
@@ -254,6 +222,131 @@ void Extension::RemoveSubscriber(void* subscriber, const std::string& topic, int
     if (dsrc.subscribers <= 0)
     {
         dsrc.timer.reset();
+    }
+}
+
+void Extension::GetMetadataJSON(jsoncons::json& json, bool settings_only)
+{
+    static const auto metakey = EXTKEY("metadata");
+    static const auto setkey  = EXTKEY("settings");
+
+    jsoncons::json&   mdat    = json[metakey];
+    jsoncons::json&   set     = json[setkey];
+
+    if (!settings_only)
+    {
+        // ext info
+        mdat["name"]        = name;
+        mdat["fullname"]    = fullname;
+        mdat["version"]     = version;
+        mdat["author"]      = author;
+        mdat["description"] = description;
+        mdat["url"]         = url;
+    }
+
+    mdat["rates"] = jsoncons::json{jsoncons::json_array_arg};
+
+    // ext rates
+
+    for (auto& [key, src] : datasources)
+    {
+        std::shared_lock<std::shared_mutex> lk(src.mutex);
+
+        jsoncons::json                      source(jsoncons::json_object_arg,
+                                 {
+                {   "name",            src.topic},
+                {"enabled", src.settings.enabled},
+                {   "rate",    src.settings.rate}
+        });
+
+        mdat["rates"].push_back(source);
+    }
+
+    // ext settings
+    if (!settings.empty())
+    {
+        set = jsoncons::json{jsoncons::json_array_arg};
+
+        for (auto& def : settings)
+        {
+            jsoncons::json setting(jsoncons::json_object_arg);
+
+            std::visit(
+                [&](auto&& arg) {
+                    using T         = std::decay_t<decltype(arg)>;
+
+                    setting["name"] = arg.GetLabel();
+                    setting["desc"] = arg.GetDescription();
+
+                    if constexpr (std::is_same_v<T, Settings::Setting<int>>)
+                    {
+                        setting["type"]       = "int";
+
+                        auto [min, max, step] = arg.GetMinMaxStep();
+
+                        setting["min"]        = min;
+                        setting["max"]        = max;
+                        setting["step"]       = step;
+                        setting["def"]        = arg.GetDefault();
+                        setting["val"]        = arg.GetValue();
+                    }
+                    else if constexpr (std::is_same_v<T, Settings::Setting<double>>)
+                    {
+                        setting["type"]       = "double";
+
+                        auto [min, max, step] = arg.GetMinMaxStep();
+
+                        setting["min"]        = min;
+                        setting["max"]        = max;
+                        setting["step"]       = step;
+                        setting["def"]        = arg.GetDefault();
+                        setting["val"]        = arg.GetValue();
+                    }
+                    else if constexpr (std::is_same_v<T, Settings::Setting<bool>>)
+                    {
+                        setting["type"] = "bool";
+                        setting["def"]  = arg.GetDefault();
+                        setting["val"]  = arg.GetValue();
+                    }
+                    else if constexpr (std::is_same_v<T, Settings::Setting<std::string>>)
+                    {
+                        setting["type"]     = "string";
+                        setting["def"]      = arg.GetDefault();
+                        setting["val"]      = arg.GetValue();
+                        setting["password"] = arg.GetIsPassword();
+                    }
+                    else if constexpr (std::is_same_v<T, Settings::SelectionSetting<std::string>>)
+                    {
+                        setting["type"] = "select";
+                        setting["list"] = jsoncons::json{jsoncons::json_array_arg};
+
+                        auto& c         = arg.GetOptions();
+
+                        for (auto& [value, name] : c)
+                        {
+                            jsoncons::json opt{
+                                jsoncons::json_object_arg,
+                                {{"name", name}, {"value", value}}
+                            };
+
+                            setting["list"].push_back(opt);
+                        }
+
+                        setting["val"] = arg.GetValue();
+                    }
+                    else
+                    {
+                        SPDLOG_WARN("Non-exhaustive visitor!");
+                    }
+                },
+                def);
+
+            set.push_back(setting);
+        }
+    }
+    else
+    {
+        set = jsoncons::json::null();
     }
 }
 
@@ -384,8 +477,70 @@ void Extension::createTimer(DataSource& src)
     }
 }
 
+void Extension::updateExtensionSettings()
+{
+    if (!settings.empty() && extensionInfo->update)
+    {
+        extensionInfo->update((quasar_settings_t*) &settings);
+
+        propagateSettingsToSubscribers();
+    }
+}
+
+void Extension::propagateSettingsToSubscribers()
+{
+    if (!settings.empty())
+    {
+        auto payload = craftSettingsMessage();
+
+        if (!payload.empty())
+        {
+            // Send the payload
+            for (auto& [name, source] : datasources)
+            {
+                std::shared_lock<std::shared_mutex> lk(source.mutex);
+
+                server.lock()->PublishData(source.topic, payload);
+            }
+        }
+    }
+}
+
+const std::string Extension::craftSettingsMessage()
+{
+    std::string payload{};
+
+    if (!settings.empty())
+    {
+        static const auto metakey = EXTKEY("metadata");
+        static const auto setkey  = EXTKEY("settings");
+
+        jsoncons::json    j{
+            jsoncons::json_object_arg,
+               {{metakey, jsoncons::json_object_arg}, {setkey, jsoncons::json_object_arg}}
+        };
+
+        GetMetadataJSON(j, true);
+
+        j.dump(payload);
+    }
+
+    return payload;
+}
+
 Extension::~Extension()
 {
+    // Save extension settings
+    auto cfl = config.lock();
+    for (auto& def : settings)
+    {
+        std::visit(
+            [&](auto&& arg) {
+                cfl->WriteSetting(arg);
+            },
+            def);
+    }
+
     if (nullptr != extensionInfo->shutdown)
     {
         extensionInfo->shutdown(this);
@@ -394,7 +549,7 @@ Extension::~Extension()
     // Do some explicit cleanup
     for (auto& [name, src] : datasources)
     {
-        config.lock()->WriteDataSourceSetting(name, &src.settings);
+        cfl->WriteDataSourceSetting(name, &src.settings);
         src.timer.reset();
         src.locks.reset();
     }
@@ -453,11 +608,10 @@ void Extension::Initialize()
             throw std::runtime_error("extension init() failed");
         }
 
-        // TODO extension settings
-        // if (m_settings)
-        // {
-        //     updateExtensionSettings();
-        // }
+        if (!settings.empty())
+        {
+            updateExtensionSettings();
+        }
 
         initialized = true;
 

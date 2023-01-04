@@ -35,6 +35,8 @@ public:
     void RunOnServer(auto&& cb);
     void RunOnPool(auto&& cb);
 
+    void WaitForExtensionLoad();
+
 private:
     void loadExtensions();
 

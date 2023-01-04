@@ -187,6 +187,13 @@ public:
 
     SettingsVariantVector& GetSettings() { return settings; };
 
+    //! Gets all of this extension's metadata and settings as a JSON object
+    /*!
+        \param[in,out]  json        JSON data
+        \param[in]  settings_only   Retrieve only the settings if true, otherwise retrieves extension's full metadata
+    */
+    void GetMetadataJSON(jsoncons::json& json, bool settings_only);
+
 private:
     //! Extension constructor
     /*! Extension::load() should be used to load and create a Extension instance
@@ -218,23 +225,40 @@ private:
     */
     void createTimer(DataSource& src);
 
-    // Members
-    quasar_ext_info_t*    extensionInfo;  //!< Extension info data \sa quasar_ext_info_t
-    extension_destroy     destroyFunc;    //!< Extension destroy function \sa quasar_ext_destroy()
+    /*! Propagates custom setting value changes to the extension
+        as well as all unique subscribers
+        \sa quasar_ext_info_t.update
+    */
+    void updateExtensionSettings();
 
-    std::string           libpath;      //!< Path to library file
-    std::string           name;         //!< Extension identifier
-    std::string           fullname;     //!< Extension full name
-    std::string           description;  //!< Extension description
-    std::string           author;       //!< Extension author
-    std::string           version;      //!< Extension version string
-    std::string           url;          //!< Extension url, if any
+    /*! Helper function that propagates custom settings message to all subscribers
+        \sa updateExtensionSettings()
+    */
+    void propagateSettingsToSubscribers();
+
+    /*! Crafts the custom settings message to be sent to subscribers
+        \return The settings message
+        \sa updateExtensionSettings()
+    */
+    const std::string craftSettingsMessage();
+
+    // Members
+    quasar_ext_info_t*    extensionInfo{};  //!< Extension info data \sa quasar_ext_info_t
+    extension_destroy     destroyFunc{};    //!< Extension destroy function \sa quasar_ext_destroy()
+
+    std::string           libpath{};      //!< Path to library file
+    std::string           name{};         //!< Extension identifier
+    std::string           fullname{};     //!< Extension full name
+    std::string           description{};  //!< Extension description
+    std::string           author{};       //!< Extension author
+    std::string           version{};      //!< Extension version string
+    std::string           url{};          //!< Extension url, if any
 
     DataSourceMapType     datasources;  //!< Map of Topics in this extension
 
-    bool                  initialized;  //!< Extension successfully initialized;
+    bool                  initialized{};  //!< Extension successfully initialized;
 
-    SettingsVariantVector settings;  //!< Collection of extension settings
+    SettingsVariantVector settings{};  //!< Collection of extension settings
 
     std::weak_ptr<Server> server{};
     std::weak_ptr<Config> config{};

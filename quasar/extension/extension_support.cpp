@@ -6,7 +6,10 @@
 #include "extension_support.h"
 #include "extension_support_internal.h"
 
+#include <fmt/core.h>
 #include <spdlog/spdlog.h>
+
+#define EXTKEY(key) fmt::format("{}/{}", ext->GetName(), key)
 
 void quasar_log(quasar_log_level_t level, const char* msg)
 {
@@ -120,11 +123,8 @@ quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char**
 
     if (ref)
     {
-        ref->val = jsoncons::json{jsoncons::json_array_arg};
-
-        std::transform(arr, arr + len, ref->val.value().begin_elements(), [](auto elm) {
-            return std::string{elm};
-        });
+        std::vector<std::string> arrcpy(arr, arr + len);
+        ref->val = jsoncons::json(arrcpy);
 
         return ref;
     }
@@ -139,9 +139,8 @@ quasar_data_handle _copy_basic_array(quasar_data_handle hData, T* arr, size_t le
 
     if (ref)
     {
-        ref->val = jsoncons::json{jsoncons::json_array_arg};
-
-        std::copy(arr, arr + len, ref->val.value().begin_elements());
+        std::vector<T> arrcpy(arr, arr + len);
+        ref->val = jsoncons::json(arrcpy);
 
         return ref;
     }
@@ -192,13 +191,15 @@ quasar_data_handle quasar_append_error(quasar_data_handle hData, const char* err
     return nullptr;
 }
 
-quasar_settings_t* quasar_add_int_setting(quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt)
+quasar_settings_t*
+quasar_add_int_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name, const char* description, int min, int max, int step, int dflt)
 {
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container)
+    if (container && ext)
     {
-        Settings::Setting<int> entry{name, description, dflt, min, max, step};
+        Settings::Setting<int> entry{EXTKEY(name), description, dflt, min, max, step};
 
         container->push_back(entry);
         return settings;
@@ -207,13 +208,37 @@ quasar_settings_t* quasar_add_int_setting(quasar_settings_t* settings, const cha
     return nullptr;
 }
 
-quasar_settings_t* quasar_add_bool_setting(quasar_settings_t* settings, const char* name, const char* description, bool dflt)
+quasar_settings_t* quasar_add_bool_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name, const char* description, bool dflt)
 {
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container)
+    if (container && ext)
     {
-        Settings::Setting<bool> entry{name, description, dflt};
+        Settings::Setting<bool> entry{EXTKEY(name), description, dflt};
+
+        container->push_back(entry);
+        return settings;
+    }
+
+    return nullptr;
+}
+
+quasar_settings_t* quasar_add_double_setting(quasar_ext_handle handle,
+    quasar_settings_t*                                         settings,
+    const char*                                                name,
+    const char*                                                description,
+    double                                                     min,
+    double                                                     max,
+    double                                                     step,
+    double                                                     dflt)
+{
+    SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
+
+    if (container && ext)
+    {
+        Settings::Setting<double> entry{EXTKEY(name), description, dflt, min, max, step};
 
         container->push_back(entry);
         return settings;
@@ -223,13 +248,14 @@ quasar_settings_t* quasar_add_bool_setting(quasar_settings_t* settings, const ch
 }
 
 quasar_settings_t*
-quasar_add_double_setting(quasar_settings_t* settings, const char* name, const char* description, double min, double max, double step, double dflt)
+quasar_add_string_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name, const char* description, const char* dflt, bool password)
 {
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container)
+    if (container && ext)
     {
-        Settings::Setting<double> entry{name, description, dflt, min, max, step};
+        Settings::Setting<std::string> entry{EXTKEY(name), description, dflt, password};
 
         container->push_back(entry);
         return settings;
@@ -238,27 +264,17 @@ quasar_add_double_setting(quasar_settings_t* settings, const char* name, const c
     return nullptr;
 }
 
-quasar_settings_t* quasar_add_string_setting(quasar_settings_t* settings, const char* name, const char* description, const char* dflt, bool password)
-{
-    SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
-
-    if (container)
-    {
-        Settings::Setting<std::string> entry{name, description, dflt, password};
-
-        container->push_back(entry);
-        return settings;
-    }
-
-    return nullptr;
-}
-
-quasar_settings_t* quasar_add_selection_setting(quasar_settings_t* settings, const char* name, const char* description, quasar_selection_options_t* select)
+quasar_settings_t* quasar_add_selection_setting(quasar_ext_handle handle,
+    quasar_settings_t*                                            settings,
+    const char*                                                   name,
+    const char*                                                   description,
+    quasar_selection_options_t*                                   select)
 {
     SettingsVariantVector*  set_con = reinterpret_cast<SettingsVariantVector*>(settings);
     SelectionOptionsVector* sel_con = reinterpret_cast<SelectionOptionsVector*>(select);
+    Extension*              ext     = static_cast<Extension*>(handle);
 
-    if (set_con && sel_con)
+    if (set_con && sel_con && ext)
     {
         if (sel_con->empty())
         {
@@ -267,7 +283,7 @@ quasar_settings_t* quasar_add_selection_setting(quasar_settings_t* settings, con
             return nullptr;
         }
 
-        Settings::SelectionSetting<std::string> entry{name, description, sel_con->at(0).first, *sel_con};
+        Settings::SelectionSetting<std::string> entry{EXTKEY(name), description, sel_con->at(0).first, *sel_con};
         set_con->push_back(entry);
         delete sel_con;
 
@@ -293,17 +309,19 @@ quasar_selection_options_t* quasar_add_selection_option(quasar_selection_options
     return nullptr;
 }
 
-intmax_t quasar_get_int_setting(quasar_settings_t* settings, const char* name)
+intmax_t quasar_get_int_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name)
 {
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container)
+    if (container && ext)
     {
+        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<int>>(entry))
             {
                 auto& w = std::get<Settings::Setting<int>>(entry);
-                return w.GetLabel() == name;
+                return w.GetLabel() == cmp;
             }
 
             return false;
@@ -320,17 +338,19 @@ intmax_t quasar_get_int_setting(quasar_settings_t* settings, const char* name)
     return intmax_t();
 }
 
-uintmax_t quasar_get_uint_setting(quasar_settings_t* settings, const char* name)
+uintmax_t quasar_get_uint_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name)
 {
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container)
+    if (container && ext)
     {
+        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<int>>(entry))
             {
                 auto& w = std::get<Settings::Setting<int>>(entry);
-                return w.GetLabel() == name;
+                return w.GetLabel() == cmp;
             }
 
             return false;
@@ -347,17 +367,19 @@ uintmax_t quasar_get_uint_setting(quasar_settings_t* settings, const char* name)
     return uintmax_t();
 }
 
-bool quasar_get_bool_setting(quasar_settings_t* settings, const char* name)
+bool quasar_get_bool_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name)
 {
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container)
+    if (container && ext)
     {
+        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<bool>>(entry))
             {
                 auto& w = std::get<Settings::Setting<bool>>(entry);
-                return w.GetLabel() == name;
+                return w.GetLabel() == cmp;
             }
 
             return false;
@@ -374,17 +396,19 @@ bool quasar_get_bool_setting(quasar_settings_t* settings, const char* name)
     return false;
 }
 
-double quasar_get_double_setting(quasar_settings_t* settings, const char* name)
+double quasar_get_double_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name)
 {
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container)
+    if (container && ext)
     {
+        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<double>>(entry))
             {
                 auto& w = std::get<Settings::Setting<double>>(entry);
-                return w.GetLabel() == name;
+                return w.GetLabel() == cmp;
             }
 
             return false;
@@ -401,17 +425,19 @@ double quasar_get_double_setting(quasar_settings_t* settings, const char* name)
     return 0.0;
 }
 
-bool quasar_get_string_setting(quasar_settings_t* settings, const char* name, char* buf, size_t size)
+bool quasar_get_string_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name, char* buf, size_t size)
 {
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container)
+    if (container && ext)
     {
+        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<std::string>>(entry))
             {
                 auto& w = std::get<Settings::Setting<std::string>>(entry);
-                return w.GetLabel() == name;
+                return w.GetLabel() == cmp;
             }
 
             return false;
@@ -429,6 +455,46 @@ bool quasar_get_string_setting(quasar_settings_t* settings, const char* name, ch
             }
 
             memcpy(buf, ba.data(), ba.length());
+            buf[ba.length()] = 0;
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool quasar_get_selection_setting(quasar_ext_handle handle, quasar_settings_t* settings, const char* name, char* buf, size_t size)
+{
+    SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
+
+    if (container && ext)
+    {
+        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
+            if (std::holds_alternative<Settings::SelectionSetting<std::string>>(entry))
+            {
+                auto& w = std::get<Settings::SelectionSetting<std::string>>(entry);
+                return w.GetLabel() == cmp;
+            }
+
+            return false;
+        });
+
+        if (result != container->end())
+        {
+            auto& w  = std::get<Settings::SelectionSetting<std::string>>(*result);
+            auto& ba = w.GetValue();
+
+            if (size < ba.length())
+            {
+                SPDLOG_WARN("Buffer size for retrieving setting {} too small!", w.GetLabel());
+                return false;
+            }
+
+            memcpy(buf, ba.data(), ba.length());
+            buf[ba.length()] = 0;
 
             return true;
         }

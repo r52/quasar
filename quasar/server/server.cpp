@@ -1,5 +1,7 @@
 #include "server.h"
 
+#include <condition_variable>
+
 #include "uwebsockets/App.h"
 
 #include "common/config.h"
@@ -33,9 +35,11 @@ using UWSSocket = uWS::WebSocket<false, true, PerSocketData>;
 namespace
 {
     // Server data
-    uWS::App*       app  = nullptr;
-    uWS::Loop*      loop = nullptr;
-    BS::thread_pool pool;
+    uWS::App*                   app              = nullptr;
+    uWS::Loop*                  loop             = nullptr;
+    bool                        extensionsLoaded = false;
+    std::condition_variable_any cv;
+    BS::thread_pool             pool;
 }  // namespace
 
 Server::Server(std::shared_ptr<Config> cfg) :
@@ -158,6 +162,14 @@ void Server::RunOnPool(auto&& cb)
     pool.push_task(cb);
 }
 
+void Server::WaitForExtensionLoad()
+{
+    std::unique_lock<std::shared_mutex> lk(extensionMutex);
+    cv.wait(lk, [] {
+        return extensionsLoaded;
+    });
+}
+
 void Server::loadExtensions()
 {
     auto          path = Util::GetCommonAppDataPath() + "extensions/";
@@ -183,52 +195,58 @@ void Server::loadExtensions()
 
     // just lock the whole thing while initializing extensions at startup
     // to prevent out of order reads
-    std::lock_guard<std::shared_mutex> lk(extensionMutex);
-
-    for (QFileInfo& file : list)
     {
-        auto libpath = (file.path() + "/" + file.fileName()).toStdString();
+        std::lock_guard<std::shared_mutex> lk(extensionMutex);
 
-        SPDLOG_INFO("Loading data extension {}", libpath);
+        for (QFileInfo& file : list)
+        {
+            auto libpath = (file.path() + "/" + file.fileName()).toStdString();
 
-        Extension* extn = Extension::Load(libpath, config.lock(), shared_from_this());
+            SPDLOG_INFO("Loading data extension {}", libpath);
 
-        if (!extn)
-        {
-            SPDLOG_WARN("Failed to load extension {}", libpath);
-        }
-        // TODO internal targets
-        // else if (m_InternalQueryTargets.count(extn->GetName()))
-        // {
-        //     SPDLOG_WARN("The extension code {} is reserved. Unloading {}", extn->GetName(), libpath);
-        // }
-        else if (extensions.count(extn->GetName()))
-        {
-            SPDLOG_WARN("Extension with code {} already loaded. Unloading {}", extn->GetName(), libpath);
-        }
-        else
-        {
-            try
+            Extension* extn = Extension::Load(libpath, config.lock(), shared_from_this());
+
+            if (!extn)
             {
-                extn->Initialize();
-            } catch (std::exception e)
+                SPDLOG_WARN("Failed to load extension {}", libpath);
+            }
+            // TODO internal targets
+            // else if (m_InternalQueryTargets.count(extn->GetName()))
+            // {
+            //     SPDLOG_WARN("The extension code {} is reserved. Unloading {}", extn->GetName(), libpath);
+            // }
+            else if (extensions.count(extn->GetName()))
             {
-                SPDLOG_WARN("Exception: {} while initializing {}", e.what(), libpath);
-                delete extn;
+                SPDLOG_WARN("Extension with code {} already loaded. Unloading {}", extn->GetName(), libpath);
+            }
+            else
+            {
+                try
+                {
+                    extn->Initialize();
+                } catch (std::exception e)
+                {
+                    SPDLOG_WARN("Exception: {} while initializing {}", e.what(), libpath);
+                    delete extn;
+                    extn = nullptr;
+                    continue;
+                }
+
+                SPDLOG_INFO("Extension {} loaded.", extn->GetName());
+                extensions[extn->GetName()].reset(extn);
                 extn = nullptr;
-                continue;
             }
 
-            SPDLOG_INFO("Extension {} loaded.", extn->GetName());
-            extensions[extn->GetName()].reset(extn);
-            extn = nullptr;
+            if (extn != nullptr)
+            {
+                delete extn;
+            }
         }
 
-        if (extn != nullptr)
-        {
-            delete extn;
-        }
+        extensionsLoaded = true;
     }
+
+    cv.notify_all();
 }
 
 void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& msg)

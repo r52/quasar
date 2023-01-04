@@ -185,13 +185,15 @@ namespace Settings
 
     using SettingsVariant = std::variant<Setting<int>, Setting<double>, Setting<bool>, Setting<std::string>, SelectionSetting<std::string>>;
 
-    // Template instatiators for supported types
-    template class Setting<int>;
-    template class Setting<double>;
-    template class Setting<bool>;
-    template class Setting<std::string>;
-    template class SelectionSetting<int>;
-    template class SelectionSetting<double>;
-    template class SelectionSetting<std::string>;
-
 }  // namespace Settings
+
+// Template instatiators for supported types
+// This needs to be here to provide plugin support at runtime for types
+// not currently used internally
+template class Settings::Setting<int>;
+template class Settings::Setting<double>;
+template class Settings::Setting<bool>;
+template class Settings::Setting<std::string>;
+template class Settings::SelectionSetting<int>;
+template class Settings::SelectionSetting<double>;
+template class Settings::SelectionSetting<std::string>;

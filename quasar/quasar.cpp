@@ -64,6 +64,8 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<C
 
     createDirectories();
 
+    server->WaitForExtensionLoad();
+
     // Load widgets
     manager->LoadStartupWidgets(config);
 }
