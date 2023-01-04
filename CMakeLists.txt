@@ -29,4 +29,5 @@ add_subdirectory(quasar)
 
 if(WIN32)
     add_subdirectory(extensions/win_simple_perf)
+    add_subdirectory(extensions/win_audio_viz)
 endif()

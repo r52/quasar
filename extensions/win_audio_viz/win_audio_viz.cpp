@@ -12,6 +12,7 @@
 #include <codecvt>
 #include <locale>
 #include <numeric>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -19,9 +20,9 @@
 
 #include <propkey.h>
 
-#include <Functiondiscoverykeys_devpkey.h>
 #include <audioclient.h>
 #include <avrt.h>
+#include <Functiondiscoverykeys_devpkey.h>
 #include <mmdeviceapi.h>
 
 #include <extension_api.h>
@@ -29,40 +30,42 @@
 
 #include "kissfft/kiss_fftr.h"
 
-#define WINDOWS_BUG_WORKAROUND 1
-#define CLAMP01(x) max(0.0, min(1.0, (x)))
-#define TWOPI (2 * 3.14159265358979323846)
-#define REFTIMES_PER_SEC 10000000
+#include <fmt/core.h>
+#include <fmt/xchar.h>
 
-#define EMPTY_TIMEOUT 0.500
-#define DEVICE_TIMEOUT 1.500
-#define QUERY_TIMEOUT (1.0 / 60)
+#define WINDOWS_BUG_WORKAROUND 1
+#define CLAMP01(x)             max(0.0, min(1.0, (x)))
+
+constexpr auto TWOPI            = (2 * 3.14159265358979323846);
+constexpr auto REFTIMES_PER_SEC = 10000000;
+constexpr auto EMPTY_TIMEOUT    = 0.500;
+constexpr auto DEVICE_TIMEOUT   = 1.500;
+constexpr auto QUERY_TIMEOUT    = (1.0 / 60);
 
 #define EXT_FULLNAME "Audio Visualization Data"
-#define EXT_NAME "win_audio_viz"
+#define EXT_NAME     "win_audio_viz"
 
-#define qlog(l, f, ...)                                             \
-    {                                                               \
-        char msg[256];                                              \
-        snprintf(msg, sizeof(msg), EXT_NAME ": " f, ##__VA_ARGS__); \
-        quasar_log(l, msg);                                         \
-    }
+#define qlog(l, ...)                                                      \
+  {                                                                       \
+    auto msg = fmt::format("{}: {}", EXT_NAME, fmt::format(__VA_ARGS__)); \
+    quasar_log(l, msg.c_str());                                           \
+  }
 
-#define debug(f, ...) qlog(QUASAR_LOG_DEBUG, f, ##__VA_ARGS__)
-#define info(f, ...) qlog(QUASAR_LOG_INFO, f, ##__VA_ARGS__)
-#define warn(f, ...) qlog(QUASAR_LOG_WARNING, f, ##__VA_ARGS__)
+#define debug(...) qlog(QUASAR_LOG_DEBUG, __VA_ARGS__)
+#define info(...)  qlog(QUASAR_LOG_INFO, __VA_ARGS__)
+#define warn(...)  qlog(QUASAR_LOG_WARNING, __VA_ARGS__)
 
 #define EXIT_ON_ERROR(hres) \
-    if (FAILED(hres))       \
-    {                       \
-        goto Exit;          \
-    }
+  if (FAILED(hres))         \
+  {                         \
+    goto Exit;              \
+  }
 #define SAFE_RELEASE(punk) \
-    if ((punk) != nullptr) \
-    {                      \
-        (punk)->Release(); \
-        (punk) = nullptr;  \
-    }
+  if ((punk) != nullptr)   \
+  {                        \
+    (punk)->Release();     \
+    (punk) = nullptr;      \
+  }
 
 struct Measure
 {
@@ -118,51 +121,51 @@ struct Measure
         float x;
     };
 
-    Port    m_port;    // port specifier (not used, only output is supported in win_audio_viz)
-    Channel m_channel; // channel specifier (not used, all channels are processed in win_audio_viz)
+    Port                 m_port;     // port specifier (not used, only output is supported in win_audio_viz)
+    Channel              m_channel;  // channel specifier (not used, all channels are processed in win_audio_viz)
 
-    Format m_format;      // format specifier (detected in init)
-    int    m_envRMS[2];   // RMS attack/decay times in ms (parsed from options)
-    int    m_envPeak[2];  // peak attack/decay times in ms (parsed from options)
-    int    m_envFFT[2];   // FFT attack/decay times in ms (parsed from options)
-    int    m_fftSize;     // size of FFT (parsed from options)
-    int    m_fftOverlap;  // number of samples between FFT calculations
-    int    m_nBands;      // number of frequency bands (parsed from options)
-    double m_gainRMS;     // RMS gain (parsed from options)
-    double m_gainPeak;    // peak gain (parsed from options)
-    double m_freqMin;     // min freq for band measurement
-    double m_freqMax;     // max freq for band measurement
-    double m_sensitivity; // dB range for FFT/Band return values (parsed from options)
+    Format               m_format;       // format specifier (detected in init)
+    int                  m_envRMS[2];    // RMS attack/decay times in ms (parsed from options)
+    int                  m_envPeak[2];   // peak attack/decay times in ms (parsed from options)
+    int                  m_envFFT[2];    // FFT attack/decay times in ms (parsed from options)
+    int                  m_fftSize;      // size of FFT (parsed from options)
+    int                  m_fftOverlap;   // number of samples between FFT calculations
+    int                  m_nBands;       // number of frequency bands (parsed from options)
+    double               m_gainRMS;      // RMS gain (parsed from options)
+    double               m_gainPeak;     // peak gain (parsed from options)
+    double               m_freqMin;      // min freq for band measurement
+    double               m_freqMax;      // max freq for band measurement
+    double               m_sensitivity;  // dB range for FFT/Band return values (parsed from options)
 
-    IMMDeviceEnumerator* m_enum;      // audio endpoint enumerator
-    IMMDevice*           m_dev;       // audio endpoint device
-    WAVEFORMATEX*        m_wfx;       // audio format info
-    IAudioClient*        m_clAudio;   // audio client instance
-    IAudioCaptureClient* m_clCapture; // capture client instance
+    IMMDeviceEnumerator* m_enum;       // audio endpoint enumerator
+    IMMDevice*           m_dev;        // audio endpoint device
+    WAVEFORMATEX*        m_wfx;        // audio format info
+    IAudioClient*        m_clAudio;    // audio client instance
+    IAudioCaptureClient* m_clCapture;  // capture client instance
 #if (WINDOWS_BUG_WORKAROUND)
-    IAudioClient*       m_clBugAudio;  // audio client for dummy silent channel
-    IAudioRenderClient* m_clBugRender; // render client for dummy silent channel
+    IAudioClient*       m_clBugAudio;   // audio client for dummy silent channel
+    IAudioRenderClient* m_clBugRender;  // render client for dummy silent channel
 #endif
-    WCHAR         m_reqID[64];             // requested device ID (parsed from options)
-    WCHAR         m_devName[64];           // device friendly name (detected in init)
-    float         m_kRMS[2];               // RMS attack/decay filter constants
-    float         m_kPeak[2];              // peak attack/decay filter constants
-    float         m_kFFT[2];               // FFT attack/decay filter constants
-    double        m_rms[MAX_CHANNELS];     // current RMS levels
-    double        m_peak[MAX_CHANNELS];    // current peak levels
-    double        m_pcMult;                // performance counter inv frequency
-    LARGE_INTEGER m_pcFill;                // performance counter on last full buffer
-    LARGE_INTEGER m_pcPoll;                // performance counter on last device poll
-    kiss_fftr_cfg m_fftCfg[MAX_CHANNELS];  // FFT states for each channel
-    float*        m_fftIn[MAX_CHANNELS];   // buffer for each channel's FFT input
-    float*        m_fftOut[MAX_CHANNELS];  // buffer for each channel's FFT output
-    float*        m_fftKWdw;               // window function coefficients
-    float*        m_fftTmpIn;              // temp FFT processing buffer
-    kiss_fft_cpx* m_fftTmpOut;             // temp FFT processing buffer
-    int           m_fftBufW;               // write index for input ring buffers
-    int           m_fftBufP;               // decremental counter - process FFT at zero
-    float*        m_bandFreq;              // buffer of band max frequencies
-    float*        m_bandOut[MAX_CHANNELS]; // buffer of band values
+    std::wstring  m_reqID;                  // requested device ID (parsed from options)
+    std::wstring  m_devName;                // device friendly name (detected in init)
+    float         m_kRMS[2];                // RMS attack/decay filter constants
+    float         m_kPeak[2];               // peak attack/decay filter constants
+    float         m_kFFT[2];                // FFT attack/decay filter constants
+    double        m_rms[MAX_CHANNELS];      // current RMS levels
+    double        m_peak[MAX_CHANNELS];     // current peak levels
+    double        m_pcMult;                 // performance counter inv frequency
+    LARGE_INTEGER m_pcFill;                 // performance counter on last full buffer
+    LARGE_INTEGER m_pcPoll;                 // performance counter on last device poll
+    kiss_fftr_cfg m_fftCfg[MAX_CHANNELS];   // FFT states for each channel
+    float*        m_fftIn[MAX_CHANNELS];    // buffer for each channel's FFT input
+    float*        m_fftOut[MAX_CHANNELS];   // buffer for each channel's FFT output
+    float*        m_fftKWdw;                // window function coefficients
+    float*        m_fftTmpIn;               // temp FFT processing buffer
+    kiss_fft_cpx* m_fftTmpOut;              // temp FFT processing buffer
+    int           m_fftBufW;                // write index for input ring buffers
+    int           m_fftBufP;                // decremental counter - process FFT at zero
+    float*        m_bandFreq;               // buffer of band max frequencies
+    float*        m_bandOut[MAX_CHANNELS];  // buffer of band values
 
     Measure() :
         m_port(PORT_OUTPUT),
@@ -190,7 +193,9 @@ struct Measure
         m_fftTmpOut(NULL),
         m_fftBufW(0),
         m_fftBufP(0),
-        m_bandFreq(NULL)
+        m_bandFreq(NULL),
+        m_reqID{},
+        m_devName{}
     {
         m_envRMS[0]  = 300;
         m_envRMS[1]  = 300;
@@ -198,8 +203,6 @@ struct Measure
         m_envPeak[1] = 2500;
         m_envFFT[0]  = 300;
         m_envFFT[1]  = 300;
-        m_reqID[0]   = '\0';
-        m_devName[0] = '\0';
         m_kRMS[0]    = 0.0f;
         m_kRMS[1]    = 0.0f;
         m_kPeak[0]   = 0.0f;
@@ -226,48 +229,54 @@ struct Measure
     void    DeviceRelease();
 };
 
-const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
-const IID   IID_IMMDeviceEnumerator  = __uuidof(IMMDeviceEnumerator);
-const IID   IID_IAudioClient         = __uuidof(IAudioClient);
-const IID   IID_IAudioCaptureClient  = __uuidof(IAudioCaptureClient);
-const IID   IID_IAudioRenderClient   = __uuidof(IAudioRenderClient);
+const CLSID          CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
+const IID            IID_IMMDeviceEnumerator  = __uuidof(IMMDeviceEnumerator);
+const IID            IID_IAudioClient         = __uuidof(IAudioClient);
+const IID            IID_IAudioCaptureClient  = __uuidof(IAudioCaptureClient);
+const IID            IID_IAudioRenderClient   = __uuidof(IAudioRenderClient);
 
-quasar_data_source_t sources[] = {{"rms", 100, 0, 0},
-                                  {"peak", 100, 0, 0},
-                                  {"fft", 100, 0, 0},
-                                  {"band", 100, 0, 0},
-                                  {"fftfreq", QUASAR_POLLING_CLIENT, 5000, 0},
-                                  {"bandfreq", QUASAR_POLLING_CLIENT, 5000, 0},
-                                  {"format", QUASAR_POLLING_CLIENT, 5000, 0},
-                                  {"dev_status", QUASAR_POLLING_CLIENT, 5000, 0},
-                                  {"dev_name", QUASAR_POLLING_CLIENT, 5000, 0},
-                                  {"dev_id", QUASAR_POLLING_CLIENT, 5000, 0},
-                                  {"dev_list", QUASAR_POLLING_CLIENT, 5000, 0}};
+quasar_data_source_t sources[]                = {
+    {       "rms",                   100,    0, 0},
+    {      "peak",                   100,    0, 0},
+    {       "fft",                   100,    0, 0},
+    {      "band",                   100,    0, 0},
+    {   "fftfreq", QUASAR_POLLING_CLIENT, 5000, 0},
+    {  "bandfreq", QUASAR_POLLING_CLIENT, 5000, 0},
+    {    "format", QUASAR_POLLING_CLIENT, 5000, 0},
+    {"dev_status", QUASAR_POLLING_CLIENT, 5000, 0},
+    {  "dev_name", QUASAR_POLLING_CLIENT, 5000, 0},
+    {    "dev_id", QUASAR_POLLING_CLIENT, 5000, 0},
+    {  "dev_list", QUASAR_POLLING_CLIENT, 5000, 0}
+};
 
 namespace
 {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
-    Measure* m                   = nullptr;
-    bool     startup_initialized = false;
+    Measure*                                               m                   = nullptr;
+    bool                                                   startup_initialized = false;
 
-    std::unordered_map<size_t, Measure::Type> m_typemap;
-}
+    std::unordered_map<size_t, Measure::Type>              m_typemap;
+    quasar_ext_handle                                      extHandle = nullptr;
+    std::vector<double>                                    output;
+}  // namespace
 
 HRESULT Measure::DeviceInit()
 {
-    HRESULT hr;
+    HRESULT         hr;
+    IPropertyStore* props                = NULL;
+    REFERENCE_TIME  hnsRequestedDuration = REFTIMES_PER_SEC;
 
     // get the device handle
     assert(m_enum && !m_dev);
 
     // if a specific ID was requested, search for that one, otherwise get the default
-    if (*m_reqID && wcscmp(m_reqID, L"Default") != 0)
+    if (!m_reqID.empty() && m_reqID != L"Default")
     {
-        hr = m_enum->GetDevice(m_reqID, &m_dev);
+        hr = m_enum->GetDevice(m_reqID.c_str(), &m_dev);
         if (hr != S_OK)
         {
-            warn("Audio %s device '%ls' not found (error 0x%08x).", m_port == PORT_OUTPUT ? "output" : "input", m_reqID, hr);
+            warn("Audio {} device '{}' not found (error 0x{}).", m_port == PORT_OUTPUT ? "output" : "input", converter.to_bytes(m_reqID), hr);
         }
     }
     else
@@ -278,7 +287,7 @@ HRESULT Measure::DeviceInit()
     EXIT_ON_ERROR(hr);
 
     // store device name
-    IPropertyStore* props = NULL;
+
     if (m_dev->OpenPropertyStore(STGM_READ, &props) == S_OK)
     {
         PROPVARIANT varName;
@@ -286,7 +295,7 @@ HRESULT Measure::DeviceInit()
 
         if (props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
         {
-            _snwprintf_s(m_devName, _TRUNCATE, L"%s", varName.pwszVal);
+            m_devName = std::wstring{varName.pwszVal};
         }
 
         PropVariantClear(&varName);
@@ -381,8 +390,6 @@ HRESULT Measure::DeviceInit()
             m_bandOut[iChan] = (float*) calloc(m_nBands * sizeof(float), 1);
         }
     }
-
-    REFERENCE_TIME hnsRequestedDuration = REFTIMES_PER_SEC;
 
 #if (WINDOWS_BUG_WORKAROUND)
     // ---------------------------------------------------------------------------------------
@@ -512,8 +519,8 @@ void Measure::DeviceRelease()
             free(m_bandOut[iChan]);
         m_bandOut[iChan] = NULL;
 
-        m_rms[iChan]  = 0.0;
-        m_peak[iChan] = 0.0;
+        m_rms[iChan]     = 0.0;
+        m_peak[iChan]    = 0.0;
     }
 
     if (m_bandFreq)
@@ -579,166 +586,161 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     switch (type)
     {
         case Measure::TYPE_FFTFREQ:
-        {
-            static std::vector<double> output;
-
-            if (m->m_clCapture && m->m_fftSize)
             {
-                output.resize((m->m_fftSize / 2) + 1);
-
-                for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
+                if (m->m_clCapture && m->m_fftSize)
                 {
-                    output[i] = (double) (i * m->m_wfx->nSamplesPerSec / m->m_fftSize);
-                }
+                    output.resize((m->m_fftSize / 2) + 1);
 
-                quasar_set_data_double_array(hData, output.data(), output.size());
-                return true;
-            }
-            break;
-        }
+                    for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
+                    {
+                        output[i] = (double) (i * m->m_wfx->nSamplesPerSec / m->m_fftSize);
+                    }
 
-        case Measure::TYPE_BANDFREQ:
-        {
-            static std::vector<double> output;
-
-            if (m->m_clCapture && m->m_nBands)
-            {
-                output.resize(m->m_nBands);
-
-                for (size_t i = 0; i < m->m_nBands; i++)
-                {
-                    output[i] = m->m_bandFreq[i];
-                }
-
-                quasar_set_data_double_array(hData, output.data(), output.size());
-                return true;
-            }
-            break;
-        }
-
-        case Measure::TYPE_DEV_STATUS:
-        {
-            if (m->m_dev)
-            {
-                DWORD state;
-                bool  bst = false;
-                if (m->m_dev->GetState(&state) == S_OK && state == DEVICE_STATE_ACTIVE)
-                {
-                    bst = true;
-                }
-
-                quasar_set_data_bool(hData, bst);
-                return true;
-            }
-            break;
-        }
-
-        case Measure::TYPE_FORMAT:
-        {
-            const char* s_fmtName[Measure::NUM_FORMATS] = {
-                "<invalid>", // FMT_INVALID
-                "PCM 16b",   // FMT_PCM_S16
-                "PCM 32b",   // FMT_PCM_F32
-            };
-
-            if (m->m_wfx)
-            {
-                char buffer[512];
-                _snprintf_s(buffer, _TRUNCATE, "%dHz %s %dch", m->m_wfx->nSamplesPerSec, s_fmtName[m->m_format], m->m_wfx->nChannels);
-
-                quasar_set_data_string(hData, buffer);
-                return true;
-            }
-            break;
-        }
-
-        case Measure::TYPE_DEV_NAME:
-        {
-            quasar_set_data_string(hData, converter.to_bytes(m->m_devName).c_str());
-            return true;
-        }
-
-        case Measure::TYPE_DEV_ID:
-        {
-            if (m->m_dev)
-            {
-                LPWSTR pwszID = NULL;
-                if (m->m_dev->GetId(&pwszID) == S_OK)
-                {
-                    quasar_set_data_string(hData, converter.to_bytes(pwszID).c_str());
-                    CoTaskMemFree(pwszID);
+                    quasar_set_data_double_array(hData, output.data(), output.size());
                     return true;
                 }
+                break;
             }
-            break;
-        }
 
-        case Measure::TYPE_DEV_LIST:
-        {
-            if (m->m_enum)
+        case Measure::TYPE_BANDFREQ:
             {
-                IMMDeviceCollection* collection = NULL;
-                if (m->m_enum->EnumAudioEndpoints(
-                        m->m_port == Measure::PORT_OUTPUT ? eRender : eCapture, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &collection) == S_OK)
+                if (m->m_clCapture && m->m_nBands)
                 {
-                    WCHAR  wbuf[512];
-                    char** list = nullptr;
-                    UINT   nDevices;
+                    output.resize(m->m_nBands);
 
-                    collection->GetCount(&nDevices);
-
-                    if (nDevices > 0)
+                    for (size_t i = 0; i < m->m_nBands; i++)
                     {
-                        list = new char*[nDevices];
+                        output[i] = m->m_bandFreq[i];
                     }
 
-                    for (ULONG iDevice = 0; iDevice < nDevices; ++iDevice)
-                    {
-                        IMMDevice*      device = NULL;
-                        IPropertyStore* props  = NULL;
-                        if (collection->Item(iDevice, &device) == S_OK && device->OpenPropertyStore(STGM_READ, &props) == S_OK)
-                        {
-                            LPWSTR      id = NULL;
-                            PROPVARIANT varName;
-                            PropVariantInit(&varName);
-
-                            if (device->GetId(&id) == S_OK && props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
-                            {
-                                _snwprintf_s(wbuf, _TRUNCATE, L"%s: %s", id, varName.pwszVal);
-                                list[iDevice] = _strdup(converter.to_bytes(wbuf).c_str());
-                            }
-
-                            if (id)
-                                CoTaskMemFree(id);
-
-                            PropVariantClear(&varName);
-                        }
-
-                        SAFE_RELEASE(props);
-                        SAFE_RELEASE(device);
-                    }
-
-                    // set data
-                    if (list)
-                    {
-                        quasar_set_data_string_array(hData, list, nDevices);
-
-                        // cleanup
-                        for (size_t i = 0; i < nDevices; i++)
-                        {
-                            free(list[i]);
-                        }
-
-                        delete list;
-                    }
+                    quasar_set_data_double_array(hData, output.data(), output.size());
+                    return true;
                 }
+                break;
+            }
 
-                SAFE_RELEASE(collection);
+        case Measure::TYPE_DEV_STATUS:
+            {
+                if (m->m_dev)
+                {
+                    DWORD state;
+                    bool  bst = false;
+                    if (m->m_dev->GetState(&state) == S_OK && state == DEVICE_STATE_ACTIVE)
+                    {
+                        bst = true;
+                    }
 
+                    quasar_set_data_bool(hData, bst);
+                    return true;
+                }
+                break;
+            }
+
+        case Measure::TYPE_FORMAT:
+            {
+                const char* s_fmtName[Measure::NUM_FORMATS] = {
+                    "<invalid>",  // FMT_INVALID
+                    "PCM 16b",    // FMT_PCM_S16
+                    "PCM 32b",    // FMT_PCM_F32
+                };
+
+                if (m->m_wfx)
+                {
+                    auto ws = fmt::format("{}Hz {} {}ch", m->m_wfx->nSamplesPerSec, s_fmtName[m->m_format], m->m_wfx->nChannels);
+
+                    quasar_set_data_string(hData, ws.c_str());
+                    return true;
+                }
+                break;
+            }
+
+        case Measure::TYPE_DEV_NAME:
+            {
+                quasar_set_data_string(hData, converter.to_bytes(m->m_devName).c_str());
                 return true;
             }
-            break;
-        }
+
+        case Measure::TYPE_DEV_ID:
+            {
+                if (m->m_dev)
+                {
+                    LPWSTR pwszID = NULL;
+                    if (m->m_dev->GetId(&pwszID) == S_OK)
+                    {
+                        quasar_set_data_string(hData, converter.to_bytes(pwszID).c_str());
+                        CoTaskMemFree(pwszID);
+                        return true;
+                    }
+                }
+                break;
+            }
+
+        case Measure::TYPE_DEV_LIST:
+            {
+                if (m->m_enum)
+                {
+                    IMMDeviceCollection* collection = NULL;
+                    if (m->m_enum->EnumAudioEndpoints(m->m_port == Measure::PORT_OUTPUT ? eRender : eCapture,
+                            DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED,
+                            &collection) == S_OK)
+                    {
+                        char** list = nullptr;
+                        UINT   nDevices;
+
+                        collection->GetCount(&nDevices);
+
+                        if (nDevices > 0)
+                        {
+                            list = new char*[nDevices];
+                        }
+
+                        for (ULONG iDevice = 0; iDevice < nDevices; ++iDevice)
+                        {
+                            IMMDevice*      device = NULL;
+                            IPropertyStore* props  = NULL;
+                            if (collection->Item(iDevice, &device) == S_OK && device->OpenPropertyStore(STGM_READ, &props) == S_OK)
+                            {
+                                LPWSTR      id = NULL;
+                                PROPVARIANT varName;
+                                PropVariantInit(&varName);
+
+                                if (device->GetId(&id) == S_OK && props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
+                                {
+                                    auto device   = fmt::format(L"{}: {}", id, varName.pwszVal);
+                                    list[iDevice] = _strdup(converter.to_bytes(device).c_str());
+                                }
+
+                                if (id)
+                                    CoTaskMemFree(id);
+
+                                PropVariantClear(&varName);
+                            }
+
+                            SAFE_RELEASE(props);
+                            SAFE_RELEASE(device);
+                        }
+
+                        // set data
+                        if (list)
+                        {
+                            quasar_set_data_string_array(hData, list, nDevices);
+
+                            // cleanup
+                            for (size_t i = 0; i < nDevices; i++)
+                            {
+                                free(list[i]);
+                            }
+
+                            delete list;
+                        }
+                    }
+
+                    SAFE_RELEASE(collection);
+
+                    return true;
+                }
+                break;
+            }
 
         default:
             break;
@@ -1004,164 +1006,164 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     switch (type)
     {
         case Measure::TYPE_RMS:
-        {
-            static bool last_acc_is_not_zero = true;
-
-            static std::vector<double> output;
-
-            output.resize(m->m_wfx->nChannels);
-
-            for (size_t i = 0; i < m->m_wfx->nChannels; i++)
             {
-                output[i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
-            }
+                static bool last_acc_is_not_zero = true;
 
-            double acc = std::accumulate(output.begin(), output.end(), 0.0);
+                output.resize(m->m_wfx->nChannels);
 
-            if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
-            {
+                for (size_t i = 0; i < m->m_wfx->nChannels; i++)
+                {
+                    output[i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
+                }
+
                 quasar_set_data_double_array(hData, output.data(), output.size());
-                last_acc_is_not_zero = (acc > 0.0);
-            }
-            else
-            {
-                quasar_set_data_null(hData);
-            }
 
-            return true;
-        }
+                // double acc = std::accumulate(output.begin(), output.end(), 0.0);
+
+                // if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
+                // {
+                //     quasar_set_data_double_array(hData, output.data(), output.size());
+                //     last_acc_is_not_zero = (acc > 0.0);
+                // }
+                // else
+                // {
+                //     quasar_set_data_null(hData);
+                // }
+
+                return true;
+            }
 
         case Measure::TYPE_PEAK:
-        {
-            static bool last_acc_is_not_zero = true;
-
-            static std::vector<double> output;
-
-            output.resize(m->m_wfx->nChannels);
-
-            for (size_t i = 0; i < m->m_wfx->nChannels; i++)
             {
-                output[i] = CLAMP01(m->m_peak[i] * m->m_gainPeak);
-            }
+                static bool last_acc_is_not_zero = true;
 
-            double acc = std::accumulate(output.begin(), output.end(), 0.0);
+                output.resize(m->m_wfx->nChannels);
 
-            if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
-            {
+                for (size_t i = 0; i < m->m_wfx->nChannels; i++)
+                {
+                    output[i] = CLAMP01(m->m_peak[i] * m->m_gainPeak);
+                }
+
                 quasar_set_data_double_array(hData, output.data(), output.size());
-                last_acc_is_not_zero = (acc > 0.0);
-            }
-            else
-            {
-                quasar_set_data_null(hData);
-            }
 
-            return true;
-        }
+                // double acc = std::accumulate(output.begin(), output.end(), 0.0);
+
+                // if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
+                // {
+                //     quasar_set_data_double_array(hData, output.data(), output.size());
+                //     last_acc_is_not_zero = (acc > 0.0);
+                // }
+                // else
+                // {
+                //     quasar_set_data_null(hData);
+                // }
+
+                return true;
+            }
 
         case Measure::TYPE_FFT:
-        {
-            static bool last_acc_is_not_zero = true;
-
-            static std::vector<double> output;
-
-            if (m->m_clCapture && m->m_fftSize)
             {
-                double x;
+                static bool last_acc_is_not_zero = true;
 
-                output.resize((m->m_fftSize / 2) + 1);
-
-                for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
+                if (m->m_clCapture && m->m_fftSize)
                 {
-                    if (m->m_channel == Measure::CHANNEL_SUM)
+                    double x;
+
+                    output.resize((m->m_fftSize / 2) + 1);
+
+                    for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
                     {
-                        if (m->m_wfx->nChannels >= 2)
+                        if (m->m_channel == Measure::CHANNEL_SUM)
                         {
-                            x = (m->m_fftOut[0][i] + m->m_fftOut[1][i]) * 0.5;
+                            if (m->m_wfx->nChannels >= 2)
+                            {
+                                x = (m->m_fftOut[0][i] + m->m_fftOut[1][i]) * 0.5;
+                            }
+                            else
+                            {
+                                x = m->m_fftOut[0][i];
+                            }
                         }
-                        else
+                        else if (m->m_channel < m->m_wfx->nChannels)
                         {
-                            x = m->m_fftOut[0][i];
+                            x = m->m_fftOut[m->m_channel][i];
                         }
+
+                        x         = CLAMP01(x);
+                        x         = max(0, 10.0 / m->m_sensitivity * log10(x) + 1.0);
+                        output[i] = x;
                     }
-                    else if (m->m_channel < m->m_wfx->nChannels)
-                    {
-                        x = m->m_fftOut[m->m_channel][i];
-                    }
 
-                    x         = CLAMP01(x);
-                    x         = max(0, 10.0 / m->m_sensitivity * log10(x) + 1.0);
-                    output[i] = x;
-                }
-
-                double acc = std::accumulate(output.begin(), output.end(), 0.0);
-
-                if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
-                {
                     quasar_set_data_double_array(hData, output.data(), output.size());
-                    last_acc_is_not_zero = (acc > 0.0);
-                }
-                else
-                {
-                    quasar_set_data_null(hData);
-                }
 
-                return true;
+                    // double acc = std::accumulate(output.begin(), output.end(), 0.0);
+
+                    // if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
+                    // {
+                    //     quasar_set_data_double_array(hData, output.data(), output.size());
+                    //     last_acc_is_not_zero = (acc > 0.0);
+                    // }
+                    // else
+                    // {
+                    //     quasar_set_data_null(hData);
+                    // }
+
+                    return true;
+                }
+                break;
             }
-            break;
-        }
 
         case Measure::TYPE_BAND:
-        {
-            static bool last_acc_is_not_zero = true;
-
-            static std::vector<double> output;
-
-            if (m->m_clCapture && m->m_nBands)
             {
-                double x;
+                static bool last_acc_is_not_zero = true;
 
-                output.resize(m->m_nBands);
-
-                for (size_t i = 0; i < m->m_nBands; i++)
+                if (m->m_clCapture && m->m_nBands)
                 {
-                    if (m->m_channel == Measure::CHANNEL_SUM)
+                    double x;
+
+                    output.resize(m->m_nBands);
+
+                    for (size_t i = 0; i < m->m_nBands; i++)
                     {
-                        if (m->m_wfx->nChannels >= 2)
+                        if (m->m_channel == Measure::CHANNEL_SUM)
                         {
-                            x = (m->m_bandOut[0][i] + m->m_bandOut[1][i]) * 0.5;
+                            if (m->m_wfx->nChannels >= 2)
+                            {
+                                x = (m->m_bandOut[0][i] + m->m_bandOut[1][i]) * 0.5;
+                            }
+                            else
+                            {
+                                x = m->m_bandOut[0][i];
+                            }
                         }
-                        else
+                        else if (m->m_channel < m->m_wfx->nChannels)
                         {
-                            x = m->m_bandOut[0][i];
+                            x = m->m_bandOut[m->m_channel][i];
                         }
+
+                        x         = CLAMP01(x);
+                        x         = max(0, 10.0 / m->m_sensitivity * log10(x) + 1.0);
+                        output[i] = x;
                     }
-                    else if (m->m_channel < m->m_wfx->nChannels)
-                    {
-                        x = m->m_bandOut[m->m_channel][i];
-                    }
 
-                    x         = CLAMP01(x);
-                    x         = max(0, 10.0 / m->m_sensitivity * log10(x) + 1.0);
-                    output[i] = x;
-                }
-
-                double acc = std::accumulate(output.begin(), output.end(), 0.0);
-
-                if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
-                {
                     quasar_set_data_double_array(hData, output.data(), output.size());
-                    last_acc_is_not_zero = (acc > 0.0);
-                }
-                else
-                {
-                    quasar_set_data_null(hData);
-                }
 
-                return true;
+                    // double acc = std::accumulate(output.begin(), output.end(), 0.0);
+
+                    // if (acc > 0.0 || (acc == 0.0 && last_acc_is_not_zero))
+                    // {
+                    //     quasar_set_data_double_array(hData, output.data(), output.size());
+                    //     last_acc_is_not_zero = (acc > 0.0);
+                    // }
+                    // else
+                    // {
+                    //     quasar_set_data_null(hData);
+                    // }
+
+                    return true;
+                }
+                break;
             }
-            break;
-        }
 
         default:
             break;
@@ -1170,18 +1172,20 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     return false;
 }
 
-quasar_settings_t* win_audio_viz_create_settings()
+quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
 {
-    m = new Measure;
+    extHandle                               = handle;
 
-    quasar_selection_options_t* devSelect = nullptr;
-    quasar_settings_t*          settings  = nullptr;
+    m                                       = new Measure;
 
-    HRESULT              hr          = S_OK;
-    IMMDeviceCollection* pCollection = NULL;
-    IMMDevice*           pEndpoint   = NULL;
-    IPropertyStore*      pProps      = NULL;
-    LPWSTR               pwszID      = NULL;
+    quasar_selection_options_t* devSelect   = nullptr;
+    quasar_settings_t*          settings    = nullptr;
+
+    HRESULT                     hr          = S_OK;
+    IMMDeviceCollection*        pCollection = NULL;
+    IMMDevice*                  pEndpoint   = NULL;
+    IPropertyStore*             pProps      = NULL;
+    LPWSTR                      pwszID      = NULL;
 
     // Add default endpoint
     devSelect = quasar_create_selection_setting();
@@ -1235,30 +1239,30 @@ quasar_settings_t* win_audio_viz_create_settings()
     }
     SAFE_RELEASE(pCollection);
 
-    settings = quasar_create_settings();
+    settings = quasar_create_settings(extHandle);
 
-    quasar_add_selection(settings, "device", "Audio Device (requires restart)", devSelect);
+    quasar_add_selection_setting(extHandle, settings, "device", "Audio Device (requires restart)", devSelect);
     devSelect = nullptr;
 
     // RMS options
-    quasar_add_int(settings, "RMSAttack", "RMSAttack", 0, 100000, 1, 300);
-    quasar_add_int(settings, "RMSDecay", "RMSDecay", 0, 100000, 1, 300);
-    quasar_add_double(settings, "RMSGain", "RMSGain", 0.0, 1000.0, 0.1, 1.0);
+    quasar_add_int_setting(extHandle, settings, "RMSAttack", "RMSAttack", 0, 100000, 1, 300);
+    quasar_add_int_setting(extHandle, settings, "RMSDecay", "RMSDecay", 0, 100000, 1, 300);
+    quasar_add_double_setting(extHandle, settings, "RMSGain", "RMSGain", 0.0, 1000.0, 0.1, 1.0);
 
     // Peak options
-    quasar_add_int(settings, "PeakAttack", "PeakAttack", 0, 100000, 1, 50);
-    quasar_add_int(settings, "PeakDecay", "PeakDecay", 0, 100000, 1, 2500);
-    quasar_add_double(settings, "PeakGain", "PeakGain", 0.0, 1000.0, 0.1, 1.0);
+    quasar_add_int_setting(extHandle, settings, "PeakAttack", "PeakAttack", 0, 100000, 1, 50);
+    quasar_add_int_setting(extHandle, settings, "PeakDecay", "PeakDecay", 0, 100000, 1, 2500);
+    quasar_add_double_setting(extHandle, settings, "PeakGain", "PeakGain", 0.0, 1000.0, 0.1, 1.0);
 
     // FFT options
-    quasar_add_int(settings, "FFTSize", "FFTSize", 0, 8192, 2, 256);
-    quasar_add_int(settings, "FFTOverlap", "FFTOverlap", 0, 4096, 1, 0);
-    quasar_add_int(settings, "FFTAttack", "FFTAttack", 0, 100000, 1, 300);
-    quasar_add_int(settings, "FFTDecay", "FFTDecay", 0, 100000, 1, 300);
-    quasar_add_int(settings, "Bands", "Number of Bands", 0, 1024, 1, 16);
-    quasar_add_double(settings, "FreqMin", "Band Frequency Min (Hz)", 0.0, 20000.0, 0.1, 20.0);
-    quasar_add_double(settings, "FreqMax", "Band Frequency Max (Hz)", 0.0, 20000.0, 0.1, 20000.0);
-    quasar_add_double(settings, "Sensitivity", "Sensitivity", 1.0, 10000.0, 0.1, 35.0);
+    quasar_add_int_setting(extHandle, settings, "FFTSize", "FFTSize", 0, 8192, 2, 256);
+    quasar_add_int_setting(extHandle, settings, "FFTOverlap", "FFTOverlap", 0, 4096, 1, 0);
+    quasar_add_int_setting(extHandle, settings, "FFTAttack", "FFTAttack", 0, 100000, 1, 300);
+    quasar_add_int_setting(extHandle, settings, "FFTDecay", "FFTDecay", 0, 100000, 1, 300);
+    quasar_add_int_setting(extHandle, settings, "Bands", "Number of Bands", 0, 1024, 1, 16);
+    quasar_add_double_setting(extHandle, settings, "FreqMin", "Band Frequency Min (Hz)", 0.0, 20000.0, 0.1, 20.0);
+    quasar_add_double_setting(extHandle, settings, "FreqMax", "Band Frequency Max (Hz)", 0.0, 20000.0, 0.1, 20000.0);
+    quasar_add_double_setting(extHandle, settings, "Sensitivity", "Sensitivity", 1.0, 10000.0, 0.1, 35.0);
 
     return settings;
 
@@ -1280,10 +1284,10 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     bool needs_reinit = false;
 
     char buf[256];
-    quasar_get_selection(settings, "device", buf, sizeof(buf));
-    _snwprintf_s(m->m_reqID, _TRUNCATE, L"%s", converter.from_bytes(buf).c_str());
+    quasar_get_selection_setting(extHandle, settings, "device", buf, sizeof(buf));
+    m->m_reqID  = converter.from_bytes(buf);
 
-    int fftsize = quasar_get_int(settings, "FFTSize");
+    int fftsize = quasar_get_int_setting(extHandle, settings, "FFTSize");
     if (fftsize < 0 || fftsize & 1)
     {
         warn("Invalid FFTSize %ld: must be an even integer >= 0. (powers of 2 work best)", fftsize);
@@ -1296,7 +1300,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 
     if (m->m_fftSize)
     {
-        int overlap = quasar_get_int(settings, "FFTOverlap");
+        int overlap = quasar_get_int_setting(extHandle, settings, "FFTOverlap");
         if (overlap < 0 || overlap >= m->m_fftSize)
         {
             warn("Invalid FFTOverlap %ld: must be an integer between 0 and FFTSize(%ld).", overlap, m->m_fftSize);
@@ -1307,27 +1311,27 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
         }
     }
 
-    int numbands = quasar_get_uint(settings, "Bands");
+    int numbands = quasar_get_uint_setting(extHandle, settings, "Bands");
     if (numbands != m->m_nBands)
     {
         m->m_nBands  = numbands;
         needs_reinit = true;
     }
 
-    m->m_freqMin = quasar_get_double(settings, "FreqMin");
-    m->m_freqMax = quasar_get_double(settings, "FreqMax");
+    m->m_freqMin    = quasar_get_double_setting(extHandle, settings, "FreqMin");
+    m->m_freqMax    = quasar_get_double_setting(extHandle, settings, "FreqMax");
 
-    m->m_envRMS[0]  = quasar_get_uint(settings, "RMSAttack");
-    m->m_envRMS[1]  = quasar_get_uint(settings, "RMSDecay");
-    m->m_envPeak[0] = quasar_get_uint(settings, "PeakAttack");
-    m->m_envPeak[1] = quasar_get_uint(settings, "PeakDecay");
-    m->m_envFFT[0]  = quasar_get_uint(settings, "FFTAttack");
-    m->m_envFFT[1]  = quasar_get_uint(settings, "FFTDecay");
+    m->m_envRMS[0]  = quasar_get_uint_setting(extHandle, settings, "RMSAttack");
+    m->m_envRMS[1]  = quasar_get_uint_setting(extHandle, settings, "RMSDecay");
+    m->m_envPeak[0] = quasar_get_uint_setting(extHandle, settings, "PeakAttack");
+    m->m_envPeak[1] = quasar_get_uint_setting(extHandle, settings, "PeakDecay");
+    m->m_envFFT[0]  = quasar_get_uint_setting(extHandle, settings, "FFTAttack");
+    m->m_envFFT[1]  = quasar_get_uint_setting(extHandle, settings, "FFTDecay");
 
     // (re)parse gain constants
-    m->m_gainRMS     = quasar_get_double(settings, "RMSGain");
-    m->m_gainPeak    = quasar_get_double(settings, "PeakGain");
-    m->m_sensitivity = quasar_get_double(settings, "Sensitivity");
+    m->m_gainRMS     = quasar_get_double_setting(extHandle, settings, "RMSGain");
+    m->m_gainPeak    = quasar_get_double_setting(extHandle, settings, "PeakGain");
+    m->m_sensitivity = quasar_get_double_setting(extHandle, settings, "Sensitivity");
 
     // regenerate filter constants
     if (m->m_wfx)
@@ -1353,24 +1357,24 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 }
 
 quasar_ext_info_fields_t fields = {EXT_NAME,
-                                   EXT_FULLNAME,
-                                   "2.0",
-                                   "r52",
-                                   "Supplies desktop audio frequency data. Adapted from Rainmeter's AudioLevel plugin.",
-                                   "https://github.com/r52/quasar"};
+    EXT_FULLNAME,
+    "2.0",
+    "r52",
+    "Supplies desktop audio frequency data. Adapted from Rainmeter's AudioLevel plugin.",
+    "https://github.com/r52/quasar"};
 
-quasar_ext_info_t info = {
+quasar_ext_info_t        info   = {
     QUASAR_API_VERSION,
     &fields,
 
     std::size(sources),
     sources,
 
-    win_audio_viz_init,            // init
-    win_audio_viz_shutdown,        // shutdown
-    win_audio_viz_get_data,        // data
-    win_audio_viz_create_settings, // create setting
-    win_audio_viz_update_settings  // update setting
+    win_audio_viz_init,             // init
+    win_audio_viz_shutdown,         // shutdown
+    win_audio_viz_get_data,         // data
+    win_audio_viz_create_settings,  // create setting
+    win_audio_viz_update_settings   // update setting
 };
 
 quasar_ext_info_t* quasar_ext_load(void)
