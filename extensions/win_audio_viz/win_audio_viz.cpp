@@ -8,6 +8,7 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
+#include <algorithm>
 #include <cassert>
 #include <codecvt>
 #include <locale>
@@ -1267,7 +1268,7 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
     return settings;
 
 Exit:
-    warn("create_settings() failed on audio enumeration: last error is %lu", GetLastError());
+    warn("create_settings() failed on audio enumeration: last error is {}", GetLastError());
     quasar_free(devSelect);
     quasar_free(settings);
     CoTaskMemFree(pwszID);
@@ -1290,7 +1291,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     int fftsize = quasar_get_int_setting(extHandle, settings, "FFTSize");
     if (fftsize < 0 || fftsize & 1)
     {
-        warn("Invalid FFTSize %ld: must be an even integer >= 0. (powers of 2 work best)", fftsize);
+        warn("Invalid FFTSize {}: must be an even integer >= 0. (powers of 2 work best)", fftsize);
     }
     else if (fftsize != m->m_fftSize)
     {
@@ -1303,7 +1304,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
         int overlap = quasar_get_int_setting(extHandle, settings, "FFTOverlap");
         if (overlap < 0 || overlap >= m->m_fftSize)
         {
-            warn("Invalid FFTOverlap %ld: must be an integer between 0 and FFTSize(%ld).", overlap, m->m_fftSize);
+            warn("Invalid FFTOverlap {}: must be an integer between 0 and FFTSize({}).", overlap, m->m_fftSize);
         }
         else
         {

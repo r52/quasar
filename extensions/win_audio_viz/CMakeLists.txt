@@ -2,8 +2,9 @@ cmake_minimum_required(VERSION 3.21)
 
 project(win_audio_viz)
 
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+
 find_package(fmt REQUIRED)
-#find_path(KISSFFT_INCLUDE_DIRS "kissfft/kiss_fftr.h" PATHS deps/)
 
 add_library(kissfft STATIC
   deps/kissfft/kiss_fft.c
@@ -18,7 +19,6 @@ target_include_directories(kissfft PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOU
 
 add_dependencies(win_audio_viz quasar)
 target_compile_features(win_audio_viz PRIVATE cxx_std_20)
-#target_include_directories(win_audio_viz PRIVATE ${KISSFFT_INCLUDE_DIRS})
 target_link_libraries(win_audio_viz PRIVATE kissfft)
 target_link_libraries(win_audio_viz PRIVATE quasar extension-api)
 target_link_libraries(win_audio_viz PRIVATE fmt::fmt)

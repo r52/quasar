@@ -421,7 +421,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
         src.cache.expiry = system_clock::now() + milliseconds(src.validtime);
     }
 
-    j = rett.val.value();
+    j = std::move(rett.val.value());
 
     return GET_DATA_SUCCESS;
 }
@@ -433,6 +433,8 @@ void Extension::sendDataToSubscribers(DataSource& src)
     // Only send if there are subscribers
     if (src.subscribers > 0)
     {
+        src.buffer.clear();
+
         jsoncons::json j{
             jsoncons::json_object_arg,
             {{src.topic, jsoncons::json{jsoncons::json_object_arg}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
@@ -440,13 +442,11 @@ void Extension::sendDataToSubscribers(DataSource& src)
 
         getDataFromSource(j, src);
 
-        std::string message{};
+        j.dump(src.buffer);
 
-        j.dump(message);
-
-        if (!message.empty())
+        if (!src.buffer.empty())
         {
-            server.lock()->PublishData(src.topic, message);
+            server.lock()->PublishData(src.topic, src.buffer);
         }
     }
 
@@ -625,7 +625,7 @@ void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::
     {
         if (!datasources.count(topic))
         {
-            auto m = "Unknown topic " + topic + " requested in extension " + name;  // + " by widget " + widgetName;
+            auto m = fmt::format("Unknown topic {} requested in extension {}", topic, name);  // + " by widget " + widgetName;
             json["errors"].push_back(m);
 
             SPDLOG_WARN(m);
@@ -644,7 +644,7 @@ void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::
         {
             case GET_DATA_FAILED:
                 {
-                    auto m = "getDataFromSource(" + topic + ") failed in extension " + name;  // + " requested by widget " + widgetName;
+                    auto m = fmt::format("getDataFromSource({}) failed in extension {}", topic, name);  // + " requested by widget " + widgetName;
                     json["errors"].push_back(m);
                     SPDLOG_WARN(m);
                 }

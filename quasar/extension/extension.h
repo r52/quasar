@@ -96,6 +96,8 @@ struct DataSource
 
     mutable std::shared_mutex mutex;  //!< Data Source level lock
 
+    std::string               buffer;
+
     // signaled type source fields
     std::unique_ptr<DataLock> locks;  //!< Mutex/cv for asynchronous or extension signaled sources \sa DataLock
 };

@@ -139,8 +139,8 @@ quasar_data_handle _copy_basic_array(quasar_data_handle hData, T* arr, size_t le
 
     if (ref)
     {
-        std::vector<T> arrcpy(arr, arr + len);
-        ref->val = jsoncons::json(arrcpy);
+        ref->val = jsoncons::json{jsoncons::json_array_arg};
+        ref->val.value().insert(ref->val.value().end_elements(), arr, arr + len);
 
         return ref;
     }
