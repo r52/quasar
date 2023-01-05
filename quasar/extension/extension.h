@@ -16,6 +16,7 @@
 #include "common/settings.h"
 
 #include <jsoncons/json.hpp>
+#include <spdlog/spdlog.h>
 
 class Config;
 class Server;
@@ -44,18 +45,25 @@ struct DataCache
 class Timer
 {
 public:
-    void setInterval(auto fn, int interval)
+    ~Timer()
     {
+        thread.request_stop();
+        cv.notify_one();
+    }
+
+    void setInterval(auto&& fn, int interval)
+    {
+        SPDLOG_DEBUG("New timer thread with {}ms internal", interval);
         thread = std::jthread{[=](std::stop_token token) {
-            while (not token.stop_requested())
+            std::unique_lock<std::mutex> lk(mtx);
+            while (true)
             {
-                if (token.stop_requested())
+                if (cv.wait_for(lk, std::chrono::milliseconds(interval), [&] {
+                        return token.stop_requested();
+                    }))
+                {
                     return;
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-
-                if (token.stop_requested())
-                    return;
+                }
 
                 fn();
             }
@@ -67,11 +75,14 @@ public:
     void stop()
     {
         thread.request_stop();
+        cv.notify_one();
         thread.join();
     }
 
 private:
-    std::jthread thread;
+    std::jthread            thread;
+    std::condition_variable cv;
+    std::mutex              mtx;
 };
 
 //! Struct containing internal resources for a Data Source

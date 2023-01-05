@@ -530,8 +530,17 @@ const std::string Extension::craftSettingsMessage()
 
 Extension::~Extension()
 {
-    // Save extension settings
     auto cfl = config.lock();
+
+    // Do some explicit cleanup
+    for (auto& [name, src] : datasources)
+    {
+        src.timer.reset();
+        src.locks.reset();
+        cfl->WriteDataSourceSetting(name, &src.settings);
+    }
+
+    // Save extension settings
     for (auto& def : settings)
     {
         std::visit(
@@ -544,14 +553,6 @@ Extension::~Extension()
     if (nullptr != extensionInfo->shutdown)
     {
         extensionInfo->shutdown(this);
-    }
-
-    // Do some explicit cleanup
-    for (auto& [name, src] : datasources)
-    {
-        cfl->WriteDataSourceSetting(name, &src.settings);
-        src.timer.reset();
-        src.locks.reset();
     }
 
     // extension is responsible for cleanup of quasar_ext_info_t*
