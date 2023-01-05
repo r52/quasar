@@ -4,6 +4,7 @@
 
 #include "extension.h"
 #include "extension_support.h"
+#include "extension_support.hpp"
 #include "extension_support_internal.h"
 
 #include <fmt/core.h>
@@ -501,4 +502,144 @@ bool quasar_get_selection_setting(quasar_ext_handle handle, quasar_settings_t* s
     }
 
     return false;
+}
+
+quasar_data_handle quasar_set_data_string_hpp(quasar_data_handle hData, std::string_view data)
+{
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
+
+    if (ref)
+    {
+        ref->val = jsoncons::json(data);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_json_hpp(quasar_data_handle hData, std::string_view data)
+{
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
+
+    if (ref)
+    {
+        ref->val = jsoncons::json::parse(data);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_string_array_hpp(quasar_data_handle hData, const std::vector<std::string>& vec)
+{
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
+
+    if (ref)
+    {
+        ref->val = jsoncons::json(vec);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_int_array_hpp(quasar_data_handle hData, const std::vector<int>& vec)
+{
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
+
+    if (ref)
+    {
+        ref->val = jsoncons::json(vec);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_float_array_hpp(quasar_data_handle hData, const std::vector<float>& vec)
+{
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
+
+    if (ref)
+    {
+        ref->val = jsoncons::json(vec);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+quasar_data_handle quasar_set_data_double_array_hpp(quasar_data_handle hData, const std::vector<double>& vec)
+{
+    quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
+
+    if (ref)
+    {
+        ref->val = jsoncons::json(vec);
+
+        return ref;
+    }
+
+    return nullptr;
+}
+
+std::string_view quasar_get_string_setting_hpp(quasar_ext_handle handle, quasar_settings_t* settings, std::string_view name)
+{
+    SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
+
+    if (container && ext)
+    {
+        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
+            if (std::holds_alternative<Settings::Setting<std::string>>(entry))
+            {
+                auto& w = std::get<Settings::Setting<std::string>>(entry);
+                return w.GetLabel() == cmp;
+            }
+
+            return false;
+        });
+
+        if (result != container->end())
+        {
+            auto& w = std::get<Settings::Setting<std::string>>(*result);
+            return w.GetValue();
+        }
+    }
+
+    return std::string_view();
+}
+
+std::string_view quasar_get_selection_setting_hpp(quasar_ext_handle handle, quasar_settings_t* settings, std::string_view name)
+{
+    SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
+    Extension*             ext       = static_cast<Extension*>(handle);
+
+    if (container && ext)
+    {
+        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
+            if (std::holds_alternative<Settings::SelectionSetting<std::string>>(entry))
+            {
+                auto& w = std::get<Settings::SelectionSetting<std::string>>(entry);
+                return w.GetLabel() == cmp;
+            }
+
+            return false;
+        });
+
+        if (result != container->end())
+        {
+            auto& w = std::get<Settings::SelectionSetting<std::string>>(*result);
+            return w.GetValue();
+        }
+    }
+
+    return std::string_view();
 }

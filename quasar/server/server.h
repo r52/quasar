@@ -30,7 +30,7 @@ public:
 
     void SendDataToClient(PerSocketData* client, const std::string& msg);
 
-    void PublishData(const std::string& topic, const std::string& data);
+    void PublishData(std::string_view topic, const std::string& data);
 
     void RunOnServer(auto&& cb);
     void RunOnPool(auto&& cb);

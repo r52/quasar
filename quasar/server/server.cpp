@@ -145,7 +145,7 @@ void Server::SendDataToClient(PerSocketData* client, const std::string& msg)
     });
 }
 
-void Server::PublishData(const std::string& topic, const std::string& data)
+void Server::PublishData(std::string_view topic, const std::string& data)
 {
     RunOnServer([=]() {
         app->publish(topic, data, uWS::TEXT);
@@ -244,6 +244,7 @@ void Server::loadExtensions()
         }
 
         extensionsLoaded = true;
+        SPDLOG_INFO("Extensions loaded!");
     }
 
     cv.notify_all();

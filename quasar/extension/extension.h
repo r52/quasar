@@ -215,7 +215,7 @@ private:
         \param[in]  path        Library path
         \sa quasar_ext_info_t, quasar_extension_destroy()
     */
-    Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, const std::string& path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg);
+    Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std::string_view path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg);
 
     /*! Retrieves data from a data source and saves it to the supplied JSON object as JSON data
         \param[in]  msg     Reference to the JSON object to save data to
@@ -259,7 +259,8 @@ private:
     quasar_ext_info_t*    extensionInfo{};  //!< Extension info data \sa quasar_ext_info_t
     extension_destroy     destroyFunc{};    //!< Extension destroy function \sa quasar_ext_destroy()
 
-    std::string           libpath{};      //!< Path to library file
+    const std::string     libpath{};  //!< Path to library file
+
     std::string           name{};         //!< Extension identifier
     std::string           fullname{};     //!< Extension full name
     std::string           description{};  //!< Extension description

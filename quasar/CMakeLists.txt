@@ -32,7 +32,7 @@ add_library(extension-api INTERFACE)
 target_sources(extension-api INTERFACE
   FILE_SET HEADERS
     BASE_DIRS api
-    FILES api/extension_api.h api/extension_types.h api/extension_support.h
+    FILES api/extension_api.h api/extension_types.h api/extension_support.h api/extension_support.hpp
 )
 
 add_executable(quasar WIN32
@@ -86,7 +86,7 @@ target_link_libraries(quasar PRIVATE ZLIB::ZLIB ${USOCKETS_LIB})
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
 add_custom_command(TARGET quasar POST_BUILD 
-    COMMAND $<$<CONFIG:Release>:Qt6::windeployqt>
+    COMMAND $<$<CONFIG:Release,RelWithDebInfo>:Qt6::windeployqt>
     ARGS $<TARGET_FILE:quasar>
 )
 

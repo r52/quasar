@@ -17,11 +17,7 @@
 
 size_t Extension::_uid = 0;
 
-Extension::Extension(quasar_ext_info_t* info,
-    extension_destroy                   destroyfunc,
-    const std::string&                  path,
-    std::shared_ptr<Server>             srv,
-    std::shared_ptr<Config>             cfg) :
+Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std::string_view path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg) :
     extensionInfo{info},
     destroyFunc{destroyfunc},
     libpath{path},
@@ -471,7 +467,10 @@ void Extension::createTimer(DataSource& src)
 
         src.timer->setInterval(
             [this, &src] {
+                // auto start = std::chrono::steady_clock::now();
                 sendDataToSubscribers(src);
+                // auto end = std::chrono::steady_clock::now();
+                // SPDLOG_DEBUG("sendDataToSubscribers() took {}us", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
             },
             src.settings.rate);
     }

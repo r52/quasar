@@ -29,6 +29,7 @@
 
 #include <extension_api.h>
 #include <extension_support.h>
+#include <extension_support.hpp>
 
 #include "kissfft/kiss_fftr.h"
 
@@ -301,6 +302,8 @@ HRESULT Measure::DeviceInit()
     }
 
     SAFE_RELEASE(props);
+
+    info("Initializing audio device {}", converter.to_bytes(m_devName));
 
 #if (WINDOWS_BUG_WORKAROUND)
     // get an extra audio client for the dummy silent channel
@@ -582,7 +585,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = (double) (i * m->m_wfx->nSamplesPerSec / m->m_fftSize);
                     }
 
-                    quasar_set_data_double_array(hData, output[type].data(), output[type].size());
+                    quasar_set_data_double_array_hpp(hData, output[type]);
                     return true;
                 }
                 break;
@@ -597,7 +600,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = m->m_bandFreq[i];
                     }
 
-                    quasar_set_data_double_array(hData, output[type].data(), output[type].size());
+                    quasar_set_data_double_array_hpp(hData, output[type]);
                     return true;
                 }
                 break;
@@ -632,7 +635,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 {
                     auto ws = fmt::format("{}Hz {} {}ch", m->m_wfx->nSamplesPerSec, s_fmtName[m->m_format], m->m_wfx->nChannels);
 
-                    quasar_set_data_string(hData, ws.c_str());
+                    quasar_set_data_string_hpp(hData, ws);
                     return true;
                 }
                 break;
@@ -640,7 +643,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
         case Measure::TYPE_DEV_NAME:
             {
-                quasar_set_data_string(hData, converter.to_bytes(m->m_devName).c_str());
+                quasar_set_data_string_hpp(hData, converter.to_bytes(m->m_devName));
                 return true;
             }
 
@@ -651,7 +654,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     LPWSTR pwszID = NULL;
                     if (m->m_dev->GetId(&pwszID) == S_OK)
                     {
-                        quasar_set_data_string(hData, converter.to_bytes(pwszID).c_str());
+                        quasar_set_data_string_hpp(hData, converter.to_bytes(pwszID));
                         CoTaskMemFree(pwszID);
                         return true;
                     }
@@ -668,15 +671,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                             DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED,
                             &collection) == S_OK)
                     {
-                        char** list = nullptr;
-                        UINT   nDevices;
+                        std::vector<std::string> list;
+                        UINT                     nDevices;
 
                         collection->GetCount(&nDevices);
-
-                        if (nDevices > 0)
-                        {
-                            list = new char*[nDevices];
-                        }
 
                         for (ULONG iDevice = 0; iDevice < nDevices; ++iDevice)
                         {
@@ -690,8 +688,8 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
                                 if (device->GetId(&id) == S_OK && props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
                                 {
-                                    auto device   = fmt::format(L"{}: {}", id, varName.pwszVal);
-                                    list[iDevice] = _strdup(converter.to_bytes(device).c_str());
+                                    auto device = fmt::format(L"{}: {}", id, varName.pwszVal);
+                                    list.push_back(converter.to_bytes(device).c_str());
                                 }
 
                                 if (id)
@@ -705,17 +703,9 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         }
 
                         // set data
-                        if (list)
+                        if (!list.empty())
                         {
-                            quasar_set_data_string_array(hData, list, nDevices);
-
-                            // cleanup
-                            for (size_t i = 0; i < nDevices; i++)
-                            {
-                                free(list[i]);
-                            }
-
-                            delete list;
+                            quasar_set_data_string_array_hpp(hData, list);
                         }
                     }
 
@@ -999,7 +989,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     output[type][i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
                 }
 
-                quasar_set_data_double_array(hData, output[type].data(), output[type].size());
+                quasar_set_data_double_array_hpp(hData, output[type]);
 
                 return true;
             }
@@ -1011,7 +1001,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     output[type][i] = CLAMP01(m->m_peak[i] * m->m_gainPeak);
                 }
 
-                quasar_set_data_double_array(hData, output[type].data(), output[type].size());
+                quasar_set_data_double_array_hpp(hData, output[type]);
 
                 return true;
             }
@@ -1045,7 +1035,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = x;
                     }
 
-                    quasar_set_data_double_array(hData, output[type].data(), output[type].size());
+                    quasar_set_data_double_array_hpp(hData, output[type]);
 
                     return true;
                 }
@@ -1081,7 +1071,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = x;
                     }
 
-                    quasar_set_data_double_array(hData, output[type].data(), output[type].size());
+                    quasar_set_data_double_array_hpp(hData, output[type]);
 
                     return true;
                 }
@@ -1206,11 +1196,10 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 {
     bool needs_reinit = false;
 
-    char buf[512];
-    quasar_get_selection_setting(extHandle, settings, "device", buf, sizeof(buf));
-    m->m_reqID  = converter.from_bytes(buf);
+    auto dev          = quasar_get_selection_setting_hpp(extHandle, settings, "device");
+    m->m_reqID        = converter.from_bytes(dev.data());
 
-    int fftsize = quasar_get_int_setting(extHandle, settings, "FFTSize");
+    int fftsize       = quasar_get_int_setting(extHandle, settings, "FFTSize");
     if (fftsize < 0 || fftsize & 1)
     {
         warn("Invalid FFTSize {}: must be an even integer >= 0. (powers of 2 work best)", fftsize);
@@ -1281,7 +1270,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 
 quasar_ext_info_fields_t fields = {EXT_NAME,
     EXT_FULLNAME,
-    "2.0",
+    "3.0",
     "r52",
     "Supplies desktop audio frequency data. Adapted from Rainmeter's AudioLevel plugin.",
     "https://github.com/r52/quasar"};
