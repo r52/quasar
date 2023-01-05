@@ -6,7 +6,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR})
 set(CMAKE_AUTORCC ON)
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED)
@@ -70,6 +69,7 @@ add_executable(quasar WIN32
 )
 
 target_compile_features(quasar PRIVATE cxx_std_20)
+target_compile_definitions(quasar PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
 target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(quasar PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
@@ -77,8 +77,6 @@ target_include_directories(quasar PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
 target_include_directories(quasar PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
 # Replace with jsoncons vcpkg lib when VS2022 compile bugs fixed
 target_include_directories(quasar PRIVATE ${JSONCONS_INCLUDE_DIRS})
-
-target_compile_definitions(quasar PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
 
 target_link_libraries(quasar PRIVATE extension-api)
 target_link_libraries(quasar PRIVATE fmt::fmt)

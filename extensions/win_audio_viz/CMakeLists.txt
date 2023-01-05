@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.21)
 
 project(win_audio_viz)
 
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
-
 find_package(fmt REQUIRED)
 
 add_library(kissfft STATIC

@@ -4,6 +4,7 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems
     CACHE STRING "Vcpkg toolchain file")
 
 set(CMAKE_ENABLE_EXPORTS ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
 project(quasar-project)
 
