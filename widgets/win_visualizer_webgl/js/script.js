@@ -1,137 +1,148 @@
-var websocket = null;
+let websocket = null;
+const source = "win_audio_viz/" + src;
 
-var scene, camera, renderer, uniforms;
-var sound_data;
+let scene, camera, renderer, uniforms, stats;
+let sound_data;
 
 // acceptable sources
-var sources = {
-    "band": {
-        "size": "Bands",
-        "calc": function (e) {
-            return e.val;
-        }
+const sources = {
+  band: {
+    size: "win_audio_viz/Bands",
+    calc: function (e) {
+      return e.val;
     },
-    "fft": {
-        "size": "FFTSize",
-        "calc": function (e) {
-            return ((e.val / 2) + 1);
-        }
-    }
+  },
+  fft: {
+    size: "win_audio_viz/FFTSize",
+    calc: function (e) {
+      return e.val / 2 + 1;
+    },
+  },
 };
 
 function subscribe() {
-    var msg = {
-        "method": "subscribe",
-        "params": {
-            "target": "win_audio_viz",
-            "params": src
-        }
-    }
+  const msg = {
+    method: "subscribe",
+    params: {
+      topics: [source],
+    },
+  };
 
-    websocket.send(JSON.stringify(msg));
+  websocket.send(JSON.stringify(msg));
 }
 
 function init(dat) {
-    var bSize = 0;
+  let bSize = 0;
 
-    if ("win_audio_viz" in dat["data"]["settings"]) {
-        if ("settings" in dat["data"]["settings"]["win_audio_viz"]) {
-            var settings = dat["data"]["settings"]["win_audio_viz"]["settings"];
+  if ("win_audio_viz/settings" in dat) {
+    let settings = dat["win_audio_viz/settings"];
 
-            settings.forEach(function (e) {
-                if (e.name === sources[src].size) {
-                    bSize = sources[src].calc(e);
-                }
-            });
-        }
-    }
-
-    sound_data = new Uint8Array(bSize);
-
-    var container = document.getElementById('container');
-
-    while(container.firstChild) {
-        container.removeChild(container.firstChild);
-    }
-
-    renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
+    settings.forEach(function (e) {
+      if (e.name === sources[src].size) {
+        bSize = sources[src].calc(e);
+      }
     });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0.0);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    container.appendChild(renderer.domElement);
+  }
 
-    scene = new THREE.Scene();
+  sound_data = new Uint8Array(bSize);
 
-    camera = new THREE.Camera();
+  const container = document.getElementById("container");
 
-    uniforms = {
-        tAudioData: {
-            value: new THREE.DataTexture(sound_data, bSize, 1, THREE.LuminanceFormat)
-        }
-    };
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
 
-    var material = new THREE.ShaderMaterial({
-        uniforms: uniforms,
-        vertexShader: document.getElementById('vertexShader').textContent,
-        fragmentShader: document.getElementById('fragmentShader').textContent
-    });
+  renderer = new THREE.WebGLRenderer({
+    antialias: false,
+    alpha: true,
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0.0);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
 
-    var geometry = new THREE.PlaneBufferGeometry(2, 2);
+  scene = new THREE.Scene();
 
-    var mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+  camera = new THREE.Camera();
 
-    window.addEventListener('resize', onResize, false);
+  const format = renderer.capabilities.isWebGL2
+    ? THREE.RedFormat
+    : THREE.LuminanceFormat;
 
-    animate();
+  uniforms = {
+    tAudioData: {
+      value: new THREE.DataTexture(sound_data, bSize, 1, format),
+    },
+  };
+
+  const material = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: document.getElementById("vertexShader").textContent,
+    fragmentShader: document.getElementById("fragmentShader").textContent,
+  });
+
+  const geometry = new THREE.PlaneGeometry(2, 2);
+
+  const mesh = new THREE.Mesh(geometry, material);
+  scene.add(mesh);
+
+  window.addEventListener("resize", onResize, false);
+
+  animate();
 }
 
 function onResize() {
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
 function animate() {
-    requestAnimationFrame(animate);
+  requestAnimationFrame(animate);
 
-    render();
+  render();
 }
 
 function render() {
-    uniforms.tAudioData.value.needsUpdate = true;
-    renderer.render(scene, camera);
+  uniforms.tAudioData.value.needsUpdate = true;
+  renderer.render(scene, camera);
 }
 
 function parseMsg(msg) {
-    var data = JSON.parse(msg);
+  const data = JSON.parse(msg);
 
-    if ("data" in data && "win_audio_viz" in data["data"] && src in data["data"]["win_audio_viz"]) {
-        sound_data.set(Uint8Array.from(data["data"]["win_audio_viz"][src], x => Math.floor(x * 255)));
-        return;
-    }
+  if (source in data) {
+    sound_data.set(Uint8Array.from(data[source], (x) => Math.floor(x * 255)));
+    return;
+  }
 
-    if ("data" in data && "settings" in data["data"]) {
-        init(data);
-        return;
-    }
+  if ("win_audio_viz/settings" in data) {
+    init(data);
+    return;
+  }
 }
 
-try {
-    if (websocket && websocket.readyState == 1)
-        websocket.close();
+function ready(fn) {
+  if (document.readyState !== "loading") {
+    fn();
+  } else {
+    document.addEventListener("DOMContentLoaded", fn);
+  }
+}
+
+ready(function () {
+  try {
+    if (websocket && websocket.readyState == 1) websocket.close();
     websocket = quasar_create_websocket();
     websocket.onopen = function (evt) {
-        quasar_authenticate(websocket);
-        subscribe();
+      quasar_authenticate(websocket);
+      subscribe();
     };
     websocket.onmessage = function (evt) {
-        parseMsg(evt.data);
+      parseMsg(evt.data);
     };
     websocket.onerror = function (evt) {
-        console.warn('ERROR: ' + evt.data);
+      console.warn("ERROR: " + evt.data);
     };
-} catch (exception) {
-    console.warn('Exception: ' + exception);
-}
+  } catch (exception) {
+    console.warn("Exception: " + exception);
+  }
+});

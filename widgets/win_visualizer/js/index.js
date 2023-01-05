@@ -1,9 +1,9 @@
-var websocket = null;
+let websocket = null;
 const source = "win_audio_viz/" + src;
-var rate = 90; // milliseconds
+let rate = 90; // milliseconds
 
 // acceptable sources
-var sources = {
+const sources = {
   band: {
     size: "win_audio_viz/Bands",
     calc: function (e) {
@@ -19,7 +19,7 @@ var sources = {
 };
 
 function subscribe() {
-  var msg = {
+  const msg = {
     method: "subscribe",
     params: {
       topics: [source],
@@ -30,21 +30,21 @@ function subscribe() {
 }
 
 function initialize(dat) {
-  var element = `<div><i></i></div>`;
+  const element = `<div><i></i></div>`;
 
   if ("win_audio_viz/settings" in dat) {
-    var settings = dat["win_audio_viz/settings"];
+    let settings = dat["win_audio_viz/settings"];
 
     settings.forEach(function (e) {
       if (e.name === sources[src].size) {
-        var main = document.getElementsByClassName("wav")[0];
+        let main = document.getElementsByClassName("wav")[0];
         main.replaceChildren();
 
-        var size = sources[src].calc(e);
+        let size = sources[src].calc(e);
 
         console.log("Generating", size, "bands");
 
-        for (var i = 0; i < size; i++) {
+        for (let i = 0; i < size; i++) {
           main.innerHTML += element;
         }
       }
@@ -52,7 +52,7 @@ function initialize(dat) {
   }
 
   if ("rates" in dat["win_audio_viz/metadata"]) {
-    var rates = dat["win_audio_viz/metadata"]["rates"];
+    let rates = dat["win_audio_viz/metadata"]["rates"];
 
     rates.forEach(function (e) {
       if (e.name === source) {
@@ -81,7 +81,7 @@ function bounce(dat) {
 }
 
 function parseMsg(msg) {
-  var data = JSON.parse(msg);
+  const data = JSON.parse(msg);
 
   if (source in data) {
     bounce(data[source]);
