@@ -235,10 +235,10 @@ const IID            IID_IAudioCaptureClient  = __uuidof(IAudioCaptureClient);
 const IID            IID_IAudioRenderClient   = __uuidof(IAudioRenderClient);
 
 quasar_data_source_t sources[]                = {
-    {       "rms",                   100,    0, 0},
-    {      "peak",                   100,    0, 0},
-    {       "fft",                   100,    0, 0},
-    {      "band",                   100,    0, 0},
+    {       "rms",                    16,    0, 0},
+    {      "peak",                    16,    0, 0},
+    {       "fft",                    16,    0, 0},
+    {      "band",                    16,    0, 0},
     {   "fftfreq", QUASAR_POLLING_CLIENT, 5000, 0},
     {  "bandfreq", QUASAR_POLLING_CLIENT, 5000, 0},
     {    "format", QUASAR_POLLING_CLIENT, 5000, 0},
@@ -1206,7 +1206,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 {
     bool needs_reinit = false;
 
-    char buf[256];
+    char buf[512];
     quasar_get_selection_setting(extHandle, settings, "device", buf, sizeof(buf));
     m->m_reqID  = converter.from_bytes(buf);
 
