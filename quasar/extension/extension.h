@@ -104,6 +104,16 @@ public:
     */
     static Extension* Load(const std::string& libpath, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv);
 
+    //! Load an internal extension
+    /*!
+        \param[in]  name        Name of the internal extension
+        \param[in]  loadFunc    Load function
+        \param[in]  DestroyFunc Destroy function
+        \return Pointer to a Extension instance if successful, nullptr otherwise
+    */
+    static Extension*
+    LoadInternal(std::string_view name, extension_load loadFunc, extension_destroy destroyFunc, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv);
+
     /*! Initializes the extension
         Throws an exception if failed.
     */
@@ -123,6 +133,11 @@ public:
     \return extension identifier
     */
     const std::string& GetName() const { return name; };
+
+    /*! Checks to see whether the Extension is an internal Extension
+        \return Extension is an internal Extension
+    */
+    bool IsInternal() const { return internal; };
 
     /*! Checks to see whether a Topic exists
         \param[in]  topic   Topic identifier
@@ -171,7 +186,12 @@ private:
         \param[in]  path        Library path
         \sa quasar_ext_info_t, quasar_extension_destroy()
     */
-    Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std::string_view path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg);
+    Extension(quasar_ext_info_t* info,
+        extension_destroy        destroyfunc,
+        std::string_view         path,
+        std::shared_ptr<Server>  srv,
+        std::shared_ptr<Config>  cfg,
+        bool                     isInternal = false);
 
     /*! Retrieves data from a data source and saves it to the supplied JSON object as JSON data
         \param[in]  msg     Reference to the JSON object to save data to
@@ -226,10 +246,19 @@ private:
 
     DataSourceMapType     datasources;  //!< Map of Topics in this extension
 
-    bool                  initialized{};  //!< Extension successfully initialized;
+    bool                  initialized{};  //!< Extension successfully initialized
+
+    const bool            internal{};  //!< Extension is an internal extension
 
     SettingsVariantVector settings{};  //!< Collection of extension settings
 
     std::weak_ptr<Server> server{};
     std::weak_ptr<Config> config{};
+
+    // Metadata keys
+    struct
+    {
+        std::string metadata{};
+        std::string settings{};
+    } metakeys;
 };

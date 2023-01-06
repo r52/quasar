@@ -13,17 +13,21 @@
   x[sizeof(x) - 1] = 0;    \
   d                = std::string{x};
 
-#define EXTKEY(key) fmt::format("{}/{}", GetName(), key)
-
 size_t Extension::_uid = 0;
 
-Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std::string_view path, std::shared_ptr<Server> srv, std::shared_ptr<Config> cfg) :
+Extension::Extension(quasar_ext_info_t* info,
+    extension_destroy                   destroyfunc,
+    std::string_view                    path,
+    std::shared_ptr<Server>             srv,
+    std::shared_ptr<Config>             cfg,
+    bool                                isInternal) :
     extensionInfo{info},
     destroyFunc{destroyfunc},
     libpath{path},
     initialized{false},
     server{srv},
-    config{cfg}
+    config{cfg},
+    internal{isInternal}
 {
     if (nullptr == extensionInfo)
     {
@@ -52,6 +56,9 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
     {
         throw std::runtime_error("Invalid extension identifier or name");
     }
+
+    // Initialize meta strings
+    metakeys = {.metadata = fmt::format("{}/{}", name, "metadata"), .settings = fmt::format("{}/{}", name, "settings")};
 
     auto cfl = config.lock();
 
@@ -223,11 +230,8 @@ void Extension::RemoveSubscriber(void* subscriber, const std::string& topic, int
 
 void Extension::GetMetadataJSON(jsoncons::json& json, bool settings_only)
 {
-    static const auto metakey = EXTKEY("metadata");
-    static const auto setkey  = EXTKEY("settings");
-
-    jsoncons::json&   mdat    = json[metakey];
-    jsoncons::json&   set     = json[setkey];
+    jsoncons::json& mdat = json[metakeys.metadata];
+    jsoncons::json& set  = json[metakeys.settings];
 
     if (!settings_only)
     {
@@ -511,12 +515,9 @@ const std::string Extension::craftSettingsMessage()
 
     if (!settings.empty())
     {
-        static const auto metakey = EXTKEY("metadata");
-        static const auto setkey  = EXTKEY("settings");
-
-        jsoncons::json    j{
+        jsoncons::json j{
             jsoncons::json_object_arg,
-               {{metakey, jsoncons::json_object_arg}, {setkey, jsoncons::json_object_arg}}
+            {{metakeys.metadata, jsoncons::json_object_arg}, {metakeys.settings, jsoncons::json_object_arg}}
         };
 
         GetMetadataJSON(j, true);
@@ -593,6 +594,35 @@ Extension* Extension::Load(const std::string& libpath, std::shared_ptr<Config> c
     } catch (std::exception e)
     {
         SPDLOG_WARN("Exception: {} while allocating {}", e.what(), libpath);
+    }
+
+    return nullptr;
+}
+
+Extension*
+Extension::LoadInternal(std::string_view name, extension_load loadFunc, extension_destroy destroyFunc, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv)
+{
+    if (!loadFunc or !destroyFunc)
+    {
+        SPDLOG_WARN("Failed to resolve extension API in {}", name);
+        return nullptr;
+    }
+
+    quasar_ext_info_t* p = loadFunc();
+
+    if (!p or !p->init or !p->shutdown or !p->get_data or !p->fields or !p->dataSources)
+    {
+        SPDLOG_WARN("quasar_ext_load failed in {}: required extension data missing", name);
+        return nullptr;
+    }
+
+    try
+    {
+        Extension* extension = new Extension(p, destroyFunc, std::string_view(), srv, cfg, true);
+        return extension;
+    } catch (std::exception e)
+    {
+        SPDLOG_WARN("Exception: {} while allocating {}", e.what(), name);
     }
 
     return nullptr;
