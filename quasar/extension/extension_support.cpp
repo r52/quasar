@@ -532,7 +532,7 @@ quasar_data_handle quasar_set_data_json_hpp(quasar_data_handle hData, std::strin
     return nullptr;
 }
 
-quasar_data_handle quasar_set_data_string_array_hpp(quasar_data_handle hData, const std::vector<std::string>& vec)
+quasar_data_handle quasar_set_data_string_vector(quasar_data_handle hData, const std::vector<std::string>& vec)
 {
     quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
@@ -546,7 +546,7 @@ quasar_data_handle quasar_set_data_string_array_hpp(quasar_data_handle hData, co
     return nullptr;
 }
 
-quasar_data_handle quasar_set_data_int_array_hpp(quasar_data_handle hData, const std::vector<int>& vec)
+quasar_data_handle quasar_set_data_int_vector(quasar_data_handle hData, const std::vector<int>& vec)
 {
     quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
@@ -560,7 +560,7 @@ quasar_data_handle quasar_set_data_int_array_hpp(quasar_data_handle hData, const
     return nullptr;
 }
 
-quasar_data_handle quasar_set_data_float_array_hpp(quasar_data_handle hData, const std::vector<float>& vec)
+quasar_data_handle quasar_set_data_float_vector(quasar_data_handle hData, const std::vector<float>& vec)
 {
     quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
@@ -574,7 +574,7 @@ quasar_data_handle quasar_set_data_float_array_hpp(quasar_data_handle hData, con
     return nullptr;
 }
 
-quasar_data_handle quasar_set_data_double_array_hpp(quasar_data_handle hData, const std::vector<double>& vec)
+quasar_data_handle quasar_set_data_double_vector(quasar_data_handle hData, const std::vector<double>& vec)
 {
     quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 

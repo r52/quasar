@@ -585,7 +585,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = (double) (i * m->m_wfx->nSamplesPerSec / m->m_fftSize);
                     }
 
-                    quasar_set_data_double_array_hpp(hData, output[type]);
+                    quasar_set_data_double_vector(hData, output[type]);
                     return true;
                 }
                 break;
@@ -600,7 +600,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = m->m_bandFreq[i];
                     }
 
-                    quasar_set_data_double_array_hpp(hData, output[type]);
+                    quasar_set_data_double_vector(hData, output[type]);
                     return true;
                 }
                 break;
@@ -705,7 +705,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         // set data
                         if (!list.empty())
                         {
-                            quasar_set_data_string_array_hpp(hData, list);
+                            quasar_set_data_string_vector(hData, list);
                         }
                     }
 
@@ -989,7 +989,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     output[type][i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
                 }
 
-                quasar_set_data_double_array_hpp(hData, output[type]);
+                quasar_set_data_double_vector(hData, output[type]);
 
                 return true;
             }
@@ -1001,7 +1001,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     output[type][i] = CLAMP01(m->m_peak[i] * m->m_gainPeak);
                 }
 
-                quasar_set_data_double_array_hpp(hData, output[type]);
+                quasar_set_data_double_vector(hData, output[type]);
 
                 return true;
             }
@@ -1035,7 +1035,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = x;
                     }
 
-                    quasar_set_data_double_array_hpp(hData, output[type]);
+                    quasar_set_data_double_vector(hData, output[type]);
 
                     return true;
                 }
@@ -1071,7 +1071,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = x;
                     }
 
-                    quasar_set_data_double_array_hpp(hData, output[type]);
+                    quasar_set_data_double_vector(hData, output[type]);
 
                     return true;
                 }

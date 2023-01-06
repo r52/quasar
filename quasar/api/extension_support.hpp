@@ -42,28 +42,28 @@ SAPI_EXPORT quasar_data_handle quasar_set_data_json_hpp(quasar_data_handle hData
     \param[in]  vec     Vector of data to set
     \return Data handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_data_handle quasar_set_data_string_array_hpp(quasar_data_handle hData, const std::vector<std::string>& vec);
+SAPI_EXPORT quasar_data_handle quasar_set_data_string_vector(quasar_data_handle hData, const std::vector<std::string>& vec);
 
 //! Sets the return data to be an array of integers
 /*! \param[in]  hData   Data handle
     \param[in]  vec     Vector of data to set
     \return Data handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_data_handle quasar_set_data_int_array_hpp(quasar_data_handle hData, const std::vector<int>& vec);
+SAPI_EXPORT quasar_data_handle quasar_set_data_int_vector(quasar_data_handle hData, const std::vector<int>& vec);
 
 //! Sets the return data to be an array of floats
 /*! \param[in]  hData   Data handle
     \param[in]  vec     Vector of data to set
     \return Data handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_data_handle quasar_set_data_float_array_hpp(quasar_data_handle hData, const std::vector<float>& vec);
+SAPI_EXPORT quasar_data_handle quasar_set_data_float_vector(quasar_data_handle hData, const std::vector<float>& vec);
 
 //! Sets the return data to be an array of doubles
 /*! \param[in]  hData   Data handle
     \param[in]  vec     Vector of data to set
     \return Data handle if successful, nullptr otherwise
 */
-SAPI_EXPORT quasar_data_handle quasar_set_data_double_array_hpp(quasar_data_handle hData, const std::vector<double>& vec);
+SAPI_EXPORT quasar_data_handle quasar_set_data_double_vector(quasar_data_handle hData, const std::vector<double>& vec);
 
 //! Retrieves a string setting from Quasar
 /*!

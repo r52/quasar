@@ -69,7 +69,7 @@ add_executable(quasar WIN32
 )
 
 target_compile_features(quasar PRIVATE cxx_std_20)
-target_compile_definitions(quasar PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+target_compile_definitions(quasar PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE JSONCONS_HAS_STD_SPAN JSONCONS_HAS_STD_ENDIAN)
 
 target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(quasar PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
