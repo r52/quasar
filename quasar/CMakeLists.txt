@@ -65,7 +65,7 @@ add_executable(quasar WIN32
  # Headers for integration
  target_sources(quasar PRIVATE
  FILE_SET HEADERS
-   FILES widgets/widgetdefinition.h
+   FILES widgets/widgetdefinition.h common/timer.h
 )
 
 target_compile_features(quasar PRIVATE cxx_std_20)
@@ -85,10 +85,12 @@ target_link_libraries(quasar PRIVATE glaze::glaze)
 target_link_libraries(quasar PRIVATE ZLIB::ZLIB ${USOCKETS_LIB})
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
-add_custom_command(TARGET quasar POST_BUILD 
+if(WIN32)
+  add_custom_command(TARGET quasar POST_BUILD 
     COMMAND $<$<CONFIG:Release,RelWithDebInfo>:Qt6::windeployqt>
     ARGS $<TARGET_FILE:quasar>
-)
+  )
+endif()
 
 install(TARGETS extension-api FILE_SET HEADERS DESTINATION quasar/include)
 install(TARGETS quasar DESTINATION quasar)

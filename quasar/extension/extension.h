@@ -8,15 +8,14 @@
 #include <set>
 #include <shared_mutex>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 
 #include "api/extension_types.h"
 #include "common/settings.h"
+#include "common/timer.h"
 
 #include <jsoncons/json.hpp>
-#include <spdlog/spdlog.h>
 
 class Config;
 class Server;
@@ -40,49 +39,6 @@ struct DataCache
                           //!< \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
     std::chrono::system_clock::time_point
         expiry;  //!< Expiry time of cached data \sa quasar_data_source_t.rate, quasar_data_source_t.validtime, quasar_polling_type_t
-};
-
-class Timer
-{
-public:
-    ~Timer()
-    {
-        thread.request_stop();
-        cv.notify_one();
-    }
-
-    void setInterval(auto&& fn, int interval)
-    {
-        SPDLOG_DEBUG("New timer thread with {}ms internal", interval);
-        thread = std::jthread{[=](std::stop_token token) {
-            std::unique_lock<std::mutex> lk(mtx);
-            while (true)
-            {
-                if (cv.wait_for(lk, std::chrono::milliseconds(interval), [&] {
-                        return token.stop_requested();
-                    }))
-                {
-                    return;
-                }
-
-                fn();
-            }
-        }};
-
-        thread.detach();
-    }
-
-    void stop()
-    {
-        thread.request_stop();
-        cv.notify_one();
-        thread.join();
-    }
-
-private:
-    std::jthread            thread;
-    std::condition_variable cv;
-    std::mutex              mtx;
 };
 
 //! Struct containing internal resources for a Data Source
