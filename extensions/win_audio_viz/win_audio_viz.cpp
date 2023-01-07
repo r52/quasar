@@ -28,7 +28,6 @@
 #include <mmdeviceapi.h>
 
 #include <extension_api.h>
-#include <extension_support.h>
 #include <extension_support.hpp>
 
 #include "kissfft/kiss_fftr.h"
@@ -1182,7 +1181,6 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
 Exit:
     warn("create_settings() failed on audio enumeration: last error is {}", GetLastError());
     quasar_free(devSelect);
-    quasar_free(settings);
     CoTaskMemFree(pwszID);
     SAFE_RELEASE(m->m_enum);
     SAFE_RELEASE(pCollection);

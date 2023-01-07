@@ -7,14 +7,14 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_SOURCE_DIR})
 set(CMAKE_AUTORCC ON)
 
-find_package(fmt REQUIRED)
-find_package(spdlog REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+find_package(spdlog CONFIG REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(jsoncons CONFIG REQUIRED)
 find_library(USOCKETS_LIB uSockets)
 find_path(UWEBSOCKETS_INCLUDE_DIRS "uwebsockets/App.h")
-find_path(JSONCONS_INCLUDE_DIRS "jsoncons/json.hpp" PATHS ../include)
 find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
-find_package(Qt6 6.4 COMPONENTS Core Gui Widgets Network NetworkAuth WebEngineCore WebEngineWidgets REQUIRED)
+find_package(Qt6 6.4 CONFIG COMPONENTS Core Gui Widgets Network NetworkAuth WebEngineCore WebEngineWidgets REQUIRED)
 
 CPMFindPackage(
    NAME glaze
@@ -75,18 +75,17 @@ target_include_directories(quasar PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_include_directories(quasar PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>")
 target_include_directories(quasar PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
 target_include_directories(quasar PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
-# Replace with jsoncons vcpkg lib when VS2022 compile bugs fixed
-target_include_directories(quasar PRIVATE ${JSONCONS_INCLUDE_DIRS})
 
 target_link_libraries(quasar PRIVATE extension-api)
 target_link_libraries(quasar PRIVATE fmt::fmt)
 target_link_libraries(quasar PRIVATE spdlog::spdlog)
 target_link_libraries(quasar PRIVATE glaze::glaze)
+target_link_libraries(quasar PRIVATE jsoncons)
 target_link_libraries(quasar PRIVATE ZLIB::ZLIB ${USOCKETS_LIB})
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
 if(WIN32)
-  add_custom_command(TARGET quasar POST_BUILD 
+  add_custom_command(TARGET quasar POST_BUILD
     COMMAND $<$<CONFIG:Release,RelWithDebInfo>:Qt6::windeployqt>
     ARGS $<TARGET_FILE:quasar>
   )

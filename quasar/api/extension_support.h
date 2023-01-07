@@ -12,7 +12,7 @@
 #  define SAPI_EXPORT __declspec(dllexport)
 #else
 #  define SAPI_EXPORT __declspec(dllimport)
-#endif  // extension_EXPORTS
+#endif  // quasar_EXPORTS
 
 #if defined(__cplusplus)
 extern "C" {

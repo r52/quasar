@@ -6,7 +6,6 @@
 #include <unordered_map>
 
 #include <extension_api.h>
-#include <extension_support.h>
 #include <extension_support.hpp>
 
 #include <fmt/core.h>

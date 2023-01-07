@@ -13,6 +13,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QStandardPaths>
+#include <QtNetworkAuth>
 #include <QUrl>
 
 #include <BS_thread_pool.hpp>
@@ -118,6 +119,9 @@ Server::Server(std::shared_ptr<Config> cfg) :
         delete app;
         loop->free();
     }};
+
+    // Force QtNetworkAuth linkage
+    QOAuth2AuthorizationCodeFlow oauth2;
 }
 
 Server::~Server()

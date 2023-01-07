@@ -1,5 +1,11 @@
 {
   "name": "quasar",
   "version": "3.0.0",
-  "dependencies": ["fmt", "spdlog", "uwebsockets", "bshoshany-thread-pool"]
+  "dependencies": [
+    "fmt",
+    "spdlog",
+    "uwebsockets",
+    "bshoshany-thread-pool",
+    "jsoncons"
+  ]
 }

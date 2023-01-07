@@ -12,16 +12,12 @@
 
 #pragma once
 
-#include "extension_types.h"
+#include "extension_support.h"
 
-#include <string>
-#include <vector>
+#if defined(__cplusplus)
 
-#ifdef quasar_EXPORTS
-#  define SAPI_EXPORT __declspec(dllexport)
-#else
-#  define SAPI_EXPORT __declspec(dllimport)
-#endif  // extension_EXPORTS
+#  include <string>
+#  include <vector>
 
 //! Sets the return data to be a null terminated string
 /*! \param[in]  hData   Data handle
@@ -82,3 +78,5 @@ SAPI_EXPORT std::string_view quasar_get_string_setting_hpp(quasar_ext_handle han
     \return string setting if successful, empty string_view otherwise
 */
 SAPI_EXPORT std::string_view quasar_get_selection_setting_hpp(quasar_ext_handle handle, quasar_settings_t* settings, std::string_view name);
+
+#endif
