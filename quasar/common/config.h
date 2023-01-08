@@ -63,6 +63,50 @@ public:
         cfg->setValue(name, result);
     }
 
+    template<typename T>
+    [[nodiscard]] T ReadGenericStorage(const std::string& group, const std::string& label) const
+    {
+        QString gname = QString::fromStdString(group);
+        QString lname = QString::fromStdString(label);
+
+        cfg->beginGroup(gname);
+        QVariant val = cfg->value(lname);
+        cfg->endGroup();
+
+        if constexpr (std::same_as<T, std::string>)
+        {
+            return val.toString().toStdString();
+        }
+        else
+        {
+            return val.value<T>();
+        }
+    }
+
+    template<typename T>
+    void WriteGenericStorage(const std::string& group, const std::string& label, const T& val)
+    {
+        QString gname = QString::fromStdString(group);
+        QString lname = QString::fromStdString(label);
+
+        cfg->beginGroup(gname);
+
+        QVariant result;
+
+        if constexpr (std::same_as<T, std::string>)
+        {
+            result = QString::fromStdString(val);
+        }
+        else
+        {
+            result = QVariant::fromValue<T>(val);
+        }
+
+        cfg->setValue(label, result);
+
+        cfg->endGroup();
+    }
+
 private:
     void                       WriteInternalSettings();
 

@@ -12,12 +12,12 @@
 #include <unordered_set>
 
 #include "api/extension_types.h"
+#include "common/config.h"
 #include "common/settings.h"
 #include "common/timer.h"
 
 #include <jsoncons/json.hpp>
 
-class Config;
 class Server;
 
 using SettingsVariantVector = std::vector<Settings::SettingsVariant>;
@@ -177,6 +177,38 @@ public:
         \param[in]  settings_only   Retrieve only the settings if true, otherwise retrieves extension's full metadata
     */
     void GetMetadataJSON(jsoncons::json& json, bool settings_only);
+
+    /*! Handles a data ready signal sent by the extension (by async-polled and signaled sources)
+        \param[in]  source  Data Source identifier
+        \sa quasar_polling_type_t, quasar_signal_data_ready()
+    */
+    void HandleDataReady(std::string_view source);
+
+    /*! Waits for a set of data to be sent to clients before processing the next set
+        \param[in]  source  Data Source identifier
+        \sa quasar_signal_wait_processed()
+    */
+    void WaitForDataProcessed(std::string_view source);
+
+    //! Retrieves non-settings data stored as a part of this extension's config
+    /*! \param[in]  label   The stored data's label
+        \return The stored data
+    */
+    template<typename T>
+    [[nodiscard]] T ReadStorage(const std::string& label) const
+    {
+        return config.lock()->ReadGenericStorage<T>(name, label);
+    }
+
+    //! Writes non-settings data stored as a part of this extension's config
+    /*! \param[in]  label   The stored data's label
+        \param[in]  val   The stored data's value
+    */
+    template<typename T>
+    void WriteStorage(const std::string& label, const T& val)
+    {
+        config.lock()->WriteGenericStorage(name, label, val);
+    }
 
 private:
     //! Extension constructor

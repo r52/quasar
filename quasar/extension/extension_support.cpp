@@ -504,6 +504,117 @@ bool quasar_get_selection_setting(quasar_ext_handle handle, quasar_settings_t* s
     return false;
 }
 
+void quasar_signal_data_ready(quasar_ext_handle handle, const char* source)
+{
+    Extension* ext = static_cast<Extension*>(handle);
+
+    if (ext)
+    {
+        ext->HandleDataReady(source);
+    }
+}
+
+void quasar_signal_wait_processed(quasar_ext_handle handle, const char* source)
+{
+    Extension* ext = static_cast<Extension*>(handle);
+
+    if (ext)
+    {
+        ext->WaitForDataProcessed(source);
+    }
+}
+
+template<typename T,
+    typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T> || std::is_same_v<const char*, T>, T>>
+void _set_basic_storage(quasar_ext_handle handle, const char* name, T data)
+{
+    Extension* ext = static_cast<Extension*>(handle);
+
+    if (ext)
+    {
+        if constexpr (std::same_as<T, const char*>)
+        {
+            ext->WriteStorage(name, std::string{data});
+        }
+        else
+        {
+            ext->WriteStorage(name, data);
+        }
+    }
+}
+
+template<typename T, typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T>, T>>
+bool _get_basic_storage(quasar_ext_handle handle, const char* name, T* buf)
+{
+    Extension* ext = static_cast<Extension*>(handle);
+
+    if (ext && buf)
+    {
+        T val = ext->ReadStorage<T>(name);
+        *buf  = val;
+        return true;
+    }
+
+    return false;
+}
+
+void quasar_set_storage_string(quasar_ext_handle handle, const char* name, const char* data)
+{
+    _set_basic_storage(handle, name, data);
+}
+
+void quasar_set_storage_int(quasar_ext_handle handle, const char* name, int data)
+{
+    _set_basic_storage(handle, name, data);
+}
+
+void quasar_set_storage_double(quasar_ext_handle handle, const char* name, double data)
+{
+    _set_basic_storage(handle, name, data);
+}
+
+void quasar_set_storage_bool(quasar_ext_handle handle, const char* name, bool data)
+{
+    _set_basic_storage(handle, name, data);
+}
+
+bool quasar_get_storage_string(quasar_ext_handle handle, const char* name, char* buf, size_t size)
+{
+    Extension* ext = static_cast<Extension*>(handle);
+
+    if (ext && buf && size)
+    {
+        std::string val = ext->ReadStorage<std::string>(name);
+
+        if (size < val.length())
+        {
+            SPDLOG_WARN("Buffer size for retrieving storage {} too small!", name);
+            return false;
+        }
+
+        memcpy(buf, val.data(), val.length());
+        buf[val.length()] = 0;
+        return true;
+    }
+
+    return false;
+}
+
+bool quasar_get_storage_int(quasar_ext_handle handle, const char* name, int* buf)
+{
+    return _get_basic_storage(handle, name, buf);
+}
+
+bool quasar_get_storage_double(quasar_ext_handle handle, const char* name, double* buf)
+{
+    return _get_basic_storage(handle, name, buf);
+}
+
+bool quasar_get_storage_bool(quasar_ext_handle handle, const char* name, bool* buf)
+{
+    return _get_basic_storage(handle, name, buf);
+}
+
 quasar_data_handle quasar_set_data_string_hpp(quasar_data_handle hData, std::string_view data)
 {
     quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);

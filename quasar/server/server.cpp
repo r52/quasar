@@ -16,7 +16,6 @@
 #include <QtNetworkAuth>
 #include <QUrl>
 
-#include <BS_thread_pool.hpp>
 #include <glaze/glaze.hpp>
 #include <spdlog/spdlog.h>
 
@@ -40,7 +39,6 @@ namespace
     uWS::Loop*                  loop             = nullptr;
     bool                        extensionsLoaded = false;
     std::condition_variable_any cv;
-    BS::thread_pool             pool;
 }  // namespace
 
 Server::Server(std::shared_ptr<Config> cfg) :
@@ -159,11 +157,6 @@ void Server::PublishData(std::string_view topic, const std::string& data)
 void Server::RunOnServer(auto&& cb)
 {
     loop->defer(cb);
-}
-
-void Server::RunOnPool(auto&& cb)
-{
-    pool.push_task(cb);
 }
 
 void Server::WaitForExtensionLoad()

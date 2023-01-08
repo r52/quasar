@@ -8,6 +8,8 @@
 
 #include "protocol.h"
 
+#include <BS_thread_pool.hpp>
+
 class Extension;
 class Config;
 
@@ -33,7 +35,9 @@ public:
     void PublishData(std::string_view topic, const std::string& data);
 
     void RunOnServer(auto&& cb);
-    void RunOnPool(auto&& cb);
+    void RunOnPool(auto&& cb) {
+        pool.push_task(cb);
+    }
 
     void WaitForExtensionLoad();
 
@@ -58,4 +62,6 @@ private:
     mutable std::shared_mutex extensionMutex;
 
     std::weak_ptr<Config>     config{};
+
+    BS::thread_pool           pool;
 };

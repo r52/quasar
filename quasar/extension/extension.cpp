@@ -2,7 +2,6 @@
 
 #include "extension_support_internal.h"
 
-#include "common/config.h"
 #include "server/server.h"
 
 #include <QLibrary>
@@ -350,6 +349,89 @@ void Extension::GetMetadataJSON(jsoncons::json& json, bool settings_only)
     }
 }
 
+void Extension::HandleDataReady(std::string_view source)
+{
+    auto srv = server.lock();
+
+    srv->RunOnPool([=, this] {
+        const auto topic = fmt::format("{}/{}", name, source);
+
+        if (!datasources.count(topic))
+        {
+            SPDLOG_WARN("Unknown topic {} requested in extension {}", topic, name);
+            return;
+        }
+
+        DataSource&                        data = datasources[topic];
+
+        std::lock_guard<std::shared_mutex> lk(data.mutex);
+
+        if (data.settings.rate == QUASAR_POLLING_CLIENT)
+        {
+            // pop poll queue
+            jsoncons::json j{jsoncons::json_object_arg, {{"errors", jsoncons::json{jsoncons::json_array_arg}}}};
+            std::string    message{};
+
+            auto           result = getDataFromSource(j, data);
+
+            switch (result)
+            {
+                case GET_DATA_FAILED:
+                    SPDLOG_WARN(fmt::format("getDataFromSource({}) failed in extension {}", topic, name));
+                    break;
+                case GET_DATA_DELAYED:
+                    SPDLOG_WARN(fmt::format("getDataFromSource({}) returned delayed data on signal ready in extension {}", topic, name));
+                    break;
+                case GET_DATA_SUCCESS:
+                    {
+                        j.dump(message);
+
+                        if (!message.empty())
+                        {
+                            for (auto& client : data.pollqueue)
+                            {
+                                srv->SendDataToClient((PerSocketData*) client, message);
+                            }
+
+                            data.pollqueue.clear();
+                        }
+
+                        break;
+                    }
+            }
+        }
+        else if (data.settings.rate == QUASAR_POLLING_SIGNALED)
+        {
+            // send to subscribers
+            sendDataToSubscribers(data);
+        }
+    });
+}
+
+void Extension::WaitForDataProcessed(std::string_view source)
+{
+    const auto topic = fmt::format("{}/{}", name, source);
+
+    if (!datasources.count(topic))
+    {
+        SPDLOG_WARN("Unknown topic {} requested in extension {}", topic, name);
+        return;
+    }
+
+    DataSource& data = datasources[topic];
+
+    if (data.locks)
+    {
+        std::unique_lock<std::mutex> lk(data.locks->mutex);
+        data.locks->cv.wait(lk, [&data] {
+            return data.locks->processed;
+        });
+
+        // Reset the flag
+        data.locks->processed = false;
+    }
+}
+
 Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& msg, DataSource& src, std::string args)
 {
     using namespace std::chrono;
@@ -428,25 +510,27 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
 
 void Extension::sendDataToSubscribers(DataSource& src)
 {
-    std::lock_guard<std::shared_mutex> lk(src.mutex);
-
-    // Only send if there are subscribers
-    if (src.subscribers > 0)
     {
-        src.buffer.clear();
+        std::lock_guard<std::shared_mutex> lk(src.mutex);
 
-        jsoncons::json j{
-            jsoncons::json_object_arg,
-            {{src.topic, jsoncons::json{jsoncons::json_object_arg}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
-        };
-
-        getDataFromSource(j, src);
-
-        j.dump(src.buffer);
-
-        if (!src.buffer.empty())
+        // Only send if there are subscribers
+        if (src.subscribers > 0)
         {
-            server.lock()->PublishData(src.topic, src.buffer);
+            src.buffer.clear();
+
+            jsoncons::json j{
+                jsoncons::json_object_arg,
+                {{src.topic, jsoncons::json{jsoncons::json_object_arg}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
+            };
+
+            getDataFromSource(j, src);
+
+            j.dump(src.buffer);
+
+            if (!src.buffer.empty())
+            {
+                server.lock()->PublishData(src.topic, src.buffer);
+            }
         }
     }
 
