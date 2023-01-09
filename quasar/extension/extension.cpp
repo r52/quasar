@@ -125,7 +125,7 @@ Extension::Extension(quasar_ext_info_t* info,
                 def);
         }
 
-        updateExtensionSettings();
+        UpdateExtensionSettings();
     }
 }
 
@@ -374,20 +374,30 @@ void Extension::HandleDataReady(std::string_view source)
 
             auto           result = getDataFromSource(j, data);
 
+            if (j[data.topic].empty())
+            {
+                j.remove_member(data.topic);
+            }
+
+            if (j["errors"].empty())
+            {
+                j.remove_member("errors");
+            }
+
             switch (result)
             {
                 case GET_DATA_FAILED:
-                    SPDLOG_WARN(fmt::format("getDataFromSource({}) failed in extension {}", topic, name));
+                    SPDLOG_WARN("getDataFromSource({}) failed in extension {}", topic, name);
                     break;
                 case GET_DATA_DELAYED:
-                    SPDLOG_WARN(fmt::format("getDataFromSource({}) returned delayed data on signal ready in extension {}", topic, name));
+                    SPDLOG_WARN("getDataFromSource({}) returned delayed data on signal ready in extension {}", topic, name);
                     break;
                 case GET_DATA_SUCCESS:
                     {
-                        j.dump(message);
-
-                        if (!message.empty())
+                        if (!j.empty())
                         {
+                            j.dump(message);
+
                             for (auto& client : data.pollqueue)
                             {
                                 srv->SendDataToClient((PerSocketData*) client, message);
@@ -525,10 +535,20 @@ void Extension::sendDataToSubscribers(DataSource& src)
 
             getDataFromSource(j, src);
 
-            j.dump(src.buffer);
-
-            if (!src.buffer.empty())
+            if (j[src.topic].empty())
             {
+                j.remove_member(src.topic);
+            }
+
+            if (j["errors"].empty())
+            {
+                j.remove_member("errors");
+            }
+
+            if (!j.empty())
+            {
+                j.dump(src.buffer);
+
                 server.lock()->PublishData(src.topic, src.buffer);
             }
         }
@@ -564,7 +584,7 @@ void Extension::createTimer(DataSource& src)
     }
 }
 
-void Extension::updateExtensionSettings()
+void Extension::UpdateExtensionSettings()
 {
     if (!settings.empty() && extensionInfo->update)
     {
@@ -722,10 +742,7 @@ void Extension::Initialize()
             throw std::runtime_error("extension init() failed");
         }
 
-        if (!settings.empty())
-        {
-            updateExtensionSettings();
-        }
+        UpdateExtensionSettings();
 
         initialized = true;
 
@@ -754,13 +771,16 @@ void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::
 
         auto result      = getDataFromSource(json, dsrc, args);
 
+        if (json[dsrc.topic].empty())
+        {
+            json.remove_member(dsrc.topic);
+        }
+
         switch (result)
         {
             case GET_DATA_FAILED:
                 {
-                    auto m = fmt::format("getDataFromSource({}) failed in extension {}", topic, name);  // + " requested by widget " + widgetName;
-                    json["errors"].push_back(m);
-                    SPDLOG_WARN(m);
+                    SPDLOG_WARN("getDataFromSource({}) failed in extension {}", topic, name);  // + " requested by widget " + widgetName;
                 }
                 break;
             case GET_DATA_DELAYED:

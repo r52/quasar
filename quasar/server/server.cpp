@@ -10,6 +10,8 @@
 
 #include "extension/extension.h"
 
+#include "internal/applauncher.h"
+
 #include <QCoreApplication>
 #include <QDir>
 #include <QStandardPaths>
@@ -195,6 +197,44 @@ void Server::loadExtensions()
     {
         std::lock_guard<std::shared_mutex> lk(extensionMutex);
 
+        // First load internal extensions
+        {
+            // App Launcher
+            std::string name = "applauncher";
+            Extension*  extn = Extension::LoadInternal(name, applauncher_load, applauncher_destroy, config.lock(), shared_from_this());
+
+            if (!extn)
+            {
+                SPDLOG_WARN("Failed to load extension {}", name);
+            }
+            else if (extensions.count(extn->GetName()))
+            {
+                SPDLOG_WARN("Extension with code {} already loaded. Unloading {}", extn->GetName(), name);
+            }
+            else
+            {
+                try
+                {
+                    extn->Initialize();
+                } catch (std::exception e)
+                {
+                    SPDLOG_WARN("Exception: {} while initializing {}", e.what(), name);
+                    delete extn;
+                    extn = nullptr;
+                }
+
+                SPDLOG_INFO("Extension {} loaded.", extn->GetName());
+                extensions[extn->GetName()].reset(extn);
+                extn = nullptr;
+            }
+
+            if (extn != nullptr)
+            {
+                delete extn;
+            }
+        }
+
+        // Load Extension libraries
         for (QFileInfo& file : list)
         {
             auto libpath = (file.path() + "/" + file.fileName()).toStdString();
@@ -407,10 +447,14 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
         extn->PollDataForSending(j, tpcs, args, client);
     }
 
-    j.dump(message);
-
-    if (!message.empty())
+    if (j["errors"].empty())
     {
+        j.remove_member("errors");
+    }
+
+    if (!j.empty())
+    {
+        j.dump(message);
         SendDataToClient(client, message);
     }
 }

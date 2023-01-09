@@ -160,6 +160,8 @@ namespace Settings
         Setting<int>         port{"main/port", "WebSocket server port", 13337, 1000, 65535, 1};
         Setting<std::string> loaded_widgets{"main/loaded", "Loaded Widgets", ""};
         Setting<std::string> lastpath{"main/lastpath", "Last used file path", ""};
+
+        Setting<std::string> applauncher{"applauncher/list", "App Launcher entries", "[]"};
     };
 
     extern InternalSettings internal;

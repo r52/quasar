@@ -210,6 +210,12 @@ public:
         config.lock()->WriteGenericStorage(name, label, val);
     }
 
+    /*! Propagates custom setting value changes to the extension
+        as well as all unique subscribers after a settings change
+        \sa quasar_ext_info_t.update
+    */
+    void UpdateExtensionSettings();
+
 private:
     //! Extension constructor
     /*! Extension::load() should be used to load and create a Extension instance
@@ -246,20 +252,14 @@ private:
     */
     void createTimer(DataSource& src);
 
-    /*! Propagates custom setting value changes to the extension
-        as well as all unique subscribers
-        \sa quasar_ext_info_t.update
-    */
-    void updateExtensionSettings();
-
     /*! Helper function that propagates custom settings message to all subscribers
-        \sa updateExtensionSettings()
+        \sa UpdateExtensionSettings()
     */
     void propagateSettingsToSubscribers();
 
     /*! Crafts the custom settings message to be sent to subscribers
         \return The settings message
-        \sa updateExtensionSettings()
+        \sa UpdateExtensionSettings()
     */
     const std::string craftSettingsMessage();
 

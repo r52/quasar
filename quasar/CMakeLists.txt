@@ -54,6 +54,8 @@ add_executable(quasar WIN32
   common/log.cpp
   common/util.cpp
 
+  internal/applauncher.cpp
+
   # UI files
   quasar.ui
 
@@ -86,7 +88,7 @@ target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Networ
 
 if(WIN32)
   add_custom_command(TARGET quasar POST_BUILD
-    COMMAND $<$<CONFIG:Release,RelWithDebInfo>:Qt6::windeployqt>
+    COMMAND Qt6::windeployqt
     ARGS $<TARGET_FILE:quasar>
   )
 endif()

@@ -22,7 +22,7 @@
 #define info(...) qlog(QUASAR_LOG_INFO, __VA_ARGS__)
 #define warn(...) qlog(QUASAR_LOG_WARNING, __VA_ARGS__)
 
-quasar_data_source_t sources[2] = {
+quasar_data_source_t sources[] = {
     {       "sysinfo",                  5000,    0, 0},
     {"sysinfo_polled", QUASAR_POLLING_CLIENT, 1000, 0}
 };

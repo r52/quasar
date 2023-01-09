@@ -24,6 +24,7 @@ void Config::ReadInteralSettings()
     ReadSetting(Settings::internal.port);
     ReadSetting(Settings::internal.loaded_widgets);
     ReadSetting(Settings::internal.lastpath);
+    ReadSetting(Settings::internal.applauncher);
 }
 
 QByteArray Config::ReadGeometry(const QString& name)
@@ -96,4 +97,5 @@ void Config::WriteInternalSettings()
     WriteSetting(Settings::internal.port);
     WriteSetting(Settings::internal.loaded_widgets);
     WriteSetting(Settings::internal.lastpath);
+    WriteSetting(Settings::internal.applauncher);
 }
