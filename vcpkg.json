@@ -5,6 +5,7 @@
     "fmt",
     "spdlog",
     "uwebsockets",
+    "usockets",
     "bshoshany-thread-pool",
     "jsoncons"
   ]
