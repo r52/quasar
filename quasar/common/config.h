@@ -31,15 +31,16 @@ public:
     template<typename T, bool ranged>
     void ReadSetting(Settings::Setting<T, ranged>& setting) const
     {
-        QString  name = QString::fromStdString(setting.GetLabel());
-        QVariant val  = cfg->value(name, QVariant::fromValue<T>(setting.GetDefault()));
+        QString name = QString::fromStdString(setting.GetLabel());
 
         if constexpr (std::same_as<T, std::string>)
         {
+            QVariant val = cfg->value(name, QString::fromStdString(setting.GetDefault()));
             setting.SetValue(val.toString().toStdString());
         }
         else
         {
+            QVariant val = cfg->value(name, QVariant::fromValue<T>(setting.GetDefault()));
             setting.SetValue(val.value<T>());
         }
     }
