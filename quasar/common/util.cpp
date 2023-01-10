@@ -26,6 +26,11 @@ std::vector<std::string> Util::SplitString(const std::string& src, const std::st
 
 std::tuple<QPixmap, QString> Util::ConvertB64ImageToPixmap(const std::string& image)
 {
+    if (image.empty())
+    {
+        return std::make_tuple(QPixmap(), QString());
+    }
+
     auto imgraw  = std::regex_replace(image, std::regex("data:image/png;base64,"), "");
 
     auto iconb64 = QString::fromStdString(imgraw);
@@ -37,6 +42,11 @@ std::tuple<QPixmap, QString> Util::ConvertB64ImageToPixmap(const std::string& im
 
 std::string Util::ConvertPixmapToB64Image(const QPixmap& pixmap)
 {
+    if (pixmap.isNull())
+    {
+        return std::string{};
+    }
+
     QByteArray bytes;
     QBuffer    buffer(&bytes);
     buffer.open(QIODevice::WriteOnly);

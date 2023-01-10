@@ -55,14 +55,11 @@ public:
         arglayout->addWidget(argLabel);
         arglayout->addWidget(argEdit);
 
-        QLabel* iconLabel = new QLabel(tr("Icon:"));
-        QLabel* iconPix   = new QLabel;
-        // iconPix->setBackgroundRole(QPalette::Base);
-        // iconPix->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
-        // iconPix->setScaledContents(true);
-        QPushButton* iconBtn = new QPushButton(tr("Browse"));
+        QLabel*      iconLabel = new QLabel(tr("Icon:"));
+        QLabel*      iconPix   = new QLabel;
+        QPushButton* iconBtn   = new QPushButton(tr("Browse"));
 
-        auto [pix, ib64]     = Util::ConvertB64ImageToPixmap(data.icon);
+        auto [pix, ib64]       = Util::ConvertB64ImageToPixmap(data.icon);
 
         if (!pix.isNull())
         {
