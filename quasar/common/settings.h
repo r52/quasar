@@ -176,6 +176,15 @@ namespace Settings
         QSize defaultSize;
     };
 
+    struct AppLauncherData
+    {
+        std::string command;
+        std::string file;
+        std::string start;
+        std::string args;
+        std::string icon;
+    };
+
     // TODO extension settings
     struct DataSourceSettings
     {

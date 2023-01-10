@@ -15,20 +15,11 @@
 #include <jsoncons/json.hpp>
 #include <spdlog/spdlog.h>
 
-struct AppLauncherData
-{
-    std::string command;
-    std::string file;
-    std::string start;
-    std::string args;
-    std::string icon;
-};
-
-JSONCONS_ALL_MEMBER_TRAITS(AppLauncherData, command, file, start, args, icon);
+JSONCONS_ALL_MEMBER_TRAITS(Settings::AppLauncherData, command, file, start, args, icon);
 
 namespace
 {
-    std::vector<AppLauncherData> applist;
+    std::vector<Settings::AppLauncherData> applist;
 }  // namespace
 
 quasar_data_source_t sources[] = {
@@ -123,8 +114,20 @@ bool applauncher_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             {
                 cmd = info.canonicalFilePath();
             }
+            auto args  = QStringList{};
+            auto start = QString();
 
-            bool result = QProcess::startDetached(cmd, QStringList() << QString::fromStdString(d.args), QString::fromStdString(d.start));
+            if (!d.args.empty())
+            {
+                args << QString::fromStdString(d.args);
+            }
+
+            if (!d.start.empty())
+            {
+                start = QString::fromStdString(d.start);
+            }
+
+            bool result = QProcess::startDetached(cmd, args, start);
 
             if (!result)
             {
@@ -148,7 +151,7 @@ quasar_settings_t* applauncher_create_settings(quasar_ext_handle handle)
 
 void applauncher_update_settings(quasar_settings_t* settings)
 {
-    applist = jsoncons::decode_json<std::vector<AppLauncherData>>(Settings::internal.applauncher.GetValue());
+    applist = jsoncons::decode_json<std::vector<Settings::AppLauncherData>>(Settings::internal.applauncher.GetValue());
 }
 
 quasar_ext_info_fields_t fields = {"applauncher", "App Launcher", "3.0", "r52", "App Launcher internal extension for Quasar", "https://github.com/r52/quasar"};

@@ -76,9 +76,7 @@ Extension::Extension(quasar_ext_info_t* info,
                 continue;
             }
 
-            DataSource& source = datasources[topic];
-
-            // TODO rewrite this garbage
+            DataSource& source      = datasources[topic];
 
             source.settings.enabled = true;
             source.settings.rate    = extensionInfo->dataSources[i].rate;

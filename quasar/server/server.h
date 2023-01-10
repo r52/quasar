@@ -35,11 +35,12 @@ public:
     void PublishData(std::string_view topic, const std::string& data);
 
     void RunOnServer(auto&& cb);
-    void RunOnPool(auto&& cb) {
-        pool.push_task(cb);
-    }
+
+    void RunOnPool(auto&& cb) { pool.push_task(cb); }
 
     void WaitForExtensionLoad();
+
+    void UpdateSettings();
 
 private:
     void loadExtensions();

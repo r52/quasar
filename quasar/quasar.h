@@ -41,6 +41,7 @@ private:
     QMenu*           widgetListMenu{};
     QAction*         loadAction{};
     QAction*         settingsAction{};
+    QAction*         dataFolderAction{};
     QAction*         logAction{};
     QAction*         consoleAction{};
     QAction*         aboutAction{};

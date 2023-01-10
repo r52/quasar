@@ -169,6 +169,17 @@ void Server::WaitForExtensionLoad()
     });
 }
 
+void Server::UpdateSettings()
+{
+    RunOnPool([=] {
+        std::lock_guard<std::shared_mutex> lk(extensionMutex);
+        for (auto& [name, ext] : extensions)
+        {
+            ext->UpdateExtensionSettings();
+        }
+    });
+}
+
 void Server::loadExtensions()
 {
     auto          path = Util::GetCommonAppDataPath() + "extensions/";
@@ -247,11 +258,6 @@ void Server::loadExtensions()
             {
                 SPDLOG_WARN("Failed to load extension {}", libpath);
             }
-            // TODO internal targets
-            // else if (m_InternalQueryTargets.count(extn->GetName()))
-            // {
-            //     SPDLOG_WARN("The extension code {} is reserved. Unloading {}", extn->GetName(), libpath);
-            // }
             else if (extensions.count(extn->GetName()))
             {
                 SPDLOG_WARN("Extension with code {} already loaded. Unloading {}", extn->GetName(), libpath);
@@ -407,16 +413,9 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
         return;
     }
 
-    auto& topics = parms.topics.value();
-    auto  params = parms.params ? parms.params.value() : std::vector<std::string>{};
-    auto  args   = parms.args ? parms.args.value() : "";
-
-    // TODO internal targets
-    // if (m_InternalQueryTargets.count(extcode))
-    // {
-    //     m_InternalQueryTargets[extcode](extparm, clidat, sender);
-    //     return;
-    // }
+    auto&                                                     topics = parms.topics.value();
+    auto                                                      params = parms.params ? parms.params.value() : std::vector<std::string>{};
+    auto                                                      args   = parms.args ? parms.args.value() : "";
 
     std::unordered_map<std::string, std::vector<std::string>> extns{};
 

@@ -4,6 +4,7 @@
 #include "common/config.h"
 #include "common/log.h"
 #include "common/util.h"
+#include "config/configdialog.h"
 #include "server/server.h"
 #include "widgets/quasarwidget.h"
 #include "widgets/widgetmanager.h"
@@ -11,6 +12,7 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QDesktopServices>
+#include <QDialog>
 #include <QDir>
 #include <QFileDialog>
 #include <QMenu>
@@ -108,18 +110,28 @@ void Quasar::createTrayMenu()
     widgetListMenu = new QMenu(tr("Widgets"), this);
 
     // TODO settings ui
-    // settingsAction = new QAction(tr("&Settings"), this);
-    // connect(settingsAction, &QAction::triggered, [&] {
-    //     if (setdlg == nullptr)
-    //     {
-    //         setdlg = new WebUiDialog(service->getServer(), tr("Settings"), WebUiHandler::settingsUrl, CAL_SETTINGS);
-    //         connect(setdlg, &QObject::destroyed, [&] {
-    //             this->setdlg = nullptr;
-    //         });
+    settingsAction = new QAction(tr("&Settings"), this);
+    connect(settingsAction, &QAction::triggered, [&] {
+        ConfigDialog* dialog = new ConfigDialog(this);
 
-    //        setdlg->show();
-    //    }
-    //});
+        connect(dialog, &QDialog::finished, [=](int result) {
+            if (result == QDialog::Accepted)
+            {
+                // Propagate settings
+                server->UpdateSettings();
+            }
+
+            dialog->deleteLater();
+        });
+
+        dialog->open();
+    });
+
+    dataFolderAction = new QAction(tr("Open &Data Folder"), this);
+    connect(dataFolderAction, &QAction::triggered, [&] {
+        auto path = Util::GetCommonAppDataPath();
+        QDesktopServices::openUrl(QUrl(path));
+    });
 
     logAction = new QAction(tr("L&og"), this);
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);
@@ -185,7 +197,9 @@ void Quasar::createTrayIcon()
     trayIconMenu->addAction(loadAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addMenu(widgetListMenu);
-    // trayIconMenu->addAction(settingsAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(settingsAction);
+    trayIconMenu->addAction(dataFolderAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(logAction);
     // trayIconMenu->addAction(consoleAction);

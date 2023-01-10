@@ -299,32 +299,32 @@ void QuasarWidget::createContextMenuActions()
 
     aResize = new QAction(tr("Custom &Size"), this);
     connect(aResize, &QAction::triggered, [&] {
-        QDialog     dialog(this);
-        QFormLayout form(&dialog);
+        QDialog*    dialog = new QDialog(this);
+        QFormLayout form(dialog);
 
-        dialog.setWindowTitle("Cusom Size");
+        dialog->setWindowTitle("Cusom Size");
 
         form.addRow(new QLabel("Warning: Setting a custom size may break the widget's styling!"));
 
-        QSpinBox* wEdit = new QSpinBox(&dialog);
+        QSpinBox* wEdit = new QSpinBox(dialog);
         wEdit->setRange(1, 8192);
         wEdit->setSuffix("px");
         wEdit->setValue(size().width());
         QString wLabel = QString("Width (default %1px)").arg(settings.defaultSize.width());
         form.addRow(wLabel, wEdit);
 
-        QSpinBox* hEdit = new QSpinBox(&dialog);
+        QSpinBox* hEdit = new QSpinBox(dialog);
         hEdit->setRange(1, 8192);
         hEdit->setSuffix("px");
         hEdit->setValue(size().height());
         QString hLabel = QString("Height (default %1px)").arg(settings.defaultSize.height());
         form.addRow(hLabel, hEdit);
 
-        QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::RestoreDefaults, Qt::Horizontal, &dialog);
+        QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::RestoreDefaults, Qt::Horizontal, dialog);
         form.addRow(&buttonBox);
 
-        connect(&buttonBox, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-        connect(&buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+        connect(&buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+        connect(&buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
         connect(&buttonBox, &QDialogButtonBox::clicked, [&](QAbstractButton* button) {
             auto role = buttonBox.buttonRole(button);
             if (role == QDialogButtonBox::ResetRole)
@@ -334,19 +334,25 @@ void QuasarWidget::createContextMenuActions()
             }
         });
 
-        // Show the dialog as modal
-        if (dialog.exec() == QDialog::Accepted)
-        {
-            QSize nsize = {wEdit->value(), hEdit->value()};
-
-            if (nsize != size())
+        connect(dialog, &QDialog::finished, [=](int result) {
+            if (result == QDialog::Accepted)
             {
-                webview->resize(nsize);
-                resize(nsize);
+                QSize nsize = {wEdit->value(), hEdit->value()};
 
-                settings.customSize = nsize;
+                if (nsize != size())
+                {
+                    webview->resize(nsize);
+                    resize(nsize);
+
+                    settings.customSize = nsize;
+                }
             }
-        }
+
+            dialog->deleteLater();
+        });
+
+        // Show the dialog as modal
+        dialog->open();
     });
 
     aClose = new QAction(tr("&Close"), this);
