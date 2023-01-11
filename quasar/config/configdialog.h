@@ -3,8 +3,11 @@
 
 #include <QDialog>
 
-namespace Ui {
-class ConfigDialog;
+class ExtensionPage;
+
+namespace Ui
+{
+    class ConfigDialog;
 }
 
 class ConfigDialog : public QDialog
@@ -12,13 +15,14 @@ class ConfigDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit ConfigDialog(QWidget *parent = nullptr);
+    explicit ConfigDialog(QWidget* parent = nullptr);
     ~ConfigDialog();
 
     void SaveSettings();
 
 private:
-    Ui::ConfigDialog *ui;
+    Ui::ConfigDialog*           ui;
+    std::vector<ExtensionPage*> extensionPages;
 };
 
-#endif // CONFIGDIALOG_H
+#endif  // CONFIGDIALOG_H

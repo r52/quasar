@@ -57,9 +57,11 @@ Extension::Extension(quasar_ext_info_t* info,
     }
 
     // Initialize meta strings
-    metakeys = {.metadata = fmt::format("{}/{}", name, "metadata"), .settings = fmt::format("{}/{}", name, "settings")};
+    metakeys                                       = {.metadata = fmt::format("{}/{}", name, "metadata"), .settings = fmt::format("{}/{}", name, "settings")};
 
-    auto cfl = config.lock();
+    auto                                       cfl = config.lock();
+
+    std::vector<Settings::DataSourceSettings*> sourceSettings;
 
     // register data sources
     if (nullptr != extensionInfo->dataSources)
@@ -80,12 +82,12 @@ Extension::Extension(quasar_ext_info_t* info,
 
             source.settings.enabled = true;
             source.settings.rate    = extensionInfo->dataSources[i].rate;
-
+            source.settings.name    = topic;
             source.topic            = topic;
             source.validtime        = extensionInfo->dataSources[i].validtime;
             source.uid = extensionInfo->dataSources[i].uid = ++Extension::_uid;
 
-            cfl->AddDataSourceSetting(topic, &source.settings);
+            cfl->ReadDataSourceSetting(topic, &source.settings);
 
             // Initialize type specific fields
             if (source.settings.rate == QUASAR_POLLING_SIGNALED)
@@ -97,6 +99,8 @@ Extension::Extension(quasar_ext_info_t* info,
             {
                 source.cache.expiry = std::chrono::system_clock::now();
             }
+
+            sourceSettings.push_back(&source.settings);
 
             SPDLOG_INFO("Extension {} registering topic '{}'", name, topic);
         }
@@ -124,6 +128,12 @@ Extension::Extension(quasar_ext_info_t* info,
         }
 
         UpdateExtensionSettings();
+    }
+
+    if (!internal)
+    {
+        Settings::extension.insert(
+            {name, std::make_tuple(Settings::ExtensionInfo{name, fullname, description, author, version, url}, sourceSettings, &settings)});
     }
 }
 
@@ -584,6 +594,8 @@ void Extension::createTimer(DataSource& src)
 
 void Extension::UpdateExtensionSettings()
 {
+    refreshDataSources();
+
     if (!settings.empty() && extensionInfo->update)
     {
         extensionInfo->update((quasar_settings_t*) &settings);
@@ -628,6 +640,32 @@ const std::string Extension::craftSettingsMessage()
     }
 
     return payload;
+}
+
+void Extension::refreshDataSources()
+{
+    for (auto& [name, src] : datasources)
+    {
+        std::lock_guard<std::shared_mutex> lk(src.mutex);
+
+        if (src.settings.enabled && src.settings.rate > QUASAR_POLLING_CLIENT && src.subscribers > 0)
+        {
+            // Create timer if not exist
+            createTimer(src);
+        }
+        else if (src.timer)
+        {
+            // Delete the timer if enabled
+            src.timer.reset();
+        }
+
+        if (src.timer && src.timer->getInterval() != src.settings.rate)
+        {
+            // Refresh timer
+            src.timer.reset();
+            createTimer(src);
+        }
+    }
 }
 
 Extension::~Extension()

@@ -185,16 +185,26 @@ namespace Settings
         std::string icon;
     };
 
-    // TODO extension settings
     struct DataSourceSettings
     {
-        bool    enabled;
-        int64_t rate;
+        std::string name;
+        bool        enabled;
+        int64_t     rate;
     };
 
-    extern std::unordered_map<std::string, DataSourceSettings*> datasource;
+    struct ExtensionInfo
+    {
+        std::string name;
+        std::string fullname;
+        std::string description;
+        std::string author;
+        std::string version;
+        std::string url;
+    };
 
     using SettingsVariant = std::variant<Setting<int>, Setting<double>, Setting<bool>, Setting<std::string>, SelectionSetting<std::string>>;
+
+    extern std::unordered_map<std::string, std::tuple<ExtensionInfo, std::vector<DataSourceSettings*>, std::vector<SettingsVariant>*>> extension;
 
 }  // namespace Settings
 

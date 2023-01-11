@@ -124,7 +124,7 @@
          <item row="1" column="0">
           <widget class="QCheckBox" name="logToFile">
            <property name="text">
-            <string>Log to file?</string>
+            <string>Log to file? (requires restart)</string>
            </property>
           </widget>
          </item>

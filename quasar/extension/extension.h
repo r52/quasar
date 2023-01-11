@@ -263,6 +263,11 @@ private:
     */
     const std::string craftSettingsMessage();
 
+    /*! Helper function that refreshes all data sources
+        \sa UpdateExtensionSettings()
+    */
+    void refreshDataSources();
+
     // Members
     quasar_ext_info_t*    extensionInfo{};  //!< Extension info data \sa quasar_ext_info_t
     extension_destroy     destroyFunc{};    //!< Extension destroy function \sa quasar_ext_destroy()

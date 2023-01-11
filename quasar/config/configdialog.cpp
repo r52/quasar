@@ -1,168 +1,15 @@
 #include "configdialog.h"
 #include "ui_configdialog.h"
 
+#include "extensionpage.h"
+#include "launchereditdialog.h"
+
 #include "common/settings.h"
 #include "common/util.h"
-
-#include <QFileDialog>
-#include <QImageReader>
-#include <QLineEdit>
-#include <QMessageBox>
 
 #include <jsoncons/json.hpp>
 
 JSONCONS_ALL_MEMBER_TRAITS(Settings::AppLauncherData, command, file, start, args, icon);
-
-class LauncherEditDialog : public QDialog
-{
-public:
-    LauncherEditDialog(QString title, QWidget* parent = Q_NULLPTR, QString command = QString(), Settings::AppLauncherData data = {}) : QDialog(parent)
-    {
-        setMinimumWidth(400);
-        setWindowTitle(title);
-
-        QLabel*    cmdLabel = new QLabel(tr("Launcher Command:"));
-        QLineEdit* cmdEdit  = new QLineEdit;
-        cmdEdit->setText(command);
-
-        QHBoxLayout* cmdlayout = new QHBoxLayout;
-        cmdlayout->addWidget(cmdLabel);
-        cmdlayout->addWidget(cmdEdit);
-
-        QLabel*      fileLabel = new QLabel(tr("File/Commandline:"));
-        QLineEdit*   fileEdit  = new QLineEdit;
-        QPushButton* fileBtn   = new QPushButton(tr("Browse"));
-        fileEdit->setText(QString::fromStdString(data.file));
-
-        QHBoxLayout* filelayout = new QHBoxLayout;
-        filelayout->addWidget(fileLabel);
-        filelayout->addWidget(fileEdit);
-        filelayout->addWidget(fileBtn);
-
-        QLabel*    pathLabel = new QLabel(tr("Start Path:"));
-        QLineEdit* pathEdit  = new QLineEdit;
-        pathEdit->setText(QString::fromStdString(data.start));
-
-        QHBoxLayout* pathlayout = new QHBoxLayout;
-        pathlayout->addWidget(pathLabel);
-        pathlayout->addWidget(pathEdit);
-
-        QLabel*    argLabel = new QLabel(tr("Arguments:"));
-        QLineEdit* argEdit  = new QLineEdit;
-        argEdit->setText(QString::fromStdString(data.args));
-
-        QHBoxLayout* arglayout = new QHBoxLayout;
-        arglayout->addWidget(argLabel);
-        arglayout->addWidget(argEdit);
-
-        QLabel*      iconLabel = new QLabel(tr("Icon:"));
-        QLabel*      iconPix   = new QLabel;
-        QPushButton* iconBtn   = new QPushButton(tr("Browse"));
-
-        auto [pix, ib64]       = Util::ConvertB64ImageToPixmap(data.icon);
-
-        if (!pix.isNull())
-        {
-            iconPix->setPixmap(pix);
-        }
-
-        QHBoxLayout* iconlayout = new QHBoxLayout;
-        iconlayout->addWidget(iconLabel);
-        iconlayout->addWidget(iconPix);
-        iconlayout->addWidget(iconBtn);
-
-        QPushButton* okBtn     = new QPushButton(tr("OK"));
-        QPushButton* cancelBtn = new QPushButton(tr("Cancel"));
-
-        okBtn->setDefault(true);
-
-        QHBoxLayout* btnlayout = new QHBoxLayout;
-        btnlayout->addWidget(okBtn);
-        btnlayout->addWidget(cancelBtn);
-
-        QVBoxLayout* layout = new QVBoxLayout;
-        layout->addLayout(cmdlayout);
-        layout->addLayout(filelayout);
-        layout->addLayout(pathlayout);
-        layout->addLayout(arglayout);
-        layout->addLayout(iconlayout);
-        layout->addLayout(btnlayout);
-
-        // browse buttons
-        connect(fileBtn, &QPushButton::clicked, [=](bool checked) {
-            QString filename = QFileDialog::getOpenFileName(this, tr("Choose Application"), QString(), tr("Executables (*.*)"));
-            if (!filename.isEmpty())
-            {
-                QFileInfo info(filename);
-
-                fileEdit->setText(info.canonicalFilePath());
-                pathEdit->setText(info.canonicalPath());
-            }
-        });
-
-        connect(iconBtn, &QPushButton::clicked, [=](bool checked) {
-            QFileDialog          dialog(this, tr("Choose Icon"));
-            QStringList          mimeTypeFilters;
-            const QByteArrayList supportedMimeTypes = QImageReader::supportedMimeTypes();
-            for (const QByteArray& mimeTypeName : supportedMimeTypes)
-                mimeTypeFilters.append(mimeTypeName);
-            mimeTypeFilters.sort();
-            dialog.setMimeTypeFilters(mimeTypeFilters);
-            dialog.selectMimeTypeFilter("image/jpeg");
-
-            if (dialog.exec() == QDialog::Accepted)
-            {
-                const auto   filename = dialog.selectedFiles().constFirst();
-                QImageReader reader(filename);
-                reader.setAutoTransform(true);
-                const QImage newImage = reader.read();
-                if (newImage.isNull())
-                {
-                    QMessageBox::information(this,
-                        QGuiApplication::applicationDisplayName(),
-                        tr("Cannot load %1: %2").arg(QDir::toNativeSeparators(filename), reader.errorString()));
-                    return;
-                }
-
-                iconPix->setPixmap(QPixmap::fromImage(newImage));
-            }
-        });
-
-        // cancel button
-        connect(cancelBtn, &QPushButton::clicked, [=](bool checked) {
-            close();
-        });
-
-        // ok button
-        connect(okBtn, &QPushButton::clicked, [=](bool checked) {
-            // validate
-            if (cmdEdit->text().isEmpty() || fileEdit->text().isEmpty())
-            {
-                QMessageBox::warning(this, title, "Command and File Path must be filled out.");
-            }
-            else
-            {
-                m_command      = cmdEdit->text();
-                m_data.command = cmdEdit->text().toStdString();
-                m_data.file    = fileEdit->text().toStdString();
-                m_data.start   = pathEdit->text().toStdString();
-                m_data.args    = argEdit->text().toStdString();
-                m_data.icon    = Util::ConvertPixmapToB64Image(iconPix->pixmap());
-                accept();
-            }
-        });
-
-        setLayout(layout);
-    };
-
-    QString&                   getCommand() { return m_command; };
-
-    Settings::AppLauncherData& getData() { return m_data; };
-
-private:
-    QString                   m_command;
-    Settings::AppLauncherData m_data;
-};
 
 ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::ConfigDialog)
 {
@@ -238,7 +85,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
             connect(editdialog, &QDialog::finished, [=](int result) {
                 if (result == QDialog::Accepted)
                 {
-                    auto& d = editdialog->getData();
+                    auto& d = editdialog->GetData();
 
                     cmditem->setText(QString::fromStdString(d.command));
                     fileitem->setText(QString::fromStdString(d.file));
@@ -263,7 +110,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
         connect(editdialog, &QDialog::finished, [=](int result) {
             if (result == QDialog::Accepted)
             {
-                auto& d   = editdialog->getData();
+                auto& d   = editdialog->GetData();
 
                 int   row = ui->appTable->rowCount();
                 ui->appTable->insertRow(row);
@@ -291,6 +138,19 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
         editdialog->open();
     });
 
+    // Extensions
+    for (auto& [name, extset] : Settings::extension)
+    {
+        QListWidgetItem* extitem = new QListWidgetItem(ui->listWidget);
+        extitem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+        extitem->setText(QString::fromStdString(name));
+
+        auto& [info, src, settings] = extset;
+        auto page                   = new ExtensionPage(name, info, src, settings);
+        extensionPages.push_back(page);
+        ui->pagesWidget->addWidget(page);
+    }
+
     connect(this, &QDialog::accepted, [=] {
         SaveSettings();
     });
@@ -303,6 +163,7 @@ ConfigDialog::~ConfigDialog()
 
 void ConfigDialog::SaveSettings()
 {
+    // General
     Settings::internal.port.SetValue(ui->portSpin->value());
     Settings::internal.log_level.SetValue(ui->logCombo->currentIndex());
     Settings::internal.log_file.SetValue(ui->logToFile->isChecked());
@@ -340,4 +201,6 @@ void ConfigDialog::SaveSettings()
     std::string output{};
     jsoncons::encode_json(applist, output);
     Settings::internal.applauncher.SetValue(output);
+
+    // TODO Extension settings save
 }

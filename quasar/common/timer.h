@@ -12,14 +12,15 @@ class Timer
 public:
     ~Timer() { stop(); }
 
-    void setInterval(auto&& fn, int interval)
+    void setInterval(auto&& fn, int intv)
     {
-        SPDLOG_DEBUG("New timer thread with {}ms internal", interval);
+        interval = intv;
+        SPDLOG_DEBUG("New timer thread with {}ms internal", intv);
         thread = std::jthread{[=](std::stop_token token) {
             std::unique_lock<std::mutex> lk(mtx);
             while (true)
             {
-                if (cv.wait_for(lk, std::chrono::milliseconds(interval), [&] {
+                if (cv.wait_for(lk, std::chrono::milliseconds(intv), [&] {
                         return token.stop_requested();
                     }))
                 {
@@ -32,6 +33,8 @@ public:
 
         thread.detach();
     }
+
+    int  getInterval() { return interval; }
 
     void stop()
     {
@@ -49,6 +52,7 @@ public:
     }
 
 private:
+    int                     interval;
     std::jthread            thread;
     std::condition_variable cv;
     std::mutex              mtx;

@@ -109,7 +109,6 @@ void Quasar::createTrayMenu()
 
     widgetListMenu = new QMenu(tr("Widgets"), this);
 
-    // TODO settings ui
     settingsAction = new QAction(tr("&Settings"), this);
     connect(settingsAction, &QAction::triggered, [&] {
         ConfigDialog* dialog = new ConfigDialog(this);
@@ -192,7 +191,6 @@ void Quasar::createDirectories()
 
 void Quasar::createTrayIcon()
 {
-    // TODO settings ui
     trayIconMenu = new QMenu(this);
     trayIconMenu->addAction(loadAction);
     trayIconMenu->addSeparator();

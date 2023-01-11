@@ -57,10 +57,14 @@ add_executable(quasar WIN32
   internal/applauncher.cpp
 
   config/configdialog.cpp
+  config/launchereditdialog.cpp
+  config/extensionpage.cpp
 
   # UI files
   quasar.ui
   config/configdialog.ui
+  config/launchereditdialog.ui
+  config/extensionpage.ui
 
   # Qt resources
   quasar.qrc

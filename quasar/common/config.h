@@ -25,7 +25,7 @@ public:
     Settings::WidgetSettings ReadWidgetSettings(const QString& name, Settings::WidgetSettings& settings) const;
     void                     WriteWidgetSettings(const QString& name, const Settings::WidgetSettings& settings);
 
-    void                     AddDataSourceSetting(const std::string& name, Settings::DataSourceSettings* settings);
+    void                     ReadDataSourceSetting(const std::string& name, Settings::DataSourceSettings* settings);
     void                     WriteDataSourceSetting(const std::string& name, Settings::DataSourceSettings* const& settings);
 
     template<typename T, bool ranged>

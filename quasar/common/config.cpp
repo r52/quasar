@@ -63,16 +63,11 @@ void Config::WriteWidgetSettings(const QString& name, const Settings::WidgetSett
     cfg->endGroup();
 }
 
-void Config::AddDataSourceSetting(const std::string& name, Settings::DataSourceSettings* settings)
+void Config::ReadDataSourceSetting(const std::string& name, Settings::DataSourceSettings* settings)
 {
-    auto qname = QString::fromStdString(name);
+    auto                         qname = QString::fromStdString(name);
 
-    if (!Settings::datasource.contains(name))
-    {
-        Settings::datasource.insert({name, settings});
-    }
-
-    Settings::DataSourceSettings cpy = *settings;
+    Settings::DataSourceSettings cpy   = *settings;
 
     cfg->beginGroup(qname);
     settings->enabled = cfg->value("enabled", cpy.enabled).toBool();
