@@ -101,7 +101,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
 
                     ui->settingsLayout->setWidget(row, QFormLayout::FieldRole, upSpin);
 
-                    connect(upSpin, &QSpinBox::valueChanged, [&](int value) {
+                    connect(upSpin, &QSpinBox::valueChanged, [&, name](int value) {
                         savedSettings[name] = value;
                     });
                 }
@@ -118,7 +118,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
 
                     ui->settingsLayout->setWidget(row, QFormLayout::FieldRole, upSpin);
 
-                    connect(upSpin, &QDoubleSpinBox::valueChanged, [&](double value) {
+                    connect(upSpin, &QDoubleSpinBox::valueChanged, [&, name](double value) {
                         savedSettings[name] = value;
                     });
                 }
@@ -130,7 +130,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
 
                     ui->sourcesLayout->setWidget(row, QFormLayout::FieldRole, enableCheck);
 
-                    connect(enableCheck, &QCheckBox::toggled, [&](bool state) {
+                    connect(enableCheck, &QCheckBox::toggled, [&, name](bool state) {
                         savedSettings[name] = state;
                     });
                 }
@@ -146,7 +146,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
 
                     ui->settingsLayout->setWidget(row, QFormLayout::FieldRole, edit);
 
-                    connect(edit, &QLineEdit::textEdited, [&](const QString& text) {
+                    connect(edit, &QLineEdit::textEdited, [&, name](const QString& text) {
                         savedSettings[name] = text.toStdString();
                     });
                 }
@@ -166,7 +166,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
 
                     ui->settingsLayout->setWidget(row, QFormLayout::FieldRole, combo);
 
-                    connect(combo, &QComboBox::currentIndexChanged, [&](int index) {
+                    connect(combo, &QComboBox::currentIndexChanged, [&, name](int index) {
                         savedSettings[name] = combo->itemData(index).toString().toStdString();
                     });
                 }

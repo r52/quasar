@@ -8,6 +8,7 @@
 #include "common/util.h"
 
 #include <jsoncons/json.hpp>
+#include <spdlog/spdlog.h>
 
 JSONCONS_ALL_MEMBER_TRAITS(Settings::AppLauncherData, command, file, start, args, icon);
 
@@ -202,5 +203,87 @@ void ConfigDialog::SaveSettings()
     jsoncons::encode_json(applist, output);
     Settings::internal.applauncher.SetValue(output);
 
-    // TODO Extension settings save
+    // Extension settings save
+    for (auto page : extensionPages)
+    {
+        auto& [info, src, settings] = Settings::extension[page->name];
+
+        for (auto& [n, c] : page->savedSrc)
+        {
+            auto result = std::find_if(src.begin(), src.end(), [&](Settings::DataSourceSettings* s) {
+                return s->name == n;
+            });
+
+            if (result != src.end())
+            {
+                (*result)->enabled = c.enabled;
+                (*result)->rate    = c.rate;
+            }
+        }
+
+        for (auto& [n, c] : page->savedSettings)
+        {
+            auto result = std::find_if(settings->begin(), settings->end(), [&](Settings::SettingsVariant& entry) {
+                return std::visit(
+                    [&](auto&& arg) -> bool {
+                        return arg.GetLabel() == n;
+                    },
+                    entry);
+            });
+
+            if (result != settings->end())
+            {
+                std::visit(
+                    [&](auto&& arg) {
+                        using T = std::decay_t<decltype(arg)>;
+
+                        if constexpr (std::is_same_v<T, Settings::Setting<int>>)
+                        {
+                            if (std::holds_alternative<int>(c))
+                            {
+                                auto w = std::get<int>(c);
+                                arg.SetValue(w);
+                            }
+                        }
+                        else if constexpr (std::is_same_v<T, Settings::Setting<double>>)
+                        {
+                            if (std::holds_alternative<double>(c))
+                            {
+                                auto w = std::get<double>(c);
+                                arg.SetValue(w);
+                            }
+                        }
+                        else if constexpr (std::is_same_v<T, Settings::Setting<bool>>)
+                        {
+                            if (std::holds_alternative<bool>(c))
+                            {
+                                auto w = std::get<bool>(c);
+                                arg.SetValue(w);
+                            }
+                        }
+                        else if constexpr (std::is_same_v<T, Settings::Setting<std::string>>)
+                        {
+                            if (std::holds_alternative<std::string>(c))
+                            {
+                                auto w = std::get<std::string>(c);
+                                arg.SetValue(w);
+                            }
+                        }
+                        else if constexpr (std::is_same_v<T, Settings::SelectionSetting<std::string>>)
+                        {
+                            if (std::holds_alternative<std::string>(c))
+                            {
+                                auto w = std::get<std::string>(c);
+                                arg.SetValue(w);
+                            }
+                        }
+                        else
+                        {
+                            SPDLOG_WARN("Non-exhaustive visitor!");
+                        }
+                    },
+                    (*result));
+            }
+        }
+    }
 }

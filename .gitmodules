@@ -2,4 +2,4 @@
 	path = vcpkg
 	url = https://github.com/r52/vcpkg.git
 	ignore = dirty
-	branch = temp-updates
+	branch = temp
