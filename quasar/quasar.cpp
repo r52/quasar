@@ -26,6 +26,11 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
 
+namespace
+{
+    ConfigDialog* cfgdlg = nullptr;
+}
+
 Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<Config>()}
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
@@ -111,19 +116,27 @@ void Quasar::createTrayMenu()
 
     settingsAction = new QAction(tr("&Settings"), this);
     connect(settingsAction, &QAction::triggered, [&] {
-        ConfigDialog* dialog = new ConfigDialog(this);
+        if (!cfgdlg)
+        {
+            cfgdlg = new ConfigDialog(this);
 
-        connect(dialog, &QDialog::finished, [=](int result) {
-            if (result == QDialog::Accepted)
-            {
-                // Propagate settings
-                server->UpdateSettings();
-            }
+            connect(cfgdlg, &QDialog::finished, [=](int result) {
+                if (result == QDialog::Accepted)
+                {
+                    // Propagate settings
+                    server->UpdateSettings();
+                }
 
-            dialog->deleteLater();
-        });
+                cfgdlg->deleteLater();
+                cfgdlg = nullptr;
+            });
 
-        dialog->open();
+            cfgdlg->open();
+        }
+        else
+        {
+            cfgdlg->show();
+        }
     });
 
     dataFolderAction = new QAction(tr("Open &Data Folder"), this);
