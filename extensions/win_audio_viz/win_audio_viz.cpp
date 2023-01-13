@@ -960,13 +960,22 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     // Windows bug: sometimes when shutting down a playback application, it doesn't zero
     // out the buffer.  Detect this by checking the time since the last successful fill
     // and resetting the volumes if past the threshold.
-    else if (type == Measure::TYPE_RMS || type == Measure::TYPE_PEAK)
+    else
     {
-        for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+        if (type == Measure::TYPE_RMS || type == Measure::TYPE_PEAK)
         {
-            m->m_rms[iChan]  = 0.0;
-            m->m_peak[iChan] = 0.0;
+            for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+            {
+                m->m_rms[iChan]  = 0.0;
+                m->m_peak[iChan] = 0.0;
+            }
         }
+
+        // poll for new devices
+        assert(m->m_enum);
+        assert(!m->m_dev);
+        m->DeviceInit();
+        return true;
     }
 
     switch (type)
