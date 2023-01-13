@@ -273,6 +273,48 @@ void QuasarWidget::createContextMenuActions()
         webview->reload();
     });
 
+    aSetPos = new QAction(tr("S&et Position"), this);
+    connect(aSetPos, &QAction::triggered, [&] {
+        QDialog*     dialog = new QDialog(this);
+        QFormLayout* form   = new QFormLayout(dialog);
+
+        dialog->setWindowTitle("Set Position");
+
+        QPoint    pos   = this->pos();
+
+        QSpinBox* wEdit = new QSpinBox(dialog);
+        wEdit->setRange(-16384, 16384);
+        wEdit->setSuffix("px");
+        wEdit->setValue(pos.x());
+        QString wLabel = QString("X");
+        form->addRow(wLabel, wEdit);
+
+        QSpinBox* hEdit = new QSpinBox(dialog);
+        hEdit->setRange(-16384, 16384);
+        hEdit->setSuffix("px");
+        hEdit->setValue(pos.y());
+        QString hLabel = QString("Y");
+        form->addRow(hLabel, hEdit);
+
+        QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, Qt::Horizontal, dialog);
+        form->addRow(buttonBox);
+
+        connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+        connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+
+        connect(dialog, &QDialog::finished, [=](int result) {
+            if (result == QDialog::Accepted)
+            {
+                this->move(wEdit->value(), hEdit->value());
+            }
+
+            dialog->deleteLater();
+        });
+
+        // Show the dialog as modal
+        dialog->open();
+    });
+
     aResetPos = new QAction(tr("Reset &Position"), this);
     connect(aResetPos, &QAction::triggered, [&] {
         this->move(0, 0);
@@ -301,7 +343,7 @@ void QuasarWidget::createContextMenuActions()
         QDialog*     dialog = new QDialog(this);
         QFormLayout* form   = new QFormLayout(dialog);
 
-        dialog->setWindowTitle("Cusom Size");
+        dialog->setWindowTitle("Custom Size");
 
         form->addRow(new QLabel("Warning: Setting a custom size may break the widget's styling!"));
 
@@ -369,6 +411,7 @@ void QuasarWidget::createContextMenu()
     contextMenu->addAction(aName);
     contextMenu->addSeparator();
     contextMenu->addAction(aReload);
+    contextMenu->addAction(aSetPos);
     contextMenu->addAction(aResetPos);
     contextMenu->addAction(aResize);
     contextMenu->addSeparator();

@@ -130,6 +130,7 @@ private:
     QMenu*   contextMenu{};
     QAction* aName{};
     QAction* aReload{};
+    QAction* aSetPos{};
     QAction* aResetPos{};
     QAction* aOnTop{};
     QAction* aFixedPos{};
