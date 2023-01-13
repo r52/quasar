@@ -194,9 +194,9 @@ QuasarWidget::QuasarWidget(const std::string& widgetName,
     // Inject global script
     if (widget_definition.dataserver.value_or(false))
     {
-        // QString authcode    = server->generateAuthCode(m_Name);
+        auto    authcode  = server.lock()->GenerateAuthCode();
 
-        QString scriptSrc = GetGlobalScript();
+        QString scriptSrc = GetGlobalScript(authcode);
 
         script.setName("GlobalScript");
         script.setInjectionPoint(QWebEngineScript::DocumentCreation);
@@ -214,7 +214,7 @@ QuasarWidget::~QuasarWidget()
     SaveSettings();
 }
 
-QString QuasarWidget::GetGlobalScript()
+QString QuasarWidget::GetGlobalScript(const std::string& authcode)
 {
     if (GlobalScript.isEmpty())
     {
@@ -228,10 +228,9 @@ QString QuasarWidget::GetGlobalScript()
         GlobalScript = in.readAll();
     }
 
-    int port = Settings::internal.port.GetValue();
+    int     port    = Settings::internal.port.GetValue();
 
-    // TODO auth maybe
-    QString pscript = GlobalScript.arg(port).arg("authcode");
+    QString pscript = GlobalScript.arg(port).arg(QString::fromStdString(authcode));
 
     return pscript;
 }
@@ -263,8 +262,8 @@ void QuasarWidget::createContextMenuActions()
             webview->page()->scripts().remove(script);
 
             // Insert refreshed script
-            // QString authcode    = server.lock()->generateAuthCode(name);
-            QString pageGlobals = GetGlobalScript();
+            auto    authcode    = server.lock()->GenerateAuthCode();
+            QString pageGlobals = GetGlobalScript(authcode);
 
             script.setSourceCode(pageGlobals);
 

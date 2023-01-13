@@ -41,6 +41,8 @@ namespace
     uWS::Loop*                  loop             = nullptr;
     bool                        extensionsLoaded = false;
     std::condition_variable_any cv;
+
+    std::set<std::string>       authcodes;
 }  // namespace
 
 Server::Server(std::shared_ptr<Config> cfg) :
@@ -50,6 +52,7 @@ Server::Server(std::shared_ptr<Config> cfg) :
     methods{
         {"subscribe", std::bind(&Server::handleMethodSubscribe, this, std::placeholders::_1, std::placeholders::_2)},
         {"query", std::bind(&Server::handleMethodQuery, this, std::placeholders::_1, std::placeholders::_2)},
+        {"auth", std::bind(&Server::handleMethodAuth, this, std::placeholders::_1, std::placeholders::_2)},
     }
 {
     using namespace std::literals;
@@ -73,11 +76,26 @@ Server::Server(std::shared_ptr<Config> cfg) :
                                context);
                        },
                    .open =
-                       [](UWSSocket* ws) {
+                       [this](UWSSocket* ws) {
                            auto data    = ws->getUserData();
                            data->socket = ws;
 
                            SPDLOG_INFO("New client connected!");
+
+                           if (Settings::internal.auth.GetValue())
+                           {
+                               RunOnPool([data, this] {
+                                   // Check for auth status after 10s
+                                   std::this_thread::sleep_for(10s);
+                                   if (!data->authenticated)
+                                   {
+                                       RunOnServer([=]() {
+                                           auto socket = static_cast<UWSSocket*>(data->socket);
+                                           socket->end(0, "Unauthenticated client");
+                                       });
+                                   }
+                               });
+                           }
                        },
                    .message =
                        [this](UWSSocket* ws, std::string_view message, uWS::OpCode opCode) {
@@ -178,6 +196,24 @@ void Server::UpdateSettings()
             ext->UpdateExtensionSettings();
         }
     });
+}
+
+std::string Server::GenerateAuthCode()
+{
+    if (!Settings::internal.auth.GetValue())
+    {
+        return std::string{};
+    }
+
+    quint64 h   = QRandomGenerator::global()->generate64();
+    quint64 l   = QRandomGenerator::global()->generate64();
+    QString hv  = QString::number(h, 16).toUpper() + QString::number(l, 16).toUpper();
+
+    auto    str = hv.toStdString();
+
+    authcodes.insert(str);
+
+    return str;
 }
 
 void Server::loadExtensions()
@@ -295,27 +331,11 @@ void Server::loadExtensions()
 
 void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& msg)
 {
-    // TODO client auth?
-    // {
-    //     std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
-
-    //     auto it = m_AuthedClientsSet.find(sender);
-    //     if (it == m_AuthedClientsSet.end())
-    //     {
-    //         DS_SEND_WARN(sender, "Unauthenticated client");
-    //         return;
-    //     }
-    // }
-
-    // auto qvar = sender->property(WGT_PROP_IDENTITY);
-    // if (!qvar.isValid())
-    // {
-    //     qCritical() << "Invalid identity in authenticated WebSocket connection.";
-    //     return;
-    // }
-
-    // client_data_t clidat     = qvar.value<client_data_t>();
-    // QString       widgetName = clidat.ident;
+    if (Settings::internal.auth.GetValue() && !client->authenticated)
+    {
+        SEND_CLIENT_ERROR(client, "Unauthenticated client");
+        return;
+    }
 
     auto& parms = msg.params;
 
@@ -378,26 +398,11 @@ void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& m
 
 void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
 {
-    // TODO client auth?
-    // {
-    //     std::shared_lock<std::shared_mutex> lk(m_AuthedClientsMtx);
-
-    //     auto it = m_AuthedClientsSet.find(sender);
-    //     if (it == m_AuthedClientsSet.end())
-    //     {
-    //         DS_SEND_WARN(sender, "Unauthenticated client");
-    //         return;
-    //     }
-    // }
-
-    // auto qvar = sender->property(WGT_PROP_IDENTITY);
-    // if (!qvar.isValid())
-    // {
-    //     qCritical() << "Invalid identity in authenticated WebSocket connection.";
-    //     return;
-    // }
-
-    // client_data_t clidat = qvar.value<client_data_t>();
+    if (Settings::internal.auth.GetValue() && !client->authenticated)
+    {
+        SEND_CLIENT_ERROR(client, "Unauthenticated client");
+        return;
+    }
 
     auto& parms = msg.params;
 
@@ -456,6 +461,48 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
         j.dump(message);
         SendDataToClient(client, message);
     }
+}
+
+void Server::handleMethodAuth(PerSocketData* client, const ClientMessage& msg)
+{
+    if (!Settings::internal.auth.GetValue())
+    {
+        SPDLOG_INFO("Widget authentication is disabled");
+        return;
+    }
+
+    if (client->authenticated)
+    {
+        SEND_CLIENT_ERROR(client, "Client already authenticated.");
+        return;
+    }
+
+    auto& parms = msg.params;
+
+    if (!parms.code)
+    {
+        SEND_CLIENT_ERROR(client, "Invalid parameters for method 'auth'");
+        return;
+    }
+
+    if (parms.code.value().empty())
+    {
+        SEND_CLIENT_ERROR(client, "Invalid auth code for method 'auth'");
+        return;
+    }
+
+    auto& code   = parms.code.value();
+
+    auto  search = authcodes.find(code);
+    if (search == authcodes.end())
+    {
+        SEND_CLIENT_ERROR(client, "Invalid authentication code");
+        return;
+    }
+
+    authcodes.erase(search);
+
+    client->authenticated = true;
 }
 
 void Server::processMessage(PerSocketData* client, const std::string& msg)

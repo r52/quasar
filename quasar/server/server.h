@@ -15,7 +15,8 @@ class Config;
 
 struct PerSocketData
 {
-    void* socket = nullptr;
+    void* socket        = nullptr;
+    bool  authenticated = false;
 };
 
 class Server : public std::enable_shared_from_this<Server>
@@ -42,12 +43,15 @@ public:
 
     void UpdateSettings();
 
+    std::string GenerateAuthCode();
+
 private:
     void loadExtensions();
 
     // Method handling
     void         handleMethodSubscribe(PerSocketData* client, const ClientMessage& msg);
     void         handleMethodQuery(PerSocketData* client, const ClientMessage& msg);
+    void         handleMethodAuth(PerSocketData* client, const ClientMessage& msg);
 
     void         processMessage(PerSocketData* client, const std::string& msg);
     void         sendErrorToClient(PerSocketData* client, const std::string& err);

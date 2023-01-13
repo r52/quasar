@@ -88,7 +88,7 @@ public:
         std::shared_ptr<Config>        cfg);
     ~QuasarWidget();
 
-    static QString     GetGlobalScript();
+    static QString     GetGlobalScript(const std::string& authcode);
 
     const std::string& GetFullPath() const { return widget_definition.fullpath; };
 

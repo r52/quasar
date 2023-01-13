@@ -20,6 +20,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
     ui->portSpin->setValue(Settings::internal.port.GetValue());
     ui->logCombo->setCurrentIndex(Settings::internal.log_level.GetValue());
     ui->logToFile->setChecked(Settings::internal.log_file.GetValue());
+    ui->authCheckbox->setChecked(Settings::internal.auth.GetValue());
 
     // App launcher table
     auto applist = jsoncons::decode_json<std::vector<Settings::AppLauncherData>>(Settings::internal.applauncher.GetValue());
@@ -168,6 +169,7 @@ void ConfigDialog::SaveSettings()
     Settings::internal.port.SetValue(ui->portSpin->value());
     Settings::internal.log_level.SetValue(ui->logCombo->currentIndex());
     Settings::internal.log_file.SetValue(ui->logToFile->isChecked());
+    Settings::internal.auth.SetValue(ui->authCheckbox->isChecked());
 
     // App table
     std::vector<Settings::AppLauncherData> applist;

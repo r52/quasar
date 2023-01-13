@@ -157,10 +157,14 @@ namespace Settings
                     {LogLevel::critical, "Critical"},
                     {LogLevel::off, "Off"}}
         };
-        Setting<int>         port{"main/port", "WebSocket server port", 13337, 1000, 65535, 1};
+        Setting<int>  port{"main/port", "WebSocket server port", 13337, 1000, 65535, 1};
+        Setting<bool> auth{"main/auth", "Allow only Quasar widgets to connect to the WebSocket server?", false};
+
+        // Hidden
         Setting<std::string> loaded_widgets{"main/loaded", "Loaded Widgets", ""};
         Setting<std::string> lastpath{"main/lastpath", "Last used file path", ""};
 
+        // App launcher
         Setting<std::string> applauncher{"applauncher/list", "App Launcher entries", "[]"};
     };
 
