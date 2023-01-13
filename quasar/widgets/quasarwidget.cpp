@@ -299,34 +299,35 @@ void QuasarWidget::createContextMenuActions()
 
     aResize = new QAction(tr("Custom &Size"), this);
     connect(aResize, &QAction::triggered, [&] {
-        QDialog*    dialog = new QDialog(this);
-        QFormLayout form(dialog);
+        QDialog*     dialog = new QDialog(this);
+        QFormLayout* form   = new QFormLayout(dialog);
 
         dialog->setWindowTitle("Cusom Size");
 
-        form.addRow(new QLabel("Warning: Setting a custom size may break the widget's styling!"));
+        form->addRow(new QLabel("Warning: Setting a custom size may break the widget's styling!"));
 
         QSpinBox* wEdit = new QSpinBox(dialog);
         wEdit->setRange(1, 8192);
         wEdit->setSuffix("px");
         wEdit->setValue(size().width());
         QString wLabel = QString("Width (default %1px)").arg(settings.defaultSize.width());
-        form.addRow(wLabel, wEdit);
+        form->addRow(wLabel, wEdit);
 
         QSpinBox* hEdit = new QSpinBox(dialog);
         hEdit->setRange(1, 8192);
         hEdit->setSuffix("px");
         hEdit->setValue(size().height());
         QString hLabel = QString("Height (default %1px)").arg(settings.defaultSize.height());
-        form.addRow(hLabel, hEdit);
+        form->addRow(hLabel, hEdit);
 
-        QDialogButtonBox buttonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::RestoreDefaults, Qt::Horizontal, dialog);
-        form.addRow(&buttonBox);
+        QDialogButtonBox* buttonBox =
+            new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel | QDialogButtonBox::RestoreDefaults, Qt::Horizontal, dialog);
+        form->addRow(buttonBox);
 
-        connect(&buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
-        connect(&buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-        connect(&buttonBox, &QDialogButtonBox::clicked, [&](QAbstractButton* button) {
-            auto role = buttonBox.buttonRole(button);
+        connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
+        connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
+        connect(buttonBox, &QDialogButtonBox::clicked, [=](QAbstractButton* button) {
+            auto role = buttonBox->buttonRole(button);
             if (role == QDialogButtonBox::ResetRole)
             {
                 wEdit->setValue(settings.defaultSize.width());
