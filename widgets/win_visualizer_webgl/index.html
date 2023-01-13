@@ -97,7 +97,7 @@
             float i = step( vUv.y, f );
 
             // vec3 color = HSLToRGB(vec3((0.33 - min(f * 0.4, 0.33)), 1.0, 0.66)); // g -> r
-            vec3 color = HSLToRGB(vec3(0.0, 1.0, f)); // r -> w
+            vec3 color = HSLToRGB(vec3(0.0, 1.0, max(0.33, f * 1.2))); // r -> w
 
 			gl_FragColor = vec4( mix( backgroundColor, color, i ), mix( 0.0, 1.0, i ) );
 
