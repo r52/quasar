@@ -118,7 +118,7 @@ void Quasar::createTrayMenu()
     connect(settingsAction, &QAction::triggered, [&] {
         if (!cfgdlg)
         {
-            cfgdlg = new ConfigDialog(this);
+            cfgdlg = new ConfigDialog();
 
             connect(cfgdlg, &QDialog::finished, [=](int result) {
                 if (result == QDialog::Accepted)
@@ -136,6 +136,7 @@ void Quasar::createTrayMenu()
         else
         {
             cfgdlg->show();
+            cfgdlg->setWindowState(Qt::WindowState::WindowActive);
         }
     });
 
