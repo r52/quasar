@@ -95,8 +95,9 @@
             float f = texture2D( tAudioData, vec2( vUv.x, 0.0 ) ).r;
             
             float i = step( vUv.y, f );
-        
-            vec3 color = HSLToRGB(vec3((0.33 - min(f * 0.4, 0.33)), 1.0, 0.66));
+
+            // vec3 color = HSLToRGB(vec3((0.33 - min(f * 0.4, 0.33)), 1.0, 0.66)); // g -> r
+            vec3 color = HSLToRGB(vec3(0.0, 1.0, f)); // r -> w
 
 			gl_FragColor = vec4( mix( backgroundColor, color, i ), mix( 0.0, 1.0, i ) );
 
