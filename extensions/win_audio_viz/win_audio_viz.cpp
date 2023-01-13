@@ -14,6 +14,7 @@
 #include <codecvt>
 #include <locale>
 #include <numeric>
+#include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -123,8 +124,7 @@ struct Measure
         float x;
     };
 
-    Port                 m_port;     // port specifier (not used, only output is supported in win_audio_viz)
-    Channel              m_channel;  // channel specifier (not used, all channels are processed in win_audio_viz)
+    Port                 m_port;  // port specifier (not used, only output is supported in win_audio_viz)
 
     Format               m_format;       // format specifier (detected in init)
     std::array<int, 2>   m_envRMS;       // RMS attack/decay times in ms (parsed from options)
@@ -155,9 +155,6 @@ struct Measure
     std::array<float, 2>                         m_kFFT;       // FFT attack/decay filter constants
     std::array<double, MAX_CHANNELS>             m_rms;        // current RMS levels
     std::array<double, MAX_CHANNELS>             m_peak;       // current peak levels
-    double                                       m_pcMult;     // performance counter inv frequency
-    LARGE_INTEGER                                m_pcFill;     // performance counter on last full buffer
-    LARGE_INTEGER                                m_pcPoll;     // performance counter on last device poll
     std::array<kiss_fftr_cfg, MAX_CHANNELS>      m_fftCfg;     // FFT states for each channel
     std::array<std::vector<float>, MAX_CHANNELS> m_fftIn;      // buffer for each channel's FFT input
     std::array<std::vector<float>, MAX_CHANNELS> m_fftOut;     // buffer for each channel's FFT output
@@ -168,10 +165,10 @@ struct Measure
     int                                          m_fftBufP;    // decremental counter - process FFT at zero
     std::vector<float>                           m_bandFreq;   // buffer of band max frequencies
     std::array<std::vector<float>, MAX_CHANNELS> m_bandOut;    // buffer of band values
+    std::span<BYTE>                              m_buffer;     // temp processing buffer
 
     Measure() :
         m_port(PORT_OUTPUT),
-        m_channel(CHANNEL_SUM),
         m_format(FMT_INVALID),
         m_fftSize(0),
         m_fftOverlap(0),
@@ -197,7 +194,8 @@ struct Measure
         m_fftBufP(0),
         m_bandFreq{},
         m_reqID{},
-        m_devName{}
+        m_devName{},
+        m_buffer{}
     {
         m_envRMS[0]  = 300;
         m_envRMS[1]  = 300;
@@ -218,10 +216,6 @@ struct Measure
             m_peak[iChan]   = 0.0;
             m_fftCfg[iChan] = NULL;
         }
-
-        LARGE_INTEGER pcFreq;
-        QueryPerformanceFrequency(&pcFreq);
-        m_pcMult = 1.0 / (double) pcFreq.QuadPart;
     }
 
     HRESULT DeviceInit();
@@ -263,8 +257,8 @@ namespace
 HRESULT Measure::DeviceInit()
 {
     HRESULT         hr;
-    IPropertyStore* props                = NULL;
-    REFERENCE_TIME  hnsRequestedDuration = REFTIMES_PER_SEC;
+    IPropertyStore* props   = NULL;
+    size_t          bufsize = 0;
 
     // get the device handle
     assert(m_enum && !m_dev);
@@ -376,9 +370,9 @@ HRESULT Measure::DeviceInit()
         m_fftBufP   = m_fftSize - m_fftOverlap;
 
         // calculate window function coefficients (http://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window)
-        for (size_t iBin = 0; iBin < m_fftSize; ++iBin)
+        for (size_t iBin = 1; iBin < m_fftSize; ++iBin)
         {
-            m_fftKWdw[iBin] = (float) (0.5 * (1.0 - cos(TWOPI * iBin / (m_fftSize - 1))));
+            m_fftKWdw[iBin] = (float) (0.5 * (1.0 - cos(TWOPI * iBin / (m_fftSize + 1))));
         }
     }
 
@@ -411,7 +405,7 @@ HRESULT Measure::DeviceInit()
     // http://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/c7ba0a04-46ce-43ff-ad15-ce8932c00171/loopback-recording-causes-digital-stuttering?forum=windowspro-audiodevelopment
     if (m_port == PORT_OUTPUT)
     {
-        hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, hnsRequestedDuration, 0, m_wfx, NULL);
+        hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, 0, 0, m_wfx, NULL);
         EXIT_ON_ERROR(hr);
 
         // get the frame count
@@ -440,7 +434,7 @@ HRESULT Measure::DeviceInit()
 #endif
 
     // initialize the audio client
-    hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, hnsRequestedDuration, 0, m_wfx, NULL);
+    hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, 0, 0, m_wfx, NULL);
     if (hr != S_OK)
     {
         // Compatibility with the Nahimic audio driver
@@ -452,7 +446,7 @@ HRESULT Measure::DeviceInit()
         m_wfx->nBlockAlign     = (2 * m_wfx->wBitsPerSample) / 8;
         m_wfx->nAvgBytesPerSec = m_wfx->nSamplesPerSec * m_wfx->nBlockAlign;
 
-        hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, hnsRequestedDuration, 0, m_wfx, NULL);
+        hr                     = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, 0, 0, m_wfx, NULL);
         if (hr != S_OK)
         {
             // stereo waveformat didnt work either, throw an error
@@ -477,8 +471,16 @@ HRESULT Measure::DeviceInit()
     }
     EXIT_ON_ERROR(hr);
 
-    // initialize the watchdog timer
-    QueryPerformanceCounter(&m_pcFill);
+    UINT32 nMaxFrames;
+    hr = m_clAudio->GetBufferSize(&nMaxFrames);
+    if (hr != S_OK)
+    {
+        warn("Failed to determine max buffer size.");
+    }
+    EXIT_ON_ERROR(hr);
+
+    bufsize  = nMaxFrames * m_wfx->nBlockAlign * sizeof(BYTE);
+    m_buffer = std::span{(BYTE*) calloc(bufsize, 1), bufsize};
 
     return S_OK;
 
@@ -531,6 +533,11 @@ void Measure::DeviceRelease()
         kiss_fft_cleanup();
     }
 
+    if (m_buffer.data())
+    {
+        free(m_buffer.data());
+    }
+
     m_format = FMT_INVALID;
 }
 
@@ -550,8 +557,6 @@ bool win_audio_viz_init(quasar_ext_handle handle)
     m_typemap[sources[8].uid]  = Measure::TYPE_DEV_NAME;
     m_typemap[sources[9].uid]  = Measure::TYPE_DEV_ID;
     m_typemap[sources[10].uid] = Measure::TYPE_DEV_LIST;
-
-    QueryPerformanceCounter(&m->m_pcPoll);
 
     m->DeviceInit();
     startup_initialized = true;
@@ -719,136 +724,140 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             break;
     }
 
-    LARGE_INTEGER pcCur;
-    QueryPerformanceCounter(&pcCur);
-
     // query the buffer
-    if (m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= QUERY_TIMEOUT)
+    if (m->m_clCapture)
     {
         BYTE*   buffer;
         UINT32  nFrames;
         DWORD   flags;
-        UINT64  pos;
         HRESULT hr;
 
-        while ((hr = m->m_clCapture->GetBuffer(&buffer, &nFrames, &flags, &pos, NULL)) == S_OK)
+        while ((hr = m->m_clCapture->GetBuffer(&buffer, &nFrames, &flags, NULL, NULL)) == S_OK)
         {
-            // measure RMS and peak levels
-            float rms[Measure::MAX_CHANNELS];
-            float peak[Measure::MAX_CHANNELS];
-            for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
-            {
-                rms[iChan]  = (float) m->m_rms[iChan];
-                peak[iChan] = (float) m->m_peak[iChan];
-            }
+            memcpy(&m->m_buffer[0], &buffer[0], nFrames * m->m_wfx->nBlockAlign);
 
-            // loops unrolled for float, 16b and mono, stereo
-            if (m->m_format == Measure::FMT_PCM_F32)
+            // release the buffer
+            m->m_clCapture->ReleaseBuffer(nFrames);
+
+            if (type == Measure::TYPE_RMS || type == Measure::TYPE_PEAK)
             {
-                float* s = (float*) buffer;
-                if (m->m_wfx->nChannels == 1)
+                // measure RMS and peak levels
+                float rms[Measure::MAX_CHANNELS];
+                float peak[Measure::MAX_CHANNELS];
+                for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
                 {
-                    for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
-                    {
-                        float xL   = (float) *s++;
-                        float sqrL = xL * xL;
-                        float absL = abs(xL);
-                        rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
-                        peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
-                        rms[1]     = rms[0];
-                        peak[1]    = peak[0];
-                    }
+                    rms[iChan]  = (float) m->m_rms[iChan];
+                    peak[iChan] = (float) m->m_peak[iChan];
                 }
-                else if (m->m_wfx->nChannels == 2)
+
+                // loops unrolled for float, 16b and mono, stereo
+                if (m->m_format == Measure::FMT_PCM_F32)
                 {
-                    for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                    float* s = (float*) m->m_buffer.data();
+                    if (m->m_wfx->nChannels == 1)
                     {
-                        float xL   = (float) *s++;
-                        float xR   = (float) *s++;
-                        float sqrL = xL * xL;
-                        float sqrR = xR * xR;
-                        float absL = abs(xL);
-                        float absR = abs(xR);
-                        rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
-                        rms[1]     = sqrR + m->m_kRMS[(sqrR < rms[1])] * (rms[1] - sqrR);
-                        peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
-                        peak[1]    = absR + m->m_kPeak[(absR < peak[1])] * (peak[1] - absR);
-                    }
-                }
-                else
-                {
-                    for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
-                    {
-                        for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
                         {
-                            float x     = (float) *s++;
-                            float sqrX  = x * x;
-                            float absX  = abs(x);
-                            rms[iChan]  = sqrX + m->m_kRMS[(sqrX < rms[iChan])] * (rms[iChan] - sqrX);
-                            peak[iChan] = absX + m->m_kPeak[(absX < peak[iChan])] * (peak[iChan] - absX);
+                            float xL   = (float) *s++;
+                            float sqrL = xL * xL;
+                            float absL = abs(xL);
+                            rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
+                            peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
+                            rms[1]     = rms[0];
+                            peak[1]    = peak[0];
+                        }
+                    }
+                    else if (m->m_wfx->nChannels == 2)
+                    {
+                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        {
+                            float xL   = (float) *s++;
+                            float xR   = (float) *s++;
+                            float sqrL = xL * xL;
+                            float sqrR = xR * xR;
+                            float absL = abs(xL);
+                            float absR = abs(xR);
+                            rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
+                            rms[1]     = sqrR + m->m_kRMS[(sqrR < rms[1])] * (rms[1] - sqrR);
+                            peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
+                            peak[1]    = absR + m->m_kPeak[(absR < peak[1])] * (peak[1] - absR);
+                        }
+                    }
+                    else
+                    {
+                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        {
+                            for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                            {
+                                float x     = (float) *s++;
+                                float sqrX  = x * x;
+                                float absX  = abs(x);
+                                rms[iChan]  = sqrX + m->m_kRMS[(sqrX < rms[iChan])] * (rms[iChan] - sqrX);
+                                peak[iChan] = absX + m->m_kPeak[(absX < peak[iChan])] * (peak[iChan] - absX);
+                            }
                         }
                     }
                 }
-            }
-            else if (m->m_format == Measure::FMT_PCM_S16)
-            {
-                INT16* s = (INT16*) buffer;
-                if (m->m_wfx->nChannels == 1)
+                else if (m->m_format == Measure::FMT_PCM_S16)
                 {
-                    for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                    INT16* s = (INT16*) m->m_buffer.data();
+                    if (m->m_wfx->nChannels == 1)
                     {
-                        float xL   = (float) *s++ * 1.0f / 0x7fff;
-                        float sqrL = xL * xL;
-                        float absL = abs(xL);
-                        rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
-                        peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
-                        rms[1]     = rms[0];
-                        peak[1]    = peak[0];
-                    }
-                }
-                else if (m->m_wfx->nChannels == 2)
-                {
-                    for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
-                    {
-                        float xL   = (float) *s++ * 1.0f / 0x7fff;
-                        float xR   = (float) *s++ * 1.0f / 0x7fff;
-                        float sqrL = xL * xL;
-                        float sqrR = xR * xR;
-                        float absL = abs(xL);
-                        float absR = abs(xR);
-                        rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
-                        rms[1]     = sqrR + m->m_kRMS[(sqrR < rms[1])] * (rms[1] - sqrR);
-                        peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
-                        peak[1]    = absR + m->m_kPeak[(absR < peak[1])] * (peak[1] - absR);
-                    }
-                }
-                else
-                {
-                    for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
-                    {
-                        for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
                         {
-                            float x     = (float) *s++ * 1.0f / 0x7fff;
-                            float sqrX  = x * x;
-                            float absX  = abs(x);
-                            rms[iChan]  = sqrX + m->m_kRMS[(sqrX < rms[iChan])] * (rms[iChan] - sqrX);
-                            peak[iChan] = absX + m->m_kPeak[(absX < peak[iChan])] * (peak[iChan] - absX);
+                            float xL   = (float) *s++ * 1.0f / 0x7fff;
+                            float sqrL = xL * xL;
+                            float absL = abs(xL);
+                            rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
+                            peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
+                            rms[1]     = rms[0];
+                            peak[1]    = peak[0];
+                        }
+                    }
+                    else if (m->m_wfx->nChannels == 2)
+                    {
+                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        {
+                            float xL   = (float) *s++ * 1.0f / 0x7fff;
+                            float xR   = (float) *s++ * 1.0f / 0x7fff;
+                            float sqrL = xL * xL;
+                            float sqrR = xR * xR;
+                            float absL = abs(xL);
+                            float absR = abs(xR);
+                            rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
+                            rms[1]     = sqrR + m->m_kRMS[(sqrR < rms[1])] * (rms[1] - sqrR);
+                            peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
+                            peak[1]    = absR + m->m_kPeak[(absR < peak[1])] * (peak[1] - absR);
+                        }
+                    }
+                    else
+                    {
+                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        {
+                            for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                            {
+                                float x     = (float) *s++ * 1.0f / 0x7fff;
+                                float sqrX  = x * x;
+                                float absX  = abs(x);
+                                rms[iChan]  = sqrX + m->m_kRMS[(sqrX < rms[iChan])] * (rms[iChan] - sqrX);
+                                peak[iChan] = absX + m->m_kPeak[(absX < peak[iChan])] * (peak[iChan] - absX);
+                            }
                         }
                     }
                 }
-            }
 
-            for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
-            {
-                m->m_rms[iChan]  = rms[iChan];
-                m->m_peak[iChan] = peak[iChan];
+                for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+                {
+                    m->m_rms[iChan]  = rms[iChan];
+                    m->m_peak[iChan] = peak[iChan];
+                }
             }
 
             // process FFTs (optional)
             if (m->m_fftSize)
             {
-                float*      sF32   = (float*) buffer;
-                INT16*      sI16   = (INT16*) buffer;
+                float*      sF32   = (float*) m->m_buffer.data();
+                INT16*      sI16   = (INT16*) m->m_buffer.data();
                 const float scalar = (float) (1.0 / sqrt(m->m_fftSize));
 
                 for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
@@ -937,46 +946,27 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     }
                 }
             }
-
-            // release the buffer
-            m->m_clCapture->ReleaseBuffer(nFrames);
-
-            // mark the time of last buffer update
-            m->m_pcFill = pcCur;
         }
         // detect device disconnection
         switch (hr)
         {
-            case AUDCLNT_S_BUFFER_EMPTY:
-                // Windows bug: sometimes when shutting down a playback application, it doesn't zero
-                // out the buffer.  Detect this by checking the time since the last successful fill
-                // and resetting the volumes if past the threshold.
-                if (((pcCur.QuadPart - m->m_pcFill.QuadPart) * m->m_pcMult) >= EMPTY_TIMEOUT)
-                {
-                    for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
-                    {
-                        m->m_rms[iChan]  = 0.0;
-                        m->m_peak[iChan] = 0.0;
-                    }
-                }
-                break;
-
             case AUDCLNT_E_BUFFER_ERROR:
             case AUDCLNT_E_DEVICE_INVALIDATED:
             case AUDCLNT_E_SERVICE_NOT_RUNNING:
                 m->DeviceRelease();
                 break;
         }
-
-        m->m_pcPoll = pcCur;
     }
-    else if (!m->m_clCapture && (pcCur.QuadPart - m->m_pcPoll.QuadPart) * m->m_pcMult >= DEVICE_TIMEOUT)
+    // Windows bug: sometimes when shutting down a playback application, it doesn't zero
+    // out the buffer.  Detect this by checking the time since the last successful fill
+    // and resetting the volumes if past the threshold.
+    else if (type == Measure::TYPE_RMS || type == Measure::TYPE_PEAK)
     {
-        // poll for new devices
-        assert(m->m_enum);
-        assert(!m->m_dev);
-        m->DeviceInit();
-        m->m_pcPoll = pcCur;
+        for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+        {
+            m->m_rms[iChan]  = 0.0;
+            m->m_peak[iChan] = 0.0;
+        }
     }
 
     switch (type)
@@ -1013,24 +1003,17 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
                     for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
                     {
-                        if (m->m_channel == Measure::CHANNEL_SUM)
+                        if (m->m_wfx->nChannels >= 2)
                         {
-                            if (m->m_wfx->nChannels >= 2)
-                            {
-                                x = (m->m_fftOut[0][i] + m->m_fftOut[1][i]) * 0.5;
-                            }
-                            else
-                            {
-                                x = m->m_fftOut[0][i];
-                            }
+                            x = (m->m_fftOut[0][i] + m->m_fftOut[1][i]) * 0.5;
                         }
-                        else if (m->m_channel < m->m_wfx->nChannels)
+                        else
                         {
-                            x = m->m_fftOut[m->m_channel][i];
+                            x = m->m_fftOut[0][i];
                         }
 
                         x               = CLAMP01(x);
-                        x               = max(0, 10.0 / m->m_sensitivity * log10(x) + 1.0);
+                        x               = max(0, m->m_sensitivity * log10(x) + 1.0);
                         output[type][i] = x;
                     }
 
@@ -1049,24 +1032,17 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
                     for (size_t i = 0; i < m->m_nBands; i++)
                     {
-                        if (m->m_channel == Measure::CHANNEL_SUM)
+                        if (m->m_wfx->nChannels >= 2)
                         {
-                            if (m->m_wfx->nChannels >= 2)
-                            {
-                                x = (m->m_bandOut[0][i] + m->m_bandOut[1][i]) * 0.5;
-                            }
-                            else
-                            {
-                                x = m->m_bandOut[0][i];
-                            }
+                            x = (m->m_bandOut[0][i] + m->m_bandOut[1][i]) * 0.5;
                         }
-                        else if (m->m_channel < m->m_wfx->nChannels)
+                        else
                         {
-                            x = m->m_bandOut[m->m_channel][i];
+                            x = m->m_bandOut[0][i];
                         }
 
                         x               = CLAMP01(x);
-                        x               = max(0, 10.0 / m->m_sensitivity * log10(x) + 1.0);
+                        x               = max(0, m->m_sensitivity * log10(x) + 1.0);
                         output[type][i] = x;
                     }
 
@@ -1241,7 +1217,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     // (re)parse gain constants
     m->m_gainRMS     = quasar_get_double_setting(extHandle, settings, "RMSGain");
     m->m_gainPeak    = quasar_get_double_setting(extHandle, settings, "PeakGain");
-    m->m_sensitivity = quasar_get_double_setting(extHandle, settings, "Sensitivity");
+    m->m_sensitivity = 10.0 / max(1.0, quasar_get_double_setting(extHandle, settings, "Sensitivity"));
 
     // regenerate filter constants
     if (m->m_wfx)
