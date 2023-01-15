@@ -43,7 +43,7 @@ jobs:
       - name: Configure Project Linux
         if: (!startsWith(matrix.os, 'windows'))
         working-directory: quasar
-        run: cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build
+        run: cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=./vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build
 
       - name: Build Project
         working-directory: quasar

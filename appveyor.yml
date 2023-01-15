@@ -41,5 +41,5 @@ for:
       Qt6_DIR: $HOME/Qt/6.4.0/gcc_64/bin
 
     build_script:
-      - ps: cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S$env:APPVEYOR_BUILD_FOLDER -B$env:APPVEYOR_BUILD_FOLDER/build
-      - ps: cmake --build $env:APPVEYOR_BUILD_FOLDER/build --config Release --target ALL_BUILD --
+      - ps: cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build
+      - ps: cmake --build ./build --config Release --target ALL_BUILD --
