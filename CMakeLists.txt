@@ -21,14 +21,17 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-#set(CMAKE_SKIP_BUILD_RPATH FALSE)
-#set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-#set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/quasar")
-#set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+option(TRACY_ENABLE "" ON)
+option(TRACY_ON_DEMAND "" ON)
+option(TRACY_STATIC "" OFF)
+
+add_subdirectory(3rdparty/tracy)
 
 add_subdirectory(quasar)
 
 if(WIN32)
     add_subdirectory(extensions/win_simple_perf)
+
+    add_subdirectory(3rdparty/mufft)
     add_subdirectory(extensions/win_audio_viz)
 endif()

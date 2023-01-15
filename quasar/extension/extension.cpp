@@ -528,6 +528,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
 
 void Extension::sendDataToSubscribers(DataSource& src)
 {
+    // ZoneScopedS(30);
     {
         std::lock_guard<std::shared_mutex> lk(src.mutex);
 
@@ -579,14 +580,13 @@ void Extension::createTimer(DataSource& src)
     if (src.settings.enabled && !src.timer)
     {
         // Timer creation required
-        src.timer = std::make_unique<Timer>();
+        src.timer = std::make_unique<Timer>(src.topic);
 
         src.timer->setInterval(
             [this, &src] {
-                // auto start = std::chrono::steady_clock::now();
+                // FrameMarkStart(src.topic.data());
                 sendDataToSubscribers(src);
-                // auto end = std::chrono::steady_clock::now();
-                // SPDLOG_DEBUG("sendDataToSubscribers() took {}us", std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+                // FrameMarkEnd(src.topic.data());
             },
             src.settings.rate);
     }

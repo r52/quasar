@@ -10,6 +10,8 @@
 class Timer
 {
 public:
+    Timer(const std::string& timer_name) : name{timer_name} {}
+
     ~Timer() { stop(); }
 
     void setInterval(auto&& fn, int intv)
@@ -52,6 +54,7 @@ public:
     }
 
 private:
+    const std::string       name{};
     int                     interval;
     std::jthread            thread;
     std::condition_variable cv;

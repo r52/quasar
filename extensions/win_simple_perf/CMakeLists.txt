@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 project(win_simple_perf)
 
-find_package(fmt REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 add_library(win_simple_perf MODULE
   win_simple_perf.cpp
