@@ -1,31 +1,22 @@
-version: '{branch}-{build}'
-branches:
-  only:
-  - master
-skip_non_tags: true
-image: Visual Studio 2019
+version: "{branch}-{build}"
+image: Visual Studio 2022
 configuration: Release
 platform: x64
 init:
-- ps: >-
-    if ($env:APPVEYOR_REPO_TAG -eq "true")
-
-    {
-        Update-AppveyorBuild -Version "$env:APPVEYOR_REPO_TAG_NAME-$env:APPVEYOR_BUILD_NUMBER"
-    }
-
-    else
-
-    {
-        Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.Substring(0, 7))-$env:APPVEYOR_BUILD_NUMBER"
-    }
+  - ps: >-
+      if ($env:APPVEYOR_REPO_TAG -eq "true")
+      {
+          Update-AppveyorBuild -Version "$env:APPVEYOR_REPO_TAG_NAME-$env:APPVEYOR_BUILD_NUMBER"
+      }
+      else
+      {
+          Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.Substring(0, 7))-$env:APPVEYOR_BUILD_NUMBER"
+      }
 environment:
-  QTDIR: C:\Qt\5.12.5\msvc2017_64
-  OPENSSL: C:\OpenSSL-v111-Win64\bin
-  QTIFW: C:\Qt\Tools\QtInstallerFramework\3.1\bin
-# Gotta run this twice because a fresh qtvars build results in unresolved WinMainCRTStartup for some stupid reason
+  QTDIR: C:\Qt\6.4.0\msvc2019_64
+  Qt6_DIR: C:\Qt\6.4.0\msvc2019_64
+install:
+  - git submodule update --init --recursive
 build_script:
-  - cmd: msbuild "C:\projects\quasar\Quasar.sln" /m /verbosity:normal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /p:QtInstall=%QTDIR% & exit 0
-  - cmd: msbuild "C:\projects\quasar\Quasar.sln" /m /verbosity:normal /logger:"C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll" /p:QtInstall=%QTDIR%
-after_build:
-- ps: .\deploy\wincreateinstall.ps1 -portable -name "$($env:APPVEYOR_BUILD_VERSION)"
+  - cmd: cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S%APPVEYOR_BUILD_FOLDER% -B%APPVEYOR_BUILD_FOLDER%/build -G "Visual Studio 17 2022" -T host=x64 -A x64
+  - cmd: cmake --build %APPVEYOR_BUILD_FOLDER%/build --config Release --target ALL_BUILD --
