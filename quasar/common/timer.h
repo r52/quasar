@@ -18,7 +18,7 @@ public:
     {
         interval = intv;
         SPDLOG_DEBUG("New timer thread with {}ms internal", intv);
-        thread = std::jthread{[=](std::stop_token token) {
+        thread = std::jthread{[=, this](std::stop_token token) {
             std::unique_lock<std::mutex> lk(mtx);
             while (true)
             {

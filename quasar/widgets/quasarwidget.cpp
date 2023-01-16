@@ -302,7 +302,7 @@ void QuasarWidget::createContextMenuActions()
         connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
         connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
 
-        connect(dialog, &QDialog::finished, [=](int result) {
+        connect(dialog, &QDialog::finished, [=, this](int result) {
             if (result == QDialog::Accepted)
             {
                 this->move(wEdit->value(), hEdit->value());
@@ -367,7 +367,7 @@ void QuasarWidget::createContextMenuActions()
 
         connect(buttonBox, &QDialogButtonBox::accepted, dialog, &QDialog::accept);
         connect(buttonBox, &QDialogButtonBox::rejected, dialog, &QDialog::reject);
-        connect(buttonBox, &QDialogButtonBox::clicked, [=](QAbstractButton* button) {
+        connect(buttonBox, &QDialogButtonBox::clicked, [=, this](QAbstractButton* button) {
             auto role = buttonBox->buttonRole(button);
             if (role == QDialogButtonBox::ResetRole)
             {
@@ -376,7 +376,7 @@ void QuasarWidget::createContextMenuActions()
             }
         });
 
-        connect(dialog, &QDialog::finished, [=](int result) {
+        connect(dialog, &QDialog::finished, [=, this](int result) {
             if (result == QDialog::Accepted)
             {
                 QSize nsize = {wEdit->value(), hEdit->value()};
@@ -426,7 +426,7 @@ void QuasarWidget::mousePressEvent(QMouseEvent* evt)
 {
     if (!settings.fixedPosition and evt->button() == Qt::LeftButton)
     {
-        dragPosition = evt->globalPos() - frameGeometry().topLeft();
+        dragPosition = evt->globalPosition().toPoint() - frameGeometry().topLeft();
         evt->accept();
     }
 }
@@ -435,7 +435,7 @@ void QuasarWidget::mouseMoveEvent(QMouseEvent* evt)
 {
     if (!settings.fixedPosition and evt->buttons() & Qt::LeftButton)
     {
-        move(evt->globalPos() - dragPosition);
+        move(evt->globalPosition().toPoint() - dragPosition);
         evt->accept();
     }
 }

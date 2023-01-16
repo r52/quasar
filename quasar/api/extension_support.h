@@ -8,11 +8,15 @@
 
 #include "extension_types.h"
 
-#ifdef quasar_EXPORTS
-#  define SAPI_EXPORT __declspec(dllexport)
-#else
-#  define SAPI_EXPORT __declspec(dllimport)
-#endif  // quasar_EXPORTS
+#if defined(_WIN32) || defined(__WIN32__)
+#  if defined(quasar_EXPORTS)
+#    define SAPI_EXPORT __declspec(dllexport)
+#  else
+#    define SAPI_EXPORT __declspec(dllimport)
+#  endif
+#elif defined(linux) || defined(__linux)
+#  define SAPI_EXPORT
+#endif
 
 #if defined(__cplusplus)
 extern "C" {

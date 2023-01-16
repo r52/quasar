@@ -120,7 +120,7 @@ void Quasar::createTrayMenu()
         {
             cfgdlg = new ConfigDialog();
 
-            connect(cfgdlg, &QDialog::finished, [=](int result) {
+            connect(cfgdlg, &QDialog::finished, [=, this](int result) {
                 if (result == QDialog::Accepted)
                 {
                     // Propagate settings

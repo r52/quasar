@@ -384,12 +384,12 @@ void Extension::HandleDataReady(std::string_view source)
 
             if (j[data.topic].empty())
             {
-                j.remove_member(data.topic);
+                j.erase(data.topic);
             }
 
             if (j["errors"].empty())
             {
-                j.remove_member("errors");
+                j.erase("errors");
             }
 
             switch (result)
@@ -483,7 +483,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
     {
         if (!rett.errors.empty())
         {
-            msg["errors"].insert(msg["errors"].end_elements(), rett.errors.begin(), rett.errors.end());
+            msg["errors"].insert(msg["errors"].array_range().end(), rett.errors.begin(), rett.errors.end());
         }
 
         SPDLOG_WARN("get_data({}, {}) failed", name, src.topic);
@@ -492,7 +492,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
 
     if (!rett.errors.empty())
     {
-        msg["errors"].insert(msg["errors"].end_elements(), rett.errors.begin(), rett.errors.end());
+        msg["errors"].insert(msg["errors"].array_range().end(), rett.errors.begin(), rett.errors.end());
     }
 
     if (not rett.val)
@@ -546,12 +546,12 @@ void Extension::sendDataToSubscribers(DataSource& src)
 
             if (j[src.topic].empty())
             {
-                j.remove_member(src.topic);
+                j.erase(src.topic);
             }
 
             if (j["errors"].empty())
             {
-                j.remove_member("errors");
+                j.erase("errors");
             }
 
             if (!j.empty())
@@ -809,7 +809,7 @@ void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::
 
         if (json[dsrc.topic].empty())
         {
-            json.remove_member(dsrc.topic);
+            json.erase(dsrc.topic);
         }
 
         switch (result)
