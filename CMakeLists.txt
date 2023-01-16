@@ -8,7 +8,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
 project(quasar-project)
 
-include(cmake/CPM.cmake)
+# include(cmake/CPM.cmake)
 
 set(default_build_type "Release")
 
