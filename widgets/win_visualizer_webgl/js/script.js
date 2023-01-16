@@ -170,7 +170,7 @@ function onResize() {
 function animate() {
   requestAnimationFrame(animate);
 
-  render();
+  // render();
 }
 
 function render() {
@@ -183,6 +183,7 @@ function parseMsg(msg) {
 
   if (source in data) {
     sound_data.set(Uint8Array.from(data[source], (x) => Math.floor(x * 255)));
+    render();
     return;
   }
 
