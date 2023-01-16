@@ -55,7 +55,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
         }
     }
 
-    connect(ui->deleteAppButton, &QPushButton::clicked, [=](bool checked) {
+    connect(ui->deleteAppButton, &QPushButton::clicked, [=, this](bool checked) {
         int row = ui->appTable->currentRow();
         if (row >= 0)
         {
@@ -63,7 +63,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
         }
     });
 
-    connect(ui->editAppButton, &QPushButton::clicked, [=](bool checked) {
+    connect(ui->editAppButton, &QPushButton::clicked, [=, this](bool checked) {
         bool ok;
         int  row = ui->appTable->currentRow();
 
@@ -84,7 +84,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
             };
 
             LauncherEditDialog* editdialog = new LauncherEditDialog("Edit App", this, cmditem->text(), d);
-            connect(editdialog, &QDialog::finished, [=](int result) {
+            connect(editdialog, &QDialog::finished, [=, this](int result) {
                 if (result == QDialog::Accepted)
                 {
                     auto& d = editdialog->GetData();
@@ -106,10 +106,10 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
         }
     });
 
-    connect(ui->addAppButton, &QPushButton::clicked, [=](bool checked) {
+    connect(ui->addAppButton, &QPushButton::clicked, [=, this](bool checked) {
         LauncherEditDialog* editdialog = new LauncherEditDialog("New App", this);
 
-        connect(editdialog, &QDialog::finished, [=](int result) {
+        connect(editdialog, &QDialog::finished, [=, this](int result) {
             if (result == QDialog::Accepted)
             {
                 auto& d   = editdialog->GetData();
@@ -153,7 +153,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
         ui->pagesWidget->addWidget(page);
     }
 
-    connect(this, &QDialog::accepted, [=] {
+    connect(this, &QDialog::accepted, [this] {
         SaveSettings();
     });
 }

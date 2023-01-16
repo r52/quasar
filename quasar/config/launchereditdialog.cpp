@@ -27,7 +27,7 @@ LauncherEditDialog::LauncherEditDialog(QString title, QWidget* parent, QString c
     }
 
     // browse buttons
-    connect(ui->fileBtn, &QPushButton::clicked, [=](bool checked) {
+    connect(ui->fileBtn, &QPushButton::clicked, [=, this](bool checked) {
         QString filename = QFileDialog::getOpenFileName(this, tr("Choose Application"), QString(), tr("Executables (*.*)"));
         if (!filename.isEmpty())
         {
@@ -38,7 +38,7 @@ LauncherEditDialog::LauncherEditDialog(QString title, QWidget* parent, QString c
         }
     });
 
-    connect(ui->iconBtn, &QPushButton::clicked, [=](bool checked) {
+    connect(ui->iconBtn, &QPushButton::clicked, [=, this](bool checked) {
         QFileDialog          dialog(this, tr("Choose Icon"));
         QStringList          mimeTypeFilters;
         const QByteArrayList supportedMimeTypes = QImageReader::supportedMimeTypes();
@@ -67,7 +67,7 @@ LauncherEditDialog::LauncherEditDialog(QString title, QWidget* parent, QString c
     });
 
     // ok button
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, [=] {
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, [=, this] {
         // validate
         if (ui->cmdEdit->text().isEmpty() || ui->fileEdit->text().isEmpty())
         {
