@@ -11,9 +11,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <codecvt>
 #include <complex>
-#include <locale>
 #include <numeric>
 #include <span>
 #include <string>
@@ -37,13 +35,12 @@
 #include <fmt/core.h>
 #include <fmt/xchar.h>
 
+#include "convert.h"
+
 #define WINDOWS_BUG_WORKAROUND 1
 #define CLAMP01(x)             max(0.0, min(1.0, (x)))
 
-constexpr auto TWOPI          = (2 * 3.14159265358979323846);
-constexpr auto EMPTY_TIMEOUT  = 0.500;
-constexpr auto DEVICE_TIMEOUT = 1.500;
-constexpr auto QUERY_TIMEOUT  = (1.0 / 60);
+constexpr auto TWOPI = (2 * 3.14159265358979323846);
 
 #define EXT_FULLNAME "Audio Visualization Data"
 #define EXT_NAME     "win_audio_viz"
@@ -187,14 +184,14 @@ struct Measure
         m_clBugAudio(NULL),
         m_clBugRender(NULL),
 #endif
+        m_reqID{},
+        m_devName{},
         m_fftKWdw{},
         m_fftTmpIn{},
         m_fftTmpOutP{},
         m_fftBufW(0),
         m_fftBufP(0),
         m_bandFreq{},
-        m_reqID{},
-        m_devName{},
         m_buffer{}
     {
         m_envRMS[0]  = 300;
@@ -244,7 +241,10 @@ quasar_data_source_t sources[]                = {
 
 namespace
 {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>    converter;
+    // std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>    converter;
+
+    dbj::char_range_to_string                                 string_conv{};
+    dbj::wchar_range_to_string                                to_wstring{};
 
     Measure*                                                  m                   = nullptr;
     bool                                                      startup_initialized = false;
@@ -271,7 +271,7 @@ HRESULT Measure::DeviceInit()
         hr = m_enum->GetDevice(m_reqID.c_str(), &m_dev);
         if (hr != S_OK)
         {
-            warn("Audio {} device '{}' not found (error 0x{}).", m_port == PORT_OUTPUT ? "output" : "input", converter.to_bytes(m_reqID), hr);
+            warn("Audio {} device '{}' not found (error 0x{}).", m_port == PORT_OUTPUT ? "output" : "input", string_conv(m_reqID), hr);
         }
     }
     else
@@ -298,7 +298,7 @@ HRESULT Measure::DeviceInit()
 
     SAFE_RELEASE(props);
 
-    info("Initializing audio device {}", converter.to_bytes(m_devName));
+    info("Initializing audio device {}", string_conv(m_devName));
 
 #if (WINDOWS_BUG_WORKAROUND)
     // get an extra audio client for the dummy silent channel
@@ -647,7 +647,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
         case Measure::TYPE_DEV_NAME:
             {
-                quasar_set_data_string_hpp(hData, converter.to_bytes(m->m_devName));
+                quasar_set_data_string_hpp(hData, string_conv(m->m_devName));
                 return true;
             }
 
@@ -658,7 +658,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     LPWSTR pwszID = NULL;
                     if (m->m_dev->GetId(&pwszID) == S_OK)
                     {
-                        quasar_set_data_string_hpp(hData, converter.to_bytes(pwszID));
+                        quasar_set_data_string_hpp(hData, string_conv(pwszID));
                         CoTaskMemFree(pwszID);
                         return true;
                     }
@@ -693,7 +693,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                                 if (device->GetId(&id) == S_OK && props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
                                 {
                                     auto device = fmt::format(L"{}: {}", id, varName.pwszVal);
-                                    list.push_back(converter.to_bytes(device).c_str());
+                                    list.push_back(string_conv(device).c_str());
                                 }
 
                                 if (id)
@@ -1127,7 +1127,7 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
         EXIT_ON_ERROR(hr);
 
         // Print endpoint friendly name and endpoint ID.
-        quasar_add_selection_option(devSelect, converter.to_bytes(varName.pwszVal).c_str(), converter.to_bytes(pwszID).c_str());
+        quasar_add_selection_option(devSelect, string_conv(varName.pwszVal).c_str(), string_conv(pwszID).c_str());
 
         CoTaskMemFree(pwszID);
         pwszID = NULL;
@@ -1181,7 +1181,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     bool needs_reinit = false;
 
     auto dev          = quasar_get_selection_setting_hpp(extHandle, settings, "device");
-    m->m_reqID        = converter.from_bytes(dev.data());
+    m->m_reqID        = to_wstring(dev.data());
 
     int fftsize       = quasar_get_int_setting(extHandle, settings, "FFTSize");
     if (fftsize < 0 || fftsize & 1)
