@@ -38,21 +38,17 @@ jobs:
 
       - name: Configure Project Windows
         if: startsWith(matrix.os, 'windows')
-        working-directory: quasar
         run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Visual Studio 17 2022" -T host=x64 -A x64
 
       - name: Configure Project Linux
         if: (!startsWith(matrix.os, 'windows'))
-        working-directory: quasar
         run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
 
       - name: Build Project
-        working-directory: quasar
         run: cmake --build ./build --config Release --target ALL_BUILD --
 
       - name: Package Quasar
         if: startsWith(matrix.os, 'windows')
-        working-directory: quasar
         shell: powershell
         run: |
           $QUASAR_VERSION = (Select-String -Path ./quasar/CMakeLists.txt -Pattern 'project\(quasar VERSION ([0-9\.]+)\)') | %{$_.Matches.Groups[1].value}

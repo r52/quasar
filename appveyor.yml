@@ -36,8 +36,8 @@ for:
         - image: Ubuntu2004
 
     environment:
-      Qt6_DIR: $HOME/Qt/6.4.0/gcc_64/lib/cmake/Qt6
+      Qt6_DIR: $HOME/Qt/6.4.0/gcc_64
 
     build_script:
-      - ps: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
+      - ps: cmake --no-warn-unused-cli -DCMAKE_PREFIX_PATH="$HOME/Qt/6.4.0/gcc_64/lib/cmake" -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
       - ps: cmake --build ./build --config Release --target ALL_BUILD --
