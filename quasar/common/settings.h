@@ -47,14 +47,14 @@ namespace Settings
 
         explicit Setting(const std::string& name, const std::string& desc, const T& default_val, const bool is_password)
             requires(!ranged && std::is_convertible_v<T, std::string_view>)
-            : value{default_val}, default_value{default_val}, label{name}, description{desc}, password{is_password}
+            : value{default_val}, default_value{default_val}, password{is_password}, label{name}, description{desc}
         {}
 
         virtual ~Setting() = default;
 
         explicit Setting(const std::string& name, const std::string& desc, const T& default_val, const T& min_val, const T& max_val, const T& stp)
             requires(ranged)
-            : value{default_val}, default_value{default_val}, maximum{max_val}, minimum{min_val}, label{name}, description{desc}, step{stp}
+            : value{default_val}, default_value{default_val}, maximum{max_val}, minimum{min_val}, step{stp}, label{name}, description{desc}
         {}
 
         virtual const T& GetValue() const { return value; }

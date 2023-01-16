@@ -64,8 +64,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
     });
 
     connect(ui->editAppButton, &QPushButton::clicked, [=, this](bool checked) {
-        bool ok;
-        int  row = ui->appTable->currentRow();
+        int row = ui->appTable->currentRow();
 
         if (row >= 0)
         {
@@ -84,7 +83,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
             };
 
             LauncherEditDialog* editdialog = new LauncherEditDialog("Edit App", this, cmditem->text(), d);
-            connect(editdialog, &QDialog::finished, [=, this](int result) {
+            connect(editdialog, &QDialog::finished, [=](int result) {
                 if (result == QDialog::Accepted)
                 {
                     auto& d = editdialog->GetData();
@@ -212,7 +211,7 @@ void ConfigDialog::SaveSettings()
 
         for (auto& [n, c] : page->savedSrc)
         {
-            auto result = std::find_if(src.begin(), src.end(), [&](Settings::DataSourceSettings* s) {
+            auto result = std::find_if(src.begin(), src.end(), [&, &n = n](Settings::DataSourceSettings* s) {
                 return s->name == n;
             });
 
@@ -225,7 +224,7 @@ void ConfigDialog::SaveSettings()
 
         for (auto& [n, c] : page->savedSettings)
         {
-            auto result = std::find_if(settings->begin(), settings->end(), [&](Settings::SettingsVariant& entry) {
+            auto result = std::find_if(settings->begin(), settings->end(), [&, &n = n](Settings::SettingsVariant& entry) {
                 return std::visit(
                     [&](auto&& arg) -> bool {
                         return arg.GetLabel() == n;
@@ -236,7 +235,7 @@ void ConfigDialog::SaveSettings()
             if (result != settings->end())
             {
                 std::visit(
-                    [&](auto&& arg) {
+                    [&, &c = c](auto&& arg) {
                         using T = std::decay_t<decltype(arg)>;
 
                         if constexpr (std::is_same_v<T, Settings::Setting<int>>)

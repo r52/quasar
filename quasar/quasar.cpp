@@ -281,6 +281,8 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
                 openWidget();
                 break;
             }
+        default:
+            break;
     }
 }
 

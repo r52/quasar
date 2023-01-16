@@ -18,11 +18,11 @@ find_path(UWEBSOCKETS_INCLUDE_DIRS "uwebsockets/App.h")
 find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
 find_package(Qt6 6.4 CONFIG COMPONENTS Core Gui Widgets Network NetworkAuth Svg WebEngineCore WebEngineWidgets REQUIRED)
 
-CPMFindPackage(
-   NAME glaze
-   GIT_REPOSITORY https://github.com/stephenberry/glaze
-   GIT_TAG main
-)
+#CPMFindPackage(
+#   NAME glaze
+#   GIT_REPOSITORY https://github.com/stephenberry/glaze
+#   GIT_TAG main
+#)
 
 qt_standard_project_setup()
 
@@ -90,7 +90,7 @@ target_include_directories(quasar PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
 target_link_libraries(quasar PUBLIC $<$<CONFIG:RelWithDebInfo>:Tracy::TracyClient>)
 target_link_libraries(quasar PRIVATE extension-api)
 target_link_libraries(quasar PRIVATE fmt::fmt spdlog::spdlog)
-target_link_libraries(quasar PRIVATE glaze::glaze jsoncons)
+target_link_libraries(quasar PRIVATE jsoncons)
 target_link_libraries(quasar PRIVATE ZLIB::ZLIB $<IF:$<TARGET_EXISTS:uv_a>,uv_a,uv> debug ${USOCKETS_LIB_DEBUG} optimized ${USOCKETS_LIB_RELEASE})
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::Svg Qt6::WebEngineCore Qt6::WebEngineWidgets)
 

@@ -18,19 +18,18 @@
 #include <QtNetworkAuth>
 #include <QUrl>
 
-#include <glaze/glaze.hpp>
 #include <spdlog/spdlog.h>
 
 #include <fmt/core.h>
-#include <glaze/core/macros.hpp>
+#include <jsoncons/json.hpp>
 
 #define SEND_CLIENT_ERROR(d, ...)                 \
   sendErrorToClient(d, fmt::format(__VA_ARGS__)); \
   SPDLOG_WARN(__VA_ARGS__);
 
-GLZ_META(ClientMsgParams, topics, params, code, args);
-GLZ_META(ClientMessage, method, params);
-GLZ_META(ErrorOnlyMessage, errors);
+JSONCONS_N_MEMBER_TRAITS(ClientMsgParams, 0, topics, params, code, args);
+JSONCONS_ALL_MEMBER_TRAITS(ClientMessage, method, params);
+JSONCONS_ALL_MEMBER_TRAITS(ErrorOnlyMessage, errors);
 
 using UWSSocket = uWS::WebSocket<false, true, PerSocketData>;
 
@@ -46,14 +45,12 @@ namespace
 }  // namespace
 
 Server::Server(std::shared_ptr<Config> cfg) :
-    config{
-        cfg
-},
     methods{
         {"subscribe", std::bind(&Server::handleMethodSubscribe, this, std::placeholders::_1, std::placeholders::_2)},
-        {"query", std::bind(&Server::handleMethodQuery, this, std::placeholders::_1, std::placeholders::_2)},
-        {"auth", std::bind(&Server::handleMethodAuth, this, std::placeholders::_1, std::placeholders::_2)},
-    }
+        {    "query",     std::bind(&Server::handleMethodQuery, this, std::placeholders::_1, std::placeholders::_2)},
+        {     "auth",      std::bind(&Server::handleMethodAuth, this, std::placeholders::_1, std::placeholders::_2)},
+},
+    config{cfg}
 {
     using namespace std::literals;
     websocketServer = std::jthread{[this]() {
@@ -202,7 +199,7 @@ std::string Server::GenerateAuthCode()
 {
     if (!Settings::internal.auth.GetValue())
     {
-        return std::string{};
+        return std::string{"dummycode"};
     }
 
     quint64 h   = QRandomGenerator::global()->generate64();
@@ -513,10 +510,11 @@ void Server::processMessage(PerSocketData* client, const std::string& msg)
 
     try
     {
-        glz::read_json(doc, msg);
+        doc = jsoncons::decode_json<ClientMessage>(msg);
     } catch (std::exception const& je)
     {
         SPDLOG_ERROR("Error parsing JSON message: {}", je.what());
+        SPDLOG_ERROR("JSON: {}", msg);
         return;
     }
 
@@ -540,7 +538,8 @@ void Server::sendErrorToClient(PerSocketData* client, const std::string& err)
     // Craft error json msg
     ErrorOnlyMessage msg{.errors = {{err}}};
     std::string      json{};
-    glz::write_json(msg, json);
+
+    jsoncons::encode_json(msg, json);
 
     SendDataToClient(client, json);
 }

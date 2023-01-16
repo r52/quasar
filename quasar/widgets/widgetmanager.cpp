@@ -2,9 +2,9 @@
 
 #include "quasarwidget.h"
 
-#include "server/server.h"
 #include "common/settings.h"
 #include "common/util.h"
+#include "server/server.h"
 
 #include <fstream>
 
@@ -14,12 +14,10 @@
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
-#include <glaze/glaze.hpp>
+#include <jsoncons/json.hpp>
 #include <spdlog/spdlog.h>
 
-#include <glaze/core/macros.hpp>
-
-GLZ_META(WidgetDefinition, name, width, height, startFile, transparentBg, clickable, dataserver, remoteAccess, required);
+JSONCONS_N_MEMBER_TRAITS(WidgetDefinition, 5, name, width, height, startFile, transparentBg, clickable, dataserver, remoteAccess, required);
 
 WidgetManager::WidgetManager(std::shared_ptr<Server> serv) : server{serv} {}
 
@@ -51,10 +49,11 @@ bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Conf
 
     try
     {
-        glz::read_json(def, json_doc);
+        def = jsoncons::decode_json<WidgetDefinition>(json_doc);
     } catch (std::exception const& je)
     {
         SPDLOG_ERROR("Error parsing widget definition file '{}': {}", filename, je.what());
+        SPDLOG_ERROR("JSON: {}", json_doc);
         return false;
     }
 
@@ -195,9 +194,7 @@ bool WidgetManager::acceptSecurityWarnings(const WidgetDefinition& def)
         return true;
     }
 
-    bool accept = false;
-
-    auto reply  = QMessageBox::warning(nullptr,
+    auto reply = QMessageBox::warning(nullptr,
         QObject::tr("Remote Access"),
         QObject::tr("This widget requires remote access to external URLs. This may pose a security risk.\n\nContinue loading?"),
         QMessageBox::Ok | QMessageBox::Cancel);

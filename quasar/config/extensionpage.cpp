@@ -13,8 +13,8 @@ ExtensionPage::ExtensionPage(const std::string& extname,
     std::vector<Settings::DataSourceSettings*>& src,
     std::vector<Settings::SettingsVariant>*     settings,
     QWidget*                                    parent) :
-    name{extname},
     QWidget(parent),
+    name{extname},
     ui(new Ui::ExtensionPage)
 {
     ui->setupUi(this);

@@ -24,9 +24,10 @@ Extension::Extension(quasar_ext_info_t* info,
     destroyFunc{destroyfunc},
     libpath{path},
     initialized{false},
+    internal{isInternal},
     server{srv},
-    config{cfg},
-    internal{isInternal}
+    config{cfg}
+
 {
     if (nullptr == extensionInfo)
     {

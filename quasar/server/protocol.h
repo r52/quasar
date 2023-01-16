@@ -22,5 +22,5 @@ struct ClientMessage
 
 struct ErrorOnlyMessage
 {
-    std::optional<std::vector<std::string>> errors;
+    std::vector<std::string> errors;
 };
