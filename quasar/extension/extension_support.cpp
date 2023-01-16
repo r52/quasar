@@ -35,14 +35,6 @@ void quasar_log(quasar_log_level_t level, const char* msg)
     }
 }
 
-void quasar_free(void* handle)
-{
-    if (nullptr != handle)
-    {
-        delete handle;
-    }
-}
-
 quasar_settings_t* quasar_create_settings(quasar_ext_handle handle)
 {
     Extension* ext = static_cast<Extension*>(handle);
@@ -58,6 +50,16 @@ quasar_settings_t* quasar_create_settings(quasar_ext_handle handle)
 quasar_selection_options_t* quasar_create_selection_setting(void)
 {
     return (quasar_selection_options_t*) new SelectionOptionsVector{};
+}
+
+void quasar_free_selection_setting(quasar_selection_options_t* handle)
+{
+    SelectionOptionsVector* container = reinterpret_cast<SelectionOptionsVector*>(handle);
+
+    if (container)
+    {
+        delete container;
+    }
 }
 
 quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* data)

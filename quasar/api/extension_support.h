@@ -30,12 +30,6 @@ extern "C" {
 */
 SAPI_EXPORT void quasar_log(quasar_log_level_t level, const char* msg);
 
-//! Frees any dangling created instances. Should only be used in error case exits.
-/*!
-    \param[in]  handle  Handle to instance to be freed
-*/
-SAPI_EXPORT void quasar_free(void* handle);
-
 //! Creates a new instance of \ref quasar_settings_t
 /*! Use in \ref quasar_ext_info_t.create_settings to create extension settings.
     Ensure that only a single instance is created and used per extension.
@@ -51,6 +45,12 @@ SAPI_EXPORT quasar_settings_t* quasar_create_settings(quasar_ext_handle handle);
     \return quasar_selection_options_t instance if successful, nullptr otherwise
 */
 SAPI_EXPORT quasar_selection_options_t* quasar_create_selection_setting(void);
+
+//! Deletes a \ref quasar_selection_options_t setting. Should only be used in error case exits.
+/*!
+    \param[in]  handle  Handle to instance to be freed
+*/
+SAPI_EXPORT void quasar_free_selection_setting(quasar_selection_options_t* handle);
 
 //! Sets the return data to be a null terminated string
 /*! \param[in]  hData   Data handle

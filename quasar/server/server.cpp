@@ -453,7 +453,7 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
 
     if (j["errors"].empty())
     {
-        j.remove_member("errors");
+        j.erase("errors");
     }
 
     if (!j.empty())
