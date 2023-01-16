@@ -18,8 +18,6 @@ init:
       {
           Update-AppveyorBuild -Version "$($env:APPVEYOR_REPO_COMMIT.Substring(0, 7))-$env:APPVEYOR_BUILD_NUMBER"
       }
-install:
-  - git submodule update --init --recursive
 for:
   - matrix:
       only:
@@ -27,6 +25,9 @@ for:
 
     environment:
       Qt6_DIR: C:\Qt\6.4.0\msvc2019_64
+
+    install:
+      - git submodule update --init --recursive
 
     build_script:
       - cmd: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S%APPVEYOR_BUILD_FOLDER% -B%APPVEYOR_BUILD_FOLDER%/build -G "Visual Studio 17 2022" -T host=x64 -A x64
@@ -39,7 +40,8 @@ for:
       Qt6_DIR: $HOME/Qt/6.4.0/gcc_64
 
     install:
-      - sudo apt install gcc-11 g++-11
+      - git submodule update --init --recursive
+      - sudo apt-get -y install gcc-11 g++-11
 
     build_script:
       - ps: cmake --no-warn-unused-cli -DCMAKE_PREFIX_PATH="$HOME/Qt/6.4.0/gcc_64/lib/cmake" -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
