@@ -38,6 +38,9 @@ for:
     environment:
       Qt6_DIR: $HOME/Qt/6.4.0/gcc_64
 
+    install:
+      - sudo apt install gcc-11 g++-11
+
     build_script:
       - ps: cmake --no-warn-unused-cli -DCMAKE_PREFIX_PATH="$HOME/Qt/6.4.0/gcc_64/lib/cmake" -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
       - ps: cmake --build ./build --config Release --
