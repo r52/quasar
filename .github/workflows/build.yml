@@ -45,7 +45,7 @@ jobs:
         run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
 
       - name: Build Project
-        run: cmake --build ./build --config Release --target ALL_BUILD --
+        run: cmake --build ./build --config Release --
 
       - name: Package Quasar
         if: startsWith(matrix.os, 'windows')
