@@ -6,6 +6,7 @@ on:
       - master
     paths-ignore:
       - "docs/**"
+  workflow_dispatch:
 
 jobs:
   build:
@@ -38,12 +39,12 @@ jobs:
       - name: Configure Project Windows
         if: startsWith(matrix.os, 'windows')
         working-directory: quasar
-        run: cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Visual Studio 17 2022" -T host=x64 -A x64
+        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Visual Studio 17 2022" -T host=x64 -A x64
 
       - name: Configure Project Linux
         if: (!startsWith(matrix.os, 'windows'))
         working-directory: quasar
-        run: cmake --no-warn-unused-cli -DCMAKE_TOOLCHAIN_FILE:STRING=./vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build
+        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
 
       - name: Build Project
         working-directory: quasar
