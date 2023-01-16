@@ -484,7 +484,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
     {
         if (!rett.errors.empty())
         {
-            msg["errors"].insert(msg["errors"].array_range().end(), rett.errors.begin(), rett.errors.end());
+            msg["errors"].insert(msg["errors"].array_range().end(), rett.errors);
         }
 
         SPDLOG_WARN("get_data({}, {}) failed", name, src.topic);
@@ -493,7 +493,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
 
     if (!rett.errors.empty())
     {
-        msg["errors"].insert(msg["errors"].array_range().end(), rett.errors.begin(), rett.errors.end());
+        msg["errors"].insert(msg["errors"].array_range().end(), rett.errors);
     }
 
     if (not rett.val)

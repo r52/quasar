@@ -96,6 +96,7 @@ QuasarWidget::QuasarWidget(const std::string& widgetName,
     webview->setPage(page);
 
     webview->settings()->setAttribute(QWebEngineSettings::JavascriptCanOpenWindows, false);
+    webview->settings()->setAttribute(QWebEngineSettings::LocalContentCanAccessFileUrls, true);
 
     // Remote access permission
     if (widget_definition.remoteAccess.value_or(false))
@@ -255,7 +256,7 @@ void QuasarWidget::createContextMenuActions()
     });
 
     aReload = new QAction(tr("&Reload"), this);
-    connect(aReload, &QAction::triggered, [&] {
+    connect(aReload, &QAction::triggered, [=, this] {
         if (webview->page()->scripts().count())
         {
             // Delete old script if it exists
