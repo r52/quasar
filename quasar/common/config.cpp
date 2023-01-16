@@ -72,7 +72,7 @@ void Config::ReadDataSourceSetting(const std::string& name, Settings::DataSource
 
     cfg->beginGroup(qname);
     settings->enabled = cfg->value("enabled", cpy.enabled).toBool();
-    settings->rate    = cfg->value("rate", QVariant(cpy.rate)).toLongLong();
+    settings->rate    = cfg->value("rate", QVariant::fromValue(cpy.rate)).toLongLong();
     cfg->endGroup();
 }
 
@@ -82,7 +82,7 @@ void Config::WriteDataSourceSetting(const std::string& name, Settings::DataSourc
 
     cfg->beginGroup(qname);
     cfg->setValue("enabled", settings->enabled);
-    cfg->setValue("rate", QVariant(settings->rate));
+    cfg->setValue("rate", QVariant::fromValue(settings->rate));
     cfg->endGroup();
 }
 
