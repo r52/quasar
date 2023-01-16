@@ -69,12 +69,6 @@ constexpr auto TWOPI = (2 * 3.14159265358979323846);
 
 struct Measure
 {
-    enum Port
-    {
-        PORT_OUTPUT,
-        PORT_INPUT,
-    };
-
     enum Channel
     {
         CHANNEL_FL,
@@ -121,8 +115,6 @@ struct Measure
         float x;
     };
 
-    Port                 m_port;  // port specifier (not used, only output is supported in win_audio_viz)
-
     Format               m_format;       // format specifier (detected in init)
     std::array<int, 2>   m_envRMS;       // RMS attack/decay times in ms (parsed from options)
     std::array<int, 2>   m_envPeak;      // peak attack/decay times in ms (parsed from options)
@@ -165,7 +157,6 @@ struct Measure
     std::span<BYTE>                              m_buffer;      // temp processing buffer
 
     Measure() :
-        m_port(PORT_OUTPUT),
         m_format(FMT_INVALID),
         m_fftSize(0),
         m_fftOverlap(0),
@@ -241,8 +232,6 @@ quasar_data_source_t sources[]                = {
 
 namespace
 {
-    // std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>>    converter;
-
     dbj::char_range_to_string                                 string_conv{};
     dbj::wchar_range_to_string                                to_wstring{};
 
@@ -254,6 +243,8 @@ namespace
     std::array<std::vector<double>, Measure::Type::NUM_TYPES> output;
 
     float                                                     fftScalar, bandScalar, df = 0;
+
+    bool                                                      last_data_is_not_zero = true;
 }  // namespace
 
 HRESULT Measure::DeviceInit()
@@ -271,12 +262,12 @@ HRESULT Measure::DeviceInit()
         hr = m_enum->GetDevice(m_reqID.c_str(), &m_dev);
         if (hr != S_OK)
         {
-            warn("Audio {} device '{}' not found (error 0x{}).", m_port == PORT_OUTPUT ? "output" : "input", string_conv(m_reqID), hr);
+            warn("Audio output device '{}' not found (error 0x{}).", string_conv(m_reqID), hr);
         }
     }
     else
     {
-        hr = m_enum->GetDefaultAudioEndpoint(m_port == PORT_OUTPUT ? eRender : eCapture, eConsole, &m_dev);
+        hr = m_enum->GetDefaultAudioEndpoint(eRender, eConsole, &m_dev);
     }
 
     EXIT_ON_ERROR(hr);
@@ -410,38 +401,35 @@ HRESULT Measure::DeviceInit()
     // Windows bug workaround: create a silent render client before initializing loopback mode
     // see:
     // http://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/c7ba0a04-46ce-43ff-ad15-ce8932c00171/loopback-recording-causes-digital-stuttering?forum=windowspro-audiodevelopment
-    if (m_port == PORT_OUTPUT)
-    {
-        hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, 0, 0, m_wfx, NULL);
-        EXIT_ON_ERROR(hr);
+    hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, 0, 0, m_wfx, NULL);
+    EXIT_ON_ERROR(hr);
 
-        // get the frame count
-        UINT32 nFrames;
-        hr = m_clBugAudio->GetBufferSize(&nFrames);
-        EXIT_ON_ERROR(hr);
+    // get the frame count
+    UINT32 nFrames;
+    hr = m_clBugAudio->GetBufferSize(&nFrames);
+    EXIT_ON_ERROR(hr);
 
-        // create a render client
-        hr = m_clBugAudio->GetService(IID_IAudioRenderClient, (void**) &m_clBugRender);
-        EXIT_ON_ERROR(hr);
+    // create a render client
+    hr = m_clBugAudio->GetService(IID_IAudioRenderClient, (void**) &m_clBugRender);
+    EXIT_ON_ERROR(hr);
 
-        // get the buffer
-        BYTE* buffer;
-        hr = m_clBugRender->GetBuffer(nFrames, &buffer);
-        EXIT_ON_ERROR(hr);
+    // get the buffer
+    BYTE* buffer;
+    hr = m_clBugRender->GetBuffer(nFrames, &buffer);
+    EXIT_ON_ERROR(hr);
 
-        // release it
-        hr = m_clBugRender->ReleaseBuffer(nFrames, AUDCLNT_BUFFERFLAGS_SILENT);
-        EXIT_ON_ERROR(hr);
+    // release it
+    hr = m_clBugRender->ReleaseBuffer(nFrames, AUDCLNT_BUFFERFLAGS_SILENT);
+    EXIT_ON_ERROR(hr);
 
-        // start the stream
-        hr = m_clBugAudio->Start();
-        EXIT_ON_ERROR(hr);
-    }
+    // start the stream
+    hr = m_clBugAudio->Start();
+    EXIT_ON_ERROR(hr);
     // ---------------------------------------------------------------------------------------
 #endif
 
     // initialize the audio client
-    hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, 0, 0, m_wfx, NULL);
+    hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, m_wfx, NULL);
     if (hr != S_OK)
     {
         // Compatibility with the Nahimic audio driver
@@ -453,7 +441,7 @@ HRESULT Measure::DeviceInit()
         m_wfx->nBlockAlign     = (2 * m_wfx->wBitsPerSample) / 8;
         m_wfx->nAvgBytesPerSec = m_wfx->nSamplesPerSec * m_wfx->nBlockAlign;
 
-        hr                     = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, m_port == PORT_OUTPUT ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0, 0, 0, m_wfx, NULL);
+        hr                     = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, m_wfx, NULL);
         if (hr != S_OK)
         {
             // stereo waveformat didnt work either, throw an error
@@ -671,9 +659,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 if (m->m_enum)
                 {
                     IMMDeviceCollection* collection = NULL;
-                    if (m->m_enum->EnumAudioEndpoints(m->m_port == Measure::PORT_OUTPUT ? eRender : eCapture,
-                            DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED,
-                            &collection) == S_OK)
+                    if (m->m_enum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &collection) == S_OK)
                     {
                         std::vector<std::string> list;
                         UINT                     nDevices;
@@ -1027,7 +1013,17 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = x;
                     }
 
-                    quasar_set_data_double_vector(hData, output[type]);
+                    double acc = std::accumulate(output[type].begin(), output[type].end(), 0.0);
+
+                    if (acc > 0.0 || (acc == 0.0 && last_data_is_not_zero))
+                    {
+                        quasar_set_data_double_vector(hData, output[type]);
+                        last_data_is_not_zero = (acc > 0.0);
+                    }
+                    else
+                    {
+                        quasar_set_data_null(hData);
+                    }
 
                     return true;
                 }
@@ -1056,7 +1052,17 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         output[type][i] = x;
                     }
 
-                    quasar_set_data_double_vector(hData, output[type]);
+                    double acc = std::accumulate(output[type].begin(), output[type].end(), 0.0);
+
+                    if (acc > 0.0 || (acc == 0.0 && last_data_is_not_zero))
+                    {
+                        quasar_set_data_double_vector(hData, output[type]);
+                        last_data_is_not_zero = (acc > 0.0);
+                    }
+                    else
+                    {
+                        quasar_set_data_null(hData);
+                    }
 
                     return true;
                 }
@@ -1214,8 +1220,15 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
         needs_reinit = true;
     }
 
-    m->m_freqMin    = quasar_get_double_setting(extHandle, settings, "FreqMin");
-    m->m_freqMax    = quasar_get_double_setting(extHandle, settings, "FreqMax");
+    double freqMin = quasar_get_double_setting(extHandle, settings, "FreqMin");
+    double freqMax = quasar_get_double_setting(extHandle, settings, "FreqMax");
+
+    if (freqMin != m->m_freqMin || freqMax != m->m_freqMax)
+    {
+        m->m_freqMin = freqMin;
+        m->m_freqMax = freqMax;
+        needs_reinit = true;
+    }
 
     m->m_envRMS[0]  = quasar_get_uint_setting(extHandle, settings, "RMSAttack");
     m->m_envRMS[1]  = quasar_get_uint_setting(extHandle, settings, "RMSDecay");
