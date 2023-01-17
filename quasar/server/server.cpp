@@ -10,6 +10,7 @@
 
 #include "extension/extension.h"
 
+#include "internal/ajax.h"
 #include "internal/applauncher.h"
 
 #include <QCoreApplication>
@@ -246,6 +247,42 @@ void Server::loadExtensions()
             // App Launcher
             std::string name = "applauncher";
             Extension*  extn = Extension::LoadInternal(name, applauncher_load, applauncher_destroy, config.lock(), shared_from_this());
+
+            if (!extn)
+            {
+                SPDLOG_WARN("Failed to load extension {}", name);
+            }
+            else if (extensions.count(extn->GetName()))
+            {
+                SPDLOG_WARN("Extension with code {} already loaded. Unloading {}", extn->GetName(), name);
+            }
+            else
+            {
+                try
+                {
+                    extn->Initialize();
+                } catch (std::exception e)
+                {
+                    SPDLOG_WARN("Exception: {} while initializing {}", e.what(), name);
+                    delete extn;
+                    extn = nullptr;
+                }
+
+                SPDLOG_INFO("Extension {} loaded.", extn->GetName());
+                extensions[extn->GetName()].reset(extn);
+                extn = nullptr;
+            }
+
+            if (extn != nullptr)
+            {
+                delete extn;
+            }
+        }
+
+        {
+            // AJAX
+            std::string name = "ajax";
+            Extension*  extn = Extension::LoadInternal(name, ajax_load, ajax_destroy, config.lock(), shared_from_this());
 
             if (!extn)
             {

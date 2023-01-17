@@ -79,16 +79,16 @@ class Extension
         GET_DATA_SUCCESS = 1    //!< data successfully retrieved
     };
 
-    //! Shorthand type for quasar_extension_load()
-    using extension_load = std::add_pointer_t<quasar_ext_info_t*(void)>;
-
-    //! Shorthand type for quasar_extension_destroy()
-    using extension_destroy = std::add_pointer_t<void(quasar_ext_info_t*)>;
-
     //! Shorthand for datasources type
     using DataSourceMapType = std::unordered_map<std::string, DataSource>;
 
 public:
+    //! Shorthand type for quasar_extension_load()
+    using extension_load = std::add_pointer_t<quasar_ext_info_t*(void)>;
+
+    //! Shorthand type for quasar_extension_destroy()
+    using extension_destroy                 = std::add_pointer_t<void(quasar_ext_info_t*)>;
+
     Extension(Extension const&)             = delete;
     Extension& operator= (Extension const&) = delete;
 
@@ -215,6 +215,9 @@ public:
         \sa quasar_ext_info_t.update
     */
     void UpdateExtensionSettings();
+
+    //! Returns pointer to Server
+    std::shared_ptr<Server> GetServer() { return server.lock(); }
 
 private:
     //! Extension constructor

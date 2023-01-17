@@ -55,6 +55,7 @@ add_executable(quasar WIN32
   common/util.cpp
 
   internal/applauncher.cpp
+  internal/ajax.cpp
 
   config/configdialog.cpp
   config/launchereditdialog.cpp
