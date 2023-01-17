@@ -158,7 +158,7 @@ function init(dat) {
   const mesh = new THREE.Mesh(geometry, material);
   scene.add(mesh);
 
-  window.addEventListener("resize", onResize, false);
+  window.addEventListener("resize", onResize);
 
   animate();
 }
