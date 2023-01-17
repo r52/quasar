@@ -46,7 +46,7 @@ LauncherEditDialog::LauncherEditDialog(QString title, QWidget* parent, QString c
             mimeTypeFilters.append(mimeTypeName);
         mimeTypeFilters.sort();
         dialog.setMimeTypeFilters(mimeTypeFilters);
-        dialog.selectMimeTypeFilter("image/jpeg");
+        dialog.selectMimeTypeFilter("image/svg+xml");
 
         if (dialog.exec() == QDialog::Accepted)
         {
