@@ -41,7 +41,7 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<C
     ui.setupUi(this);
 
     // Setup logger
-    ui.logEdit->document()->setMaximumBlockCount(250);
+    ui.logEdit->document()->setMaximumBlockCount(200);
     initializeLogger(ui.logEdit);
 
     // Initialize late components

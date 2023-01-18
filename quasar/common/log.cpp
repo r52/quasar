@@ -13,8 +13,11 @@ namespace Log
             if (sinks.size() > 0)
             {
                 spdlog::init_thread_pool(8192, 1);
-                logger =
-                    std::make_shared<spdlog::async_logger>(quasar_log, sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+                logger = std::make_shared<spdlog::async_logger>(quasar_log,
+                    sinks.begin(),
+                    sinks.end(),
+                    spdlog::thread_pool(),
+                    spdlog::async_overflow_policy::overrun_oldest);
 
                 spdlog::register_logger(logger);
             }
