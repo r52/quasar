@@ -9,7 +9,6 @@ on:
       - "**.md"
       - "**.rst"
       - "widgets/**"
-
   workflow_dispatch:
 
 jobs:
@@ -39,6 +38,9 @@ jobs:
           version: "6.4.2"
           arch: ${{ matrix.arch }}
           modules: qtmultimedia qtwebengine qtpositioning qtwebchannel qtnetworkauth qtserialport
+
+      - name: Cache vcpkg
+        uses: lukka/run-vcpkg@v10
 
       - name: Configure Project Windows
         if: runner.os == 'Windows'
