@@ -87,7 +87,7 @@ struct quasar_data_source_t
 {
     char    name[32];  //!< Identifier for this data source.
 
-    int64_t rate;  //!< Default rate of refresh for this Data Source (in milliseconds).
+    int64_t rate;  //!< Default rate of refresh for this Data Source (in microseconds).
                    //!< See \ref quasar_polling_type_t for additional polling options.
                    //!< \sa quasar_signal_data_ready(), quasar_signal_wait_processed(), quasar_polling_type_t
 

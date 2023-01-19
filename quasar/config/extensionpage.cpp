@@ -54,7 +54,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
             upSpin->setMaximum(INT_MAX);
             upSpin->setSingleStep(1);
             upSpin->setValue(data->rate);
-            upSpin->setSuffix("ms");
+            upSpin->setSuffix("us");
             upSpin->setEnabled(data->enabled);
 
             connect(enableCheck, &QCheckBox::toggled, [=](bool state) {

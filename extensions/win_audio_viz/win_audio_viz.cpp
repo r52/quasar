@@ -217,10 +217,10 @@ const IID            IID_IAudioCaptureClient  = __uuidof(IAudioCaptureClient);
 const IID            IID_IAudioRenderClient   = __uuidof(IAudioRenderClient);
 
 quasar_data_source_t sources[]                = {
-    {       "rms",                    16,    0, 0},
-    {      "peak",                    16,    0, 0},
-    {       "fft",                    16,    0, 0},
-    {      "band",                    16,    0, 0},
+    {       "rms",                 16667,    0, 0},
+    {      "peak",                 16667,    0, 0},
+    {       "fft",                 16667,    0, 0},
+    {      "band",                 16667,    0, 0},
     {   "fftfreq", QUASAR_POLLING_CLIENT, 5000, 0},
     {  "bandfreq", QUASAR_POLLING_CLIENT, 5000, 0},
     {    "format", QUASAR_POLLING_CLIENT, 5000, 0},

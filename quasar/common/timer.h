@@ -17,11 +17,11 @@ public:
     void setInterval(auto&& fn, int intv)
     {
         interval = intv;
-        SPDLOG_DEBUG("New timer thread with {}ms internal", intv);
-        thread = std::jthread{[=, this](std::stop_token token) {
+        SPDLOG_DEBUG("New timer thread with {}us internal", interval);
+        thread = std::jthread{[&, fn](std::stop_token token) {
             std::unique_lock<std::mutex> lk(mtx);
 
-            const auto                   origInterval = std::chrono::nanoseconds(std::chrono::milliseconds(intv));
+            const auto                   origInterval = std::chrono::nanoseconds(std::chrono::microseconds(interval));
             auto                         nextSleep    = origInterval;
 
             while (true)
