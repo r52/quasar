@@ -4,24 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <title>Sample AppLauncher</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>
     <style>
         body {
             user-select: none;
-            background-color: transparent;
+            background-color: rgba(0,0,0,0.2);
             overflow: hidden;
+        }
+
+        #container {
+            height: 100%;
+            width: 100%;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-evenly;
         }
 
         a {
             display: block;
-            width: 50px;
-            height: 50px;
-            filter: drop-shadow( 1px 1px 0px #eee );
+            width: 60px;
+            height: 60px;
+            filter: drop-shadow( 4px 4px 2px rgb(21, 18, 18) );
         }
     </style>
 </head>
 
 <body ondragstart="return false">
+    <div id="container"></div>
     <script src="js/script.js"></script>
 </body>
 
