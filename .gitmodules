@@ -6,6 +6,6 @@
 [submodule "3rdparty/tracy"]
 	path = 3rdparty/tracy
 	url = https://github.com/wolfpld/tracy.git
-[submodule "3rdparty/mufft"]
-	path = 3rdparty/mufft
-	url = https://github.com/Themaister/muFFT.git
+[submodule "3rdparty/kfr"]
+	path = 3rdparty/kfr
+	url = https://github.com/kfrlib/kfr.git

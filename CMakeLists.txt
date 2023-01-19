@@ -32,6 +32,6 @@ add_subdirectory(quasar)
 if(WIN32)
     add_subdirectory(extensions/win_simple_perf)
 
-    add_subdirectory(3rdparty/mufft)
+    add_subdirectory(3rdparty/kfr)
     add_subdirectory(extensions/win_audio_viz)
 endif()

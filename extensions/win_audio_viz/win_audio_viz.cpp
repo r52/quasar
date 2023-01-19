@@ -12,11 +12,22 @@
 #include <array>
 #include <cassert>
 #include <complex>
+#include <mutex>
 #include <numeric>
 #include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include <kfr/dft.hpp>
+
+#include <extension_api.h>
+#include <extension_support.hpp>
+
+#include <fmt/core.h>
+#include <fmt/xchar.h>
+
+#include "convert.h"
 
 #include <windows.h>
 
@@ -26,16 +37,6 @@
 #include <avrt.h>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <mmdeviceapi.h>
-
-#include <extension_api.h>
-#include <extension_support.hpp>
-
-#include <fft.h>
-
-#include <fmt/core.h>
-#include <fmt/xchar.h>
-
-#include "convert.h"
 
 #define WINDOWS_BUG_WORKAROUND 1
 #define CLAMP01(x)             max(0.0, min(1.0, (x)))
@@ -137,24 +138,24 @@ struct Measure
     IAudioClient*       m_clBugAudio;   // audio client for dummy silent channel
     IAudioRenderClient* m_clBugRender;  // render client for dummy silent channel
 #endif
-    std::wstring                                 m_reqID;       // requested device ID (parsed from options)
-    std::wstring                                 m_devName;     // device friendly name (detected in init)
-    std::array<float, 2>                         m_kRMS;        // RMS attack/decay filter constants
-    std::array<float, 2>                         m_kPeak;       // peak attack/decay filter constants
-    std::array<float, 2>                         m_kFFT;        // FFT attack/decay filter constants
-    std::array<double, MAX_CHANNELS>             m_rms;         // current RMS levels
-    std::array<double, MAX_CHANNELS>             m_peak;        // current peak levels
-    std::array<mufft_plan_1d*, MAX_CHANNELS>     m_fftPlan;     // FFT plans for each channel
-    std::array<std::vector<float>, MAX_CHANNELS> m_fftIn;       // buffer for each channel's FFT input
-    std::array<std::vector<float>, MAX_CHANNELS> m_fftOut;      // buffer for each channel's FFT output
-    std::vector<float>                           m_fftKWdw;     // window function coefficients
-    std::vector<float>                           m_fftTmpIn;    // temp FFT processing buffer
-    std::vector<std::complex<float>>             m_fftTmpOutP;  // temp FFT processing buffer
-    int                                          m_fftBufW;     // write index for input ring buffers
-    int                                          m_fftBufP;     // decremental counter - process FFT at zero
-    std::vector<float>                           m_bandFreq;    // buffer of band max frequencies
-    std::array<std::vector<float>, MAX_CHANNELS> m_bandOut;     // buffer of band values
-    std::span<BYTE>                              m_buffer;      // temp processing buffer
+    std::wstring                                            m_reqID;       // requested device ID (parsed from options)
+    std::wstring                                            m_devName;     // device friendly name (detected in init)
+    std::array<float, 2>                                    m_kRMS;        // RMS attack/decay filter constants
+    std::array<float, 2>                                    m_kPeak;       // peak attack/decay filter constants
+    std::array<float, 2>                                    m_kFFT;        // FFT attack/decay filter constants
+    std::array<double, MAX_CHANNELS>                        m_rms;         // current RMS levels
+    std::array<double, MAX_CHANNELS>                        m_peak;        // current peak levels
+    std::array<kfr::dft_plan_real_ptr<float>, MAX_CHANNELS> m_fftPlan;     // FFT plans for each channel
+    std::array<std::vector<float>, MAX_CHANNELS>            m_fftIn;       // buffer for each channel's FFT input
+    std::array<std::vector<float>, MAX_CHANNELS>            m_fftOut;      // buffer for each channel's FFT output
+    std::vector<float>                                      m_fftKWdw;     // window function coefficients
+    std::vector<float>                                      m_fftTmpIn;    // temp FFT processing buffer
+    std::vector<std::complex<float>>                        m_fftTmpOutP;  // temp FFT processing buffer
+    int                                                     m_fftBufW;     // write index for input ring buffers
+    int                                                     m_fftBufP;     // decremental counter - process FFT at zero
+    std::vector<float>                                      m_bandFreq;    // buffer of band max frequencies
+    std::array<std::vector<float>, MAX_CHANNELS>            m_bandOut;     // buffer of band values
+    std::span<BYTE>                                         m_buffer;      // temp processing buffer
 
     Measure() :
         m_format(FMT_INVALID),
@@ -200,9 +201,8 @@ struct Measure
 
         for (size_t iChan = 0; iChan < MAX_CHANNELS; ++iChan)
         {
-            m_rms[iChan]     = 0.0;
-            m_peak[iChan]    = 0.0;
-            m_fftPlan[iChan] = nullptr;
+            m_rms[iChan]  = 0.0;
+            m_peak[iChan] = 0.0;
         }
     }
 
@@ -245,13 +245,16 @@ namespace
     float                                                     fftScalar, bandScalar, df = 0;
 
     bool                                                      last_data_is_not_zero = true;
+    kfr::univector<kfr::u8>                                   temp;
+    std::mutex                                                mutex;
 }  // namespace
 
 HRESULT Measure::DeviceInit()
 {
-    HRESULT         hr;
-    IPropertyStore* props   = NULL;
-    size_t          bufsize = 0;
+    std::unique_lock<std::mutex> lk(mutex);
+    HRESULT                      hr;
+    IPropertyStore*              props   = NULL;
+    size_t                       bufsize = 0;
 
     // get the device handle
     assert(m_enum && !m_dev);
@@ -354,9 +357,10 @@ HRESULT Measure::DeviceInit()
 
         for (size_t iChan = 0; iChan < m_wfx->nChannels; ++iChan)
         {
-            m_fftPlan[iChan] = mufft_create_plan_1d_r2c(m_fftSize, 0);
+            m_fftPlan[iChan].reset(new kfr::dft_plan_real<float>(m_fftSize));
             m_fftIn[iChan].resize(m_fftSize, 0.0f);
             m_fftOut[iChan].resize(m_fftSize, 0.0f);
+            temp.resize(m_fftPlan[iChan]->temp_size);
         }
 
         m_fftKWdw.resize(m_fftSize, 0.0f);
@@ -480,12 +484,14 @@ HRESULT Measure::DeviceInit()
     return S_OK;
 
 Exit:
+    lk.unlock();
     DeviceRelease();
     return hr;
 }
 
 void Measure::DeviceRelease()
 {
+    std::unique_lock<std::mutex> lk(mutex);
 #if (WINDOWS_BUG_WORKAROUND)
     if (m_clBugAudio)
     {
@@ -514,11 +520,10 @@ void Measure::DeviceRelease()
     for (size_t iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
     {
         if (m_fftPlan[iChan])
-            mufft_free_plan_1d(m_fftPlan[iChan]);
-        m_fftPlan[iChan] = nullptr;
+            m_fftPlan[iChan].reset();
 
-        m_rms[iChan]     = 0.0;
-        m_peak[iChan]    = 0.0;
+        m_rms[iChan]  = 0.0;
+        m_peak[iChan] = 0.0;
     }
 
     if (m_buffer.data())
@@ -564,7 +569,9 @@ bool win_audio_viz_shutdown(quasar_ext_handle handle)
 
 bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 {
-    size_t type = m_typemap[srcUid];
+    std::unique_lock<std::mutex> lk(mutex);
+
+    size_t                       type = m_typemap[srcUid];
 
     switch (type)
     {
@@ -877,7 +884,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                                     m->m_fftTmpIn[iBin] *= m->m_fftKWdw[iBin];
                                 }
 
-                                mufft_execute_plan_1d(m->m_fftPlan[iChan], &m->m_fftTmpOutP[0], &m->m_fftTmpIn[0]);
+                                auto in  = kfr::make_univector(m->m_fftTmpIn);
+                                auto out = kfr::make_univector(m->m_fftTmpOutP);
+
+                                m->m_fftPlan[iChan]->execute(out, in, temp);
                             }
                             else
                             {
@@ -940,6 +950,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             case AUDCLNT_E_BUFFER_ERROR:
             case AUDCLNT_E_DEVICE_INVALIDATED:
             case AUDCLNT_E_SERVICE_NOT_RUNNING:
+                lk.unlock();
                 m->DeviceRelease();
                 break;
         }
@@ -959,9 +970,12 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
         }
 
         // poll for new devices
-        assert(m->m_enum);
-        assert(!m->m_dev);
-        m->DeviceInit();
+        if (m->m_enum && !m->m_dev)
+        {
+            lk.unlock();
+            m->DeviceInit();
+        }
+
         return true;
     }
 
@@ -1159,7 +1173,7 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
     quasar_add_double_setting(extHandle, settings, "PeakGain", "PeakGain", 0.0, 1000.0, 0.1, 1.0);
 
     // FFT options
-    quasar_add_int_setting(extHandle, settings, "FFTSize", "FFTSize", 0, 8192, 2, 256);
+    quasar_add_int_setting(extHandle, settings, "FFTSize", "FFTSize (requires power of 2)", 0, 8192, 2, 256);
     quasar_add_int_setting(extHandle, settings, "FFTOverlap", "FFTOverlap", 0, 4096, 1, 0);
     quasar_add_int_setting(extHandle, settings, "FFTAttack", "FFTAttack", 0, 100000, 1, 300);
     quasar_add_int_setting(extHandle, settings, "FFTDecay", "FFTDecay", 0, 100000, 1, 300);
