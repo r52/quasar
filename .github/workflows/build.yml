@@ -41,6 +41,8 @@ jobs:
 
       - name: Cache vcpkg
         uses: lukka/run-vcpkg@v10
+        with:
+          vcpkgJsonGlob: "vcpkg.json"
 
       - name: Configure Project Windows
         if: runner.os == 'Windows'
