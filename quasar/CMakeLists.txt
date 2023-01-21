@@ -88,7 +88,7 @@ target_include_directories(quasar PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOU
 target_include_directories(quasar PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
 target_include_directories(quasar PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
 
-target_link_libraries(quasar PUBLIC $<$<CONFIG:RelWithDebInfo>:Tracy::TracyClient>)
+target_link_libraries(quasar PRIVATE Tracy::TracyClient)
 target_link_libraries(quasar PRIVATE extension-api)
 target_link_libraries(quasar PRIVATE fmt::fmt spdlog::spdlog)
 target_link_libraries(quasar PRIVATE jsoncons)

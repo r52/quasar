@@ -8,6 +8,8 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
+#include <tracy/Tracy.hpp>
+
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -720,7 +722,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     // query the buffer
     if (m->m_clCapture)
     {
-        // ZoneScopedS(30);
+        ZoneScopedS(30);
 
         BYTE*   buffer;
         UINT32  nFrames;

@@ -1,3 +1,5 @@
+#include <tracy/Tracy.hpp>
+
 #include "extension.h"
 
 #include "extension_support_internal.h"
@@ -529,7 +531,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
 
 void Extension::sendDataToSubscribers(DataSource& src)
 {
-    // ZoneScopedS(30);
+    ZoneScopedS(30);
     {
         std::lock_guard<std::shared_mutex> lk(src.mutex);
 
@@ -585,9 +587,9 @@ void Extension::createTimer(DataSource& src)
 
         src.timer->setInterval(
             [this, &src] {
-                // FrameMarkStart(src.topic.data());
+                FrameMarkStart(src.topic.data());
                 sendDataToSubscribers(src);
-                // FrameMarkEnd(src.topic.data());
+                FrameMarkEnd(src.topic.data());
             },
             src.settings.rate);
     }
