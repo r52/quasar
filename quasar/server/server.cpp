@@ -43,6 +43,7 @@ namespace
     std::condition_variable_any cv;
 
     std::set<std::string>       authcodes;
+    std::mutex                  authMutex;
 }  // namespace
 
 Server::Server(std::shared_ptr<Config> cfg) :
@@ -525,9 +526,11 @@ void Server::handleMethodAuth(PerSocketData* client, const ClientMessage& msg)
         return;
     }
 
-    auto& code   = parms.code.value();
+    auto&                       code = parms.code.value();
 
-    auto  search = authcodes.find(code);
+    std::lock_guard<std::mutex> lk(authMutex);
+
+    auto                        search = authcodes.find(code);
     if (search == authcodes.end())
     {
         SEND_CLIENT_ERROR(client, "Invalid authentication code");
@@ -537,6 +540,7 @@ void Server::handleMethodAuth(PerSocketData* client, const ClientMessage& msg)
     authcodes.erase(search);
 
     client->authenticated = true;
+    SPDLOG_INFO("Client authenticated!");
 }
 
 void Server::processMessage(PerSocketData* client, const std::string& msg)
