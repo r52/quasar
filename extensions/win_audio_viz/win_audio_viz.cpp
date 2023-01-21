@@ -8,20 +8,20 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
+#define NOMINMAX
+
 #include <tracy/Tracy.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <complex>
+#include <memory>
 #include <mutex>
-#include <numeric>
 #include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#include <kfr/dft.hpp>
 
 #include <extension_api.h>
 #include <extension_support.hpp>
@@ -31,6 +31,7 @@
 
 #include "convert.h"
 
+//- These WinAPI defs must be in a certain order
 #include <windows.h>
 
 #include <propkey.h>
@@ -39,9 +40,16 @@
 #include <avrt.h>
 #include <Functiondiscoverykeys_devpkey.h>
 #include <mmdeviceapi.h>
+//- WinAPI
+
+#include <kfr/dft.hpp>
 
 #define WINDOWS_BUG_WORKAROUND 1
-#define CLAMP01(x)             max(0.0, min(1.0, (x)))
+
+constexpr double CLAMP01(double x)
+{
+    return std::max(0.0, std::min(1.0, (x)));
+}
 
 constexpr auto TWOPI = (2 * 3.14159265358979323846);
 
@@ -110,12 +118,6 @@ struct Measure
         FMT_PCM_F32,
         // ... //
         NUM_FORMATS
-    };
-
-    struct BandInfo
-    {
-        float freq;
-        float x;
     };
 
     Format               m_format;       // format specifier (detected in init)
@@ -1025,7 +1027,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         }
 
                         x               = CLAMP01(x);
-                        x               = max(0, m->m_sensitivity * log10(x) + 1.0);
+                        x               = std::max(0.0, m->m_sensitivity * log10(x) + 1.0);
                         output[type][i] = x;
                     }
 
@@ -1064,7 +1066,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         }
 
                         x               = CLAMP01(x);
-                        x               = max(0, m->m_sensitivity * log10(x) + 1.0);
+                        x               = std::max(0.0, m->m_sensitivity * log10(x) + 1.0);
                         output[type][i] = x;
                     }
 
@@ -1256,7 +1258,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     // (re)parse gain constants
     m->m_gainRMS     = quasar_get_double_setting(extHandle, settings, "RMSGain");
     m->m_gainPeak    = quasar_get_double_setting(extHandle, settings, "PeakGain");
-    m->m_sensitivity = 10.0 / max(1.0, quasar_get_double_setting(extHandle, settings, "Sensitivity"));
+    m->m_sensitivity = 10.0 / std::max(1.0, quasar_get_double_setting(extHandle, settings, "Sensitivity"));
 
     // regenerate filter constants
     if (m->m_wfx)
