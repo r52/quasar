@@ -4,6 +4,7 @@
 #include <QDialog>
 
 class ExtensionPage;
+class QCheckBox;
 
 namespace Ui
 {
@@ -23,6 +24,8 @@ public:
 private:
     Ui::ConfigDialog*           ui;
     std::vector<ExtensionPage*> extensionPages;
+
+    QCheckBox*                  startupCheck{};
 };
 
 #endif  // CONFIGDIALOG_H

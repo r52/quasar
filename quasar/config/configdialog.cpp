@@ -10,6 +10,9 @@
 #include <jsoncons/json.hpp>
 #include <spdlog/spdlog.h>
 
+#include <QFileInfo>
+#include <QStandardPaths>
+
 JSONCONS_ALL_MEMBER_TRAITS(Settings::AppLauncherData, command, file, start, args, icon);
 
 ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::ConfigDialog)
@@ -21,6 +24,16 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
     ui->logCombo->setCurrentIndex(Settings::internal.log_level.GetValue());
     ui->logToFile->setChecked(Settings::internal.log_file.GetValue());
     ui->authCheckbox->setChecked(Settings::internal.auth.GetValue());
+
+#ifdef WIN32
+    // ------------------Startup launch
+    QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
+    QFileInfo lnk(startupFolder + "/Quasar.lnk");
+
+    startupCheck = new QCheckBox("Launch Quasar when system starts");
+    startupCheck->setChecked(lnk.exists());
+    ui->formLayout->setWidget(ui->formLayout->rowCount(), QFormLayout::SpanningRole, startupCheck);
+#endif
 
     // App launcher table
     auto applist = jsoncons::decode_json<std::vector<Settings::AppLauncherData>>(Settings::internal.applauncher.GetValue());
@@ -169,6 +182,26 @@ void ConfigDialog::SaveSettings()
     Settings::internal.log_level.SetValue(ui->logCombo->currentIndex());
     Settings::internal.log_file.SetValue(ui->logToFile->isChecked());
     Settings::internal.auth.SetValue(ui->authCheckbox->isChecked());
+
+#ifdef WIN32
+    if (startupCheck)
+    {
+        QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
+        QString   filename      = startupFolder + "/Quasar.lnk";
+        QFileInfo lnk(filename);
+
+        bool      checked = startupCheck->isChecked();
+
+        if (checked && !lnk.exists())
+        {
+            QFile::link(QCoreApplication::applicationFilePath(), filename);
+        }
+        else if (!checked && lnk.exists())
+        {
+            QFile::remove(filename);
+        }
+    }
+#endif
 
     // App table
     std::vector<Settings::AppLauncherData> applist;

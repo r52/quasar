@@ -124,7 +124,7 @@
          <item row="1" column="0" colspan="2">
           <widget class="QCheckBox" name="authCheckbox">
            <property name="text">
-            <string>Allow only Quasar widgets to connect to the WebSocket server?</string>
+            <string>Allow only Quasar widgets to connect to the WebSocket server? (requires restart)</string>
            </property>
           </widget>
          </item>
