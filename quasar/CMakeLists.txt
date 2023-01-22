@@ -96,7 +96,7 @@ target_link_libraries(quasar PRIVATE ZLIB::ZLIB $<IF:$<TARGET_EXISTS:uv_a>,uv_a,
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::Svg Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
 add_custom_command(TARGET quasar POST_BUILD
-  COMMAND $<$<CONFIG:RelWithDebInfo>:${CMAKE_COMMAND}> -E copy $<$<CONFIG:RelWithDebInfo>:$<TARGET_FILE:Tracy::TracyClient>> $<TARGET_FILE_DIR:quasar>
+  COMMAND $<$<BOOL:${TRACY_ENABLE}>:${CMAKE_COMMAND}> -E copy $<$<BOOL:${TRACY_ENABLE}>:$<TARGET_FILE:Tracy::TracyClient>> $<TARGET_FILE_DIR:quasar>
 )
 
 if(WIN32)
