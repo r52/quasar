@@ -33,6 +33,7 @@ if(WIN32)
     add_subdirectory(extensions/win_simple_perf)
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        option(KFR_ENABLE_DFT_MULTIARCH "" ON)
         add_subdirectory(3rdparty/kfr)
         add_subdirectory(extensions/win_audio_viz)
     endif()
