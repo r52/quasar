@@ -102,7 +102,7 @@ public:
         \param[in]  libpath Path to library file
         \return Pointer to a Extension instance if successful, nullptr otherwise
     */
-    static Extension* Load(const std::string& libpath, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv);
+    static Extension* Load(const std::string& libpath, std::shared_ptr<Config> cfg, Server* srv);
 
     //! Load an internal extension
     /*!
@@ -111,8 +111,7 @@ public:
         \param[in]  DestroyFunc Destroy function
         \return Pointer to a Extension instance if successful, nullptr otherwise
     */
-    static Extension*
-    LoadInternal(std::string_view name, extension_load loadFunc, extension_destroy destroyFunc, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv);
+    static Extension* LoadInternal(std::string_view name, extension_load loadFunc, extension_destroy destroyFunc, std::shared_ptr<Config> cfg, Server* srv);
 
     /*! Initializes the extension
         Throws an exception if failed.
@@ -217,7 +216,7 @@ public:
     void UpdateExtensionSettings();
 
     //! Returns pointer to Server
-    std::shared_ptr<Server> GetServer() { return server.lock(); }
+    Server* GetServer() { return server; }
 
 private:
     //! Extension constructor
@@ -227,12 +226,7 @@ private:
         \param[in]  path        Library path
         \sa quasar_ext_info_t, quasar_extension_destroy()
     */
-    Extension(quasar_ext_info_t* info,
-        extension_destroy        destroyfunc,
-        std::string_view         path,
-        std::shared_ptr<Server>  srv,
-        std::shared_ptr<Config>  cfg,
-        bool                     isInternal = false);
+    Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std::string_view path, Server* srv, std::shared_ptr<Config> cfg, bool isInternal = false);
 
     /*! Retrieves data from a data source and saves it to the supplied JSON object as JSON data
         \param[in]  msg     Reference to the JSON object to save data to
@@ -292,7 +286,7 @@ private:
 
     SettingsVariantVector settings{};  //!< Collection of extension settings
 
-    std::weak_ptr<Server> server{};
+    Server*               server{};
     std::weak_ptr<Config> config{};
 
     // Metadata keys

@@ -9,3 +9,6 @@
 [submodule "3rdparty/kfr"]
 	path = 3rdparty/kfr
 	url = https://github.com/kfrlib/kfr.git
+[submodule "extensions/quasar-spotify-api"]
+	path = extensions/quasar-spotify-api
+	url = https://github.com/r52/quasar-spotify-api.git

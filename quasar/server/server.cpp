@@ -37,13 +37,15 @@ using UWSSocket = uWS::WebSocket<false, true, PerSocketData>;
 namespace
 {
     // Server data
-    uWS::App*                   app              = nullptr;
-    uWS::Loop*                  loop             = nullptr;
-    bool                        extensionsLoaded = false;
-    std::condition_variable_any cv;
+    uWS::App*               app          = nullptr;
+    uWS::Loop*              loop         = nullptr;
 
-    std::set<std::string>       authcodes;
-    std::mutex                  authMutex;
+    bool                    serverLoaded = false;
+    std::mutex              serverMutex;
+    std::condition_variable scv;
+
+    std::set<std::string>   authcodes;
+    std::mutex              authMutex;
 }  // namespace
 
 Server::Server(std::shared_ptr<Config> cfg) :
@@ -117,14 +119,16 @@ Server::Server(std::shared_ptr<Config> cfg) :
                            SPDLOG_INFO("Client disconnected.");
                        }})
             .listen(Settings::internal.port.GetValue(),
-                [this](auto* socket) {
+                [](auto* socket) {
                     if (socket)
                     {
                         SPDLOG_INFO("WebSocket Thread listening on port {}", Settings::internal.port.GetValue());
 
-                        RunOnPool([this] {
-                            this->loadExtensions();
-                        });
+                        {
+                            std::lock_guard lk(serverMutex);
+                            serverLoaded = true;
+                        }
+                        scv.notify_one();
                     }
                     else
                     {
@@ -136,6 +140,15 @@ Server::Server(std::shared_ptr<Config> cfg) :
         delete app;
         loop->free();
     }};
+
+    {
+        std::unique_lock lk(serverMutex);
+        scv.wait(lk, [] {
+            return serverLoaded;
+        });
+    }
+
+    this->loadExtensions();
 
     // Force QtNetworkAuth linkage
     QOAuth2AuthorizationCodeFlow oauth2;
@@ -176,14 +189,6 @@ void Server::PublishData(std::string_view topic, const std::string& data)
 void Server::RunOnServer(auto&& cb)
 {
     loop->defer(cb);
-}
-
-void Server::WaitForExtensionLoad()
-{
-    std::unique_lock<std::shared_mutex> lk(extensionMutex);
-    cv.wait(lk, [] {
-        return extensionsLoaded;
-    });
 }
 
 void Server::UpdateSettings()
@@ -247,7 +252,7 @@ void Server::loadExtensions()
         {
             // App Launcher
             std::string name = "applauncher";
-            Extension*  extn = Extension::LoadInternal(name, applauncher_load, applauncher_destroy, config.lock(), shared_from_this());
+            Extension*  extn = Extension::LoadInternal(name, applauncher_load, applauncher_destroy, config.lock(), this);
 
             if (!extn)
             {
@@ -283,7 +288,7 @@ void Server::loadExtensions()
         {
             // AJAX
             std::string name = "ajax";
-            Extension*  extn = Extension::LoadInternal(name, ajax_load, ajax_destroy, config.lock(), shared_from_this());
+            Extension*  extn = Extension::LoadInternal(name, ajax_load, ajax_destroy, config.lock(), this);
 
             if (!extn)
             {
@@ -323,7 +328,7 @@ void Server::loadExtensions()
 
             SPDLOG_INFO("Loading data extension {}", libpath);
 
-            Extension* extn = Extension::Load(libpath, config.lock(), shared_from_this());
+            Extension* extn = Extension::Load(libpath, config.lock(), this);
 
             if (!extn)
             {
@@ -357,11 +362,8 @@ void Server::loadExtensions()
             }
         }
 
-        extensionsLoaded = true;
         SPDLOG_INFO("Extensions loaded!");
     }
-
-    cv.notify_all();
 }
 
 void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& msg)

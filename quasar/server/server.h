@@ -29,19 +29,17 @@ public:
     Server(std::shared_ptr<Config> cfg);
     ~Server();
 
-    bool FindExtension(const std::string& extcode);
+    bool        FindExtension(const std::string& extcode);
 
-    void SendDataToClient(PerSocketData* client, const std::string& msg);
+    void        SendDataToClient(PerSocketData* client, const std::string& msg);
 
-    void PublishData(std::string_view topic, const std::string& data);
+    void        PublishData(std::string_view topic, const std::string& data);
 
-    void RunOnServer(auto&& cb);
+    void        RunOnServer(auto&& cb);
 
-    void RunOnPool(auto&& cb) { pool.push_task(cb); }
+    void        RunOnPool(auto&& cb) { pool.push_task(cb); }
 
-    void WaitForExtensionLoad();
-
-    void UpdateSettings();
+    void        UpdateSettings();
 
     std::string GenerateAuthCode();
 

@@ -16,12 +16,7 @@
 
 size_t Extension::_uid = 0;
 
-Extension::Extension(quasar_ext_info_t* info,
-    extension_destroy                   destroyfunc,
-    std::string_view                    path,
-    std::shared_ptr<Server>             srv,
-    std::shared_ptr<Config>             cfg,
-    bool                                isInternal) :
+Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std::string_view path, Server* srv, std::shared_ptr<Config> cfg, bool isInternal) :
     extensionInfo{info},
     destroyFunc{destroyfunc},
     libpath{path},
@@ -203,7 +198,7 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& topic, int co
     if (!payload.empty())
     {
         // Send the payload
-        server.lock()->SendDataToClient((PerSocketData*) subscriber, payload);
+        server->SendDataToClient((PerSocketData*) subscriber, payload);
     }
 
     return true;
@@ -362,9 +357,7 @@ void Extension::GetMetadataJSON(jsoncons::json& json, bool settings_only)
 
 void Extension::HandleDataReady(std::string_view source)
 {
-    auto srv = server.lock();
-
-    srv->RunOnPool([=, this] {
+    server->RunOnPool([=, this] {
         const auto topic = fmt::format("{}/{}", name, source);
 
         if (!datasources.count(topic))
@@ -411,7 +404,7 @@ void Extension::HandleDataReady(std::string_view source)
 
                             for (auto& client : data.pollqueue)
                             {
-                                srv->SendDataToClient((PerSocketData*) client, message);
+                                server->SendDataToClient((PerSocketData*) client, message);
                             }
 
                             data.pollqueue.clear();
@@ -561,7 +554,7 @@ void Extension::sendDataToSubscribers(DataSource& src)
             {
                 j.dump(src.buffer);
 
-                server.lock()->PublishData(src.topic, src.buffer);
+                server->PublishData(src.topic, src.buffer);
             }
         }
     }
@@ -620,7 +613,7 @@ void Extension::propagateSettingsToSubscribers()
             {
                 std::shared_lock<std::shared_mutex> lk(source.mutex);
 
-                server.lock()->PublishData(source.topic, payload);
+                server->PublishData(source.topic, payload);
             }
         }
     }
@@ -678,6 +671,7 @@ Extension::~Extension()
     // Do some explicit cleanup
     for (auto& [name, src] : datasources)
     {
+        std::lock_guard<std::shared_mutex> lk(src.mutex);
         src.timer.reset();
         src.locks.reset();
         cfl->WriteDataSourceSetting(name, &src.settings);
@@ -703,7 +697,7 @@ Extension::~Extension()
     extensionInfo = nullptr;
 }
 
-Extension* Extension::Load(const std::string& libpath, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv)
+Extension* Extension::Load(const std::string& libpath, std::shared_ptr<Config> cfg, Server* srv)
 {
     QLibrary lib(QString::fromStdString(libpath));
 
@@ -742,8 +736,7 @@ Extension* Extension::Load(const std::string& libpath, std::shared_ptr<Config> c
     return nullptr;
 }
 
-Extension*
-Extension::LoadInternal(std::string_view name, extension_load loadFunc, extension_destroy destroyFunc, std::shared_ptr<Config> cfg, std::shared_ptr<Server> srv)
+Extension* Extension::LoadInternal(std::string_view name, extension_load loadFunc, extension_destroy destroyFunc, std::shared_ptr<Config> cfg, Server* srv)
 {
     if (!loadFunc or !destroyFunc)
     {
