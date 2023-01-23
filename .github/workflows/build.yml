@@ -9,6 +9,9 @@ on:
       - "**.md"
       - "**.rst"
       - "widgets/**"
+      - "**.js"
+      - "**.html"
+      - "**.css"
   workflow_dispatch:
 
 jobs:
