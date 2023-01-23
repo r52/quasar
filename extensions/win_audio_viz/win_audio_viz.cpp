@@ -17,7 +17,7 @@
 #include <cassert>
 #include <complex>
 #include <memory>
-#include <mutex>
+#include <shared_mutex>
 #include <span>
 #include <string>
 #include <unordered_map>
@@ -250,15 +250,15 @@ namespace
 
     bool                                                      last_data_is_not_zero = true;
     kfr::univector<kfr::u8>                                   temp;
-    std::mutex                                                mutex;
+    std::shared_mutex                                         mutex;
 }  // namespace
 
 HRESULT Measure::DeviceInit()
 {
-    std::unique_lock<std::mutex> lk(mutex);
-    HRESULT                      hr;
-    IPropertyStore*              props   = NULL;
-    size_t                       bufsize = 0;
+    std::unique_lock lk(mutex);
+    HRESULT          hr;
+    IPropertyStore*  props   = NULL;
+    size_t           bufsize = 0;
 
     // get the device handle
     assert(m_enum && !m_dev);
@@ -495,7 +495,7 @@ Exit:
 
 void Measure::DeviceRelease()
 {
-    std::unique_lock<std::mutex> lk(mutex);
+    std::unique_lock lk(mutex);
 #if (WINDOWS_BUG_WORKAROUND)
     if (m_clBugAudio)
     {
@@ -573,9 +573,9 @@ bool win_audio_viz_shutdown(quasar_ext_handle handle)
 
 bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 {
-    std::unique_lock<std::mutex> lk(mutex);
+    std::unique_lock lk(mutex);
 
-    size_t                       type = m_typemap[srcUid];
+    size_t           type = m_typemap[srcUid];
 
     switch (type)
     {
