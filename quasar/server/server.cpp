@@ -419,7 +419,7 @@ void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& m
 
         auto socket = static_cast<UWSSocket*>(client->socket);
 
-        loop->defer([=, this]() {
+        RunOnServer([=, this]() {
             auto res = socket->subscribe(topic);
 
             if (res)
