@@ -357,7 +357,7 @@ void Extension::GetMetadataJSON(jsoncons::json& json, bool settings_only)
 
 void Extension::HandleDataReady(std::string_view source)
 {
-    server->RunOnPool([=, this] {
+    server->RunOnPool([source = std::string{source}, this] {
         const auto topic = fmt::format("{}/{}", name, source);
 
         if (!datasources.count(topic))
@@ -373,10 +373,13 @@ void Extension::HandleDataReady(std::string_view source)
         if (data.settings.rate == QUASAR_POLLING_CLIENT)
         {
             // pop poll queue
-            jsoncons::json j{jsoncons::json_object_arg, {{"errors", jsoncons::json{jsoncons::json_array_arg}}}};
-            std::string    message{};
+            jsoncons::json j{
+                jsoncons::json_object_arg,
+                {{data.topic, jsoncons::json{jsoncons::json_object_arg}}, {"errors", jsoncons::json{jsoncons::json_array_arg}}}
+            };
+            std::string message{};
 
-            auto           result = getDataFromSource(j, data);
+            auto        result = getDataFromSource(j, data);
 
             if (j[data.topic].empty())
             {
@@ -671,7 +674,6 @@ Extension::~Extension()
     // Do some explicit cleanup
     for (auto& [name, src] : datasources)
     {
-        std::lock_guard<std::shared_mutex> lk(src.mutex);
         src.timer.reset();
         src.locks.reset();
         cfl->WriteDataSourceSetting(name, &src.settings);
