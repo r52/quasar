@@ -37,7 +37,7 @@ namespace
             return false;
         }
 
-        jsoncons::json jarg = jsoncons::json::parse(args);
+        jsoncons::json jarg = args ? jsoncons::json::parse(args) : jsoncons::json();
 
         if (jarg.empty())
         {

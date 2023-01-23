@@ -106,9 +106,7 @@ Server::Server(std::shared_ptr<Config> cfg) :
                        },
                    .subscription =
                        [this](UWSSocket* ws, std::string_view topic, int nSize, int oSize) {
-                           RunOnPool([=, data = ws->getUserData(), this, tpc = std::string{topic}] {
-                               this->processSubscription(data, tpc, nSize, oSize);
-                           });
+                           this->processSubscription(ws->getUserData(), std::string{topic}, nSize, oSize);
                        },
                    .close =
                        [this](UWSSocket* ws, int code, std::string_view message) {
@@ -159,6 +157,9 @@ Server::~Server()
     loop->defer([]() {
         app->close();
     });
+
+    pool.wait_for_tasks();
+
     websocketServer.join();
 
     extensions.clear();

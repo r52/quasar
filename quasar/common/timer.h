@@ -19,18 +19,19 @@ public:
         interval = intv;
         SPDLOG_DEBUG("New timer thread with {}us internal", interval);
         thread = std::jthread{[&, fn](std::stop_token token) {
-            std::unique_lock<std::mutex> lk(mtx);
-
-            const auto                   origInterval = std::chrono::nanoseconds(std::chrono::microseconds(interval));
-            auto                         nextSleep    = origInterval;
+            const auto origInterval = std::chrono::nanoseconds(std::chrono::microseconds(interval));
+            auto       nextSleep    = origInterval;
 
             while (true)
             {
-                if (cv.wait_for(lk, nextSleep, [&] {
-                        return token.stop_requested();
-                    }))
                 {
-                    return;
+                    std::unique_lock lk(mtx);
+                    if (cv.wait_for(lk, nextSleep, [&] {
+                            return token.stop_requested();
+                        }))
+                    {
+                        return;
+                    }
                 }
 
                 auto frameTimeBefore = std::chrono::steady_clock::now();
@@ -41,31 +42,29 @@ public:
                 nextSleep           = origInterval - (frameTimeAfter - frameTimeBefore);
             }
         }};
-
-        thread.detach();
     }
 
     int  getInterval() { return interval; }
 
     void stop()
     {
-        {
-            std::unique_lock<std::mutex> lk(mtx);
-            thread.request_stop();
-        }
-
-        cv.notify_one();
-
         if (thread.joinable())
         {
+            {
+                std::lock_guard lk(mtx);
+                thread.request_stop();
+            }
+
+            cv.notify_one();
+
             thread.join();
         }
     }
 
 private:
     const std::string       name{};
+    std::mutex              mtx;
+    std::condition_variable cv;
     int                     interval;
     std::jthread            thread;
-    std::condition_variable cv;
-    std::mutex              mtx;
 };

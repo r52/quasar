@@ -229,7 +229,11 @@ void Extension::RemoveSubscriber(void* subscriber, const std::string& topic, int
     // Stop timer if no subscribers
     if (dsrc.subscribers <= 0)
     {
-        dsrc.timer.reset();
+        if (dsrc.timer)
+        {
+            dsrc.timer->stop();
+            dsrc.timer.reset();
+        }
     }
 }
 
@@ -655,12 +659,14 @@ void Extension::refreshDataSources()
         else if (src.timer)
         {
             // Delete the timer if enabled
+            src.timer->stop();
             src.timer.reset();
         }
 
         if (src.timer && src.timer->getInterval() != src.settings.rate)
         {
             // Refresh timer
+            src.timer->stop();
             src.timer.reset();
             createTimer(src);
         }
@@ -674,7 +680,12 @@ Extension::~Extension()
     // Do some explicit cleanup
     for (auto& [name, src] : datasources)
     {
-        src.timer.reset();
+        if (src.timer)
+        {
+            src.timer->stop();
+            src.timer.reset();
+        }
+
         src.locks.reset();
         cfl->WriteDataSourceSetting(name, &src.settings);
     }
