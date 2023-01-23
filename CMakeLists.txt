@@ -44,6 +44,6 @@ if(WIN32 AND BUILD_SAMPLE_EXTENSIONS)
     endif()
 endif()
 
-if (BUILD_SPOTIFY_API)
+if(BUILD_SPOTIFY_API)
     add_subdirectory(extensions/quasar-spotify-api)
 endif()

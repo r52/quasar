@@ -16,7 +16,6 @@ target_link_libraries(win_audio_viz PRIVATE kfr kfr_dft)
 target_link_libraries(win_audio_viz PRIVATE quasar extension-api)
 target_link_libraries(win_audio_viz PRIVATE fmt::fmt)
 
-
 add_custom_command(TARGET win_audio_viz POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:win_audio_viz> $<TARGET_FILE_DIR:quasar>/extensions/win_audio_viz.dll
 )
