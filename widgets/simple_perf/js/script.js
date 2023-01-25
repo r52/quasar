@@ -1,7 +1,7 @@
-var websocket = null;
+let websocket = null;
 
 function subscribe() {
-  var msg = {
+  const msg = {
     method: "subscribe",
     params: {
       topics: ["win_simple_perf/sysinfo"],
@@ -29,10 +29,10 @@ function setData(elm, value) {
 }
 
 function parseMsg(msg) {
-  var data = JSON.parse(msg);
+  const data = JSON.parse(msg);
 
   if ("win_simple_perf/sysinfo" in data) {
-    var vals = data["win_simple_perf/sysinfo"];
+    const vals = data["win_simple_perf/sysinfo"];
     setData(document.getElementById("cpu"), vals["cpu"]);
     setData(
       document.getElementById("ram"),

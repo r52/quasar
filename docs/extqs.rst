@@ -29,7 +29,7 @@ These are:
 
 Within the :cpp:class:`quasar_ext_info_t` structure.
 
-For each Data Dource provided by the extension, a :cpp:class:`quasar_data_source_t` entry needs to be created that contains the Data Source's identifier and refresh rate in milliseconds or polling style. :cpp:member:`quasar_data_source_t::validtime` specifies the amount of time in milliseconds that the data is cached and remains valid for, for sources using the Client Polling style. :cpp:member:`quasar_data_source_t::uid` should be initialized to ``0``.
+For each Data Dource provided by the extension, a :cpp:class:`quasar_data_source_t` entry needs to be created that contains the Data Source's identifier and refresh rate in microseconds or polling style. :cpp:member:`quasar_data_source_t::validtime` specifies the amount of time in milliseconds that the data is cached and remains valid for, for sources using the Client Polling style. :cpp:member:`quasar_data_source_t::uid` should be initialized to ``0``.
 
 The entries should be propagated in :cpp:member:`quasar_ext_info_t::numDataSources` and :cpp:member:`quasar_ext_info_t::dataSources`.
 
@@ -42,17 +42,16 @@ Adapted from the sample extension `win_simple_perf <https://github.com/r52/quasa
 
 .. code-block:: cpp
 
-    quasar_data_source_t sources[2] =
-        {
-            {"cpu", QUASAR_POLLING_CLIENT, 1000, 0},
-            {"ram", QUASAR_POLLING_CLIENT, 1000, 0}
-        };
+    quasar_data_source_t sources[] = {
+        {       "sysinfo",               5000000,    0, 0},
+        {"sysinfo_polled", QUASAR_POLLING_CLIENT, 1000, 0}
+    };
 
     quasar_ext_info_fields_t fields =
         {
             "win_simple_perf",                                      // char name[16]
             "Simple Performance Query",                             // char fullname[64]
-            "2.0",                                                  // char version[64]
+            "3.0",                                                  // char version[64]
             "r52",                                                  // char author[64]
             "Provides basic PC performance metrics",                // char description[256]
             "https://github.com/r52/quasar"                         // char url[256]
@@ -69,11 +68,11 @@ Adapted from the sample extension `win_simple_perf <https://github.com/r52/quasa
             simple_perf_init,                                       // bool init(quasar_ext_handle handle)
             simple_perf_shutdown,                                   // bool shutdown(quasar_ext_handle handle)
             simple_perf_get_data,                                   // bool get_data(size_t uid, quasar_data_handle dataHandle, char* args)
-            nullptr,                                                // quasar_settings_t* create_settings()
+            nullptr,                                                // quasar_settings_t* create_settings(quasar_ext_handle handle)
             nullptr                                                 // void update(quasar_settings_t* settings)
         };
 
-In this example, 2 Data Sources are defined, ``cpu`` and ``ram``, each using the Client Polling model. The functions ``simple_perf_init()``, ``simple_perf_shutdown()``, and ``simple_perf_get_data()`` are the implementations of ``init()``, ``shutdown()``, and ``get_data()`` respectively. Note that ``create_settings()`` and ``update()`` are not implemented by this extension. These functions are optional, and only needs to be implemented if the extension provides custom settings. See :ref:`extqs_custom` for more information.
+In this example, 2 Data Sources are defined, ``sysinfo`` and ``sysinfo_polled``, where ``sysinfo`` uses the subscription model, while ``sysinfo_polled`` uses the Client Polling model. The functions ``simple_perf_init()``, ``simple_perf_shutdown()``, and ``simple_perf_get_data()`` are the implementations of ``init()``, ``shutdown()``, and ``get_data()`` respectively. Note that ``create_settings()`` and ``update()`` are not implemented by this extension. These functions are optional, and only needs to be implemented if the extension provides custom settings. See :ref:`extqs_custom` for more information.
 
 quasar_ext_load()
 ~~~~~~~~~~~~~~~~~~~~~
@@ -124,13 +123,13 @@ This function should also allocate or initialize any other resources needed, as 
         // Process uid entries.
         if (sources[0].uid == 0)
         {
-            // "cpu" Data Source didn't get a uid
+            // "sysinfo" Data Source didn't get a uid
             return false;
         }
 
         if (sources[1].uid == 0)
         {
-            // "ram" Data Source didn't get a uid
+            // "sysinfo_polled" Data Source didn't get a uid
             return false;
         }
 
@@ -161,48 +160,33 @@ This function is responsible for retrieving the data requested by the ``uid`` ar
 
 .. code-block:: cpp
 
-    bool getCPUData(quasar_data_handle hData)
+    bool simple_perf_get_data(size_t uid, quasar_data_handle hData, char* args)
     {
+        if (srcUid != sources[0].uid && srcUid != sources[1].uid)
+        {
+            warn("Unknown source {}", srcUid);
+            return false;
+        }
+
+        // CPU data
         double cpu = GetCPULoad() * 100.0;
 
-        quasar_set_data_int(hData, (int) cpu);
-
-        return true;
-    }
-
-    bool getRAMData(quasar_data_handle hData)
-    {
+        // https://stackoverflow.com/questions/63166/how-to-determine-cpu-and-memory-consumption-from-inside-a-process
+        // RAM data
         MEMORYSTATUSEX memInfo;
         memInfo.dwLength = sizeof(MEMORYSTATUSEX);
         GlobalMemoryStatusEx(&memInfo);
         DWORDLONG totalPhysMem = memInfo.ullTotalPhys;
         DWORDLONG physMemUsed  = memInfo.ullTotalPhys - memInfo.ullAvailPhys;
 
-        std::stringstream ss;
-        ss << "{ \"total\": " << totalPhysMem << ", \"used\": " << physMemUsed << " }";
+        auto      res          = fmt::format("{{\"cpu\":{},\"ram\":{{\"total\":{},\"used\":{}}}}}", (int) cpu, totalPhysMem, physMemUsed);
 
-        quasar_set_data_json(hData, ss.str().c_str());
+        quasar_set_data_json(hData, res.c_str());
 
         return true;
     }
 
-    bool simple_perf_get_data(size_t uid, quasar_data_handle hData, char* args)
-    {
-        // the "cpu" source
-        if (uid == sources[0].uid)
-        {
-            return getCPUData(hData);
-        }
-        // the "ram" source
-        else if (uid == sources[1].uid)
-        {
-            return getRAMData(hData);
-        }
-
-        return false;
-    }
-
-See :ref:`extension_support_h` for all supported data types.
+See :ref:`extension_support_h` and :ref:`extension_support_hpp` for all supported data types.
 
 .. _extqs_models:
 
@@ -222,7 +206,7 @@ Timer-based Subscription
 
 Enabled by initializing :cpp:member:`quasar_data_source_t::rate` of a Data Source entry to a positive value.
 
-Multiple client widgets may subscribe to a single data source, which is polled for new data every :cpp:member:`quasar_data_source_t::rate` milliseconds. This new data is then propagated to every subscribed widget.
+Multiple client widgets may subscribe to a single data source, which is polled for new data every :cpp:member:`quasar_data_source_t::rate` microseconds. This new data is then propagated to every subscribed widget.
 
 Signal-based Subscription
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -240,7 +224,7 @@ For example:
     quasar_data_source_t sources[2] =
         {
           { "some_thread_source", QUASAR_POLLING_SIGNALED, 0, 0 },
-          { "some_timer_source", 5000, 0, 0 }
+          { "some_timer_source", 5000000, 0, 0 }
         };
 
     quasar_ext_handle extHandle = nullptr;
@@ -288,7 +272,7 @@ Client Polling
 
 Enabled by initializing :cpp:member:`quasar_data_source_t::rate` to ``QUASAR_POLLING_CLIENT``.
 
-This data model transfers the responsibility of polling for new data to the client widget. The data source will no longer accept subscribers.
+This data model transfers the responsibility of polling for new data to the client widget. The data source does not accept subscribers.
 
 Example:
 
@@ -297,7 +281,7 @@ Example:
     quasar_data_source_t sources[2] =
         {
           { "some_polled_source", QUASAR_POLLING_CLIENT, 1000, 0 },
-          { "some_timer_source", 5000, 0, 0 }
+          { "some_timer_source", 5000000, 0, 0 }
         };
 
 
@@ -306,11 +290,10 @@ From the client:
 .. code-block:: javascript
 
     function poll() {
-        var reg = {
-            "method": "query",
-            "params": {
-                "target": "some_extension",
-                "params": "some_polled_source"
+        const reg = {
+            method: "query",
+            params: {
+                topics: ["some_extension/some_polled_source"]
             }
         };
 
@@ -336,17 +319,17 @@ Sample code:
 
 .. code-block:: cpp
 
-    quasar_settings_t* create_custom_settings()
+    quasar_settings_t* create_custom_settings(quasar_ext_handle handle)
     {
-        quasar_settings_t* settings = quasar_create_settings();
-        quasar_add_bool(settings, "s_levelenabled", "Process Level:", true);
-        quasar_add_int(settings, "s_level", "Level:", 1, 30, 1, 1);
+        quasar_settings_t* settings = quasar_create_settings(handle);
+        quasar_add_bool_setting(handle, settings, "s_levelenabled", "Process Level", true);
+        quasar_add_int_setting(handle, settings, "s_level", "Level", 1, 30, 1, 1);
 
         return settings;
     }
 
     void custom_settings_update(quasar_settings_t* settings)
     {
-        g_levelenabled = quasar_get_bool(settings, "s_levelenabled");
-        g_level = quasar_get_int(settings, "s_level");
+        g_levelenabled = quasar_get_bool_setting(extHandle, settings, "s_levelenabled");
+        g_level = quasar_get_int_setting(extHandle, settings, "s_level");
     }

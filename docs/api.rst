@@ -25,9 +25,9 @@ extension_support.h
 
 .. doxygenfile:: extension_support.h
 
-.. _extension_support_internal_h:
+.. _extension_support_hpp:
 
-extension_support_internal.h
+extension_support.hpp
 ----------------------------
 
-.. doxygenfile:: extension_support_internal.h
+.. doxygenfile:: extension_support.hpp
