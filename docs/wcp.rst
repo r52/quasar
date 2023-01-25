@@ -43,7 +43,7 @@ Basic Message Format
     {
         method: <method>,
         params: {
-            target: <target>,
+            topics: [<targets>],
             params: <list of target params>
             args: <param args>
         }
@@ -57,25 +57,22 @@ Field Descriptions
     The method/function to be invoked by this message.
     For client widgets, supported values are: ``subscribe``, and ``query``.
     ``subscribe`` is used to subscribe to timer-based or extension signaled Data Sources, while ``query`` is used for client polled Data Sources as well as any other commands.
-    For external widgets and applications, ``auth`` is also supported for authenication purposes.
+    For Quasar loaded widgets, ``auth`` is also supported for authenication purposes.
 
 ``params``
     The parameters sent to the method.
-    This field should be a JSON object that is typically comprised of two fields: ``target`` and ``params``. If the method is ``auth``, then it should be comprised of a single field ``code`` that is set to the :doc:`User Key <userkeys>` being used.
+    This field should be a JSON object that is typically comprised of at least the field ``topics``.
 
-``target``
-    The intended target of the message.
-    Typically, this is an extension's identifier.
-    For App Launcher widgets, use target name ``launcher``.
-    See :ref:`app-launcher-protocol` for more details.
+``topics``
+    The intended targets of the message.
+    Typically, this is an extension's identifier plus the Data Source identifier separated by a forward slash.
 
 ``target params``
-    List of parameters sent to the target.
-    Typically, these are Data Source identifiers.
-    For App Launcher widgets, these are App Launcher commands, or ``get`` to retrieve the command list.
+    List of parameters sent to all targets.
+    Typically, this field is unused.
 
 ``param args``
-    Optional arguments for the specified parameters sent to the target.
+    Optional arguments sent to the target.
     Only supported by queried/client polled sources, if arguments are supported by the source.
 
 Sample Usages
@@ -84,11 +81,10 @@ Sample Usages
 .. code-block:: javascript
 
     function subscribe() {
-        var msg = {
-            "method": "subscribe",
-            "params": {
-                "target": "win_audio_viz",
-                "params": ["band"]
+        const msg = {
+            method: "subscribe",
+            params: {
+                topics: ["win_audio_viz/band"]
             }
         }
 
@@ -96,11 +92,10 @@ Sample Usages
     }
 
     function poll() {
-        var msg = {
-            "method": "query",
-            "params": {
-                "target": "win_simple_perf",
-                "params": ["cpu","ram"]
+        const msg = {
+            method: "query",
+            params: {
+                topics: ["win_simple_perf/sysinfo_polled"]
             }
         }
 
@@ -108,34 +103,36 @@ Sample Usages
     }
 
     function get_launcher_list() {
-        var msg = {
-            "method": "query",
-            "params": {
-                "target": "launcher",
-                "params": ["get"]
+        const msg = {
+            method: "query",
+            params: {
+                topics: ["applauncher/list"]
             }
         }
 
         websocket.send(JSON.stringify(msg));
     }
 
-    function launcher_cmd(cmd) {
-        var msg = {
-            "method": "query",
-            "params": {
-                "target": "launcher",
-                "params": [cmd]
-            }
+    function launcher_cmd(cmd, arg) {
+        let msg = {
+            method: "query",
+            params: {
+                topics: [`applauncher/${cmd}`],
+            },
+        };
+
+        if (arg) {
+            msg.params["args"] = arg;
         }
 
         websocket.send(JSON.stringify(msg));
     }
 
     function authenticate() {
-        var msg = {
-            "method": "auth",
-            "params": {
-                "code": "6EFBBE6542D52FDD294337343147B033"
+        const msg = {
+            method: "auth",
+            params: {
+                code: "6EFBBE6542D52FDD294337343147B033"
             }
         }
 
@@ -156,8 +153,11 @@ Basic Message Format
 ::
 
     {
-        data: {
-            <target>: <target data>
+        <target>: {
+            <target data>
+        },
+        ...<target>: {
+            <target data>
         },
         errors: <errors>
     }
@@ -165,77 +165,54 @@ Basic Message Format
 Field Descriptions
 ###################
 
-The top level data field holds all the data sent with the message.
+The top level ``target`` fields holds all the data sent with the message.
 
 ``target`` and ``target data``
-    Typically specifies the extension identifier and the data payload sent by the extension.
+    Typically specifies the Data Source identifier and the data payload sent by the extension.
 
 ``errors``
     Any errors that occurred while retrieving the data.
 
-Sample Message
-###############
+Sample Messages
+##################
 
 Sample messages sent by various sources, including `sample extensions <https://github.com/r52/quasar/tree/master/extensions>`_ and extension settings, and App Launcher command list:
 
 .. code-block:: json
 
     {
-        "data": {
-            "win_simple_perf": {
-                "cpu": 15,
-                "ram": {
-                    "total": 34324512768,
-                    "used": 10252300288
-                }
+        "win_simple_perf/sysinfo": {
+            "cpu": 15,
+            "ram": {
+                "total": 34324512768,
+                "used": 10252300288
             }
         }
     }
 
     {
-        "data": {
-            "win_simple_perf": {
-                "cpu": 36
+        "win_audio_viz/settings": [
+            {
+                "def": 256,
+                "desc": "FFTSize",
+                "max": 8192,
+                "min": 0,
+                "name": "FFTSize",
+                "step": 2,
+                "type": "int",
+                "val": 1024
+            },
+            {
+                "def": 16,
+                "desc": "Number of Bands",
+                "max": 1024,
+                "min": 0,
+                "name": "Bands",
+                "step": 1,
+                "type": "int",
+                "val": 32
             }
-        },
-        "errors": ["Unknown data source band requested in extension win_simple_perf"]
-    }
-
-    {
-        "data": {
-            "settings": {
-                "win_audio_viz": {
-                    "rates": [{
-                        "enabled": true,
-                        "name": "fft",
-                        "rate": 100
-                    }, {
-                        "enabled": true,
-                        "name": "band",
-                        "rate": 100
-                    }],
-                    "settings": [{
-                        "def": 256,
-                        "desc": "FFTSize",
-                        "max": 8192,
-                        "min": 0,
-                        "name": "FFTSize",
-                        "step": 2,
-                        "type": "int",
-                        "val": 1024
-                    }, {
-                        "def": 16,
-                        "desc": "Number of Bands",
-                        "max": 1024,
-                        "min": 0,
-                        "name": "Bands",
-                        "step": 1,
-                        "type": "int",
-                        "val": 32
-                    }]
-                }
-            }
-        }
+        ]
     }
 
 Sample Usage
@@ -246,11 +223,15 @@ This following sample is taken from the :doc:`widgetqs` documentation, and defin
 .. code-block:: javascript
 
     function parseMsg(msg) {
-        var data = JSON.parse(msg);
+        const data = JSON.parse(msg);
 
-        if ("data" in data && "win_simple_perf" in data["data"] && "cpu" in data["data"]["win_simple_perf"]) {
-            var val = data["data"]["win_simple_perf"]["cpu"]
-            $('#cpu').text(val + "%");
+        if ("win_simple_perf/sysinfo_polled" in data) {
+            const vals = data["win_simple_perf/sysinfo_polled"]
+            setData(document.getElementById("cpu"), vals["cpu"]);
+            setData(
+                document.getElementById("ram"),
+                Math.round((vals["ram"]["used"] / vals["ram"]["total"]) * 100),
+            );
         }
     }
 
@@ -266,10 +247,9 @@ For example, sending the following message:
 .. code-block:: json
 
     {
-        "method": "query",
-        "params": {
-            "target": "launcher",
-            "params": ["get"]
+        method: "query",
+        params: {
+            topics: ["applauncher/list"]
         }
     }
 
@@ -278,18 +258,16 @@ Will see Quasar respond with the following sample reply:
 .. code-block:: json
 
     {
-        "data": {
-            "launcher": [{
-                "command": "chrome",
-                "icon": "data:image/svg+xml;base64,..."
-            }, {
-                "command": "spotify",
-                "icon": "data:image/svg+xml;base64..."
-            }, {
-                "command": "steam",
-                "icon": "data:image/svg+xml;base64..."
-            }]
-        }
+        "applauncher/list": [{
+            "command": "chrome",
+            "icon": "data:image/png;base64,..."
+        }, {
+            "command": "spotify",
+            "icon": "data:image/png;base64..."
+        }, {
+            "command": "steam",
+            "icon": "data:image/png;base64..."
+        }]
     }
 
 Where ``chrome``, ``spotify``, and ``steam`` are commands preconfigured in the :doc:`App Launcher Settings <launcher>`. Subsequently, an App Launcher widget may then send:
@@ -297,10 +275,10 @@ Where ``chrome``, ``spotify``, and ``steam`` are commands preconfigured in the :
 .. code-block:: json
 
     {
-        "method": "query",
-        "params": {
-            "target": "launcher",
-            "params": ["chrome"]
+        method: "query",
+        params: {
+            topics: ["applauncher/launch"],
+            args: "chrome"
         }
     }
 

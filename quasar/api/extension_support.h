@@ -30,9 +30,9 @@ extern "C" {
 */
 SAPI_EXPORT void quasar_log(quasar_log_level_t level, const char* msg);
 
-//! Creates a new instance of \ref quasar_settings_t
+//! Returns an instance of \ref quasar_settings_t
 /*! Use in \ref quasar_ext_info_t.create_settings to create extension settings.
-    Ensure that only a single instance is created and used per extension.
+    Ensure that only a single instance is used per extension.
 
     \param[in]  handle  Extension handle
     \return quasar_settings_t instance if successful, nullptr otherwise
@@ -40,7 +40,7 @@ SAPI_EXPORT void quasar_log(quasar_log_level_t level, const char* msg);
 SAPI_EXPORT quasar_settings_t* quasar_create_settings(quasar_ext_handle handle);
 
 //! Creates a new \ref quasar_selection_options_t setting.
-/*! Use with \ref quasar_add_selection() after populating options.
+/*! Use with \ref quasar_add_selection_setting() after populating options.
 
     \return quasar_selection_options_t instance if successful, nullptr otherwise
 */

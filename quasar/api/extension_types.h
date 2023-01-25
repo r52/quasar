@@ -194,7 +194,7 @@ struct quasar_ext_info_t
     //! quasar_settings_t* create_settings(#quasar_ext_handle handle), **OPTIONAL**
     /*! Creates extension settings (and corresponding UI elements) if any.
 
-        \sa quasar_create_settings(), quasar_add_int(), quasar_add_bool(), quasar_add_double()
+        \sa quasar_create_settings(), quasar_add_int_setting(), quasar_add_bool_setting(), quasar_add_double_setting()
         \return quasar_settings_t pointer if successful, nullptr otherwise
     */
     ext_create_settings_call_t create_settings;
@@ -202,7 +202,7 @@ struct quasar_ext_info_t
     //! void update(quasar_settings_t* settings), **OPTIONAL**
     /*! This function should update local settings values.
 
-        \sa quasar_get_int(), quasar_get_uint(), quasar_get_bool(), quasar_get_double()
+        \sa quasar_get_int_setting(), quasar_get_uint_setting(), quasar_get_bool_setting(), quasar_get_double_setting()
     */
     ext_settings_call_t update;
 };
