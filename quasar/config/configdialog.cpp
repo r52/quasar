@@ -25,7 +25,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
     ui->logToFile->setChecked(Settings::internal.log_file.GetValue());
     ui->authCheckbox->setChecked(Settings::internal.auth.GetValue());
 
-#ifdef 0
+#if 0
     // ------------------Startup launch
     QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
     QFileInfo lnk(startupFolder + "/Quasar.lnk");
@@ -183,7 +183,7 @@ void ConfigDialog::SaveSettings()
     Settings::internal.log_file.SetValue(ui->logToFile->isChecked());
     Settings::internal.auth.SetValue(ui->authCheckbox->isChecked());
 
-#ifdef 0
+#if 0
     if (startupCheck)
     {
         QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
