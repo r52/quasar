@@ -10,6 +10,7 @@
 #include <jsoncons/json.hpp>
 #include <spdlog/spdlog.h>
 
+#include <QFileDialog>
 #include <QFileInfo>
 #include <QStandardPaths>
 
@@ -24,6 +25,17 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
     ui->logCombo->setCurrentIndex(Settings::internal.log_level.GetValue());
     ui->logToFile->setChecked(Settings::internal.log_file.GetValue());
     ui->authCheckbox->setChecked(Settings::internal.auth.GetValue());
+    ui->cookieEdit->setText(QString::fromStdString(Settings::internal.cookies.GetValue()));
+
+    connect(ui->cookieButton, &QPushButton::clicked, [=, this](bool checked) {
+        QString filename = QFileDialog::getOpenFileName(this, tr("Choose cookies.txt"), QString(), tr("cookies.txt (*.txt)"));
+        if (!filename.isEmpty())
+        {
+            QFileInfo info(filename);
+
+            ui->cookieEdit->setText(info.canonicalFilePath());
+        }
+    });
 
 #if 0
     // ------------------Startup launch
@@ -182,6 +194,7 @@ void ConfigDialog::SaveSettings()
     Settings::internal.log_level.SetValue(ui->logCombo->currentIndex());
     Settings::internal.log_file.SetValue(ui->logToFile->isChecked());
     Settings::internal.auth.SetValue(ui->authCheckbox->isChecked());
+    Settings::internal.cookies.SetValue(ui->cookieEdit->text().toStdString());
 
 #if 0
     if (startupCheck)

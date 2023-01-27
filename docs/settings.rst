@@ -6,7 +6,7 @@ Right-click the Quasar icon in your notification bar, and click **Settings** to 
 General Settings
 -----------------
 
-Data Server port
+WebSocket Server port
     The port the WebSocket Data Server runs on. *(default: 13337)*
 
 Allow only Quasar widgets to connect to the WebSocket server?
@@ -17,6 +17,9 @@ Log to file?
 
 Log Level
     Severity of log messages that are logged. *(default: Warn)*
+
+cookies.txt
+    Path to a Netscape formatted cookies.txt. These cookies will be loaded by all widgets.
 
 
 App Launcher Settings

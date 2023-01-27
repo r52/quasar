@@ -157,8 +157,9 @@ namespace Settings
                     {LogLevel::critical, "Critical"},
                     {LogLevel::off, "Off"}}
         };
-        Setting<int>  port{"main/port", "WebSocket server port", 13337, 1000, 65535, 1};
-        Setting<bool> auth{"main/auth", "Allow only Quasar widgets to connect to the WebSocket server?", false};
+        Setting<int>         port{"main/port", "WebSocket server port", 13337, 1000, 65535, 1};
+        Setting<bool>        auth{"main/auth", "Allow only Quasar widgets to connect to the WebSocket server?", false};
+        Setting<std::string> cookies{"main/cookies", "cookies.txt", ""};
 
         // Hidden
         Setting<std::string> loaded_widgets{"main/loaded", "Loaded Widgets", ""};

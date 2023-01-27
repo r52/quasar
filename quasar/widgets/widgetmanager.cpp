@@ -9,7 +9,10 @@
 #include <fstream>
 
 #include <QMessageBox>
+#include <QNetworkCookie>
 #include <QObject>
+#include <QWebEngineCookieStore>
+#include <QWebEngineProfile>
 
 #include <fmt/core.h>
 #include <fmt/ranges.h>
@@ -19,7 +22,75 @@
 
 JSONCONS_N_MEMBER_TRAITS(WidgetDefinition, 5, name, width, height, startFile, transparentBg, clickable, dataserver, remoteAccess, required);
 
-WidgetManager::WidgetManager(std::shared_ptr<Server> serv) : server{serv} {}
+namespace
+{
+    enum NetscapeCookieFormat
+    {
+        NETSCAPE_COOKIE_DOMAIN = 0,
+        NETSCAPE_COOKIE_FLAG,
+        NETSCAPE_COOKIE_PATH,
+        NETSCAPE_COOKIE_SECURE,
+        NETSCAPE_COOKIE_EXP,
+        NETSCAPE_COOKIE_NAME,
+        NETSCAPE_COOKIE_VALUE,
+        NETSCAPE_COOKIE_MAX
+    };
+}  // namespace
+
+WidgetManager::WidgetManager(std::shared_ptr<Server> serv) : server{serv}
+{
+    auto cookiesfile = Settings::internal.cookies.GetValue();
+
+    if (cookiesfile.empty())
+    {
+        SPDLOG_INFO("cookies.txt not set");
+        return;
+    }
+
+    QFile cookiestxt(QString::fromStdString(cookiesfile));
+
+    if (!cookiestxt.open(QIODevice::ReadOnly))
+    {
+        SPDLOG_WARN("Failed to load {}", cookiesfile);
+    }
+    else
+    {
+        QWebEngineCookieStore* store = QWebEngineProfile::defaultProfile()->cookieStore();
+
+        // parse netscape format cookies file
+        QTextStream in(&cookiestxt);
+
+        while (!in.atEnd())
+        {
+            QString line = in.readLine();
+
+            if (line.at(0) == '#')
+            {
+                // skip comments
+                continue;
+            }
+
+            QStringList vals = line.split('\t');
+
+            if (vals.count() != NETSCAPE_COOKIE_MAX)
+            {
+                // ill formatted line
+                SPDLOG_WARN("Ill formatted cookie \"{}\"", line.toStdString());
+                continue;
+            }
+
+            QNetworkCookie cookie(vals[NETSCAPE_COOKIE_NAME].toUtf8(), vals[NETSCAPE_COOKIE_VALUE].toUtf8());
+            cookie.setDomain(vals[NETSCAPE_COOKIE_DOMAIN]);
+            cookie.setExpirationDate(QDateTime::fromSecsSinceEpoch(vals[NETSCAPE_COOKIE_EXP].toLongLong()));
+            cookie.setPath(vals[NETSCAPE_COOKIE_PATH]);
+            cookie.setSecure(vals[NETSCAPE_COOKIE_SECURE] == "TRUE");
+
+            store->setCookie(cookie);
+        }
+
+        SPDLOG_INFO("cookies.txt loaded");
+    }
+}
 
 WidgetManager::~WidgetManager()
 {

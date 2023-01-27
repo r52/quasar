@@ -23,6 +23,7 @@ void Config::ReadInteralSettings()
     ReadSetting(Settings::internal.log_level);
     ReadSetting(Settings::internal.port);
     ReadSetting(Settings::internal.auth);
+    ReadSetting(Settings::internal.cookies);
     ReadSetting(Settings::internal.loaded_widgets);
     ReadSetting(Settings::internal.lastpath);
     ReadSetting(Settings::internal.applauncher);
@@ -92,6 +93,7 @@ void Config::WriteInternalSettings()
     WriteSetting(Settings::internal.log_level);
     WriteSetting(Settings::internal.port);
     WriteSetting(Settings::internal.auth);
+    WriteSetting(Settings::internal.cookies);
     WriteSetting(Settings::internal.loaded_widgets);
     WriteSetting(Settings::internal.lastpath);
     WriteSetting(Settings::internal.applauncher);
