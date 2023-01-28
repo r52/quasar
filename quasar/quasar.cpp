@@ -29,7 +29,7 @@
 namespace
 {
     ConfigDialog* cfgdlg = nullptr;
-}
+}  // namespace
 
 Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<Config>()}
 {
@@ -101,7 +101,12 @@ void Quasar::initializeLogger(QTextEdit* edit)
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [thread %t] [%^%l%$] %v - %s:L%#");
 
     SPDLOG_DEBUG("Log level: {}", Settings::internal.log_level.GetValue());
-    SPDLOG_DEBUG("Logging to: {}", path.toStdString());
+
+    if (Settings::internal.log_file.GetValue())
+    {
+        SPDLOG_DEBUG("Logging to: {}", path.toStdString());
+    }
+
     SPDLOG_INFO("Log initialized!");
 }
 
