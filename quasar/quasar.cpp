@@ -139,7 +139,7 @@ void Quasar::createTrayMenu()
     });
 
     dataFolderAction = new QAction(tr("Open &Data Folder"), this);
-    connect(dataFolderAction, &QAction::triggered, [&] {
+    connect(dataFolderAction, &QAction::triggered, [] {
         auto path = Util::GetCommonAppDataPath();
         QDesktopServices::openUrl(QUrl(path));
     });

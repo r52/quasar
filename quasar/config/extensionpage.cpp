@@ -57,7 +57,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
             upSpin->setSuffix("us");
             upSpin->setEnabled(data->enabled);
 
-            connect(enableCheck, &QCheckBox::toggled, [=](bool state) {
+            connect(enableCheck, &QCheckBox::toggled, [upSpin](bool state) {
                 upSpin->setEnabled(state);
             });
 
@@ -166,7 +166,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
 
                     ui->settingsLayout->setWidget(row, QFormLayout::FieldRole, combo);
 
-                    connect(combo, &QComboBox::currentIndexChanged, [&, name](int index) {
+                    connect(combo, &QComboBox::currentIndexChanged, [&, combo, name](int index) {
                         savedSettings[name] = combo->itemData(index).toString().toStdString();
                     });
                 }
