@@ -108,7 +108,7 @@ struct quasar_data_source_t
 */
 struct quasar_ext_info_fields_t
 {
-    char name[16];          //!< A unique short identifier for this extension. Used by widgets to identify and subscribe to this extension.
+    char name[32];          //!< A unique short identifier for this extension. Used by widgets to identify and subscribe to this extension.
     char fullname[64];      //!< Full name of this extension.
     char version[64];       //!< Version string.
     char author[64];        //!< Author.
