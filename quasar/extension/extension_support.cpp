@@ -7,10 +7,17 @@
 #include "extension_support.hpp"
 #include "extension_support_internal.h"
 
+#include "common/util.h"
+
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
 #define EXTKEY(key) fmt::format("{}/{}", ext->GetName(), key)
+
+char* quasar_strcpy(char* dest, size_t destSize, const char* src, size_t srcSize)
+{
+    return Util::SafeCStrCopy(dest, destSize, src, srcSize);
+}
 
 void quasar_log(quasar_log_level_t level, const char* msg)
 {

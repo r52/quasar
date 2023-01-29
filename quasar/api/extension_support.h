@@ -22,6 +22,21 @@
 extern "C" {
 #endif
 
+//! A custom string copy implementation to work around inherently unsafe C library functions
+/*! If src contains a null terminator before srcSize is reached, this function will correctly
+    terminate. If the [0, srcSize) portion of src does not contain a null terminator, it will
+    copy up to src[srcSize-1] and terminate. If destSize is smaller than src at null
+    terminator or srcSize, it will copy up to destSize-2 and terminate. Assuming that the copy
+    occurred, dest will be null terminated.
+
+    \param[in]  dest        Destination buffer
+    \param[in]  destSize    Size of destination buffer
+    \param[in]  src         Source string
+    \param[in]  srcSize     Maximum size of source string
+    \return dest
+*/
+SAPI_EXPORT char* quasar_strcpy(char* dest, size_t destSize, const char* src, size_t srcSize);
+
 //! Logs a message to Quasar console
 /*!
     \param[in]  level   Log level
