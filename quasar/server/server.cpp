@@ -116,7 +116,8 @@ Server::Server(std::shared_ptr<Config> cfg) :
 
                            SPDLOG_INFO("Client disconnected.");
                        }})
-            .listen(Settings::internal.port.GetValue(),
+            .listen("127.0.0.1",
+                Settings::internal.port.GetValue(),
                 [](auto* socket) {
                     if (socket)
                     {
