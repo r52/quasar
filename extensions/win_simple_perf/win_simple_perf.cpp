@@ -10,8 +10,8 @@
 
 #include <fmt/core.h>
 
-#define EXT_FULLNAME "Simple Performance Query"
-#define EXT_NAME     "win_simple_perf"
+constexpr std::string_view EXT_FULLNAME = "Simple Performance Query";
+constexpr std::string_view EXT_NAME     = "win_simple_perf";
 
 #define qlog(l, ...)                                                      \
   {                                                                       \
@@ -97,7 +97,10 @@ bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     return true;
 }
 
-quasar_ext_info_fields_t fields = {EXT_NAME, EXT_FULLNAME, "3.0", "r52", "Provides basic PC performance metrics", "https://github.com/r52/quasar"};
+quasar_ext_info_fields_t fields = {.version = "3.0",
+    .author                                 = "r52",
+    .description                            = "Provides basic PC performance metrics",
+    .url                                    = "https://github.com/r52/quasar"};
 
 quasar_ext_info_t        info   = {QUASAR_API_VERSION,
              &fields,
@@ -113,6 +116,8 @@ quasar_ext_info_t        info   = {QUASAR_API_VERSION,
 
 quasar_ext_info_t*       quasar_ext_load(void)
 {
+    strncpy_s(fields.name, sizeof(fields.name), EXT_NAME.data(), EXT_NAME.size());
+    strncpy_s(fields.fullname, sizeof(fields.fullname), EXT_FULLNAME.data(), EXT_FULLNAME.size());
     return &info;
 }
 

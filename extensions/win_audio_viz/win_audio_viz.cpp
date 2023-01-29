@@ -46,15 +46,15 @@
 
 #define WINDOWS_BUG_WORKAROUND 1
 
-constexpr double CLAMP01(double x)
+constexpr std::string_view EXT_FULLNAME = "Audio Visualization Data";
+constexpr std::string_view EXT_NAME     = "win_audio_viz";
+
+constexpr double           CLAMP01(double x)
 {
     return std::max(0.0, std::min(1.0, (x)));
 }
 
 constexpr auto TWOPI = (2 * 3.14159265358979323846);
-
-#define EXT_FULLNAME "Audio Visualization Data"
-#define EXT_NAME     "win_audio_viz"
 
 #define qlog(l, ...)                                                      \
   {                                                                       \
@@ -1283,12 +1283,10 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     }
 }
 
-quasar_ext_info_fields_t fields = {EXT_NAME,
-    EXT_FULLNAME,
-    "3.0",
-    "r52",
-    "Supplies desktop audio frequency data. Adapted from Rainmeter's AudioLevel plugin.",
-    "https://github.com/r52/quasar"};
+quasar_ext_info_fields_t fields = {.version = "3.0",
+    .author                                 = "r52",
+    .description                            = "Supplies desktop audio frequency data. Adapted from Rainmeter's AudioLevel plugin.",
+    .url                                    = "https://github.com/r52/quasar"};
 
 quasar_ext_info_t        info   = {
     QUASAR_API_VERSION,
@@ -1306,6 +1304,8 @@ quasar_ext_info_t        info   = {
 
 quasar_ext_info_t* quasar_ext_load(void)
 {
+    strncpy_s(fields.name, sizeof(fields.name), EXT_NAME.data(), EXT_NAME.size());
+    strncpy_s(fields.fullname, sizeof(fields.fullname), EXT_FULLNAME.data(), EXT_FULLNAME.size());
     return &info;
 }
 
