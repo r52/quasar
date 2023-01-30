@@ -208,8 +208,9 @@ namespace Settings
     };
 
     using SettingsVariant = std::variant<Setting<int>, Setting<double>, Setting<bool>, Setting<std::string>, SelectionSetting<std::string>>;
+    using ExtensionSettingsMap = std::unordered_map<std::string, std::tuple<ExtensionInfo, std::vector<DataSourceSettings*>, std::vector<SettingsVariant>*>>;
 
-    extern std::unordered_map<std::string, std::tuple<ExtensionInfo, std::vector<DataSourceSettings*>, std::vector<SettingsVariant>*>> extension;
+    extern ExtensionSettingsMap extension;
 
 }  // namespace Settings
 
