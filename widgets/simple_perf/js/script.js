@@ -1,4 +1,5 @@
 let websocket = null;
+let cpuElem, ramElem;
 
 function subscribe() {
   const msg = {
@@ -33,9 +34,9 @@ function parseMsg(msg) {
 
   if ("win_simple_perf/sysinfo" in data) {
     const vals = data["win_simple_perf/sysinfo"];
-    setData(document.getElementById("cpu"), vals["cpu"]);
+    setData(cpuElem, vals["cpu"]);
     setData(
-      document.getElementById("ram"),
+      ramElem,
       Math.round((vals["ram"]["used"] / vals["ram"]["total"]) * 100),
     );
   }
@@ -50,6 +51,9 @@ function ready(fn) {
 }
 
 ready(function () {
+  cpuElem = document.getElementById("cpu");
+  ramElem = document.getElementById("ram");
+
   try {
     if (websocket && websocket.readyState == 1) websocket.close();
     websocket = quasar_create_websocket();

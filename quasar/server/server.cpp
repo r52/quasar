@@ -5,8 +5,8 @@
 #include "uwebsockets/App.h"
 
 #include "common/config.h"
+#include "common/qutil.h"
 #include "common/settings.h"
-#include "common/util.h"
 
 #include "extension/extension.h"
 
@@ -224,7 +224,7 @@ std::string Server::GenerateAuthCode()
 
 void Server::loadExtensions()
 {
-    auto          path = Util::GetCommonAppDataPath() + "extensions/";
+    auto          path = QUtil::GetCommonAppDataPath() + "extensions/";
 
     QDir          dir(path);
     QFileInfoList list = dir.entryInfoList(QStringList() << "*.dll"

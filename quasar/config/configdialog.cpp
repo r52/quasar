@@ -4,8 +4,8 @@
 #include "extensionpage.h"
 #include "launchereditdialog.h"
 
+#include "common/qutil.h"
 #include "common/settings.h"
-#include "common/util.h"
 
 #include <jsoncons/json.hpp>
 #include <spdlog/spdlog.h>
@@ -63,7 +63,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
             QTableWidgetItem* startitem = new QTableWidgetItem(QString::fromStdString(ref.start));
             QTableWidgetItem* argitem   = new QTableWidgetItem(QString::fromStdString(ref.args));
 
-            auto [pix, ib64]            = Util::ConvertB64ImageToPixmap(ref.icon);
+            auto [pix, ib64]            = QUtil::ConvertB64ImageToPixmap(ref.icon);
             QTableWidgetItem* iconitem  = new QTableWidgetItem(QIcon(pix), "");
             iconitem->setTextAlignment(Qt::AlignHCenter);
             iconitem->setData(Qt::UserRole, ib64);
@@ -118,7 +118,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
                     startitem->setText(QString::fromStdString(d.start));
                     argitem->setText(QString::fromStdString(d.args));
 
-                    auto [pix, ib64] = Util::ConvertB64ImageToPixmap(d.icon);
+                    auto [pix, ib64] = QUtil::ConvertB64ImageToPixmap(d.icon);
                     iconitem->setIcon(QIcon(pix));
                     iconitem->setData(Qt::UserRole, ib64);
                 }
@@ -146,7 +146,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
                 QTableWidgetItem* startitem = new QTableWidgetItem(QString::fromStdString(d.start));
                 QTableWidgetItem* argitem   = new QTableWidgetItem(QString::fromStdString(d.args));
 
-                auto [pix, ib64]            = Util::ConvertB64ImageToPixmap(d.icon);
+                auto [pix, ib64]            = QUtil::ConvertB64ImageToPixmap(d.icon);
                 QTableWidgetItem* iconitem  = new QTableWidgetItem(QIcon(pix), "");
                 iconitem->setTextAlignment(Qt::AlignHCenter);
                 iconitem->setData(Qt::UserRole, ib64);

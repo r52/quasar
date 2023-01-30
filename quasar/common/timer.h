@@ -17,10 +17,12 @@ public:
     void setInterval(auto&& fn, int intv)
     {
         interval = intv;
-        SPDLOG_DEBUG("New timer thread with {}us internal", interval);
+        // SPDLOG_DEBUG("New timer thread with {}us internal", interval);
         thread = std::jthread{[&, fn](std::stop_token token) {
-            const auto origInterval = std::chrono::nanoseconds(std::chrono::microseconds(interval));
-            auto       nextSleep    = origInterval;
+            const auto origInterval    = std::chrono::nanoseconds(std::chrono::microseconds(interval));
+            auto       nextSleep       = origInterval;
+            auto       frameTimeBefore = std::chrono::steady_clock::now();
+            auto       frameTimeAfter  = std::chrono::steady_clock::now();
 
             while (true)
             {
@@ -34,12 +36,12 @@ public:
                     }
                 }
 
-                auto frameTimeBefore = std::chrono::steady_clock::now();
+                frameTimeBefore = std::chrono::steady_clock::now();
 
                 fn();
 
-                auto frameTimeAfter = std::chrono::steady_clock::now();
-                nextSleep           = origInterval - (frameTimeAfter - frameTimeBefore);
+                frameTimeAfter = std::chrono::steady_clock::now();
+                nextSleep      = origInterval - (frameTimeAfter - frameTimeBefore);
             }
         }};
     }

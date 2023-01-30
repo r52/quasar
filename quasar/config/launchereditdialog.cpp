@@ -1,7 +1,7 @@
 #include "launchereditdialog.h"
 #include "ui_launchereditdialog.h"
 
-#include "common/util.h"
+#include "common/qutil.h"
 
 #include <QFileDialog>
 #include <QImageReader>
@@ -19,7 +19,7 @@ LauncherEditDialog::LauncherEditDialog(QString title, QWidget* parent, QString c
     ui->pathEdit->setText(QString::fromStdString(data.start));
     ui->argEdit->setText(QString::fromStdString(data.args));
 
-    auto [pix, ib64] = Util::ConvertB64ImageToPixmap(data.icon);
+    auto [pix, ib64] = QUtil::ConvertB64ImageToPixmap(data.icon);
 
     if (!pix.isNull())
     {
@@ -80,7 +80,7 @@ LauncherEditDialog::LauncherEditDialog(QString title, QWidget* parent, QString c
             savedData.file    = ui->fileEdit->text().toStdString();
             savedData.start   = ui->pathEdit->text().toStdString();
             savedData.args    = ui->argEdit->text().toStdString();
-            savedData.icon    = Util::ConvertPixmapToB64Image(ui->iconPix->pixmap());
+            savedData.icon    = QUtil::ConvertPixmapToB64Image(ui->iconPix->pixmap());
             accept();
         }
     });

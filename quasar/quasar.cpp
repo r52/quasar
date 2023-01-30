@@ -3,7 +3,7 @@
 
 #include "common/config.h"
 #include "common/log.h"
-#include "common/util.h"
+#include "common/qutil.h"
 #include "config/configdialog.h"
 #include "server/server.h"
 #include "widgets/quasarwidget.h"
@@ -145,25 +145,12 @@ void Quasar::createTrayMenu()
 
     dataFolderAction = new QAction(tr("Open &Data Folder"), this);
     connect(dataFolderAction, &QAction::triggered, [] {
-        auto path = Util::GetCommonAppDataPath();
+        auto path = QUtil::GetCommonAppDataPath();
         QDesktopServices::openUrl(QUrl(path));
     });
 
     logAction = new QAction(tr("L&og"), this);
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);
-
-    // consoleAction = new QAction(tr("&Console"), this);
-    // connect(consoleAction, &QAction::triggered, [&] {
-    //     if (condlg == nullptr)
-    //     {
-    //         condlg = new WebUiDialog(service->getServer(), tr("Debug Console"), WebUiHandler::consoleUrl, CAL_DEBUG);
-    //         connect(condlg, &QObject::destroyed, [&] {
-    //             this->condlg = nullptr;
-    //         });
-
-    //        condlg->show();
-    //    }
-    //});
 
     aboutAction = new QAction(tr("&About Quasar"), this);
 
@@ -195,7 +182,7 @@ void Quasar::createTrayMenu()
 
 void Quasar::createDirectories()
 {
-    auto path = Util::GetCommonAppDataPath();
+    auto path = QUtil::GetCommonAppDataPath();
     path.append("extensions/");
 
     QDir dir(path);
@@ -217,7 +204,6 @@ void Quasar::createTrayIcon()
     trayIconMenu->addAction(dataFolderAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(logAction);
-    // trayIconMenu->addAction(consoleAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(aboutAction);
     trayIconMenu->addAction(aboutQtAction);

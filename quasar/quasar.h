@@ -43,7 +43,6 @@ private:
     QAction*         settingsAction{};
     QAction*         dataFolderAction{};
     QAction*         logAction{};
-    QAction*         consoleAction{};
     QAction*         aboutAction{};
     QAction*         aboutQtAction{};
     QAction*         docAction{};

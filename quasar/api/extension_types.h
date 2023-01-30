@@ -44,13 +44,13 @@ enum quasar_polling_type_t
 
 //! Handle for creating and storing extension settings.
 /*! This handle is opaque to the front facing API.
-    \sa extension_support.h, extension_support_internal.h
+    \sa extension_support.h
 */
 typedef void* quasar_settings_t;
 
 //! Handle for creating and storing selection options in a selection type setting.
 /*! This handle is opaque to the front facing API.
-    \sa extension_support.h, extension_support_internal.h
+    \sa extension_support.h
 */
 typedef void* quasar_selection_options_t;
 

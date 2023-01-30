@@ -123,17 +123,17 @@ namespace
 
     quasar_ext_info_fields_t fields = {"ajax", "AJAX Runner", "3.0", "r52", "Network access internal extension for Quasar", "https://github.com/r52/quasar"};
 
-    quasar_ext_info_t        info   = {
-        QUASAR_API_VERSION,
-        &fields,
+    quasar_ext_info_t        info   = {QUASAR_API_VERSION,
+                 &fields,
 
-        std::size(sources),
-        sources,
+                 std::size(sources),
+                 sources,
 
-        ajax_init,      // init
-        ajax_shutdown,  // shutdown
-        ajax_get_data,  // data
-    };
+                 ajax_init,      // init
+                 ajax_shutdown,  // shutdown
+                 ajax_get_data,  // data
+                 nullptr,
+                 nullptr};
 
 }  // namespace
 
