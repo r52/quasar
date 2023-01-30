@@ -187,7 +187,8 @@ Sample messages sent by various sources, including `sample extensions <https://g
                 "total": 34324512768,
                 "used": 10252300288
             }
-        }
+        },
+        "errors": ["Unknown topic win_simple_perf/band requested in extension win_simple_perf"]
     }
 
     {
@@ -247,9 +248,9 @@ For example, sending the following message:
 .. code-block:: json
 
     {
-        method: "query",
-        params: {
-            topics: ["applauncher/list"]
+        "method": "query",
+        "params": {
+            "topics": ["applauncher/list"]
         }
     }
 
@@ -275,10 +276,10 @@ Where ``chrome``, ``spotify``, and ``steam`` are commands preconfigured in the :
 .. code-block:: json
 
     {
-        method: "query",
-        params: {
-            topics: ["applauncher/launch"],
-            args: "chrome"
+        "method": "query",
+        "params": {
+            "topics": ["applauncher/launch"],
+            "args": "chrome"
         }
     }
 
