@@ -44,8 +44,8 @@ Basic Message Format
         method: <method>,
         params: {
             topics: [<targets>],
-            params: <list of target params>
-            args: <param args>
+            args: <args>,
+            params: [<list of target params>]
         }
     }
 
@@ -64,16 +64,17 @@ Field Descriptions
     This field should be a JSON object that is typically comprised of at least the field ``topics``.
 
 ``topics``
-    The intended targets of the message.
+    List of intended targets.
     Typically, this is an extension's identifier plus the Data Source identifier separated by a forward slash.
+
+``args``
+    Optional arguments sent to the target.
+    Only supported by queried/client polled sources, if arguments are supported by the source.
 
 ``target params``
     List of parameters sent to all targets.
     Typically, this field is unused.
 
-``param args``
-    Optional arguments sent to the target.
-    Only supported by queried/client polled sources, if arguments are supported by the source.
 
 Sample Usages
 #################
