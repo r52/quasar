@@ -26,6 +26,9 @@ class Server : public std::enable_shared_from_this<Server>
     using MethodCallMapType = std::unordered_map<std::string, MethodFuncType>;
 
 public:
+    Server(const Server&)             = delete;
+    Server& operator= (const Server&) = delete;
+
     Server(std::shared_ptr<Config> cfg);
     ~Server();
 

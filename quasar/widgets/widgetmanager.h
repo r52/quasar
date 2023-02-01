@@ -16,6 +16,9 @@ using WidgetMapType = std::unordered_map<std::string, std::unique_ptr<QuasarWidg
 class WidgetManager : public std::enable_shared_from_this<WidgetManager>
 {
 public:
+    WidgetManager(const WidgetManager&)             = delete;
+    WidgetManager& operator= (const WidgetManager&) = delete;
+
     WidgetManager(std::shared_ptr<Server> serv);
     ~WidgetManager();
 

@@ -294,6 +294,12 @@ void Quasar::closeEvent(QCloseEvent* event)
 
 Quasar::~Quasar()
 {
+    // Clean up config dialog
+    if (cfgdlg)
+    {
+        cfgdlg->done(QDialog::Rejected);
+    }
+
     manager.reset();
     server.reset();
     config.reset();

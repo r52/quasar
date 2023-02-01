@@ -89,8 +89,8 @@ public:
     //! Shorthand type for quasar_extension_destroy()
     using extension_destroy                 = std::add_pointer_t<void(quasar_ext_info_t*)>;
 
-    Extension(Extension const&)             = delete;
-    Extension& operator= (Extension const&) = delete;
+    Extension(const Extension&)             = delete;
+    Extension& operator= (const Extension&) = delete;
 
     ~Extension();
 

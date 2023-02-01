@@ -81,6 +81,9 @@ class QuasarWidget : public QWidget
     Q_OBJECT;
 
 public:
+    QuasarWidget(const QuasarWidget&)             = delete;
+    QuasarWidget& operator= (const QuasarWidget&) = delete;
+
     QuasarWidget(const std::string&    widgetName,
         const WidgetDefinition&        def,
         std::shared_ptr<Server>        serv,

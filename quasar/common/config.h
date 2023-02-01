@@ -12,6 +12,9 @@ class QSettings;
 class Config
 {
 public:
+    Config(const Config&)             = delete;
+    Config& operator= (const Config&) = delete;
+
     Config();
     ~Config();
 
