@@ -193,7 +193,7 @@ void Server::RunOnServer(auto&& cb)
 
 void Server::UpdateSettings()
 {
-    RunOnPool([=, this] {
+    RunOnServer([=, this] {
         std::lock_guard<std::shared_mutex> lk(extensionMutex);
         for (auto& [name, ext] : extensions)
         {
