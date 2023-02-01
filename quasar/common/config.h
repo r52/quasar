@@ -7,8 +7,6 @@
 #include <QSettings>
 #include <QVariant>
 
-class QSettings;
-
 class Config
 {
 public:
@@ -28,8 +26,8 @@ public:
     Settings::WidgetSettings ReadWidgetSettings(const QString& name, Settings::WidgetSettings& settings) const;
     void                     WriteWidgetSettings(const QString& name, const Settings::WidgetSettings& settings);
 
-    void                     ReadDataSourceSetting(const std::string& name, Settings::DataSourceSettings* settings);
-    void                     WriteDataSourceSetting(const std::string& name, Settings::DataSourceSettings* const& settings);
+    void                     ReadDataSourceSetting(Settings::DataSourceSettings* settings);
+    void                     WriteDataSourceSetting(Settings::DataSourceSettings* const& settings);
 
     template<typename T, bool ranged>
     void ReadSetting(Settings::Setting<T, ranged>& setting) const

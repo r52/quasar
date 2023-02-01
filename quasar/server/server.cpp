@@ -15,9 +15,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
-#include <QStandardPaths>
 #include <QtNetworkAuth>
-#include <QUrl>
 
 #include <spdlog/spdlog.h>
 

@@ -10,7 +10,6 @@
 
 #include <QMessageBox>
 #include <QNetworkCookie>
-#include <QObject>
 #include <QWebEngineCookieStore>
 #include <QWebEngineProfile>
 

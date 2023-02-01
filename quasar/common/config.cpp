@@ -65,9 +65,9 @@ void Config::WriteWidgetSettings(const QString& name, const Settings::WidgetSett
     cfg->endGroup();
 }
 
-void Config::ReadDataSourceSetting(const std::string& name, Settings::DataSourceSettings* settings)
+void Config::ReadDataSourceSetting(Settings::DataSourceSettings* settings)
 {
-    auto                         qname = QString::fromStdString(name);
+    auto                         qname = QString::fromStdString(settings->name);
 
     Settings::DataSourceSettings cpy   = *settings;
 
@@ -77,9 +77,9 @@ void Config::ReadDataSourceSetting(const std::string& name, Settings::DataSource
     cfg->endGroup();
 }
 
-void Config::WriteDataSourceSetting(const std::string& name, Settings::DataSourceSettings* const& settings)
+void Config::WriteDataSourceSetting(Settings::DataSourceSettings* const& settings)
 {
-    auto qname = QString::fromStdString(name);
+    auto qname = QString::fromStdString(settings->name);
 
     cfg->beginGroup(qname);
     cfg->setValue("enabled", settings->enabled);

@@ -10,8 +10,8 @@
 
 #include <spdlog/spdlog.h>
 
-#define CHAR_TO_UTF8(d, x) \
-  x[sizeof(x) - 1] = 0;    \
+#define CHAR_TO_STRING(d, x) \
+  x[sizeof(x) - 1] = 0;      \
   d                = std::string{x};
 
 size_t Extension::_uid = 0;
@@ -42,12 +42,12 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
         throw std::invalid_argument("null extension fields struct");
     }
 
-    CHAR_TO_UTF8(name, extensionInfo->fields->name);
-    CHAR_TO_UTF8(fullname, extensionInfo->fields->fullname);
-    CHAR_TO_UTF8(author, extensionInfo->fields->author);
-    CHAR_TO_UTF8(description, extensionInfo->fields->description);
-    CHAR_TO_UTF8(version, extensionInfo->fields->version);
-    CHAR_TO_UTF8(url, extensionInfo->fields->url);
+    CHAR_TO_STRING(name, extensionInfo->fields->name);
+    CHAR_TO_STRING(fullname, extensionInfo->fields->fullname);
+    CHAR_TO_STRING(author, extensionInfo->fields->author);
+    CHAR_TO_STRING(description, extensionInfo->fields->description);
+    CHAR_TO_STRING(version, extensionInfo->fields->version);
+    CHAR_TO_STRING(url, extensionInfo->fields->url);
 
     if (name.empty() or fullname.empty())
     {
@@ -66,7 +66,7 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
     {
         for (size_t i = 0; i < extensionInfo->numDataSources; i++)
         {
-            CHAR_TO_UTF8(const std::string srcname, extensionInfo->dataSources[i].name);
+            CHAR_TO_STRING(const std::string srcname, extensionInfo->dataSources[i].name);
 
             const auto topic = fmt::format("{}/{}", name, srcname);
 
@@ -85,7 +85,7 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
             source.validtime        = extensionInfo->dataSources[i].validtime;
             source.uid = extensionInfo->dataSources[i].uid = ++Extension::_uid;
 
-            cfl->ReadDataSourceSetting(topic, &source.settings);
+            cfl->ReadDataSourceSetting(&source.settings);
 
             // Initialize type specific fields
             if (source.settings.rate == QUASAR_POLLING_SIGNALED)
@@ -687,7 +687,7 @@ Extension::~Extension()
         }
 
         src.locks.reset();
-        cfl->WriteDataSourceSetting(name, &src.settings);
+        cfl->WriteDataSourceSetting(&src.settings);
     }
 
     // Save extension settings

@@ -19,7 +19,6 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QUrl>
-#include <QVBoxLayout>
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/qt_sinks.h>
