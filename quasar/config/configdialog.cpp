@@ -205,11 +205,11 @@ void ConfigDialog::SaveSettings()
 
         bool      checked = startupCheck->isChecked();
 
-        if (checked && !lnk.exists())
+        if (checked and !lnk.exists())
         {
             QFile::link(QCoreApplication::applicationFilePath(), filename);
         }
-        else if (!checked && lnk.exists())
+        else if (!checked and lnk.exists())
         {
             QFile::remove(filename);
         }

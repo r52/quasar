@@ -69,7 +69,7 @@ LauncherEditDialog::LauncherEditDialog(QString title, QWidget* parent, QString c
     // ok button
     connect(ui->buttonBox, &QDialogButtonBox::accepted, [=, this] {
         // validate
-        if (ui->cmdEdit->text().isEmpty() || ui->fileEdit->text().isEmpty())
+        if (ui->cmdEdit->text().isEmpty() or ui->fileEdit->text().isEmpty())
         {
             QMessageBox::warning(this, title, "Command and File Path must be filled out.");
         }

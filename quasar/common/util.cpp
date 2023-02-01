@@ -12,10 +12,10 @@ std::vector<std::string> Util::SplitString(const std::string& src, const std::st
 
 char* Util::SafeCStrCopy(char* dest, size_t destSize, const char* src, size_t srcSize)
 {
-    if (destSize > 0 && srcSize > 0)
+    if (destSize > 0 and srcSize > 0)
     {
         size_t i;
-        for (i = 0; i < destSize - 1 && i < srcSize && src[i]; i++)
+        for (i = 0; i < destSize - 1 and i < srcSize and src[i]; i++)
         {
             dest[i] = src[i];
         }

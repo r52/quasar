@@ -38,7 +38,7 @@ namespace
 
     bool applauncher_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     {
-        if (srcUid != sources[0].uid && srcUid != sources[1].uid)
+        if (srcUid != sources[0].uid and srcUid != sources[1].uid)
         {
             SPDLOG_WARN("Unknown source {}", srcUid);
             return false;

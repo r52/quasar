@@ -264,7 +264,7 @@ HRESULT Measure::DeviceInit()
     assert(m_enum && !m_dev);
 
     // if a specific ID was requested, search for that one, otherwise get the default
-    if (!m_reqID.empty() && m_reqID != L"Default")
+    if (!m_reqID.empty() and m_reqID != L"Default")
     {
         hr = m_enum->GetDevice(m_reqID.c_str(), &m_dev);
         if (hr != S_OK)
@@ -581,7 +581,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     {
         case Measure::TYPE_FFTFREQ:
             {
-                if (m->m_clCapture && m->m_fftSize)
+                if (m->m_clCapture and m->m_fftSize)
                 {
                     for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
                     {
@@ -596,7 +596,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
         case Measure::TYPE_BANDFREQ:
             {
-                if (m->m_clCapture && m->m_nBands)
+                if (m->m_clCapture and m->m_nBands)
                 {
                     for (size_t i = 0; i < m->m_nBands; i++)
                     {
@@ -615,7 +615,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 {
                     DWORD state;
                     bool  bst = false;
-                    if (m->m_dev->GetState(&state) == S_OK && state == DEVICE_STATE_ACTIVE)
+                    if (m->m_dev->GetState(&state) == S_OK and state == DEVICE_STATE_ACTIVE)
                     {
                         bst = true;
                     }
@@ -681,13 +681,13 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         {
                             IMMDevice*      device = NULL;
                             IPropertyStore* props  = NULL;
-                            if (collection->Item(iDevice, &device) == S_OK && device->OpenPropertyStore(STGM_READ, &props) == S_OK)
+                            if (collection->Item(iDevice, &device) == S_OK and device->OpenPropertyStore(STGM_READ, &props) == S_OK)
                             {
                                 LPWSTR      id = NULL;
                                 PROPVARIANT varName;
                                 PropVariantInit(&varName);
 
-                                if (device->GetId(&id) == S_OK && props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
+                                if (device->GetId(&id) == S_OK and props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
                                 {
                                     auto device = fmt::format(L"{}: {}", id, varName.pwszVal);
                                     list.push_back(string_conv(device).c_str());
@@ -738,7 +738,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             // release the buffer
             m->m_clCapture->ReleaseBuffer(nFrames);
 
-            if (type == Measure::TYPE_RMS || type == Measure::TYPE_PEAK)
+            if (type == Measure::TYPE_RMS or type == Measure::TYPE_PEAK)
             {
                 // measure RMS and peak levels
                 float rms[Measure::MAX_CHANNELS];
@@ -924,7 +924,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         int   iBand = 0;
                         float f0    = 0.0f;
 
-                        while (iBin <= (m->m_fftSize / 2) && iBand < m->m_nBands)
+                        while (iBin <= (m->m_fftSize / 2) and iBand < m->m_nBands)
                         {
                             float  fLin1 = ((float) iBin + 0.5f) * df;
                             float  fLog1 = m->m_bandFreq[iBand];
@@ -964,7 +964,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     // and resetting the volumes if past the threshold.
     else
     {
-        if (type == Measure::TYPE_RMS || type == Measure::TYPE_PEAK)
+        if (type == Measure::TYPE_RMS or type == Measure::TYPE_PEAK)
         {
             for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
             {
@@ -974,7 +974,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
         }
 
         // poll for new devices
-        if (m->m_enum && !m->m_dev)
+        if (m->m_enum and !m->m_dev)
         {
             lk.unlock();
             m->DeviceInit();
@@ -1011,7 +1011,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
         case Measure::TYPE_FFT:
             {
-                if (m->m_clCapture && m->m_fftSize)
+                if (m->m_clCapture and m->m_fftSize)
                 {
                     double x;
 
@@ -1033,7 +1033,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
                     double acc = std::accumulate(output[type].begin(), output[type].end(), 0.0);
 
-                    if (acc > 0.0 || (acc == 0.0 && last_data_is_not_zero))
+                    if (acc > 0.0 or (acc == 0.0 and last_data_is_not_zero))
                     {
                         quasar_set_data_double_vector(hData, output[type]);
                         last_data_is_not_zero = (acc > 0.0);
@@ -1050,7 +1050,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
         case Measure::TYPE_BAND:
             {
-                if (m->m_clCapture && m->m_nBands)
+                if (m->m_clCapture and m->m_nBands)
                 {
                     double x;
 
@@ -1072,7 +1072,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
                     double acc = std::accumulate(output[type].begin(), output[type].end(), 0.0);
 
-                    if (acc > 0.0 || (acc == 0.0 && last_data_is_not_zero))
+                    if (acc > 0.0 or (acc == 0.0 and last_data_is_not_zero))
                     {
                         quasar_set_data_double_vector(hData, output[type]);
                         last_data_is_not_zero = (acc > 0.0);
@@ -1208,7 +1208,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     m->m_reqID        = to_wstring(dev.data());
 
     int fftsize       = quasar_get_int_setting(extHandle, settings, "FFTSize");
-    if (fftsize < 0 || fftsize & 1)
+    if (fftsize < 0 or fftsize & 1)
     {
         warn("Invalid FFTSize {}: must be an even integer >= 0. (powers of 2 work best)", fftsize);
     }
@@ -1221,7 +1221,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     if (m->m_fftSize)
     {
         int overlap = quasar_get_int_setting(extHandle, settings, "FFTOverlap");
-        if (overlap < 0 || overlap >= m->m_fftSize)
+        if (overlap < 0 or overlap >= m->m_fftSize)
         {
             warn("Invalid FFTOverlap {}: must be an integer between 0 and FFTSize({}).", overlap, m->m_fftSize);
         }
@@ -1241,7 +1241,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     double freqMin = quasar_get_double_setting(extHandle, settings, "FreqMin");
     double freqMax = quasar_get_double_setting(extHandle, settings, "FreqMax");
 
-    if (freqMin != m->m_freqMin || freqMax != m->m_freqMax)
+    if (freqMin != m->m_freqMin or freqMax != m->m_freqMax)
     {
         m->m_freqMin = freqMin;
         m->m_freqMax = freqMax;
@@ -1276,7 +1276,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
         }
     }
 
-    if (startup_initialized && needs_reinit)
+    if (startup_initialized and needs_reinit)
     {
         m->DeviceRelease();
         m->DeviceInit();

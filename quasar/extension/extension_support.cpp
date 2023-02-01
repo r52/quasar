@@ -207,7 +207,7 @@ quasar_add_int_setting(quasar_ext_handle handle, quasar_settings_t* settings, co
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         Settings::Setting<int> entry{EXTKEY(name), description, dflt, min, max, step};
 
@@ -223,7 +223,7 @@ quasar_settings_t* quasar_add_bool_setting(quasar_ext_handle handle, quasar_sett
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         Settings::Setting<bool> entry{EXTKEY(name), description, dflt};
 
@@ -246,7 +246,7 @@ quasar_settings_t* quasar_add_double_setting(quasar_ext_handle handle,
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         Settings::Setting<double> entry{EXTKEY(name), description, dflt, min, max, step};
 
@@ -263,7 +263,7 @@ quasar_add_string_setting(quasar_ext_handle handle, quasar_settings_t* settings,
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         Settings::Setting<std::string> entry{EXTKEY(name), description, dflt, password};
 
@@ -284,7 +284,7 @@ quasar_settings_t* quasar_add_selection_setting(quasar_ext_handle handle,
     SelectionOptionsVector* sel_con = reinterpret_cast<SelectionOptionsVector*>(select);
     Extension*              ext     = static_cast<Extension*>(handle);
 
-    if (set_con && sel_con && ext)
+    if (set_con and sel_con and ext)
     {
         if (sel_con->empty())
         {
@@ -324,7 +324,7 @@ intmax_t quasar_get_int_setting(quasar_ext_handle handle, quasar_settings_t* set
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
@@ -353,7 +353,7 @@ uintmax_t quasar_get_uint_setting(quasar_ext_handle handle, quasar_settings_t* s
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
@@ -382,7 +382,7 @@ bool quasar_get_bool_setting(quasar_ext_handle handle, quasar_settings_t* settin
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
@@ -411,7 +411,7 @@ double quasar_get_double_setting(quasar_ext_handle handle, quasar_settings_t* se
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
@@ -440,7 +440,7 @@ bool quasar_get_string_setting(quasar_ext_handle handle, quasar_settings_t* sett
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
@@ -479,7 +479,7 @@ bool quasar_get_selection_setting(quasar_ext_handle handle, quasar_settings_t* s
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
@@ -557,7 +557,7 @@ bool _get_basic_storage(quasar_ext_handle handle, const char* name, T* buf)
 {
     Extension* ext = static_cast<Extension*>(handle);
 
-    if (ext && buf)
+    if (ext and buf)
     {
         T val = ext->ReadStorage<T>(name);
         *buf  = val;
@@ -591,7 +591,7 @@ bool quasar_get_storage_string(quasar_ext_handle handle, const char* name, char*
 {
     Extension* ext = static_cast<Extension*>(handle);
 
-    if (ext && buf && size)
+    if (ext and buf and size)
     {
         std::string val = ext->ReadStorage<std::string>(name);
 
@@ -713,7 +713,7 @@ std::string_view quasar_get_string_setting_hpp(quasar_ext_handle handle, quasar_
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
@@ -741,7 +741,7 @@ std::string_view quasar_get_selection_setting_hpp(quasar_ext_handle handle, quas
     SettingsVariantVector* container = reinterpret_cast<SettingsVariantVector*>(settings);
     Extension*             ext       = static_cast<Extension*>(handle);
 
-    if (container && ext)
+    if (container and ext)
     {
         auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {

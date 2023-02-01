@@ -73,7 +73,7 @@ bool simple_perf_shutdown(quasar_ext_handle handle)
 
 bool simple_perf_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 {
-    if (srcUid != sources[0].uid && srcUid != sources[1].uid)
+    if (srcUid != sources[0].uid and srcUid != sources[1].uid)
     {
         warn("Unknown source {}", srcUid);
         return false;

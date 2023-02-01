@@ -466,7 +466,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
         return GET_DATA_FAILED;
     }
 
-    if (src.settings.rate == QUASAR_POLLING_CLIENT && src.validtime)
+    if (src.settings.rate == QUASAR_POLLING_CLIENT and src.validtime)
     {
         // If this source is client polled and a validity duration is specified,
         // first check for expiry time and cached data
@@ -517,7 +517,7 @@ Extension::DataSourceReturnState Extension::getDataFromSource(jsoncons::json& ms
     }
 
     // If we have valid data here:
-    if (src.settings.rate == QUASAR_POLLING_CLIENT && src.validtime)
+    if (src.settings.rate == QUASAR_POLLING_CLIENT and src.validtime)
     {
         // If validity time duration is set, cache the data
         src.cache.data   = rett.val.value();
@@ -580,7 +580,7 @@ void Extension::sendDataToSubscribers(DataSource& src)
 
 void Extension::createTimer(DataSource& src)
 {
-    if (src.settings.enabled && !src.timer)
+    if (src.settings.enabled and !src.timer)
     {
         // Timer creation required
         src.timer = std::make_unique<Timer>(src.topic);
@@ -599,7 +599,7 @@ void Extension::UpdateExtensionSettings()
 {
     refreshDataSources();
 
-    if (!settings.empty() && extensionInfo->update)
+    if (!settings.empty() and extensionInfo->update)
     {
         extensionInfo->update((quasar_settings_t*) &settings);
 
@@ -647,7 +647,7 @@ void Extension::refreshDataSources()
     {
         std::lock_guard<std::shared_mutex> lk(src.mutex);
 
-        if (src.settings.enabled && src.settings.rate > QUASAR_POLLING_CLIENT && src.subscribers > 0)
+        if (src.settings.enabled and src.settings.rate > QUASAR_POLLING_CLIENT and src.subscribers > 0)
         {
             // Create timer if not exist
             createTimer(src);
@@ -659,7 +659,7 @@ void Extension::refreshDataSources()
             src.timer.reset();
         }
 
-        if (src.timer && src.timer->getInterval() != src.settings.rate)
+        if (src.timer and src.timer->getInterval() != src.settings.rate)
         {
             // Refresh timer
             src.timer->stop();

@@ -368,7 +368,7 @@ void Server::loadExtensions()
 
 void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& msg)
 {
-    if (Settings::internal.auth.GetValue() && !client->authenticated)
+    if (Settings::internal.auth.GetValue() and !client->authenticated)
     {
         SEND_CLIENT_ERROR(client, "Unauthenticated client");
         return;
@@ -435,7 +435,7 @@ void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& m
 
 void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
 {
-    if (Settings::internal.auth.GetValue() && !client->authenticated)
+    if (Settings::internal.auth.GetValue() and !client->authenticated)
     {
         SEND_CLIENT_ERROR(client, "Unauthenticated client");
         return;

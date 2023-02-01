@@ -161,7 +161,7 @@ bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Conf
         }
     }
 
-    if (userAction && !acceptSecurityWarnings(def))
+    if (userAction and !acceptSecurityWarnings(def))
     {
         SPDLOG_WARN("Denied loading widget {}", filename);
         return false;
