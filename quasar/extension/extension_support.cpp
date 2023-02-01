@@ -326,7 +326,7 @@ intmax_t quasar_get_int_setting(quasar_ext_handle handle, quasar_settings_t* set
 
     if (container && ext)
     {
-        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<int>>(entry))
             {
@@ -355,7 +355,7 @@ uintmax_t quasar_get_uint_setting(quasar_ext_handle handle, quasar_settings_t* s
 
     if (container && ext)
     {
-        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<int>>(entry))
             {
@@ -384,7 +384,7 @@ bool quasar_get_bool_setting(quasar_ext_handle handle, quasar_settings_t* settin
 
     if (container && ext)
     {
-        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<bool>>(entry))
             {
@@ -413,7 +413,7 @@ double quasar_get_double_setting(quasar_ext_handle handle, quasar_settings_t* se
 
     if (container && ext)
     {
-        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<double>>(entry))
             {
@@ -442,7 +442,7 @@ bool quasar_get_string_setting(quasar_ext_handle handle, quasar_settings_t* sett
 
     if (container && ext)
     {
-        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<std::string>>(entry))
             {
@@ -481,7 +481,7 @@ bool quasar_get_selection_setting(quasar_ext_handle handle, quasar_settings_t* s
 
     if (container && ext)
     {
-        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::SelectionSetting<std::string>>(entry))
             {
@@ -715,7 +715,7 @@ std::string_view quasar_get_string_setting_hpp(quasar_ext_handle handle, quasar_
 
     if (container && ext)
     {
-        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::Setting<std::string>>(entry))
             {
@@ -743,7 +743,7 @@ std::string_view quasar_get_selection_setting_hpp(quasar_ext_handle handle, quas
 
     if (container && ext)
     {
-        auto cmp    = fmt::format("{}/{}", ext->GetName(), name);
+        auto cmp    = EXTKEY(name);
         auto result = std::find_if(container->begin(), container->end(), [&](Settings::SettingsVariant& entry) {
             if (std::holds_alternative<Settings::SelectionSetting<std::string>>(entry))
             {
