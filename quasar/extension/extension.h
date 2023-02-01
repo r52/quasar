@@ -249,11 +249,6 @@ private:
     */
     void createTimer(DataSource& src);
 
-    /*! Helper function that propagates custom settings message to all subscribers
-        \sa UpdateExtensionSettings()
-    */
-    void propagateSettingsToSubscribers();
-
     /*! Crafts the custom settings message to be sent to subscribers
         \return The settings message
         \sa UpdateExtensionSettings()

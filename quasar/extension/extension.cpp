@@ -603,14 +603,7 @@ void Extension::UpdateExtensionSettings()
     {
         extensionInfo->update((quasar_settings_t*) &settings);
 
-        propagateSettingsToSubscribers();
-    }
-}
-
-void Extension::propagateSettingsToSubscribers()
-{
-    if (!settings.empty())
-    {
+        // Propagate settings to subscribers
         auto payload = craftSettingsMessage();
 
         if (!payload.empty())
@@ -620,7 +613,10 @@ void Extension::propagateSettingsToSubscribers()
             {
                 std::shared_lock<std::shared_mutex> lk(source.mutex);
 
-                server->PublishData(source.topic, payload);
+                if (source.subscribers > 0)
+                {
+                    server->PublishData(source.topic, payload);
+                }
             }
         }
     }
