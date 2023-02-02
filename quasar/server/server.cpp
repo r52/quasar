@@ -222,20 +222,17 @@ std::string Server::GenerateAuthCode()
 
 void Server::loadExtensions()
 {
+    const auto libTypes = QStringList() << "*.dll"
+                                        << "*.so"
+                                        << "*.dylib";
     auto          path = QUtil::GetCommonAppDataPath() + "extensions/";
 
     QDir          dir(path);
-    QFileInfoList list = dir.entryInfoList(QStringList() << "*.dll"
-                                                         << "*.so"
-                                                         << "*.dylib",
-        QDir::Files);
+    QFileInfoList list = dir.entryInfoList(libTypes, QDir::Files);
 
     // Also check executable path
     auto extdir = QDir(QCoreApplication::applicationDirPath() + "/extensions/");
-    list.append(extdir.entryInfoList(QStringList() << "*.dll"
-                                                   << "*.so"
-                                                   << "*.dylib",
-        QDir::Files));
+    list.append(extdir.entryInfoList(libTypes, QDir::Files));
 
     if (list.count() == 0)
     {
@@ -398,7 +395,7 @@ void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& m
 
         if (!extensions.count(target))
         {
-            SEND_CLIENT_ERROR(client, "Unknown extension '{}'", target);
+            SEND_CLIENT_ERROR(client, "Unknown extension '{}' in topic {}", target, topic);
             continue;
         }
 
@@ -472,14 +469,11 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
     jsoncons::json                      j{jsoncons::json_object_arg, {{"errors", jsoncons::json{jsoncons::json_array_arg}}}};
     std::string                         message{};
 
-    for (auto& ex : extns)
+    for (auto& [target, tpcs] : extns)
     {
-        auto& target = ex.first;
-        auto& tpcs   = ex.second;
-
         if (!extensions.count(target))
         {
-            SEND_CLIENT_ERROR(client, "Unknown extension {}", target);
+            SEND_CLIENT_ERROR(client, "Unknown extension {} in topic {}", target, fmt::join(tpcs, ","));
             continue;
         }
 
@@ -547,8 +541,6 @@ void Server::handleMethodAuth(PerSocketData* client, const ClientMessage& msg)
 
 void Server::processMessage(PerSocketData* client, const std::string& msg)
 {
-    // SPDLOG_DEBUG("Raw WebSocket message: {}", msg);
-
     ClientMessage doc{};
 
     try
@@ -600,7 +592,7 @@ void Server::processSubscription(PerSocketData* client, const std::string& topic
 
     if (!extensions.count(target))
     {
-        SEND_CLIENT_ERROR(client, "Unknown extension '{}'", target);
+        SEND_CLIENT_ERROR(client, "Unknown extension '{}' in topic {}", target, topic);
         return;
     }
 
