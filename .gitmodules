@@ -1,8 +1,7 @@
 [submodule "vcpkg"]
 	path = vcpkg
-	url = https://github.com/r52/vcpkg.git
+	url = https://github.com/microsoft/vcpkg.git
 	ignore = dirty
-	branch = temp
 [submodule "3rdparty/tracy"]
 	path = 3rdparty/tracy
 	url = https://github.com/wolfpld/tracy.git
