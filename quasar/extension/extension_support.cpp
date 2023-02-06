@@ -83,8 +83,9 @@ quasar_data_handle quasar_set_data_string(quasar_data_handle hData, const char* 
     return nullptr;
 }
 
-template<typename T, typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T>, T>>
+template<typename T>
 quasar_data_handle _set_basic_json_type(quasar_data_handle hData, T data)
+    requires std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T>
 {
     quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
@@ -142,8 +143,9 @@ quasar_data_handle quasar_set_data_string_array(quasar_data_handle hData, char**
     return nullptr;
 }
 
-template<typename T, typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<float, T>, T>>
+template<typename T>
 quasar_data_handle _copy_basic_array(quasar_data_handle hData, T* arr, size_t len)
+    requires std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<float, T>
 {
     quasar_return_data_t* ref = static_cast<quasar_return_data_t*>(hData);
 
@@ -533,9 +535,9 @@ void quasar_signal_wait_processed(quasar_ext_handle handle, const char* source)
     }
 }
 
-template<typename T,
-    typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T> || std::is_same_v<const char*, T>, T>>
+template<typename T>
 void _set_basic_storage(quasar_ext_handle handle, const char* name, T data)
+    requires std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T> || std::is_same_v<const char*, T>
 {
     Extension* ext = static_cast<Extension*>(handle);
 
@@ -552,8 +554,9 @@ void _set_basic_storage(quasar_ext_handle handle, const char* name, T data)
     }
 }
 
-template<typename T, typename = std::enable_if_t<std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T>, T>>
+template<typename T>
 bool _get_basic_storage(quasar_ext_handle handle, const char* name, T* buf)
+    requires std::is_same_v<double, T> || std::is_same_v<int, T> || std::is_same_v<bool, T>
 {
     Extension* ext = static_cast<Extension*>(handle);
 
