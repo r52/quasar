@@ -16,6 +16,7 @@
 #include <array>
 #include <cassert>
 #include <complex>
+#include <limits>
 #include <memory>
 #include <shared_mutex>
 #include <span>
@@ -52,6 +53,14 @@ constexpr std::string_view EXT_NAME     = "win_audio_viz";
 constexpr double           CLAMP01(double x)
 {
     return std::max(0.0, std::min(1.0, (x)));
+}
+
+template<typename T>
+requires std::numeric_limits<T>::is_integer
+constexpr float normalizeAsFloat(T val)
+{
+    constexpr float imax = 1.0f / std::numeric_limits<T>::max();
+    return val * imax;
 }
 
 constexpr auto TWOPI = (2 * 3.14159265358979323846);
@@ -804,7 +813,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     {
                         for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
                         {
-                            float xL   = (float) *s++ * 1.0f / 0x7fff;
+                            float xL   = normalizeAsFloat(*s++);
                             float sqrL = xL * xL;
                             float absL = abs(xL);
                             rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
@@ -817,8 +826,8 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     {
                         for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
                         {
-                            float xL   = (float) *s++ * 1.0f / 0x7fff;
-                            float xR   = (float) *s++ * 1.0f / 0x7fff;
+                            float xL   = normalizeAsFloat(*s++);
+                            float xR   = normalizeAsFloat(*s++);
                             float sqrL = xL * xL;
                             float sqrR = xR * xR;
                             float absL = abs(xL);
@@ -835,7 +844,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         {
                             for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
                             {
-                                float x     = (float) *s++ * 1.0f / 0x7fff;
+                                float x     = normalizeAsFloat(*s++);
                                 float sqrX  = x * x;
                                 float absX  = abs(x);
                                 rms[iChan]  = sqrX + m->m_kRMS[(sqrX < rms[iChan])] * (rms[iChan] - sqrX);
@@ -863,7 +872,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     // fill ring buffers (demux streams)
                     for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
                     {
-                        (m->m_fftIn[iChan])[m->m_fftBufW] = m->m_format == Measure::FMT_PCM_F32 ? *sF32++ : (float) *sI16++ * 1.0f / 0x7fff;
+                        (m->m_fftIn[iChan])[m->m_fftBufW] = m->m_format == Measure::FMT_PCM_F32 ? *sF32++ : normalizeAsFloat(*sI16++);
                     }
 
                     m->m_fftBufW = (m->m_fftBufW + 1) % m->m_fftSize;
