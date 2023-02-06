@@ -46,6 +46,7 @@ private:
     QAction*         aboutAction{};
     QAction*         aboutQtAction{};
     QAction*         docAction{};
+    QAction*         gpuTestAction{};
     QAction*         quitAction{};
 
     //

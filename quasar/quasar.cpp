@@ -19,6 +19,7 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QUrl>
+#include <QWebEngineView>
 
 #include <spdlog/async.h>
 #include <spdlog/sinks/qt_sinks.h>
@@ -175,6 +176,14 @@ void Quasar::createTrayMenu()
         QDesktopServices::openUrl(QUrl("https://quasardoc.readthedocs.io"));
     });
 
+    gpuTestAction = new QAction(tr("GPU Info"), this);
+    connect(gpuTestAction, &QAction::triggered, [] {
+        QWebEngineView* view = new QWebEngineView();
+        view->setAttribute(Qt::WA_DeleteOnClose);
+        view->load(QUrl("chrome://gpu/"));
+        view->show();
+    });
+
     quitAction = new QAction(tr("&Quit"), this);
     connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::exit, Qt::QueuedConnection);
 }
@@ -207,6 +216,7 @@ void Quasar::createTrayIcon()
     trayIconMenu->addAction(aboutAction);
     trayIconMenu->addAction(aboutQtAction);
     trayIconMenu->addAction(docAction);
+    trayIconMenu->addAction(gpuTestAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(quitAction);
 
