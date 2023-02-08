@@ -66,7 +66,18 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<C
 
     // Initialize late components
     server  = std::make_shared<Server>(config);
-    manager = std::make_shared<WidgetManager>(server);
+    manager = std::make_shared<WidgetManager>(server, [this](const std::vector<QuasarWidget*>& widgets) {
+        if (widgetListMenu)
+        {
+            // Regenerate widget list menu
+            widgetListMenu->clear();
+
+            for (auto& w : widgets)
+            {
+                duplicateMenu(widgetListMenu, *(w->GetContextMenu()));
+            }
+        }
+    });
 
     // Setup system tray
     createTrayMenu();
@@ -274,18 +285,6 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
         case QSystemTrayIcon::Trigger:
         case QSystemTrayIcon::Context:
             {
-                // Regenerate widget list menu
-                widgetListMenu->clear();
-
-                {
-                    auto widgets = manager->GetWidgets();
-
-                    for (auto& w : widgets)
-                    {
-                        duplicateMenu(widgetListMenu, *(w->GetContextMenu()));
-                    }
-                }
-
                 if (reason == QSystemTrayIcon::Trigger)
                 {
                     trayIcon->contextMenu()->popup(QCursor::pos());

@@ -36,7 +36,7 @@ namespace
     };
 }  // namespace
 
-WidgetManager::WidgetManager(std::shared_ptr<Server> serv) : server{serv}
+WidgetManager::WidgetManager(std::shared_ptr<Server> serv, WidgetChangedCallback&& cb) : server{serv}, widgetChangedCb(std::move(cb))
 {
     auto cookiesfile = Settings::internal.cookies.GetValue();
 
@@ -168,31 +168,38 @@ bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Conf
     }
 
     // Generate unique widget name
-    std::string                         widgetName = def.name;
-    int                                 idx        = 2;
+    std::string widgetName = def.name;
+    int         idx        = 2;
 
-    std::unique_lock<std::shared_mutex> lk(mutex);
-
-    while (widgetMap.count(widgetName) > 0)
     {
-        widgetName = def.name + std::to_string(idx++);
+        std::unique_lock<std::shared_mutex> lk(mutex);
+
+        while (widgetMap.count(widgetName) > 0)
+        {
+            widgetName = def.name + std::to_string(idx++);
+        }
+
+        SPDLOG_INFO("Loading widget \"{}\" ({})", widgetName, def.fullpath);
+
+        auto widget = std::make_unique<QuasarWidget>(widgetName, def, server.lock(), shared_from_this(), config);
+
+        widget->show();
+
+        if (userAction)
+        {
+            // Add to loaded
+            auto loaded = getLoadedWidgetsList();
+            loaded.push_back(widget->GetFullPath());
+            saveLoadedWidgetsList(loaded);
+        }
+
+        widgetMap.insert(std::make_pair(widgetName, std::move(widget)));
     }
 
-    SPDLOG_INFO("Loading widget \"{}\" ({})", widgetName, def.fullpath);
-
-    auto widget = std::make_unique<QuasarWidget>(widgetName, def, server.lock(), shared_from_this(), config);
-
-    widget->show();
-
-    if (userAction)
+    if (widgetChangedCb)
     {
-        // Add to loaded
-        auto loaded = getLoadedWidgetsList();
-        loaded.push_back(widget->GetFullPath());
-        saveLoadedWidgetsList(loaded);
+        widgetChangedCb(GetWidgets());
     }
-
-    widgetMap.insert(std::make_pair(widgetName, std::move(widget)));
 
     return true;
 }
@@ -230,6 +237,11 @@ void WidgetManager::CloseWidget(QuasarWidget* widget)
     }
 
     saveLoadedWidgetsList(loaded);
+
+    if (widgetChangedCb)
+    {
+        widgetChangedCb(GetWidgets());
+    }
 }
 
 void WidgetManager::LoadStartupWidgets(std::shared_ptr<Config> config)
