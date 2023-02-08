@@ -18,7 +18,7 @@ Quasar is licensed under GPL-3.0. All sample widgets are licensed under the MIT 
 
 ## System Requirements
 
-An OS and computer capable of running Chrome. Only 64-bit OSes are supported. For Windows, only Windows 10 and above are supported.
+An OS and computer capable of running Chrome. Only 64-bit OSes are supported. On Windows, only Windows 10 and above are supported. On Linux, only desktop environments with system tray support are supported.
 
 ## Getting Started
 
@@ -38,13 +38,17 @@ Source code is [available on GitHub](https://github.com/r52/quasar).
 
 ### All Platforms
 
-- [CMake 3.21 or later](https://cmake.org/)
+- [CMake 3.23 or later](https://cmake.org/)
 - [Qt 6.4 or later](http://www.qt.io/), with at least the following additional libraries:
   - WebEngine (qtwebengine)
   - Positioning (qtpositioning)
   - WebChannel (qtwebchannel)
   - Network Authorization (qtnetworkauth)
   - Serial Port (qtserialport)
+- The `Qt6_DIR` environment variable defined for your Qt installation
+  - Windows example: `C:\Qt\6.4.2\msvc2019_64`
+  - Linux example: `$HOME/Qt/6.4.2/gcc_64/`
+  - On Linux, additional dependencies may be needed for Qt such as the packages `libgl1-mesa-dev libglvnd-dev`
 
 ### Windows
 
@@ -55,6 +59,8 @@ Source code is [available on GitHub](https://github.com/r52/quasar).
 
 - gcc/g++ 11 or later, or Clang 15 or later
   - Tested on Ubuntu 22.04 using both g++ 11 and 12
+- [vcpkg](https://github.com/microsoft/vcpkg) dependencies, for example including but not limited to the following Debian-based packages:
+  - `build-essential tar curl zip unzip pkg-config`
 
 ### macOS
 
@@ -79,18 +85,24 @@ cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE "-DCMAKE_C_
 
 #### Linux
 
-The following example configures the project to build using `g++-12`, assuming g++ 12 is installed:
+The following example configures the project to build using `g++-12`, assuming g++ 12 is installed, and configures Quasar to be installed to `$HOME/.local/quasar/`:
 
 ```bash
 export CC=gcc-12
 export CXX=g++-12
-cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
+cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE --install-prefix $HOME/.local/ -S./ -B./build -G "Unix Makefiles"
 ```
 
 ### Building the Project
 
 ```bash
 cmake --build ./build --config Release --
+```
+
+### Installing from Build (optional)
+
+```bash
+cmake --install ./build
 ```
 
 ## Acknowledgements
