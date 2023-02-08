@@ -29,6 +29,26 @@
 namespace
 {
     ConfigDialog* cfgdlg = nullptr;
+
+    void          duplicateMenu(QMenu* dst, const QMenu& origin)
+    {
+        QMenu*          sub     = dst->addMenu(origin.title());
+        QList<QAction*> actions = origin.actions();
+
+        for (auto ac : actions)
+        {
+            QMenu* acmen = ac->menu();
+
+            if (acmen)
+            {
+                duplicateMenu(sub, *acmen);
+            }
+            else
+            {
+                sub->addAction(ac);
+            }
+        }
+    }
 }  // namespace
 
 Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<Config>()}
@@ -262,7 +282,7 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
 
                     for (auto& w : widgets)
                     {
-                        widgetListMenu->addMenu(w->GetContextMenu());
+                        duplicateMenu(widgetListMenu, *(w->GetContextMenu()));
                     }
                 }
 
