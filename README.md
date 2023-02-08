@@ -18,7 +18,11 @@ Quasar is licensed under GPL-3.0. All sample widgets are licensed under the MIT 
 
 ## System Requirements
 
-An OS and computer capable of running Chrome. Only 64-bit OSes are supported. On Windows, only Windows 10 and above are supported. On Linux, only desktop environments with system tray support are supported.
+An OS and computer capable of running Chrome. Only 64-bit OSes are supported. On Windows, only Windows 10 and above are supported. On Linux, only X11 desktop environments with system tray support are supported.
+
+#### Note Regarding Wayland
+
+Quasar does not work properly on Wayland compositors due to Wayland not supporting functions like global cursor position or explicitly setting window positions for top-level windows [[1]](https://bugreports.qt.io/browse/QTBUG-110119)[[2]](https://bugreports.qt.io/browse/QTBUG-86780), which completely defeats Quasar's core functionality. Until a workaround or solution is added to Qt itself, Quasar cannot support Wayland.
 
 ## Getting Started
 
