@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.23)
 
 set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
     CACHE STRING "Vcpkg toolchain file")
@@ -30,7 +30,7 @@ option(TRACY_STATIC "" OFF)
 option(BUILD_SAMPLE_EXTENSIONS "Build sample extensions (Windows only)" ON)
 option(BUILD_SPOTIFY_API "Build Spotify API extension (optional)" ON)
 
-add_subdirectory(3rdparty/tracy)
+add_subdirectory(3rdparty/tracy EXCLUDE_FROM_ALL)
 
 add_subdirectory(quasar)
 
