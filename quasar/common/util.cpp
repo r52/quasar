@@ -1,11 +1,16 @@
 #include "util.h"
 
+#include <algorithm>
 #include <regex>
 
 std::vector<std::string> Util::SplitString(const std::string& src, const std::string& delimiter)
 {
-    const std::regex         del{","};
+    const std::regex         del{delimiter};
     std::vector<std::string> list(std::sregex_token_iterator(src.begin(), src.end(), del, -1), {});
+
+    std::erase_if(list, [](const std::string& s) {
+        return s.empty();
+    });
 
     return list;
 }
