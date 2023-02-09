@@ -36,7 +36,7 @@ namespace
     };
 }  // namespace
 
-WidgetManager::WidgetManager(std::shared_ptr<Server> serv, WidgetChangedCallback&& cb) : server{serv}, widgetChangedCb(std::move(cb))
+WidgetManager::WidgetManager(std::shared_ptr<Server> serv) : server{serv}
 {
     auto cookiesfile = Settings::internal.cookies.GetValue();
 
@@ -267,6 +267,11 @@ std::vector<QuasarWidget*> WidgetManager::GetWidgets()
     }
 
     return widgets;
+}
+
+void WidgetManager::SetWidgetChangedCallback(WidgetChangedCallback&& cb)
+{
+    widgetChangedCb = std::move(cb);
 }
 
 bool WidgetManager::acceptSecurityWarnings(const WidgetDefinition& def)

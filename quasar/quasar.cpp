@@ -66,7 +66,13 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<C
 
     // Initialize late components
     server  = std::make_shared<Server>(config);
-    manager = std::make_shared<WidgetManager>(server, [this](const std::vector<QuasarWidget*>& widgets) {
+    manager = std::make_shared<WidgetManager>(server);
+
+    // Setup system tray
+    createTrayMenu();
+    createTrayIcon();
+
+    manager->SetWidgetChangedCallback([this](const std::vector<QuasarWidget*>& widgets) {
         if (widgetListMenu)
         {
             // Regenerate widget list menu
@@ -78,10 +84,6 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<C
             }
         }
     });
-
-    // Setup system tray
-    createTrayMenu();
-    createTrayIcon();
 
     // Setup icon
     QIcon icon(":/Resources/q.png");

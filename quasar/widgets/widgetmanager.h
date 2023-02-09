@@ -21,7 +21,7 @@ public:
     WidgetManager(const WidgetManager&)             = delete;
     WidgetManager& operator= (const WidgetManager&) = delete;
 
-    WidgetManager(std::shared_ptr<Server> serv, WidgetChangedCallback&& cb);
+    WidgetManager(std::shared_ptr<Server> serv);
     ~WidgetManager();
 
     bool                       LoadWidget(const std::string& filename, std::shared_ptr<Config> config, bool userAction);
@@ -30,6 +30,8 @@ public:
     void                       LoadStartupWidgets(std::shared_ptr<Config> config);
 
     std::vector<QuasarWidget*> GetWidgets();
+
+    void                       SetWidgetChangedCallback(WidgetChangedCallback&& cb);
 
 private:
     bool                      acceptSecurityWarnings(const WidgetDefinition& def);
