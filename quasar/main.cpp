@@ -6,6 +6,8 @@
 
 int main(int argc, char* argv[])
 {
+    QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
+
     // Set settings type/path
     QCoreApplication::setOrganizationName("quasar");
     QCoreApplication::setApplicationName("quasar");
