@@ -24,6 +24,10 @@ An OS and computer capable of running Chrome. Only 64-bit OSes are supported. On
 
 Quasar does not work properly on Wayland compositors due to Wayland not supporting functions like global cursor position or explicitly setting window positions for top-level windows [[1]](https://bugreports.qt.io/browse/QTBUG-110119)[[2]](https://bugreports.qt.io/browse/QTBUG-86780), which completely defeats Quasar's core functionality. Until a workaround or solution is added to Qt itself, Quasar cannot support Wayland.
 
+#### Qt on Linux
+
+Quasar has been built and tested on the latest pre-built binaries supplied by Qt, which at the time of writing is Qt 6.4.2 built against OpenSSL 1.1.1. The Qt version offered by Ubuntu 22.04's package repository is Qt 6.2.4 built against OpenSSL 3.0. As of Ubuntu 22.04, OpenSSL 3 is the default and version 1.1.1 is no longer offered in the package repository. Building Quasar on versions of Qt older than 6.4 may work but is not supported. Ensure that the version of the OpenSSL libraries installed (i.e `libcrypto.so` and `libssl.so`) matches the version your Qt installation is built against or SSL functionality will fail.
+
 ## Getting Started
 
 [Download the latest portable release here](https://github.com/r52/quasar/releases) for Windows x64.
