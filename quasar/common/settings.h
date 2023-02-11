@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <concepts>
 #include <map>
+#include <ranges>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -197,18 +198,22 @@ namespace Settings
         int64_t     rate;
     };
 
+    using SettingsVariant     = std::variant<Setting<int>, Setting<double>, Setting<bool>, Setting<std::string>, SelectionSetting<std::string>>;
+    using SettingsVariantView = std::ranges::ref_view<std::vector<Settings::SettingsVariant>>;
+
     struct ExtensionInfo
     {
-        std::string name;
-        std::string fullname;
-        std::string description;
-        std::string author;
-        std::string version;
-        std::string url;
+        std::string                                             name;
+        std::string                                             fullname;
+        std::string                                             description;
+        std::string                                             author;
+        std::string                                             version;
+        std::string                                             url;
+        std::vector<std::reference_wrapper<DataSourceSettings>> sources;
+        SettingsVariantView                                     settings;
     };
 
-    using SettingsVariant = std::variant<Setting<int>, Setting<double>, Setting<bool>, Setting<std::string>, SelectionSetting<std::string>>;
-    using ExtensionSettingsMap = std::unordered_map<std::string, std::tuple<ExtensionInfo, std::vector<DataSourceSettings*>, std::vector<SettingsVariant>*>>;
+    using ExtensionSettingsMap = std::unordered_map<std::string, ExtensionInfo>;
 
     extern ExtensionSettingsMap extension;
 

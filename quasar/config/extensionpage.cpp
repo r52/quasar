@@ -8,11 +8,7 @@
 
 #include <spdlog/spdlog.h>
 
-ExtensionPage::ExtensionPage(const std::string& extname,
-    const Settings::ExtensionInfo&              info,
-    std::vector<Settings::DataSourceSettings*>& src,
-    std::vector<Settings::SettingsVariant>*     settings,
-    QWidget*                                    parent) :
+ExtensionPage::ExtensionPage(const std::string& extname, const Settings::ExtensionInfo& info, QWidget* parent) :
     QWidget(parent),
     name{extname},
     ui(new Ui::ExtensionPage)
@@ -28,17 +24,17 @@ ExtensionPage::ExtensionPage(const std::string& extname,
 
     // Sources
     int row = ui->sourcesLayout->rowCount();
-    for (auto data : src)
+    for (auto data : info.sources)
     {
-        savedSrc.insert({data->name, *data});
+        savedSrc.insert({data.get().name, data.get()});
 
-        auto& savedDat    = savedSrc[data->name];
+        auto& savedDat    = savedSrc.at(data.get().name);
 
         auto  enableCheck = new QCheckBox(this);
-        auto  name        = QString::fromStdString(data->name);
+        auto  name        = QString::fromStdString(data.get().name);
         enableCheck->setObjectName(name + "/enabled");
         enableCheck->setText(name);
-        enableCheck->setChecked(data->enabled);
+        enableCheck->setChecked(data.get().enabled);
 
         ui->sourcesLayout->setWidget(row, QFormLayout::LabelRole, enableCheck);
 
@@ -46,16 +42,16 @@ ExtensionPage::ExtensionPage(const std::string& extname,
             savedDat.enabled = state;
         });
 
-        if (data->rate > 0)
+        if (data.get().rate > 0)
         {
             QSpinBox* upSpin = new QSpinBox(this);
             upSpin->setObjectName(name + "/rate");
             upSpin->setMinimum(1);
             upSpin->setMaximum(INT_MAX);
             upSpin->setSingleStep(1);
-            upSpin->setValue(data->rate);
+            upSpin->setValue(data.get().rate);
             upSpin->setSuffix("us");
-            upSpin->setEnabled(data->enabled);
+            upSpin->setEnabled(data.get().enabled);
 
             connect(enableCheck, &QCheckBox::toggled, [upSpin](bool state) {
                 upSpin->setEnabled(state);
@@ -73,7 +69,7 @@ ExtensionPage::ExtensionPage(const std::string& extname,
 
     // Settings
     row = ui->settingsLayout->rowCount();
-    for (auto& def : *settings)
+    for (auto& def : info.settings)
     {
         std::visit(
             [&](auto&& arg) {

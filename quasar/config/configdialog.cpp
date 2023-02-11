@@ -167,14 +167,13 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
     });
 
     // Extensions
-    for (auto& [name, extset] : Settings::extension)
+    for (auto& [name, extinfo] : Settings::extension)
     {
         QListWidgetItem* extitem = new QListWidgetItem(ui->listWidget);
         extitem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
         extitem->setText(QString::fromStdString(name));
 
-        auto& [info, src, settings] = extset;
-        auto page                   = new ExtensionPage(name, info, src, settings);
+        auto page = new ExtensionPage(name, extinfo);
         extensionPages.push_back(page);
         ui->pagesWidget->addWidget(page);
     }
@@ -253,24 +252,24 @@ void ConfigDialog::SaveSettings()
     // Extension settings save
     for (auto page : extensionPages)
     {
-        auto& [info, src, settings] = Settings::extension[page->name];
+        auto& info = Settings::extension.at(page->name);
 
         for (auto& [n, c] : page->savedSrc)
         {
-            auto result = std::find_if(src.begin(), src.end(), [&, &n = n](Settings::DataSourceSettings* s) {
-                return s->name == n;
+            auto result = std::find_if(info.sources.begin(), info.sources.end(), [&, &n = n](auto s) {
+                return s.get().name == n;
             });
 
-            if (result != src.end())
+            if (result != info.sources.end())
             {
-                (*result)->enabled = c.enabled;
-                (*result)->rate    = c.rate;
+                (*result).get().enabled = c.enabled;
+                (*result).get().rate    = c.rate;
             }
         }
 
         for (auto& [n, c] : page->savedSettings)
         {
-            auto result = std::find_if(settings->begin(), settings->end(), [&, &n = n](Settings::SettingsVariant& entry) {
+            auto result = std::find_if(info.settings.begin(), info.settings.end(), [&, &n = n](Settings::SettingsVariant& entry) {
                 return std::visit(
                     [&](auto&& arg) -> bool {
                         return arg.GetLabel() == n;
@@ -278,7 +277,7 @@ void ConfigDialog::SaveSettings()
                     entry);
             });
 
-            if (result != settings->end())
+            if (result != info.settings.end())
             {
                 std::visit(
                     [&, &c = c](auto&& arg) {

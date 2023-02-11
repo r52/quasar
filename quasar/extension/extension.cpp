@@ -57,11 +57,11 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
     }
 
     // Initialize meta strings
-    metakeys                                       = {.metadata = fmt::format("{}/{}", name, "metadata"), .settings = fmt::format("{}/{}", name, "settings")};
+    metakeys                    = {.metadata = fmt::format("{}/{}", name, "metadata"), .settings = fmt::format("{}/{}", name, "settings")};
 
-    auto                                       cfl = config.lock();
+    auto                    cfl = config.lock();
 
-    std::vector<Settings::DataSourceSettings*> sourceSettings;
+    Settings::ExtensionInfo extinfo{name, fullname, description, author, version, url, {}, std::views::all(settings)};
 
     // register data sources
     if (nullptr != extensionInfo->dataSources)
@@ -100,7 +100,7 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
                 source.cache.expiry = std::chrono::system_clock::now();
             }
 
-            sourceSettings.push_back(&source.settings);
+            extinfo.sources.push_back(std::ref(source.settings));
 
             SPDLOG_INFO("Extension {} registering topic '{}'", name, topic);
         }
@@ -132,8 +132,7 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
 
     if (!internal)
     {
-        Settings::extension.insert(
-            {name, std::make_tuple(Settings::ExtensionInfo{name, fullname, description, author, version, url}, sourceSettings, &settings)});
+        Settings::extension.emplace(name, extinfo);
     }
 }
 

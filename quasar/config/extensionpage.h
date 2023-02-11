@@ -15,11 +15,7 @@ class ExtensionPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit ExtensionPage(const std::string&       extname,
-        const Settings::ExtensionInfo&              info,
-        std::vector<Settings::DataSourceSettings*>& src,
-        std::vector<Settings::SettingsVariant>*     settings,
-        QWidget*                                    parent = nullptr);
+    explicit ExtensionPage(const std::string& extname, const Settings::ExtensionInfo& info, QWidget* parent = nullptr);
     ~ExtensionPage();
 
     const std::string                                                   name{};
