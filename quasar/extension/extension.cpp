@@ -6,6 +6,8 @@
 
 #include "server/server.h"
 
+#include <ranges>
+
 #include <QLibrary>
 
 #include <spdlog/spdlog.h>
@@ -64,7 +66,7 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
     // register data sources
     if (nullptr != extensionInfo->dataSources)
     {
-        for (size_t i = 0; i < extensionInfo->numDataSources; i++)
+        for (auto i : std::views::iota((size_t) 0, extensionInfo->numDataSources))
         {
             CHAR_TO_STRING(const std::string srcname, extensionInfo->dataSources[i].name);
 

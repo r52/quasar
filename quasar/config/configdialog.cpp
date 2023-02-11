@@ -7,6 +7,8 @@
 #include "common/qutil.h"
 #include "common/settings.h"
 
+#include <ranges>
+
 #include <jsoncons/json.hpp>
 #include <spdlog/spdlog.h>
 
@@ -219,9 +221,7 @@ void ConfigDialog::SaveSettings()
     // App table
     std::vector<Settings::AppLauncherData> applist;
 
-    int                                    rows = ui->appTable->rowCount();
-
-    for (int i = 0; i < rows; i++)
+    for (auto i : std::views::iota(0, ui->appTable->rowCount()))
     {
         QTableWidgetItem*         cmditem   = ui->appTable->item(i, 0);
         QTableWidgetItem*         fileitem  = ui->appTable->item(i, 1);

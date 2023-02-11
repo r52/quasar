@@ -18,6 +18,8 @@
 #include <complex>
 #include <limits>
 #include <memory>
+#include <numeric>
+#include <ranges>
 #include <shared_mutex>
 #include <span>
 #include <string>
@@ -50,10 +52,7 @@
 constexpr std::string_view EXT_FULLNAME = "Audio Visualization Data";
 constexpr std::string_view EXT_NAME     = "win_audio_viz";
 
-constexpr double           CLAMP01(double x)
-{
-    return std::max(0.0, std::min(1.0, (x)));
-}
+#define CLAMP01(x) std::clamp(x, 0.0, 1.0)
 
 template<typename T>
 requires std::numeric_limits<T>::is_integer
@@ -129,24 +128,24 @@ struct Measure
         NUM_FORMATS
     };
 
-    Format               m_format;       // format specifier (detected in init)
-    std::array<int, 2>   m_envRMS;       // RMS attack/decay times in ms (parsed from options)
-    std::array<int, 2>   m_envPeak;      // peak attack/decay times in ms (parsed from options)
-    std::array<int, 2>   m_envFFT;       // FFT attack/decay times in ms (parsed from options)
-    int                  m_fftSize;      // size of FFT (parsed from options)
-    int                  m_fftOverlap;   // number of samples between FFT calculations
-    int                  m_nBands;       // number of frequency bands (parsed from options)
-    double               m_gainRMS;      // RMS gain (parsed from options)
-    double               m_gainPeak;     // peak gain (parsed from options)
-    double               m_freqMin;      // min freq for band measurement
-    double               m_freqMax;      // max freq for band measurement
-    double               m_sensitivity;  // dB range for FFT/Band return values (parsed from options)
+    Format                m_format;       // format specifier (detected in init)
+    std::array<size_t, 2> m_envRMS;       // RMS attack/decay times in ms (parsed from options)
+    std::array<size_t, 2> m_envPeak;      // peak attack/decay times in ms (parsed from options)
+    std::array<size_t, 2> m_envFFT;       // FFT attack/decay times in ms (parsed from options)
+    size_t                m_fftSize;      // size of FFT (parsed from options)
+    size_t                m_fftOverlap;   // number of samples between FFT calculations
+    size_t                m_nBands;       // number of frequency bands (parsed from options)
+    double                m_gainRMS;      // RMS gain (parsed from options)
+    double                m_gainPeak;     // peak gain (parsed from options)
+    double                m_freqMin;      // min freq for band measurement
+    double                m_freqMax;      // max freq for band measurement
+    double                m_sensitivity;  // dB range for FFT/Band return values (parsed from options)
 
-    IMMDeviceEnumerator* m_enum;       // audio endpoint enumerator
-    IMMDevice*           m_dev;        // audio endpoint device
-    WAVEFORMATEX*        m_wfx;        // audio format info
-    IAudioClient*        m_clAudio;    // audio client instance
-    IAudioCaptureClient* m_clCapture;  // capture client instance
+    IMMDeviceEnumerator*  m_enum;       // audio endpoint enumerator
+    IMMDevice*            m_dev;        // audio endpoint device
+    WAVEFORMATEX*         m_wfx;        // audio format info
+    IAudioClient*         m_clAudio;    // audio client instance
+    IAudioCaptureClient*  m_clCapture;  // capture client instance
 #if (WINDOWS_BUG_WORKAROUND)
     IAudioClient*       m_clBugAudio;   // audio client for dummy silent channel
     IAudioRenderClient* m_clBugRender;  // render client for dummy silent channel
@@ -164,7 +163,7 @@ struct Measure
     std::vector<float>                                      m_fftKWdw;     // window function coefficients
     std::vector<float>                                      m_fftTmpIn;    // temp FFT processing buffer
     std::vector<std::complex<float>>                        m_fftTmpOutP;  // temp FFT processing buffer
-    int                                                     m_fftBufW;     // write index for input ring buffers
+    size_t                                                  m_fftBufW;     // write index for input ring buffers
     int                                                     m_fftBufP;     // decremental counter - process FFT at zero
     std::vector<float>                                      m_bandFreq;    // buffer of band max frequencies
     std::array<std::vector<float>, MAX_CHANNELS>            m_bandOut;     // buffer of band values
@@ -212,7 +211,7 @@ struct Measure
         m_kFFT[0]    = 0.0f;
         m_kFFT[1]    = 0.0f;
 
-        for (size_t iChan = 0; iChan < MAX_CHANNELS; ++iChan)
+        for (const auto iChan : std::views::iota((size_t) 0, (size_t) Measure::MAX_CHANNELS))
         {
             m_rms[iChan]  = 0.0;
             m_peak[iChan] = 0.0;
@@ -368,7 +367,7 @@ HRESULT Measure::DeviceInit()
 
         fftScalar = (float) (1.0 / sqrt(m->m_fftSize));
 
-        for (size_t iChan = 0; iChan < m_wfx->nChannels; ++iChan)
+        for (auto iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
         {
             m_fftPlan[iChan].reset(new kfr::dft_plan_real<float>(m_fftSize));
             m_fftIn[iChan].resize(m_fftSize, 0.0f);
@@ -382,7 +381,7 @@ HRESULT Measure::DeviceInit()
         m_fftBufP = m_fftSize - m_fftOverlap;
 
         // calculate window function coefficients (http://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window)
-        for (size_t iBin = 1; iBin < m_fftSize; ++iBin)
+        for (auto iBin : std::views::iota((size_t) 1, m->m_fftSize))
         {
             m_fftKWdw[iBin] = (float) (0.5 * (1.0 - cos(TWOPI * iBin / (m_fftSize + 1))));
         }
@@ -402,12 +401,12 @@ HRESULT Measure::DeviceInit()
         const double step = (log(m_freqMax / m_freqMin) / m_nBands) / log(2.0);
         m_bandFreq[0]     = (float) (m_freqMin * pow(2.0, step / 2.0));
 
-        for (size_t iBand = 1; iBand < m_nBands; ++iBand)
+        for (auto iBand : std::views::iota((size_t) 1, m->m_nBands))
         {
             m_bandFreq[iBand] = (float) (m_bandFreq[iBand - 1] * pow(2.0, step));
         }
 
-        for (size_t iChan = 0; iChan < m_wfx->nChannels; ++iChan)
+        for (auto iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
         {
             m_bandOut[iChan].resize(m_nBands, 0.0f);
         }
@@ -530,7 +529,7 @@ void Measure::DeviceRelease()
     SAFE_RELEASE(m_clAudio);
     SAFE_RELEASE(m_dev);
 
-    for (size_t iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+    for (auto iChan : std::views::iota((size_t) 0, (size_t) Measure::MAX_CHANNELS))
     {
         if (m_fftPlan[iChan])
             m_fftPlan[iChan].reset();
@@ -592,12 +591,12 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             {
                 if (m->m_clCapture and m->m_fftSize)
                 {
-                    for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
+                    for (auto i : std::views::iota((size_t) 0, (m->m_fftSize / 2) + 1))
                     {
-                        output[type][i] = (double) (i * m->m_wfx->nSamplesPerSec / m->m_fftSize);
+                        output[Measure::TYPE_FFTFREQ][i] = (double) (i * m->m_wfx->nSamplesPerSec / m->m_fftSize);
                     }
 
-                    quasar_set_data_double_vector(hData, output[type]);
+                    quasar_set_data_double_vector(hData, output[Measure::TYPE_FFTFREQ]);
                     return true;
                 }
                 break;
@@ -607,12 +606,12 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             {
                 if (m->m_clCapture and m->m_nBands)
                 {
-                    for (size_t i = 0; i < m->m_nBands; i++)
+                    for (auto i : std::views::iota((size_t) 0, m->m_nBands))
                     {
-                        output[type][i] = m->m_bandFreq[i];
+                        output[Measure::TYPE_BANDFREQ][i] = m->m_bandFreq[i];
                     }
 
-                    quasar_set_data_double_vector(hData, output[type]);
+                    quasar_set_data_double_vector(hData, output[Measure::TYPE_BANDFREQ]);
                     return true;
                 }
                 break;
@@ -752,7 +751,8 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 // measure RMS and peak levels
                 float rms[Measure::MAX_CHANNELS];
                 float peak[Measure::MAX_CHANNELS];
-                for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+
+                for (auto iChan : std::views::iota((size_t) 0, (size_t) Measure::MAX_CHANNELS))
                 {
                     rms[iChan]  = (float) m->m_rms[iChan];
                     peak[iChan] = (float) m->m_peak[iChan];
@@ -764,7 +764,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     float* s = (float*) m->m_buffer.data();
                     if (m->m_wfx->nChannels == 1)
                     {
-                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        for ([[maybe_unused]] auto _ : std::views::iota((size_t) 0, (size_t) nFrames))
                         {
                             float xL   = (float) *s++;
                             float sqrL = xL * xL;
@@ -777,7 +777,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     }
                     else if (m->m_wfx->nChannels == 2)
                     {
-                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        for ([[maybe_unused]] auto _ : std::views::iota((size_t) 0, (size_t) nFrames))
                         {
                             float xL   = (float) *s++;
                             float xR   = (float) *s++;
@@ -793,9 +793,9 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     }
                     else
                     {
-                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        for ([[maybe_unused]] auto _ : std::views::iota((size_t) 0, (size_t) nFrames))
                         {
-                            for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                            for (auto iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                             {
                                 float x     = (float) *s++;
                                 float sqrX  = x * x;
@@ -811,7 +811,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     INT16* s = (INT16*) m->m_buffer.data();
                     if (m->m_wfx->nChannels == 1)
                     {
-                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        for ([[maybe_unused]] auto _ : std::views::iota((size_t) 0, (size_t) nFrames))
                         {
                             float xL   = normalizeAsFloat(*s++);
                             float sqrL = xL * xL;
@@ -824,7 +824,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     }
                     else if (m->m_wfx->nChannels == 2)
                     {
-                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        for ([[maybe_unused]] auto _ : std::views::iota((size_t) 0, (size_t) nFrames))
                         {
                             float xL   = normalizeAsFloat(*s++);
                             float xR   = normalizeAsFloat(*s++);
@@ -840,9 +840,9 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     }
                     else
                     {
-                        for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                        for ([[maybe_unused]] auto _ : std::views::iota((size_t) 0, (size_t) nFrames))
                         {
-                            for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                            for (auto iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                             {
                                 float x     = normalizeAsFloat(*s++);
                                 float sqrX  = x * x;
@@ -854,7 +854,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     }
                 }
 
-                for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+                for (auto iChan : std::views::iota((size_t) 0, (size_t) Measure::MAX_CHANNELS))
                 {
                     m->m_rms[iChan]  = rms[iChan];
                     m->m_peak[iChan] = peak[iChan];
@@ -867,10 +867,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 float* sF32 = (float*) m->m_buffer.data();
                 INT16* sI16 = (INT16*) m->m_buffer.data();
 
-                for (unsigned int iFrame = 0; iFrame < nFrames; ++iFrame)
+                for ([[maybe_unused]] auto _ : std::views::iota((size_t) 0, (size_t) nFrames))
                 {
                     // fill ring buffers (demux streams)
-                    for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                    for (auto iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                     {
                         (m->m_fftIn[iChan])[m->m_fftBufW] = m->m_format == Measure::FMT_PCM_F32 ? *sF32++ : normalizeAsFloat(*sI16++);
                     }
@@ -880,7 +880,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     // if overlap limit reached, process FFTs for each channel
                     if (!--m->m_fftBufP)
                     {
-                        for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                        for (auto iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                         {
                             if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
                             {
@@ -892,9 +892,9 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                                 }
 
                                 // apply the windowing function
-                                for (int iBin = 0; iBin < m->m_fftSize; ++iBin)
+                                for (auto bin : std::views::iota((size_t) 0, m->m_fftSize))
                                 {
-                                    m->m_fftTmpIn[iBin] *= m->m_fftKWdw[iBin];
+                                    m->m_fftTmpIn[bin] *= m->m_fftKWdw[bin];
                                 }
 
                                 auto in  = kfr::make_univector(m->m_fftTmpIn);
@@ -908,14 +908,14 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                             }
 
                             // filter the bin levels as with peak measurements
-                            for (int iBin = 0; iBin < m->m_fftSize; ++iBin)
+                            for (auto bin : std::views::iota((size_t) 0, m->m_fftSize))
                             {
-                                float x0 = (m->m_fftOut[iChan])[iBin];
-                                float x1 = (m->m_fftTmpOutP[iBin].real() * m->m_fftTmpOutP[iBin].real() +
-                                               m->m_fftTmpOutP[iBin].imag() * m->m_fftTmpOutP[iBin].imag()) *
-                                           fftScalar;
-                                x0                         = x1 + m->m_kFFT[(x1 < x0)] * (x0 - x1);
-                                (m->m_fftOut[iChan])[iBin] = x0;
+                                float x0 = (m->m_fftOut[iChan])[bin];
+                                float x1 =
+                                    (m->m_fftTmpOutP[bin].real() * m->m_fftTmpOutP[bin].real() + m->m_fftTmpOutP[bin].imag() * m->m_fftTmpOutP[bin].imag()) *
+                                    fftScalar;
+                                x0                        = x1 + m->m_kFFT[(x1 < x0)] * (x0 - x1);
+                                (m->m_fftOut[iChan])[bin] = x0;
                             }
                         }
 
@@ -926,19 +926,19 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 // integrate FFT results into log-scale frequency bands
                 if (m->m_nBands)
                 {
-                    for (unsigned int iChan = 0; iChan < m->m_wfx->nChannels; ++iChan)
+                    for (auto channel : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                     {
-                        std::fill(m->m_bandOut[iChan].begin(), m->m_bandOut[iChan].end(), 0.0f);
-                        int   iBin  = 0;
-                        int   iBand = 0;
-                        float f0    = 0.0f;
+                        std::fill(m->m_bandOut[channel].begin(), m->m_bandOut[channel].end(), 0.0f);
+                        size_t iBin  = 0;
+                        size_t iBand = 0;
+                        float  f0    = 0.0f;
 
                         while (iBin <= (m->m_fftSize / 2) and iBand < m->m_nBands)
                         {
                             float  fLin1 = ((float) iBin + 0.5f) * df;
                             float  fLog1 = m->m_bandFreq[iBand];
-                            float  x     = (m->m_fftOut[iChan])[iBin];
-                            float& y     = (m->m_bandOut[iChan])[iBand];
+                            float  x     = (m->m_fftOut[channel])[iBin];
+                            float& y     = (m->m_bandOut[channel])[iBand];
 
                             if (fLin1 <= fLog1)
                             {
@@ -975,7 +975,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     {
         if (type == Measure::TYPE_RMS or type == Measure::TYPE_PEAK)
         {
-            for (int iChan = 0; iChan < Measure::MAX_CHANNELS; ++iChan)
+            for (auto iChan : std::views::iota((size_t) 0, (size_t) Measure::MAX_CHANNELS))
             {
                 m->m_rms[iChan]  = 0.0;
                 m->m_peak[iChan] = 0.0;
@@ -996,24 +996,24 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     {
         case Measure::TYPE_RMS:
             {
-                for (size_t i = 0; i < m->m_wfx->nChannels; i++)
+                for (auto i : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                 {
-                    output[type][i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
+                    output[Measure::TYPE_RMS][i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
                 }
 
-                quasar_set_data_double_vector(hData, output[type]);
+                quasar_set_data_double_vector(hData, output[Measure::TYPE_RMS]);
 
                 return true;
             }
 
         case Measure::TYPE_PEAK:
             {
-                for (size_t i = 0; i < m->m_wfx->nChannels; i++)
+                for (auto i : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                 {
-                    output[type][i] = CLAMP01(m->m_peak[i] * m->m_gainPeak);
+                    output[Measure::TYPE_PEAK][i] = CLAMP01(m->m_peak[i] * m->m_gainPeak);
                 }
 
-                quasar_set_data_double_vector(hData, output[type]);
+                quasar_set_data_double_vector(hData, output[Measure::TYPE_PEAK]);
 
                 return true;
             }
@@ -1024,7 +1024,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 {
                     double x;
 
-                    for (size_t i = 0; i <= (m->m_fftSize / 2); i++)
+                    for (auto i : std::views::iota((size_t) 0, (m->m_fftSize / 2) + 1))
                     {
                         if (m->m_wfx->nChannels >= 2)
                         {
@@ -1035,16 +1035,16 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                             x = m->m_fftOut[0][i];
                         }
 
-                        x               = CLAMP01(x);
-                        x               = std::max(0.0, m->m_sensitivity * log10(x) + 1.0);
-                        output[type][i] = x;
+                        x                            = CLAMP01(x);
+                        x                            = std::max(0.0, m->m_sensitivity * log10(x) + 1.0);
+                        output[Measure::TYPE_FFT][i] = x;
                     }
 
-                    double acc = std::accumulate(output[type].begin(), output[type].end(), 0.0);
+                    double acc = std::reduce(output[Measure::TYPE_FFT].begin(), output[Measure::TYPE_FFT].end(), 0.0);
 
                     if (acc > 0.0 or (acc == 0.0 and last_data_is_not_zero))
                     {
-                        quasar_set_data_double_vector(hData, output[type]);
+                        quasar_set_data_double_vector(hData, output[Measure::TYPE_FFT]);
                         last_data_is_not_zero = (acc > 0.0);
                     }
                     else
@@ -1063,7 +1063,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 {
                     double x;
 
-                    for (size_t i = 0; i < m->m_nBands; i++)
+                    for (auto i : std::views::iota((size_t) 0, m->m_nBands))
                     {
                         if (m->m_wfx->nChannels >= 2)
                         {
@@ -1074,16 +1074,16 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                             x = m->m_bandOut[0][i];
                         }
 
-                        x               = CLAMP01(x);
-                        x               = std::max(0.0, m->m_sensitivity * log10(x) + 1.0);
-                        output[type][i] = x;
+                        x                             = CLAMP01(x);
+                        x                             = std::max(0.0, m->m_sensitivity * log10(x) + 1.0);
+                        output[Measure::TYPE_BAND][i] = x;
                     }
 
-                    double acc = std::accumulate(output[type].begin(), output[type].end(), 0.0);
+                    double acc = std::reduce(output[Measure::TYPE_BAND].begin(), output[Measure::TYPE_BAND].end(), 0.0);
 
                     if (acc > 0.0 or (acc == 0.0 and last_data_is_not_zero))
                     {
-                        quasar_set_data_double_vector(hData, output[type]);
+                        quasar_set_data_double_vector(hData, output[Measure::TYPE_BAND]);
                         last_data_is_not_zero = (acc > 0.0);
                     }
                     else
@@ -1216,7 +1216,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     auto dev          = quasar_get_selection_setting_hpp(extHandle, settings, "device");
     m->m_reqID        = to_wstring(dev.data());
 
-    int fftsize       = quasar_get_int_setting(extHandle, settings, "FFTSize");
+    size_t fftsize    = quasar_get_uint_setting(extHandle, settings, "FFTSize");
     if (fftsize < 0 or fftsize & 1)
     {
         warn("Invalid FFTSize {}: must be an even integer >= 0. (powers of 2 work best)", fftsize);
@@ -1229,7 +1229,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
 
     if (m->m_fftSize)
     {
-        int overlap = quasar_get_int_setting(extHandle, settings, "FFTOverlap");
+        size_t overlap = quasar_get_uint_setting(extHandle, settings, "FFTOverlap");
         if (overlap < 0 or overlap >= m->m_fftSize)
         {
             warn("Invalid FFTOverlap {}: must be an integer between 0 and FFTSize({}).", overlap, m->m_fftSize);
@@ -1240,7 +1240,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
         }
     }
 
-    int numbands = quasar_get_uint_setting(extHandle, settings, "Bands");
+    size_t numbands = quasar_get_uint_setting(extHandle, settings, "Bands");
     if (numbands != m->m_nBands)
     {
         m->m_nBands  = numbands;
