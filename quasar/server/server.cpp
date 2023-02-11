@@ -399,7 +399,7 @@ void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& m
             continue;
         }
 
-        auto extn = extensions[target].get();
+        auto extn = extensions.at(target).get();
 
         if (!extn->TopicExists(topic))
         {
@@ -477,7 +477,7 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
             continue;
         }
 
-        auto extn = extensions[target].get();
+        auto extn = extensions.at(target).get();
 
         extn->PollDataForSending(j, tpcs, args, client);
     }
@@ -565,7 +565,7 @@ void Server::processMessage(PerSocketData* client, const std::string& msg)
         return;
     }
 
-    methods[doc.method](client, doc);
+    methods.at(doc.method)(client, doc);
 }
 
 void Server::sendErrorToClient(PerSocketData* client, const std::string& err)
@@ -596,7 +596,7 @@ void Server::processSubscription(PerSocketData* client, const std::string& topic
         return;
     }
 
-    auto extn = extensions[target].get();
+    auto extn = extensions.at(target).get();
 
     if (nSize > oSize)
     {

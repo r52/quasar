@@ -62,7 +62,7 @@ private:
     std::jthread websocketServer;
 
     // Method function map
-    MethodCallMapType         methods;
+    const MethodCallMapType   methods;
 
     ExtensionsMapType         extensions;
     mutable std::shared_mutex extensionMutex;

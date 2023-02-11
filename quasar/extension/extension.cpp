@@ -148,7 +148,7 @@ bool Extension::TopicAcceptsSubscribers(const std::string& topic)
         return false;
     }
 
-    DataSource&                         dsrc = datasources[topic];
+    DataSource&                         dsrc = datasources.at(topic);
 
     std::shared_lock<std::shared_mutex> lk(dsrc.mutex);
 
@@ -174,7 +174,7 @@ bool Extension::AddSubscriber(void* subscriber, const std::string& topic, int co
         return false;
     }
 
-    DataSource& dsrc = datasources[topic];
+    DataSource& dsrc = datasources.at(topic);
 
     if (dsrc.settings.rate == QUASAR_POLLING_CLIENT)
     {
@@ -219,7 +219,7 @@ void Extension::RemoveSubscriber(void* subscriber, const std::string& topic, int
         return;
     }
 
-    DataSource&                        dsrc = datasources[topic];
+    DataSource&                        dsrc = datasources.at(topic);
 
     std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
@@ -371,7 +371,7 @@ void Extension::HandleDataReady(std::string_view source)
             return;
         }
 
-        DataSource&                        data = datasources[topic];
+        DataSource&                        data = datasources.at(topic);
 
         std::lock_guard<std::shared_mutex> lk(data.mutex);
 
@@ -440,7 +440,7 @@ void Extension::WaitForDataProcessed(std::string_view source)
         return;
     }
 
-    DataSource& data = datasources[topic];
+    DataSource& data = datasources.at(topic);
 
     if (data.locks)
     {
@@ -805,7 +805,7 @@ void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::
             continue;
         }
 
-        DataSource&                        dsrc = datasources[topic];
+        DataSource&                        dsrc = datasources.at(topic);
 
         std::lock_guard<std::shared_mutex> lk(dsrc.mutex);
 
