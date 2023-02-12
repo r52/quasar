@@ -741,7 +741,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
         while ((hr = m->m_clCapture->GetBuffer(&buffer, &nFrames, &flags, NULL, NULL)) == S_OK)
         {
-            memcpy(&m->m_buffer[0], &buffer[0], nFrames * m->m_wfx->nBlockAlign);
+            std::memcpy(m->m_buffer.data(), buffer, nFrames * m->m_wfx->nBlockAlign);
 
             // release the buffer
             m->m_clCapture->ReleaseBuffer(nFrames);
@@ -885,10 +885,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                             if (!(flags & AUDCLNT_BUFFERFLAGS_SILENT))
                             {
                                 // copy from the ring buffer to temp space
-                                memcpy(&m->m_fftTmpIn[0], &(m->m_fftIn[iChan])[m->m_fftBufW], (m->m_fftSize - m->m_fftBufW) * sizeof(float));
+                                std::memcpy(m->m_fftTmpIn.data(), m->m_fftIn[iChan].data() + m->m_fftBufW, (m->m_fftSize - m->m_fftBufW) * sizeof(float));
                                 if (m->m_fftSize - m->m_fftBufW < m->m_fftTmpIn.size())
                                 {
-                                    memcpy(&m->m_fftTmpIn[m->m_fftSize - m->m_fftBufW], &m->m_fftIn[iChan][0], m->m_fftBufW * sizeof(float));
+                                    std::memcpy(m->m_fftTmpIn.data() + (m->m_fftSize - m->m_fftBufW), m->m_fftIn[iChan].data(), m->m_fftBufW * sizeof(float));
                                 }
 
                                 // apply the windowing function

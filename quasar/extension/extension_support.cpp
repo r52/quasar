@@ -466,7 +466,7 @@ bool quasar_get_string_setting(quasar_ext_handle handle, quasar_settings_t* sett
                 return false;
             }
 
-            memcpy(buf, ba.data(), ba.length());
+            std::memcpy(buf, ba.data(), ba.length());
             buf[ba.length()] = 0;
 
             return true;
@@ -505,7 +505,7 @@ bool quasar_get_selection_setting(quasar_ext_handle handle, quasar_settings_t* s
                 return false;
             }
 
-            memcpy(buf, ba.data(), ba.length());
+            std::memcpy(buf, ba.data(), ba.length());
             buf[ba.length()] = 0;
 
             return true;
@@ -604,7 +604,7 @@ bool quasar_get_storage_string(quasar_ext_handle handle, const char* name, char*
             return false;
         }
 
-        memcpy(buf, val.data(), val.length());
+        std::memcpy(buf, val.data(), val.length());
         buf[val.length()] = 0;
         return true;
     }
