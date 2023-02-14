@@ -167,7 +167,7 @@ struct Measure
     int                                                     m_fftBufP;     // decremental counter - process FFT at zero
     std::vector<float>                                      m_bandFreq;    // buffer of band max frequencies
     std::array<std::vector<float>, MAX_CHANNELS>            m_bandOut;     // buffer of band values
-    std::span<BYTE>                                         m_buffer;      // temp processing buffer
+    std::span<uint8_t>                                      m_buffer;      // temp processing buffer
 
     Measure() :
         m_format(FMT_INVALID),
@@ -381,9 +381,9 @@ HRESULT Measure::DeviceInit()
         m_fftBufP = m_fftSize - m_fftOverlap;
 
         // calculate window function coefficients (http://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window)
-        for (auto iBin : std::views::iota((size_t) 1, m->m_fftSize))
+        for (auto n : std::views::iota((size_t) 0, m->m_fftSize))
         {
-            m_fftKWdw[iBin] = (float) (0.5 * (1.0 - cos(TWOPI * iBin / (m_fftSize + 1))));
+            m_fftKWdw[n] = (float) (0.5 * (1.0 - cos(TWOPI * n / (m_fftSize - 1))));
         }
     }
 
@@ -490,8 +490,8 @@ HRESULT Measure::DeviceInit()
     }
     EXIT_ON_ERROR(hr);
 
-    bufsize  = nMaxFrames * m_wfx->nBlockAlign * sizeof(BYTE);
-    m_buffer = std::span{(BYTE*) calloc(bufsize, 1), bufsize};
+    bufsize  = nMaxFrames * m_wfx->nBlockAlign * sizeof(uint8_t);
+    m_buffer = std::span{new uint8_t[bufsize](), bufsize};
 
     return S_OK;
 
@@ -540,7 +540,7 @@ void Measure::DeviceRelease()
 
     if (m_buffer.data())
     {
-        free(m_buffer.data());
+        delete[] m_buffer.data();
     }
 
     m_format = FMT_INVALID;
