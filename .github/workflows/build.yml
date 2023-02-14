@@ -12,6 +12,7 @@ on:
       - "**.js"
       - "**.html"
       - "**.css"
+      - "**.yml"
   workflow_dispatch:
   release:
     types:
