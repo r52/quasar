@@ -248,7 +248,7 @@ void WidgetManager::LoadStartupWidgets(std::shared_ptr<Config> config)
 {
     auto loaded = getLoadedWidgetsList();
 
-    for (auto file : loaded)
+    for (auto&& file : loaded)
     {
         LoadWidget(file, config, false);
     }

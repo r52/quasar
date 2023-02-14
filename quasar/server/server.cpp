@@ -195,7 +195,7 @@ void Server::UpdateSettings()
 {
     RunOnServer([=, this] {
         std::lock_guard<std::shared_mutex> lk(extensionMutex);
-        for (auto& [name, ext] : extensions)
+        for (auto&& [name, ext] : extensions)
         {
             ext->UpdateExtensionSettings();
         }
@@ -389,7 +389,7 @@ void Server::handleMethodSubscribe(PerSocketData* client, const ClientMessage& m
 
     std::shared_lock<std::shared_mutex> lk(extensionMutex);
 
-    for (auto& topic : topics)
+    for (auto&& topic : topics)
     {
         auto target = topic.substr(0, topic.find_first_of("/"));
 
@@ -458,7 +458,7 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
 
     std::unordered_map<std::string, std::vector<std::string>> extns{};
 
-    for (auto& topic : topics)
+    for (auto&& topic : topics)
     {
         auto target = topic.substr(0, topic.find_first_of("/"));
         extns[target].push_back(topic);
@@ -469,7 +469,7 @@ void Server::handleMethodQuery(PerSocketData* client, const ClientMessage& msg)
     jsoncons::json                      j{jsoncons::json_object_arg, {{"errors", jsoncons::json{jsoncons::json_array_arg}}}};
     std::string                         message{};
 
-    for (auto& [target, tpcs] : extns)
+    for (auto&& [target, tpcs] : extns)
     {
         if (!extensions.count(target))
         {

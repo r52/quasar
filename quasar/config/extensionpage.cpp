@@ -69,7 +69,7 @@ ExtensionPage::ExtensionPage(const std::string& extname, const Settings::Extensi
 
     // Settings
     row = ui->settingsLayout->rowCount();
-    for (auto& def : info.settings)
+    for (auto&& def : info.settings)
     {
         std::visit(
             [&](auto&& arg) {

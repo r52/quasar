@@ -66,7 +66,7 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
     // register data sources
     if (nullptr != extensionInfo->dataSources)
     {
-        for (auto i : std::views::iota((size_t) 0, extensionInfo->numDataSources))
+        for (auto&& i : std::views::iota((size_t) 0, extensionInfo->numDataSources))
         {
             CHAR_TO_STRING(const std::string srcname, extensionInfo->dataSources[i].name);
 
@@ -118,7 +118,7 @@ Extension::Extension(quasar_ext_info_t* info, extension_destroy destroyfunc, std
         }
 
         // Fill saved settings if any
-        for (auto& def : settings)
+        for (auto&& def : settings)
         {
             std::visit(
                 [&](auto&& arg) {
@@ -258,7 +258,7 @@ void Extension::GetMetadataJSON(jsoncons::json& json, bool settings_only)
 
     // ext rates
 
-    for (auto& [key, src] : datasources)
+    for (auto&& [key, src] : datasources)
     {
         std::shared_lock<std::shared_mutex> lk(src.mutex);
 
@@ -277,7 +277,7 @@ void Extension::GetMetadataJSON(jsoncons::json& json, bool settings_only)
     {
         set = jsoncons::json{jsoncons::json_array_arg};
 
-        for (auto& def : settings)
+        for (auto&& def : settings)
         {
             jsoncons::json setting(jsoncons::json_object_arg);
 
@@ -410,7 +410,7 @@ void Extension::HandleDataReady(std::string_view source)
                         {
                             j.dump(message);
 
-                            for (auto& client : data.pollqueue)
+                            for (auto&& client : data.pollqueue)
                             {
                                 server->SendDataToClient((PerSocketData*) client, message);
                             }
@@ -610,7 +610,7 @@ void Extension::UpdateExtensionSettings()
         if (!payload.empty())
         {
             // Send the payload
-            for (auto& [name, source] : datasources)
+            for (auto&& [name, source] : datasources)
             {
                 std::shared_lock<std::shared_mutex> lk(source.mutex);
 
@@ -644,7 +644,7 @@ const std::string Extension::craftSettingsMessage()
 
 void Extension::refreshDataSources()
 {
-    for (auto& [name, src] : datasources)
+    for (auto&& [name, src] : datasources)
     {
         std::lock_guard<std::shared_mutex> lk(src.mutex);
 
@@ -675,7 +675,7 @@ Extension::~Extension()
     auto cfl = config.lock();
 
     // Do some explicit cleanup
-    for (auto& [name, src] : datasources)
+    for (auto&& [name, src] : datasources)
     {
         if (src.timer)
         {
@@ -688,7 +688,7 @@ Extension::~Extension()
     }
 
     // Save extension settings
-    for (auto& def : settings)
+    for (auto&& def : settings)
     {
         std::visit(
             [&](auto&& arg) {
@@ -794,7 +794,7 @@ void Extension::Initialize()
 
 void Extension::PollDataForSending(jsoncons::json& json, const std::vector<std::string>& topics, const std::string& args, void* client)
 {
-    for (auto& topic : topics)
+    for (auto&& topic : topics)
     {
         if (!datasources.count(topic))
         {
