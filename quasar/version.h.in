@@ -1,5 +1,5 @@
 #pragma once
 
-#define VER_FILEVERSION 2,0,2
-#define VER_PRODUCTVERSION 2,0,2
-#define GIT_VER_STRING "@QUASAR_GIT_VER@"
+#define VER_FILEVERSION    @quasar_VERSION_MAJOR@,@quasar_VERSION_MINOR@,@quasar_VERSION_PATCH@
+#define VER_PRODUCTVERSION @quasar_VERSION_MAJOR@,@quasar_VERSION_MINOR@,@quasar_VERSION_PATCH@
+#define VERSION_STRING     "@quasar_VERSION@"

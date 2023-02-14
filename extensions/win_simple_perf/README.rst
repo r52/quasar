@@ -6,21 +6,19 @@ A sample extension for Quasar on Windows that provides basic performance metrics
 Data Sources
 -------------
 
-win_simple_perf provides two Data Sources, ``cpu``, and ``ram``, both of which can be polled by clients.
+win_simple_perf provides two Data Sources: the subscription based ``sysinfo``, and client polled ``sysinfo_polled``. Both provide the same information.
 
-cpu
-~~~~~
+``sysinfo`` refreshes at a default rate of 5000ms.
 
-Outputs the current total CPU load percentage.
+cpu field
+~~~~~~~~~
 
-This source outputs a single integer that is the current total CPU load percentage.
+Contains a single integer that is the current total CPU load percentage.
 
-ram
-~~~~
+ram field
+~~~~~~~~~
 
-Outputs the total and currently used memory on the system.
-
-This source outputs the total (``total``) and currently used (``used``) memory as a JSON object, in bytes.
+Contains the total (``total``) and currently used (``used``) memory as a JSON object, in bytes.
 
 Sample Output
 ~~~~~~~~~~~~~
@@ -28,13 +26,11 @@ Sample Output
 .. code-block:: json
 
     {
-        "data": {
-            "win_simple_perf": {
-                "cpu": 15,
-                "ram": {
-                    "total": 34324512768,
-                    "used": 10252300288
-                }
+        "win_simple_perf/sysinfo": {
+            "cpu": 15,
+            "ram": {
+                "total": 34324512768,
+                "used": 10252300288
             }
         }
     }

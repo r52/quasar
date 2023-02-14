@@ -31,6 +31,9 @@ The widget menu can be accessed by either right-clicking the widget itself, or b
 Reload
     Refreshes the widget
 
+Set Position
+    Sets the position of the widget to a specific X and Y position
+
 Reset Position
     Resets the position of the widget to a visible position on your monitor
 

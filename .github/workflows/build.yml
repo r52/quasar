@@ -1,0 +1,107 @@
+name: Build Quasar
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - "**.rst"
+      - "widgets/**"
+      - "**.js"
+      - "**.html"
+      - "**.css"
+  workflow_dispatch:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            arch: "win64_msvc2019_64"
+          - os: ubuntu-latest
+            arch: "gcc_64"
+
+    name: Build Quasar
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3.3.0
+        with:
+          submodules: "recursive"
+
+      - name: Setup Qt
+        uses: jurplel/install-qt-action@v3.0.0
+        with:
+          version: "6.4.2"
+          arch: ${{ matrix.arch }}
+          modules: qtwebengine qtpositioning qtwebchannel qtnetworkauth qtserialport
+
+      - name: Cache vcpkg
+        uses: lukka/run-vcpkg@v10
+        with:
+          vcpkgJsonGlob: "vcpkg.json"
+
+      - name: Configure Project Windows
+        if: runner.os == 'Windows'
+        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE "-DCMAKE_C_COMPILER:FILEPATH=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe" "-DCMAKE_CXX_COMPILER:FILEPATH=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe" -S./ -B./build -G "Visual Studio 17 2022" -T ClangCL,host=x64 -A x64
+
+      - name: Configure Project Linux
+        if: runner.os == 'Linux'
+        env:
+          CC: gcc-12
+          CXX: g++-12
+        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
+
+      - name: Build Project
+        run: cmake --build ./build --config Release --
+
+      - name: Package Quasar
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $QUASAR_VERSION = (Select-String -Path ./quasar/CMakeLists.txt -Pattern 'project\(quasar VERSION ([0-9\.]+)\)') | %{$_.Matches.Groups[1].value}
+          $RELEASE_PACKAGE_FILE = "quasar-windows-v$QUASAR_VERSION.zip"
+          Compress-Archive ./build/quasar/Release/ $RELEASE_PACKAGE_FILE
+          $release_filepath = Get-ChildItem $RELEASE_PACKAGE_FILE | %{$_[0].FullName}
+          echo "RELEASE_PACKAGE_PATH=$release_filepath" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Package Sample Widgets
+        if: runner.os == 'Windows' && github.event_name == 'release'
+        shell: powershell
+        run: |
+          $WIDGETS_PACKAGE_FILE = "quasar-sample-widgets.zip"
+          Compress-Archive ./widgets/ $WIDGETS_PACKAGE_FILE
+          $widgets_filepath = Get-ChildItem $WIDGETS_PACKAGE_FILE | %{$_[0].FullName}
+          echo "WIDGETS_PACKAGE_FILE=$widgets_filepath" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Upload Build Artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v3
+        with:
+          name: quasar-windows-Release
+          path: ${{ env.RELEASE_PACKAGE_PATH }}
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload Release Asset
+        if: runner.os == 'Windows' && github.event_name == 'release'
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.RELEASE_PACKAGE_PATH }}
+
+      - name: Upload Sample Widgets
+        if: runner.os == 'Windows' && github.event_name == 'release'
+        uses: shogo82148/actions-upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ env.WIDGETS_PACKAGE_FILE }}

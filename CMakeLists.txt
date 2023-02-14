@@ -1,6 +1,14 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.23)
+
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake"
+    CACHE STRING "Vcpkg toolchain file")
+
+set(CMAKE_ENABLE_EXPORTS ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
 project(quasar-project)
+
+# include(cmake/CPM.cmake)
 
 set(default_build_type "Release")
 
@@ -13,17 +21,29 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
         "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    message("DEBUG BUILD")
-else()
-    add_definitions(-DQT_MESSAGELOGCONTEXT)
-    add_definitions(-DNDEBUG)
+# Tracy options
+option(TRACY_ENABLE "" OFF)
+option(TRACY_ON_DEMAND "" ON)
+option(TRACY_STATIC "" OFF)
+
+# Quasar options
+option(BUILD_SAMPLE_EXTENSIONS "Build sample extensions (Windows only)" ON)
+option(BUILD_SPOTIFY_API "Build Spotify API extension (optional)" ON)
+
+add_subdirectory(3rdparty/tracy EXCLUDE_FROM_ALL)
+
+add_subdirectory(quasar)
+
+if(WIN32 AND BUILD_SAMPLE_EXTENSIONS)
+    add_subdirectory(extensions/win_simple_perf)
+
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        option(KFR_ENABLE_DFT_MULTIARCH "" ON)
+        add_subdirectory(3rdparty/kfr)
+        add_subdirectory(extensions/win_audio_viz)
+    endif()
 endif()
 
-set(CMAKE_SKIP_BUILD_RPATH FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/quasar")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-add_subdirectory(extension-api)
-add_subdirectory(quasar)
+if(BUILD_SPOTIFY_API)
+    add_subdirectory(extensions/quasar-spotify-api)
+endif()

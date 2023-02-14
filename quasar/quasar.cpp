@@ -1,230 +1,196 @@
 #include "quasar.h"
-
-#include "preproc.h"
 #include "version.h"
 
-#include "dataservices.h"
-#include "logwindow.h"
-#include "webuidialog.h"
-#include "webuihandler.h"
-#include "webwidget.h"
-#include "widgetdefs.h"
-#include "widgetregistry.h"
+#include "common/config.h"
+#include "common/log.h"
+#include "common/qutil.h"
+#include "config/configdialog.h"
+#include "server/server.h"
+#include "widgets/quasarwidget.h"
+#include "widgets/widgetmanager.h"
 
+#include <QApplication>
 #include <QCloseEvent>
+#include <QDesktopServices>
+#include <QDialog>
+#include <QDir>
 #include <QFileDialog>
 #include <QMenu>
 #include <QMessageBox>
-#include <QNetworkReply>
-#include <QTextEdit>
-#include <QVBoxLayout>
+#include <QStandardPaths>
+#include <QUrl>
+#include <QWebEngineView>
 
-Quasar::Quasar(LogWindow* log, DataServices* s, QWidget* parent) :
-    QMainWindow(parent), logWindow(log), service(s), setdlg(nullptr), condlg(nullptr), netmanager(new QNetworkAccessManager(this))
+#include <spdlog/async.h>
+#include <spdlog/sinks/qt_sinks.h>
+#include <spdlog/sinks/rotating_file_sink.h>
+#include <spdlog/spdlog.h>
+
+namespace
+{
+    ConfigDialog* cfgdlg = nullptr;
+
+    void          duplicateMenu(QMenu* dst, const QMenu& origin)
+    {
+        QMenu*          sub     = dst->addMenu(origin.title());
+        QList<QAction*> actions = origin.actions();
+
+        for (auto ac : actions)
+        {
+            QMenu* acmen = ac->menu();
+
+            if (acmen)
+            {
+                duplicateMenu(sub, *acmen);
+            }
+            else
+            {
+                sub->addAction(ac);
+            }
+        }
+    }
+}  // namespace
+
+Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<Config>()}
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
         throw std::runtime_error("System Tray is not supported on the current desktop manager");
     }
 
-    if (nullptr == logWindow)
-    {
-        throw std::invalid_argument("Invalid LogWindow");
-    }
-
-    if (nullptr == service)
-    {
-        throw std::invalid_argument("Invalid DataServices");
-    }
-
-    logWindow->setParent(this);
-    service->setParent(this);
-
     ui.setupUi(this);
 
+    // Setup logger
+    ui.logEdit->document()->setMaximumBlockCount(200);
+    initializeLogger(ui.logEdit);
+
+    // Initialize late components
+    server  = std::make_shared<Server>(config);
+    manager = std::make_shared<WidgetManager>(server);
+
     // Setup system tray
-    createActions();
+    createTrayMenu();
     createTrayIcon();
+
+    manager->SetWidgetChangedCallback([this](const std::vector<QuasarWidget*>& widgets) {
+        if (widgetListMenu)
+        {
+            // Regenerate widget list menu
+            widgetListMenu->clear();
+
+            for (auto& w : widgets)
+            {
+                duplicateMenu(widgetListMenu, *(w->GetContextMenu()));
+            }
+        }
+    });
 
     // Setup icon
     QIcon icon(":/Resources/q.png");
     setWindowIcon(icon);
     trayIcon->setIcon(icon);
-
     trayIcon->show();
 
-    // Setup log widget
-    QVBoxLayout* layout = new QVBoxLayout();
-    layout->addWidget(logWindow->release());
+    const auto geometry = config->ReadGeometry("main");
 
-    ui.centralWidget->setLayout(layout);
-
-    resize(800, 400);
+    if (geometry.isEmpty())
+    {
+        resize(800, 400);
+    }
+    else
+    {
+        restoreGeometry(geometry);
+    }
 
     createDirectories();
-    checkForUpdates();
+
+    // Load widgets
+    manager->LoadStartupWidgets(config);
 }
 
-Quasar::~Quasar()
+void Quasar::initializeLogger(QTextEdit* edit)
 {
-    // hard deletes required here because Qt resource management has already
-    // run its course at this point
+    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    path.append(".log");
 
-    if (setdlg != nullptr)
+    constexpr auto                max_size{1048576 * 5};
+    constexpr auto                max_files{3};
+
+    auto                          qt_sink = std::make_shared<spdlog::sinks::qt_sink_mt>(edit, "append");
+
+    std::vector<spdlog::sink_ptr> sinks{qt_sink};
+
+    if (Settings::internal.log_file.GetValue())
     {
-        setdlg->close();
-        delete setdlg;
-        setdlg = nullptr;
+        auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(path.toStdString(), max_size, max_files);
+        sinks.push_back(rotating_sink);
     }
 
-    if (condlg != nullptr)
+    auto logger = Log::setup_logger(sinks);
+
+    spdlog::set_default_logger(logger);
+
+    spdlog::set_level((spdlog::level::level_enum) Settings::internal.log_level.GetValue());
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S] [thread %t] [%^%l%$] %v - %s:L%#");
+
+    SPDLOG_DEBUG("Log level: {}", Settings::internal.log_level.GetValue());
+
+    if (Settings::internal.log_file.GetValue())
     {
-        condlg->close();
-        delete condlg;
-        condlg = nullptr;
+        SPDLOG_DEBUG("Logging to: {}", path.toStdString());
     }
+
+    SPDLOG_INFO("Log initialized!");
 }
 
-void Quasar::openWebWidget()
-{
-    QSettings settings;
-
-    QString defpath = QDir::currentPath();
-
-#ifdef Q_OS_WIN
-    defpath = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Quasar/widgets";
-#endif // Q_OS_WIN
-
-    QString lastpath = settings.value(QUASAR_CONFIG_LASTPATH, defpath).toString();
-
-    QString fname = QFileDialog::getOpenFileName(this, tr("Load Widget"), lastpath, tr("Widget Definitions (*.json)"));
-
-    if (!fname.isNull())
-    {
-        QFileInfo info(fname);
-        settings.setValue(QUASAR_CONFIG_LASTPATH, info.canonicalPath());
-
-        service->getRegistry()->loadWebWidget(fname, true);
-    }
-}
-
-void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
-{
-    switch (reason)
-    {
-        case QSystemTrayIcon::Trigger:
-        case QSystemTrayIcon::Context:
-        {
-            // Regenerate widget list menu
-            widgetListMenu->clear();
-
-            {
-                auto widgets = service->getRegistry()->getWidgets();
-
-                for (auto& w : *widgets)
-                {
-                    widgetListMenu->addMenu(w.second->getMenu());
-                }
-            }
-
-            if (reason == QSystemTrayIcon::Trigger)
-            {
-                trayIcon->contextMenu()->popup(QCursor::pos());
-            }
-
-            break;
-        }
-
-        case QSystemTrayIcon::DoubleClick:
-        {
-            openWebWidget();
-            break;
-        }
-    }
-}
-
-void Quasar::createDirectories()
-{
-#ifdef Q_OS_WIN
-    // Windows paths only
-    auto extdir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Quasar/extensions");
-
-    if (!extdir.exists())
-    {
-        // create folder
-        extdir.mkpath(".");
-    }
-
-    auto wdir = QDir(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/Quasar/widgets");
-
-    if (!wdir.exists())
-    {
-        // create folder
-        wdir.mkpath(".");
-    }
-#endif
-}
-
-void Quasar::createTrayIcon()
-{
-    trayIconMenu = new QMenu(this);
-    trayIconMenu->addAction(loadAction);
-    trayIconMenu->addMenu(widgetListMenu);
-    trayIconMenu->addAction(settingsAction);
-    trayIconMenu->addAction(logAction);
-    trayIconMenu->addAction(consoleAction);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(aboutAction);
-    trayIconMenu->addAction(aboutQtAction);
-    trayIconMenu->addAction(docAction);
-    trayIconMenu->addSeparator();
-    trayIconMenu->addAction(quitAction);
-
-    trayIcon = new QSystemTrayIcon(this);
-    trayIcon->setContextMenu(trayIconMenu);
-
-    connect(trayIcon, &QSystemTrayIcon::activated, this, &Quasar::trayIconActivated);
-}
-
-void Quasar::createActions()
+void Quasar::createTrayMenu()
 {
     loadAction = new QAction(tr("&Load"), this);
-    connect(loadAction, &QAction::triggered, this, &Quasar::openWebWidget);
+    connect(loadAction, &QAction::triggered, this, &Quasar::openWidget);
 
     widgetListMenu = new QMenu(tr("Widgets"), this);
 
     settingsAction = new QAction(tr("&Settings"), this);
     connect(settingsAction, &QAction::triggered, [&] {
-        if (setdlg == nullptr)
+        if (!cfgdlg)
         {
-            setdlg = new WebUiDialog(service->getServer(), tr("Settings"), WebUiHandler::settingsUrl, CAL_SETTINGS);
-            connect(setdlg, &QObject::destroyed, [&] { this->setdlg = nullptr; });
+            cfgdlg = new ConfigDialog();
 
-            setdlg->show();
+            connect(cfgdlg, &QDialog::finished, [=, this](int result) {
+                if (result == QDialog::Accepted)
+                {
+                    // Propagate settings
+                    server->UpdateSettings();
+                }
+
+                cfgdlg->deleteLater();
+                cfgdlg = nullptr;
+            });
+
+            cfgdlg->open();
         }
+        else
+        {
+            cfgdlg->show();
+            cfgdlg->setWindowState(Qt::WindowState::WindowActive);
+        }
+    });
+
+    dataFolderAction = new QAction(tr("Open &Data Folder"), this);
+    connect(dataFolderAction, &QAction::triggered, [] {
+        auto path = QUtil::GetCommonAppDataPath();
+        QDesktopServices::openUrl(QUrl(path));
     });
 
     logAction = new QAction(tr("L&og"), this);
     connect(logAction, &QAction::triggered, this, &QWidget::showNormal);
 
-    consoleAction = new QAction(tr("&Console"), this);
-    connect(consoleAction, &QAction::triggered, [&] {
-        if (condlg == nullptr)
-        {
-            condlg = new WebUiDialog(service->getServer(), tr("Debug Console"), WebUiHandler::consoleUrl, CAL_DEBUG);
-            connect(condlg, &QObject::destroyed, [&] { this->condlg = nullptr; });
-
-            condlg->show();
-        }
-    });
-
     aboutAction = new QAction(tr("&About Quasar"), this);
 
     connect(aboutAction, &QAction::triggered, [&] {
-        static QString aboutMsg = "Quasar " GIT_VER_STRING "<br/>"
+        static QString aboutMsg = "Quasar " VERSION_STRING "<br/>"
                                   "<br/>"
                                   "Compiled on: " __DATE__ "<br/>"
-                                  "Compiler: " COMPILER_STRING "<br/>"
                                   "Qt version: " QT_VERSION_STR "<br/>"
                                   "<br/>"
                                   "Licensed under GPLv3<br/>"
@@ -234,19 +200,117 @@ void Quasar::createActions()
     });
 
     aboutQtAction = new QAction(tr("About &Qt"), this);
-    connect(aboutQtAction, &QAction::triggered, [&] { QMessageBox::aboutQt(this, "About Qt"); });
+    connect(aboutQtAction, &QAction::triggered, [&] {
+        QMessageBox::aboutQt(this, "About Qt");
+    });
 
     docAction = new QAction(tr("Quasar &Documentation"), this);
-    connect(docAction, &QAction::triggered, [] { QDesktopServices::openUrl(QUrl("https://quasardoc.readthedocs.io")); });
+    connect(docAction, &QAction::triggered, [] {
+        QDesktopServices::openUrl(QUrl("https://quasardoc.readthedocs.io"));
+    });
+
+    gpuTestAction = new QAction(tr("GPU Info"), this);
+    connect(gpuTestAction, &QAction::triggered, [] {
+        QWebEngineView* view = new QWebEngineView();
+        view->setAttribute(Qt::WA_DeleteOnClose);
+        view->load(QUrl("chrome://gpu/"));
+        view->show();
+    });
 
     quitAction = new QAction(tr("&Quit"), this);
-    connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::quit);
+    connect(quitAction, &QAction::triggered, qApp, &QCoreApplication::exit, Qt::QueuedConnection);
+}
+
+void Quasar::createDirectories()
+{
+    auto path = QUtil::GetCommonAppDataPath();
+    path.append("extensions/");
+
+    QDir dir(path);
+    if (!dir.exists())
+    {
+        // create folder
+        dir.mkpath(".");
+    }
+}
+
+void Quasar::createTrayIcon()
+{
+    trayIconMenu = new QMenu(this);
+    trayIconMenu->addAction(loadAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addMenu(widgetListMenu);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(settingsAction);
+    trayIconMenu->addAction(dataFolderAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(logAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(aboutAction);
+    trayIconMenu->addAction(aboutQtAction);
+    trayIconMenu->addAction(docAction);
+    trayIconMenu->addAction(gpuTestAction);
+    trayIconMenu->addSeparator();
+    trayIconMenu->addAction(quitAction);
+
+    trayIcon = new QSystemTrayIcon(this);
+    trayIcon->setContextMenu(trayIconMenu);
+
+    connect(trayIcon, &QSystemTrayIcon::activated, this, &Quasar::trayIconActivated);
+}
+
+void Quasar::openWidget()
+{
+    QString defpath  = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+    QString lastpath = QString::fromStdString(Settings::internal.lastpath.GetValue());
+
+    if (lastpath.isEmpty())
+    {
+        lastpath = defpath;
+    }
+
+    QString fname = QFileDialog::getOpenFileName(this, tr("Load Widget"), lastpath, tr("Widget Definitions (*.json)"));
+
+    if (!fname.isNull())
+    {
+        QFileInfo info(fname);
+        Settings::internal.lastpath.SetValue(info.canonicalPath().toStdString());
+
+        manager->LoadWidget(fname.toStdString(), config, true);
+    }
+}
+
+void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
+{
+    switch (reason)
+    {
+        case QSystemTrayIcon::Trigger:
+        case QSystemTrayIcon::Context:
+            {
+                if (reason == QSystemTrayIcon::Trigger)
+                {
+                    trayIcon->contextMenu()->popup(QCursor::pos());
+                }
+
+                break;
+            }
+
+        case QSystemTrayIcon::DoubleClick:
+            {
+                openWidget();
+                break;
+            }
+        default:
+            break;
+    }
 }
 
 void Quasar::closeEvent(QCloseEvent* event)
 {
+    config->WriteGeometry("main", saveGeometry());
+
 #ifdef Q_OS_OSX
-    if (!event->spontaneous() || !isVisible())
+    if (!event->spontaneous() or !isVisible())
     {
         return;
     }
@@ -258,47 +322,15 @@ void Quasar::closeEvent(QCloseEvent* event)
     }
 }
 
-void Quasar::checkForUpdates()
+Quasar::~Quasar()
 {
-    connect(netmanager, &QNetworkAccessManager::finished, [](QNetworkReply* reply) {
-        if (reply->error())
-        {
-            qInfo() << reply->errorString();
-            return;
-        }
+    // Clean up config dialog
+    if (cfgdlg)
+    {
+        cfgdlg->done(QDialog::Rejected);
+    }
 
-        QString       answer = reply->readAll();
-        QJsonDocument doc    = QJsonDocument::fromJson(answer.toUtf8());
-
-        if (doc.isNull())
-        {
-            qWarning() << "Error parsing Github API response";
-            return;
-        }
-
-        auto info = doc.object();
-
-        // simple case compare should suffice
-        if (info["name"].toString() > GIT_VER_STRING)
-        {
-            auto reply = QMessageBox::question(nullptr,
-                                               tr("Quasar Update"),
-                                               tr("Quasar version ") + info["name"].toString() + tr(" is available.\n\nWould you like to download it?"),
-                                               QMessageBox::Yes | QMessageBox::No);
-
-            if (reply == QMessageBox::Ok)
-            {
-                QDesktopServices::openUrl(QUrl(info["html_url"].toString()));
-            }
-        }
-        else
-        {
-            qInfo() << "No updates available. Already on the latest version.";
-        }
-    });
-
-    QTimer::singleShot(5000, [&] {
-        updrequest.setUrl(QUrl("https://api.github.com/repos/r52/quasar/releases/latest"));
-        netmanager->get(updrequest);
-    });
+    manager.reset();
+    server.reset();
+    config.reset();
 }
