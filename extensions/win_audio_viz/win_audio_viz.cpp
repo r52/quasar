@@ -45,14 +45,16 @@
 #include <mmdeviceapi.h>
 //- WinAPI
 
+#include <kfr/base.hpp>
 #include <kfr/dft.hpp>
+#include <kfr/dsp.hpp>
 
 #define WINDOWS_BUG_WORKAROUND 1
 
 constexpr std::string_view EXT_FULLNAME = "Audio Visualization Data";
 constexpr std::string_view EXT_NAME     = "win_audio_viz";
 
-#define CLAMP01(x) std::clamp(x, 0.0, 1.0)
+#define CLAMP01(x) kfr::clamp(x, 0.0, 1.0)
 
 template<typename T>
 requires std::numeric_limits<T>::is_integer
@@ -61,8 +63,6 @@ constexpr float normalizeAsFloat(T val)
     constexpr float imax = 1.0f / std::numeric_limits<T>::max();
     return val * imax;
 }
-
-constexpr auto TWOPI = (2 * 3.14159265358979323846);
 
 #define qlog(l, ...)                                                      \
   {                                                                       \
@@ -160,9 +160,9 @@ struct Measure
     std::array<kfr::dft_plan_real_ptr<float>, MAX_CHANNELS> m_fftPlan;     // FFT plans for each channel
     std::array<std::vector<float>, MAX_CHANNELS>            m_fftIn;       // buffer for each channel's FFT input
     std::array<std::vector<float>, MAX_CHANNELS>            m_fftOut;      // buffer for each channel's FFT output
-    std::vector<float>                                      m_fftKWdw;     // window function coefficients
-    std::vector<float>                                      m_fftTmpIn;    // temp FFT processing buffer
-    std::vector<std::complex<float>>                        m_fftTmpOutP;  // temp FFT processing buffer
+    kfr::univector<float>                                   m_fftKWdw;     // window function coefficients
+    kfr::univector<float>                                   m_fftTmpIn;    // temp FFT processing buffer
+    kfr::univector<std::complex<float>>                     m_fftTmpOutP;  // temp FFT processing buffer
     size_t                                                  m_fftBufW;     // write index for input ring buffers
     int                                                     m_fftBufP;     // decremental counter - process FFT at zero
     std::vector<float>                                      m_bandFreq;    // buffer of band max frequencies
@@ -365,7 +365,7 @@ HRESULT Measure::DeviceInit()
         output[Measure::TYPE_FFTFREQ].resize((m_fftSize / 2) + 1, 0.0);
         output[Measure::TYPE_FFT].resize((m_fftSize / 2) + 1, 0.0);
 
-        fftScalar = (float) (1.0 / sqrt(m->m_fftSize));
+        fftScalar = (float) (1.0 / kfr::sqrt(m->m_fftSize));
 
         for (auto&& iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
         {
@@ -375,16 +375,11 @@ HRESULT Measure::DeviceInit()
             temp.resize(m_fftPlan[iChan]->temp_size);
         }
 
-        m_fftKWdw.resize(m_fftSize, 0.0f);
         m_fftTmpIn.resize(m_fftSize, 0.0f);
         m_fftTmpOutP.resize(m_fftSize, {0.0f, 0.0f});
         m_fftBufP = m_fftSize - m_fftOverlap;
 
-        // calculate window function coefficients (http://en.wikipedia.org/wiki/Window_function#Hann_.28Hanning.29_window)
-        for (auto&& n : std::views::iota((size_t) 0, m->m_fftSize))
-        {
-            m_fftKWdw[n] = (float) (0.5 * (1.0 - cos(TWOPI * n / (m_fftSize - 1))));
-        }
+        m_fftKWdw = kfr::window_hann(m_fftSize);
     }
 
     // calculate band frequencies and allocate band output buffers
@@ -398,12 +393,12 @@ HRESULT Measure::DeviceInit()
         df         = (float) m->m_wfx->nSamplesPerSec / m->m_fftSize;
 
         m_bandFreq.resize(m_nBands, 0.0f);
-        const double step = (log(m_freqMax / m_freqMin) / m_nBands) / log(2.0);
-        m_bandFreq[0]     = (float) (m_freqMin * pow(2.0, step / 2.0));
+        const double step = (kfr::log(m_freqMax / m_freqMin) / m_nBands) / kfr::log(2.0);
+        m_bandFreq[0]     = (float) (m_freqMin * kfr::pow(2.0, step / 2.0));
 
         for (auto&& iBand : std::views::iota((size_t) 1, m->m_nBands))
         {
-            m_bandFreq[iBand] = (float) (m_bandFreq[iBand - 1] * pow(2.0, step));
+            m_bandFreq[iBand] = (float) (m_bandFreq[iBand - 1] * kfr::pow(2.0, step));
         }
 
         for (auto&& iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
@@ -758,98 +753,23 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                     peak[iChan] = (float) m->m_peak[iChan];
                 }
 
-                // loops unrolled for float, 16b and mono, stereo
-                if (m->m_format == Measure::FMT_PCM_F32)
+                float* sF32 = (float*) m->m_buffer.data();
+                INT16* sI16 = (INT16*) m->m_buffer.data();
+
+                for ([[maybe_unused]] auto&& _ : std::views::iota((size_t) 0, (size_t) nFrames))
                 {
-                    float* s = (float*) m->m_buffer.data();
-                    if (m->m_wfx->nChannels == 1)
+                    for (auto&& iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                     {
-                        for ([[maybe_unused]] auto&& _ : std::views::iota((size_t) 0, (size_t) nFrames))
+                        float x     = m->m_format == Measure::FMT_PCM_F32 ? *sF32++ : normalizeAsFloat(*sI16++);
+                        float sqrX  = kfr::sqr(x);
+                        float absX  = kfr::abs(x);
+                        rms[iChan]  = sqrX + m->m_kRMS[(sqrX < rms[iChan])] * (rms[iChan] - sqrX);
+                        peak[iChan] = absX + m->m_kPeak[(absX < peak[iChan])] * (peak[iChan] - absX);
+
+                        if (m->m_wfx->nChannels == 1)
                         {
-                            float xL   = (float) *s++;
-                            float sqrL = xL * xL;
-                            float absL = abs(xL);
-                            rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
-                            peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
-                            rms[1]     = rms[0];
-                            peak[1]    = peak[0];
-                        }
-                    }
-                    else if (m->m_wfx->nChannels == 2)
-                    {
-                        for ([[maybe_unused]] auto&& _ : std::views::iota((size_t) 0, (size_t) nFrames))
-                        {
-                            float xL   = (float) *s++;
-                            float xR   = (float) *s++;
-                            float sqrL = xL * xL;
-                            float sqrR = xR * xR;
-                            float absL = abs(xL);
-                            float absR = abs(xR);
-                            rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
-                            rms[1]     = sqrR + m->m_kRMS[(sqrR < rms[1])] * (rms[1] - sqrR);
-                            peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
-                            peak[1]    = absR + m->m_kPeak[(absR < peak[1])] * (peak[1] - absR);
-                        }
-                    }
-                    else
-                    {
-                        for ([[maybe_unused]] auto&& _ : std::views::iota((size_t) 0, (size_t) nFrames))
-                        {
-                            for (auto&& iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
-                            {
-                                float x     = (float) *s++;
-                                float sqrX  = x * x;
-                                float absX  = abs(x);
-                                rms[iChan]  = sqrX + m->m_kRMS[(sqrX < rms[iChan])] * (rms[iChan] - sqrX);
-                                peak[iChan] = absX + m->m_kPeak[(absX < peak[iChan])] * (peak[iChan] - absX);
-                            }
-                        }
-                    }
-                }
-                else if (m->m_format == Measure::FMT_PCM_S16)
-                {
-                    INT16* s = (INT16*) m->m_buffer.data();
-                    if (m->m_wfx->nChannels == 1)
-                    {
-                        for ([[maybe_unused]] auto&& _ : std::views::iota((size_t) 0, (size_t) nFrames))
-                        {
-                            float xL   = normalizeAsFloat(*s++);
-                            float sqrL = xL * xL;
-                            float absL = abs(xL);
-                            rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
-                            peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
-                            rms[1]     = rms[0];
-                            peak[1]    = peak[0];
-                        }
-                    }
-                    else if (m->m_wfx->nChannels == 2)
-                    {
-                        for ([[maybe_unused]] auto&& _ : std::views::iota((size_t) 0, (size_t) nFrames))
-                        {
-                            float xL   = normalizeAsFloat(*s++);
-                            float xR   = normalizeAsFloat(*s++);
-                            float sqrL = xL * xL;
-                            float sqrR = xR * xR;
-                            float absL = abs(xL);
-                            float absR = abs(xR);
-                            rms[0]     = sqrL + m->m_kRMS[(sqrL < rms[0])] * (rms[0] - sqrL);
-                            rms[1]     = sqrR + m->m_kRMS[(sqrR < rms[1])] * (rms[1] - sqrR);
-                            peak[0]    = absL + m->m_kPeak[(absL < peak[0])] * (peak[0] - absL);
-                            peak[1]    = absR + m->m_kPeak[(absR < peak[1])] * (peak[1] - absR);
-                        }
-                    }
-                    else
-                    {
-                        for ([[maybe_unused]] auto&& _ : std::views::iota((size_t) 0, (size_t) nFrames))
-                        {
-                            for (auto&& iChan : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
-                            {
-                                float x     = normalizeAsFloat(*s++);
-                                float sqrX  = x * x;
-                                float absX  = abs(x);
-                                rms[iChan]  = sqrX + m->m_kRMS[(sqrX < rms[iChan])] * (rms[iChan] - sqrX);
-                                peak[iChan] = absX + m->m_kPeak[(absX < peak[iChan])] * (peak[iChan] - absX);
-                            }
+                            rms[1]  = rms[0];
+                            peak[1] = peak[0];
                         }
                     }
                 }
@@ -892,28 +812,22 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                                 }
 
                                 // apply the windowing function
-                                for (auto&& bin : std::views::iota((size_t) 0, m->m_fftSize))
-                                {
-                                    m->m_fftTmpIn[bin] *= m->m_fftKWdw[bin];
-                                }
+                                m->m_fftTmpIn = m->m_fftTmpIn * m->m_fftKWdw;
 
-                                auto in  = kfr::make_univector(m->m_fftTmpIn);
-                                auto out = kfr::make_univector(m->m_fftTmpOutP);
-
-                                m->m_fftPlan[iChan]->execute(out, in, temp);
+                                m->m_fftPlan[iChan]->execute(m->m_fftTmpOutP, m->m_fftTmpIn, temp);
                             }
                             else
                             {
                                 std::fill(m->m_fftTmpOutP.begin(), m->m_fftTmpOutP.end(), std::complex{0.0f, 0.0f});
                             }
 
+                            auto scaled = kfr::cabssqr(m->m_fftTmpOutP) * fftScalar;
+
                             // filter the bin levels as with peak measurements
                             for (auto&& bin : std::views::iota((size_t) 0, m->m_fftSize))
                             {
-                                float x0 = (m->m_fftOut[iChan])[bin];
-                                float x1 =
-                                    (m->m_fftTmpOutP[bin].real() * m->m_fftTmpOutP[bin].real() + m->m_fftTmpOutP[bin].imag() * m->m_fftTmpOutP[bin].imag()) *
-                                    fftScalar;
+                                float x0                  = (m->m_fftOut[iChan])[bin];
+                                float x1                  = kfr::get_element(scaled, {bin});
                                 x0                        = x1 + m->m_kFFT[(x1 < x0)] * (x0 - x1);
                                 (m->m_fftOut[iChan])[bin] = x0;
                             }
@@ -998,7 +912,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             {
                 for (auto&& i : std::views::iota((size_t) 0, (size_t) m->m_wfx->nChannels))
                 {
-                    output[Measure::TYPE_RMS][i] = CLAMP01(sqrt(m->m_rms[i]) * m->m_gainRMS);
+                    output[Measure::TYPE_RMS][i] = CLAMP01(kfr::sqrt(m->m_rms[i]) * m->m_gainRMS);
                 }
 
                 quasar_set_data_double_vector(hData, output[Measure::TYPE_RMS]);
@@ -1036,7 +950,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         }
 
                         x                            = CLAMP01(x);
-                        x                            = std::max(0.0, m->m_sensitivity * log10(x) + 1.0);
+                        x                            = kfr::max(0.0, m->m_sensitivity * kfr::log10(x) + 1.0);
                         output[Measure::TYPE_FFT][i] = x;
                     }
 
@@ -1075,7 +989,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                         }
 
                         x                             = CLAMP01(x);
-                        x                             = std::max(0.0, m->m_sensitivity * log10(x) + 1.0);
+                        x                             = kfr::max(0.0, m->m_sensitivity * kfr::log10(x) + 1.0);
                         output[Measure::TYPE_BAND][i] = x;
                     }
 
@@ -1273,15 +1187,15 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     if (m->m_wfx)
     {
         const double freq = m->m_wfx->nSamplesPerSec;
-        m->m_kRMS[0]      = (float) exp(log10(0.01) / (freq * (double) m->m_envRMS[0] * 0.001));
-        m->m_kRMS[1]      = (float) exp(log10(0.01) / (freq * (double) m->m_envRMS[1] * 0.001));
-        m->m_kPeak[0]     = (float) exp(log10(0.01) / (freq * (double) m->m_envPeak[0] * 0.001));
-        m->m_kPeak[1]     = (float) exp(log10(0.01) / (freq * (double) m->m_envPeak[1] * 0.001));
+        m->m_kRMS[0]      = (float) kfr::exp(kfr::log10(0.01) / (freq * (double) m->m_envRMS[0] * 0.001));
+        m->m_kRMS[1]      = (float) kfr::exp(kfr::log10(0.01) / (freq * (double) m->m_envRMS[1] * 0.001));
+        m->m_kPeak[0]     = (float) kfr::exp(kfr::log10(0.01) / (freq * (double) m->m_envPeak[0] * 0.001));
+        m->m_kPeak[1]     = (float) kfr::exp(kfr::log10(0.01) / (freq * (double) m->m_envPeak[1] * 0.001));
 
         if (m->m_fftSize)
         {
-            m->m_kFFT[0] = (float) exp(log10(0.01) / (freq / (m->m_fftSize - m->m_fftOverlap) * (double) m->m_envFFT[0] * 0.001));
-            m->m_kFFT[1] = (float) exp(log10(0.01) / (freq / (m->m_fftSize - m->m_fftOverlap) * (double) m->m_envFFT[1] * 0.001));
+            m->m_kFFT[0] = (float) kfr::exp(kfr::log10(0.01) / (freq / (m->m_fftSize - m->m_fftOverlap) * (double) m->m_envFFT[0] * 0.001));
+            m->m_kFFT[1] = (float) kfr::exp(kfr::log10(0.01) / (freq / (m->m_fftSize - m->m_fftOverlap) * (double) m->m_envFFT[1] * 0.001));
         }
     }
 
