@@ -82,40 +82,58 @@ constexpr float normalizeAsFloat(T val)
   }
 
 template<typename T>
-requires std::is_base_of_v<IUnknown, T>
+struct IFaceDeleter
+{
+    constexpr void operator() (T* arg) const requires std::is_base_of_v<IUnknown, T> { arg->Release(); }
+};
+
+template<>
+struct IFaceDeleter<WCHAR>
+{
+    constexpr void operator() (WCHAR* arg) const { CoTaskMemFree(arg); }
+};
+
+template<>
+struct IFaceDeleter<WAVEFORMATEX>
+{
+    constexpr void operator() (WAVEFORMATEX* arg) const { CoTaskMemFree(arg); }
+};
+
+template<typename T, typename D = IFaceDeleter<T>>
 struct WInterface
 {
-    WInterface() : _data(nullptr) {}
+    constexpr WInterface(D&& d = D()) : _data(nullptr), _deleter(std::forward<decltype(d)>(d)) {}
 
-    WInterface(T* ptr) : _data(ptr) {}
+    constexpr WInterface(T* ptr, D&& d = D()) : _data(ptr), _deleter(std::forward<decltype(d)>(d)) {}
 
-    ~WInterface() { release(); }
+    constexpr ~WInterface() { release(); }
 
-    void release()
+    constexpr void release()
     {
         if (_data)
         {
-            _data->Release();
+            _deleter(_data);
             _data = nullptr;
         }
     }
 
-    void reset(T* ptr = nullptr)
+    constexpr void reset(T* ptr = nullptr)
     {
         release();
         _data = ptr;
     }
 
-    T** operator& () { return &_data; }
+    constexpr T** operator& () { return &_data; }
 
-    T*  get() const { return _data; }
+    constexpr T*  get() const { return _data; }
 
-    T*  operator->() const { return _data; }
+    constexpr T*  operator->() const { return _data; }
 
-        operator bool () const { return (_data != nullptr); }
+    constexpr     operator bool () const { return (_data != nullptr); }
 
 private:
     T* _data = nullptr;
+    D  _deleter;
 };
 
 struct Measure
@@ -175,7 +193,7 @@ struct Measure
 
     WInterface<IMMDeviceEnumerator> m_enum;       // audio endpoint enumerator
     WInterface<IMMDevice>           m_dev;        // audio endpoint device
-    WAVEFORMATEX*                   m_wfx;        // audio format info
+    WInterface<WAVEFORMATEX>        m_wfx;        // audio format info
     WInterface<IAudioClient>        m_clAudio;    // audio client instance
     WInterface<IAudioCaptureClient> m_clCapture;  // capture client instance
 #if (WINDOWS_BUG_WORKAROUND)
@@ -213,7 +231,7 @@ struct Measure
         m_sensitivity(35.0),
         m_enum(),
         m_dev(),
-        m_wfx(NULL),
+        m_wfx(),
         m_clAudio(),
         m_clCapture(),
 #if (WINDOWS_BUG_WORKAROUND)
@@ -250,6 +268,8 @@ struct Measure
         }
     }
 
+    ~Measure() { DeviceRelease(); }
+
     HRESULT DeviceInit();
     void    DeviceRelease();
 };
@@ -279,7 +299,7 @@ namespace
     dbj::char_range_to_string                                 string_conv{};
     dbj::wchar_range_to_string                                to_wstring{};
 
-    Measure*                                                  m                   = nullptr;
+    std::unique_ptr<Measure>                                  m;
     bool                                                      startup_initialized = false;
 
     std::unordered_map<size_t, Measure::Type>                 m_typemap;
@@ -371,7 +391,7 @@ HRESULT Measure::DeviceInit()
             break;
 
         case WAVE_FORMAT_EXTENSIBLE:
-            if (reinterpret_cast<WAVEFORMATEXTENSIBLE*>(m_wfx)->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
+            if (reinterpret_cast<WAVEFORMATEXTENSIBLE*>(m_wfx.get())->SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)
             {
                 m_format = FMT_PCM_F32;
             }
@@ -441,7 +461,7 @@ HRESULT Measure::DeviceInit()
     // Windows bug workaround: create a silent render client before initializing loopback mode
     // see:
     // http://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/c7ba0a04-46ce-43ff-ad15-ce8932c00171/loopback-recording-causes-digital-stuttering?forum=windowspro-audiodevelopment
-    hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, 0, 0, m_wfx, NULL);
+    hr = m_clBugAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, 0, 0, m_wfx.get(), NULL);
     EXIT_ON_ERROR(hr);
 
     // get the frame count
@@ -469,7 +489,7 @@ HRESULT Measure::DeviceInit()
 #endif
 
     // initialize the audio client
-    hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, m_wfx, NULL);
+    hr = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, m_wfx.get(), NULL);
     if (hr != S_OK)
     {
         // Compatibility with the Nahimic audio driver
@@ -481,7 +501,7 @@ HRESULT Measure::DeviceInit()
         m_wfx->nBlockAlign     = (2 * m_wfx->wBitsPerSample) / 8;
         m_wfx->nAvgBytesPerSec = m_wfx->nSamplesPerSec * m_wfx->nBlockAlign;
 
-        hr                     = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, m_wfx, NULL);
+        hr                     = m_clAudio->Initialize(AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, 0, 0, m_wfx.get(), NULL);
         if (hr != S_OK)
         {
             // stereo waveformat didnt work either, throw an error
@@ -546,8 +566,7 @@ void Measure::DeviceRelease()
 
     if (m_wfx)
     {
-        CoTaskMemFree(m_wfx);
-        m_wfx = NULL;
+        m_wfx.reset();
     }
 
     m_clAudio.reset();
@@ -572,7 +591,7 @@ void Measure::DeviceRelease()
 
 bool win_audio_viz_init(quasar_ext_handle handle)
 {
-    assert(m);
+    assert(m.get());
 
     // process types
     m_typemap[sources[0].uid]  = Measure::TYPE_RMS;
@@ -597,7 +616,7 @@ bool win_audio_viz_shutdown(quasar_ext_handle handle)
 {
     m->DeviceRelease();
 
-    delete m;
+    m.reset();
 
     return true;
 }
@@ -685,11 +704,10 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             {
                 if (m->m_dev)
                 {
-                    LPWSTR pwszID = NULL;
+                    WInterface<WCHAR> pwszID;
                     if (m->m_dev->GetId(&pwszID) == S_OK)
                     {
-                        quasar_set_data_string_hpp(hData, string_conv(pwszID));
-                        CoTaskMemFree(pwszID);
+                        quasar_set_data_string_hpp(hData, string_conv(pwszID.get()));
                         return true;
                     }
                 }
@@ -714,8 +732,8 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                             WInterface<IPropertyStore> props;
                             if (collection->Item(iDevice, &device) == S_OK and device->OpenPropertyStore(STGM_READ, &props) == S_OK)
                             {
-                                LPWSTR      id = NULL;
-                                PROPVARIANT varName;
+                                WInterface<WCHAR> id;
+                                PROPVARIANT       varName;
                                 PropVariantInit(&varName);
 
                                 if (device->GetId(&id) == S_OK and props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
@@ -723,9 +741,6 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                                     auto device = fmt::format(L"{}: {}", id, varName.pwszVal);
                                     list.push_back(string_conv(device).c_str());
                                 }
-
-                                if (id)
-                                    CoTaskMemFree(id);
 
                                 PropVariantClear(&varName);
                             }
@@ -1042,16 +1057,15 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
 quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
 {
-    extHandle                                 = handle;
+    extHandle = handle;
 
-    m                                         = new Measure();
+    m.reset(new Measure());
 
     quasar_selection_options_t*     devSelect = nullptr;
     quasar_settings_t*              settings  = nullptr;
 
     HRESULT                         hr        = S_OK;
     WInterface<IMMDeviceCollection> pCollection;
-    LPWSTR                          pwszID = NULL;
 
     // Add default endpoint
     devSelect = quasar_create_selection_setting();
@@ -1077,6 +1091,7 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
     {
         WInterface<IMMDevice>      pEndpoint;
         WInterface<IPropertyStore> pProps;
+        WInterface<WCHAR>          pwszID;
 
         // Get pointer to endpoint number i.
         hr = pCollection->Item(i, &pEndpoint);
@@ -1098,10 +1113,8 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
         EXIT_ON_ERROR(hr);
 
         // Print endpoint friendly name and endpoint ID.
-        quasar_add_selection_option(devSelect, string_conv(varName.pwszVal).c_str(), string_conv(pwszID).c_str());
+        quasar_add_selection_option(devSelect, string_conv(varName.pwszVal).c_str(), string_conv(pwszID.get()).c_str());
 
-        CoTaskMemFree(pwszID);
-        pwszID = NULL;
         PropVariantClear(&varName);
     }
 
@@ -1135,8 +1148,7 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
 Exit:
     warn("create_settings() failed on audio enumeration: last error is {}", GetLastError());
     quasar_free_selection_setting(devSelect);
-    CoTaskMemFree(pwszID);
-    delete m;
+    m.reset();
     return nullptr;
 }
 
