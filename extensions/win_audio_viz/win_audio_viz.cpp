@@ -23,6 +23,7 @@
 #include <shared_mutex>
 #include <span>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -79,12 +80,43 @@ constexpr float normalizeAsFloat(T val)
   {                         \
     goto Exit;              \
   }
-#define SAFE_RELEASE(punk) \
-  if ((punk) != nullptr)   \
-  {                        \
-    (punk)->Release();     \
-    (punk) = nullptr;      \
-  }
+
+template<typename T>
+requires std::is_base_of_v<IUnknown, T>
+struct WInterface
+{
+    WInterface() : _data(nullptr) {}
+
+    WInterface(T* ptr) : _data(ptr) {}
+
+    ~WInterface() { release(); }
+
+    void release()
+    {
+        if (_data)
+        {
+            _data->Release();
+            _data = nullptr;
+        }
+    }
+
+    void reset(T* ptr = nullptr)
+    {
+        release();
+        _data = ptr;
+    }
+
+    T** operator& () { return &_data; }
+
+    T*  get() const { return _data; }
+
+    T*  operator->() const { return _data; }
+
+        operator bool () const { return (_data != nullptr); }
+
+private:
+    T* _data = nullptr;
+};
 
 struct Measure
 {
@@ -128,27 +160,27 @@ struct Measure
         NUM_FORMATS
     };
 
-    Format                m_format;       // format specifier (detected in init)
-    std::array<size_t, 2> m_envRMS;       // RMS attack/decay times in ms (parsed from options)
-    std::array<size_t, 2> m_envPeak;      // peak attack/decay times in ms (parsed from options)
-    std::array<size_t, 2> m_envFFT;       // FFT attack/decay times in ms (parsed from options)
-    size_t                m_fftSize;      // size of FFT (parsed from options)
-    size_t                m_fftOverlap;   // number of samples between FFT calculations
-    size_t                m_nBands;       // number of frequency bands (parsed from options)
-    double                m_gainRMS;      // RMS gain (parsed from options)
-    double                m_gainPeak;     // peak gain (parsed from options)
-    double                m_freqMin;      // min freq for band measurement
-    double                m_freqMax;      // max freq for band measurement
-    double                m_sensitivity;  // dB range for FFT/Band return values (parsed from options)
+    Format                          m_format;       // format specifier (detected in init)
+    std::array<size_t, 2>           m_envRMS;       // RMS attack/decay times in ms (parsed from options)
+    std::array<size_t, 2>           m_envPeak;      // peak attack/decay times in ms (parsed from options)
+    std::array<size_t, 2>           m_envFFT;       // FFT attack/decay times in ms (parsed from options)
+    size_t                          m_fftSize;      // size of FFT (parsed from options)
+    size_t                          m_fftOverlap;   // number of samples between FFT calculations
+    size_t                          m_nBands;       // number of frequency bands (parsed from options)
+    double                          m_gainRMS;      // RMS gain (parsed from options)
+    double                          m_gainPeak;     // peak gain (parsed from options)
+    double                          m_freqMin;      // min freq for band measurement
+    double                          m_freqMax;      // max freq for band measurement
+    double                          m_sensitivity;  // dB range for FFT/Band return values (parsed from options)
 
-    IMMDeviceEnumerator*  m_enum;       // audio endpoint enumerator
-    IMMDevice*            m_dev;        // audio endpoint device
-    WAVEFORMATEX*         m_wfx;        // audio format info
-    IAudioClient*         m_clAudio;    // audio client instance
-    IAudioCaptureClient*  m_clCapture;  // capture client instance
+    WInterface<IMMDeviceEnumerator> m_enum;       // audio endpoint enumerator
+    WInterface<IMMDevice>           m_dev;        // audio endpoint device
+    WAVEFORMATEX*                   m_wfx;        // audio format info
+    WInterface<IAudioClient>        m_clAudio;    // audio client instance
+    WInterface<IAudioCaptureClient> m_clCapture;  // capture client instance
 #if (WINDOWS_BUG_WORKAROUND)
-    IAudioClient*       m_clBugAudio;   // audio client for dummy silent channel
-    IAudioRenderClient* m_clBugRender;  // render client for dummy silent channel
+    WInterface<IAudioClient>       m_clBugAudio;   // audio client for dummy silent channel
+    WInterface<IAudioRenderClient> m_clBugRender;  // render client for dummy silent channel
 #endif
     std::wstring                                            m_reqID;       // requested device ID (parsed from options)
     std::wstring                                            m_devName;     // device friendly name (detected in init)
@@ -179,14 +211,14 @@ struct Measure
         m_freqMin(20.0),
         m_freqMax(20000.0),
         m_sensitivity(35.0),
-        m_enum(NULL),
-        m_dev(NULL),
+        m_enum(),
+        m_dev(),
         m_wfx(NULL),
-        m_clAudio(NULL),
-        m_clCapture(NULL),
+        m_clAudio(),
+        m_clCapture(),
 #if (WINDOWS_BUG_WORKAROUND)
-        m_clBugAudio(NULL),
-        m_clBugRender(NULL),
+        m_clBugAudio(),
+        m_clBugRender(),
 #endif
         m_reqID{},
         m_devName{},
@@ -263,10 +295,10 @@ namespace
 
 HRESULT Measure::DeviceInit()
 {
-    std::unique_lock lk(mutex);
-    HRESULT          hr;
-    IPropertyStore*  props   = NULL;
-    size_t           bufsize = 0;
+    std::unique_lock           lk(mutex);
+    HRESULT                    hr;
+    WInterface<IPropertyStore> props;
+    size_t                     bufsize = 0;
 
     // get the device handle
     assert(m_enum && !m_dev);
@@ -288,7 +320,6 @@ HRESULT Measure::DeviceInit()
     EXIT_ON_ERROR(hr);
 
     // store device name
-
     if (m_dev->OpenPropertyStore(STGM_READ, &props) == S_OK)
     {
         PROPVARIANT varName;
@@ -301,8 +332,6 @@ HRESULT Measure::DeviceInit()
 
         PropVariantClear(&varName);
     }
-
-    SAFE_RELEASE(props);
 
     info("Initializing audio device {}", string_conv(m_devName));
 
@@ -504,8 +533,8 @@ void Measure::DeviceRelease()
     {
         m_clBugAudio->Stop();
     }
-    SAFE_RELEASE(m_clBugRender);
-    SAFE_RELEASE(m_clBugAudio);
+    m_clBugRender.reset();
+    m_clBugAudio.reset();
 #endif
 
     if (m_clAudio)
@@ -513,7 +542,7 @@ void Measure::DeviceRelease()
         m_clAudio->Stop();
     }
 
-    SAFE_RELEASE(m_clCapture);
+    m_clCapture.reset();
 
     if (m_wfx)
     {
@@ -521,8 +550,8 @@ void Measure::DeviceRelease()
         m_wfx = NULL;
     }
 
-    SAFE_RELEASE(m_clAudio);
-    SAFE_RELEASE(m_dev);
+    m_clAudio.reset();
+    m_dev.reset();
 
     for (auto&& iChan : std::views::iota((size_t) 0, (size_t) Measure::MAX_CHANNELS))
     {
@@ -567,7 +596,6 @@ bool win_audio_viz_init(quasar_ext_handle handle)
 bool win_audio_viz_shutdown(quasar_ext_handle handle)
 {
     m->DeviceRelease();
-    SAFE_RELEASE(m->m_enum);
 
     delete m;
 
@@ -672,7 +700,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
             {
                 if (m->m_enum)
                 {
-                    IMMDeviceCollection* collection = NULL;
+                    WInterface<IMMDeviceCollection> collection;
                     if (m->m_enum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE | DEVICE_STATE_UNPLUGGED, &collection) == S_OK)
                     {
                         std::vector<std::string> list;
@@ -682,8 +710,8 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
                         for (ULONG iDevice = 0; iDevice < nDevices; ++iDevice)
                         {
-                            IMMDevice*      device = NULL;
-                            IPropertyStore* props  = NULL;
+                            WInterface<IMMDevice>      device;
+                            WInterface<IPropertyStore> props;
                             if (collection->Item(iDevice, &device) == S_OK and device->OpenPropertyStore(STGM_READ, &props) == S_OK)
                             {
                                 LPWSTR      id = NULL;
@@ -701,9 +729,6 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
                                 PropVariantClear(&varName);
                             }
-
-                            SAFE_RELEASE(props);
-                            SAFE_RELEASE(device);
                         }
 
                         // set data
@@ -712,8 +737,6 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                             quasar_set_data_string_vector(hData, list);
                         }
                     }
-
-                    SAFE_RELEASE(collection);
 
                     return true;
                 }
@@ -1019,18 +1042,16 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
 quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
 {
-    extHandle                               = handle;
+    extHandle                                 = handle;
 
-    m                                       = new Measure;
+    m                                         = new Measure();
 
-    quasar_selection_options_t* devSelect   = nullptr;
-    quasar_settings_t*          settings    = nullptr;
+    quasar_selection_options_t*     devSelect = nullptr;
+    quasar_settings_t*              settings  = nullptr;
 
-    HRESULT                     hr          = S_OK;
-    IMMDeviceCollection*        pCollection = NULL;
-    IMMDevice*                  pEndpoint   = NULL;
-    IPropertyStore*             pProps      = NULL;
-    LPWSTR                      pwszID      = NULL;
+    HRESULT                         hr        = S_OK;
+    WInterface<IMMDeviceCollection> pCollection;
+    LPWSTR                          pwszID = NULL;
 
     // Add default endpoint
     devSelect = quasar_create_selection_setting();
@@ -1054,6 +1075,9 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
     // Each loop prints the name of an endpoint device.
     for (ULONG i = 0; i < count; i++)
     {
+        WInterface<IMMDevice>      pEndpoint;
+        WInterface<IPropertyStore> pProps;
+
         // Get pointer to endpoint number i.
         hr = pCollection->Item(i, &pEndpoint);
         EXIT_ON_ERROR(hr);
@@ -1079,10 +1103,7 @@ quasar_settings_t* win_audio_viz_create_settings(quasar_ext_handle handle)
         CoTaskMemFree(pwszID);
         pwszID = NULL;
         PropVariantClear(&varName);
-        SAFE_RELEASE(pProps);
-        SAFE_RELEASE(pEndpoint);
     }
-    SAFE_RELEASE(pCollection);
 
     settings = quasar_create_settings(extHandle);
 
@@ -1115,10 +1136,6 @@ Exit:
     warn("create_settings() failed on audio enumeration: last error is {}", GetLastError());
     quasar_free_selection_setting(devSelect);
     CoTaskMemFree(pwszID);
-    SAFE_RELEASE(m->m_enum);
-    SAFE_RELEASE(pCollection);
-    SAFE_RELEASE(pEndpoint);
-    SAFE_RELEASE(pProps);
     delete m;
     return nullptr;
 }
