@@ -167,7 +167,7 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
     });
 
     // Extensions
-    for (auto& [name, extinfo] : Settings::extension)
+    for (auto&& [name, extinfo] : Settings::extension)
     {
         QListWidgetItem* extitem = new QListWidgetItem(ui->listWidget);
         extitem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
@@ -220,7 +220,7 @@ void ConfigDialog::SaveSettings()
     // App table
     std::vector<Settings::AppLauncherData> applist;
 
-    for (auto i : std::views::iota(0, ui->appTable->rowCount()))
+    for (auto&& i : std::views::iota(0, ui->appTable->rowCount()))
     {
         QTableWidgetItem*         cmditem   = ui->appTable->item(i, 0);
         QTableWidgetItem*         fileitem  = ui->appTable->item(i, 1);
@@ -254,7 +254,7 @@ void ConfigDialog::SaveSettings()
     {
         auto& info = Settings::extension.at(page->name);
 
-        for (auto& [n, c] : page->savedSrc)
+        for (auto&& [n, c] : page->savedSrc)
         {
             auto result = std::find_if(info.sources.begin(), info.sources.end(), [&, &n = n](auto s) {
                 return s.get().name == n;
@@ -267,7 +267,7 @@ void ConfigDialog::SaveSettings()
             }
         }
 
-        for (auto& [n, c] : page->savedSettings)
+        for (auto&& [n, c] : page->savedSettings)
         {
             auto result = std::find_if(info.settings.begin(), info.settings.end(), [&, &n = n](Settings::SettingsVariant& entry) {
                 return std::visit(

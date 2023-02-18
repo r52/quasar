@@ -78,7 +78,7 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<C
             // Regenerate widget list menu
             widgetListMenu->clear();
 
-            for (auto& w : widgets)
+            for (auto w : widgets)
             {
                 duplicateMenu(widgetListMenu, *(w->GetContextMenu()));
             }

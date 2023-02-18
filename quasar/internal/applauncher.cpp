@@ -56,7 +56,7 @@ namespace
             }
 
             jsoncons::json sendlist{jsoncons::json_array_arg};
-            for (const auto& item : applist)
+            for (auto&& item : std::as_const(applist))
             {
                 sendlist.push_back(jsoncons::json{
                     jsoncons::json_object_arg,
@@ -80,11 +80,11 @@ namespace
                 return false;
             }
 
-            auto it = std::find_if(applist.begin(), applist.end(), [&](const auto& item) {
+            auto it = std::find_if(applist.cbegin(), applist.cend(), [&](const auto& item) {
                 return item.command == args;
             });
 
-            if (it == applist.end())
+            if (it == applist.cend())
             {
                 auto m = fmt::format("Unknown launcher command '{}'", args);
                 SPDLOG_WARN(m);
