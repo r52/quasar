@@ -39,11 +39,15 @@ if(WIN32 AND BUILD_SAMPLE_EXTENSIONS)
 
     if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
         option(KFR_ENABLE_DFT_MULTIARCH "" ON)
-        add_subdirectory(3rdparty/kfr)
+        add_subdirectory(3rdparty/kfr EXCLUDE_FROM_ALL)
         add_subdirectory(extensions/win_audio_viz)
     endif()
 endif()
 
 if(BUILD_SPOTIFY_API)
     add_subdirectory(extensions/quasar-spotify-api)
+endif()
+
+if(WIN32)
+    add_subdirectory(updater)
 endif()

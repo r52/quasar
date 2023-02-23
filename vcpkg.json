@@ -8,6 +8,11 @@
     "usockets",
     "bshoshany-thread-pool",
     "jsoncons",
+    {
+      "name": "minizip-ng",
+      "default-features": false,
+      "features": ["pkcrypt", "wzaes", "zlib"]
+    },
     "vulkan-headers"
   ]
 }
