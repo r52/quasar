@@ -14,7 +14,7 @@ target_link_libraries(win_simple_perf PRIVATE fmt::fmt)
 target_link_libraries(win_simple_perf PRIVATE quasar extension-api)
 
 add_custom_command(TARGET win_simple_perf POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:win_simple_perf> $<TARGET_FILE_DIR:quasar>/extensions/win_simple_perf.dll
+  COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:win_simple_perf> $<TARGET_FILE_DIR:quasar>/extensions/
 )
 
 install(TARGETS win_simple_perf DESTINATION quasar/extensions)
