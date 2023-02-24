@@ -1,5 +1,6 @@
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <thread>
 
@@ -63,15 +64,28 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    std::filesystem::path exe  = argv[0];
     std::filesystem::path file = argv[1];
 
     if (!std::filesystem::exists(file))
     {
-        std::cout << "File " << file.string() << "does not exist\n";
+        std::cout << "File " << file.string() << " does not exist\n";
         return 1;
     }
 
-    // Move zlib since this app depends on zlib
+    // Move current dependencies
+    std::filesystem::path exeold = "updater-old.exe";
+
+    if (!exe.string().starts_with("updater-old"))
+    {
+        if (std::filesystem::exists(exeold))
+        {
+            std::filesystem::remove(exeold);
+        }
+
+        std::filesystem::rename(exe, exeold);
+    }
+
     std::filesystem::path zlib    = "zlib1.dll";
     std::filesystem::path zlibold = "zlib1-old.dll";
 
@@ -85,10 +99,12 @@ int main(int argc, char* argv[])
         std::filesystem::rename(zlib, zlibold);
     }
 
+    std::cout << "Updating Quasar...\n";
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+
     // Unpack
     std::cout << "Unpacking " << file.string() << "...\n";
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     void*   reader    = NULL;
     int32_t err       = MZ_OK;
@@ -109,14 +125,14 @@ int main(int argc, char* argv[])
 
         if (err != MZ_OK)
         {
-            std::cout << "Error" << err << "while saving entries to disk: " << file.string() << "\n";
+            std::cout << "Error " << err << " while saving entries to disk: " << file.string() << "\n";
         }
     }
 
     err_close = mz_zip_reader_close(reader);
     if (err_close != MZ_OK)
     {
-        std::cout << "Error" << err_close << "while closing archive for reading\n";
+        std::cout << "Error " << err_close << " while closing archive for reading\n";
         err = err_close;
     }
 
@@ -124,9 +140,18 @@ int main(int argc, char* argv[])
 
     if (err == MZ_OK)
     {
+        std::filesystem::path updLock = "_update.lock";
+
+        if (std::filesystem::exists(updLock))
+        {
+            std::ofstream upd(updLock, std::ios::out | std::ios::trunc);
+            upd << "done";
+            upd.close();
+        }
+
         std::cout << "Update complete! Starting Quasar...\n";
 
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 
         char q[] = "quasar.exe";
         start(q);

@@ -1,11 +1,19 @@
 #include "quasar.h"
 
+#include "common/update.h"
+
 #include <QApplication>
 #include <QSettings>
 #include <QSplashScreen>
 
 int main(int argc, char* argv[])
 {
+    if (Update::GetUpdateStatus() == Update::HasUpdate)
+    {
+        Update::RunUpdate();
+        return 0;
+    }
+
     QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
 
     // Set settings type/path

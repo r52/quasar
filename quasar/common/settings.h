@@ -161,6 +161,8 @@ namespace Settings
         Setting<int>         port{"main/port", "WebSocket server port", 13337, 1000, 65535, 1};
         Setting<bool>        auth{"main/auth", "Allow only Quasar widgets to connect to the WebSocket server?", false};
         Setting<std::string> cookies{"main/cookies", "cookies.txt", ""};
+        Setting<bool>        update_check{"main/updatecheck", "Check for updates?", true};
+        Setting<bool>        auto_update{"main/autoupdate", "Automatically download and install updates?", false};
 
         // Hidden
         Setting<std::string> loaded_widgets{"main/loaded", "Loaded Widgets", ""};

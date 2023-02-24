@@ -4,6 +4,7 @@
 #include "common/config.h"
 #include "common/log.h"
 #include "common/qutil.h"
+#include "common/update.h"
 #include "config/configdialog.h"
 #include "server/server.h"
 #include "widgets/quasarwidget.h"
@@ -17,7 +18,10 @@
 #include <QFileDialog>
 #include <QMenu>
 #include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
 #include <QStandardPaths>
+#include <QSysInfo>
 #include <QUrl>
 #include <QWebEngineView>
 
@@ -25,6 +29,8 @@
 #include <spdlog/sinks/qt_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
+
+#include <jsoncons/json.hpp>
 
 namespace
 {
@@ -51,7 +57,7 @@ namespace
     }
 }  // namespace
 
-Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<Config>()}
+Quasar::Quasar(QWidget* parent) : QMainWindow(parent), updateManager(new QNetworkAccessManager(this)), config{std::make_shared<Config>()}
 {
     if (!QSystemTrayIcon::isSystemTrayAvailable())
     {
@@ -59,6 +65,8 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<C
     }
 
     ui.setupUi(this);
+
+    connect(updateManager, &QNetworkAccessManager::finished, this, &Quasar::handleUpdateRequest);
 
     // Setup logger
     ui.logEdit->document()->setMaximumBlockCount(200);
@@ -106,6 +114,11 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), config{std::make_shared<C
 
     // Load widgets
     manager->LoadStartupWidgets(config);
+
+    if (Settings::internal.update_check.GetValue())
+    {
+        checkForUpdates();
+    }
 }
 
 void Quasar::initializeLogger(QTextEdit* edit)
@@ -145,6 +158,11 @@ void Quasar::initializeLogger(QTextEdit* edit)
 
 void Quasar::createTrayMenu()
 {
+    nameAction = new QAction("Quasar", this);
+    QFont f    = nameAction->font();
+    f.setBold(true);
+    nameAction->setFont(f);
+
     loadAction = new QAction(tr("&Load"), this);
     connect(loadAction, &QAction::triggered, this, &Quasar::openWidget);
 
@@ -232,11 +250,24 @@ void Quasar::createDirectories()
         // create folder
         dir.mkpath(".");
     }
+
+#ifdef Q_OS_WIN
+    // Clean up post-update
+    if (Update::GetUpdateStatus() == Update::FinishedUpdating)
+    {
+        SPDLOG_INFO("Quasar updated to version {}", VERSION_STRING);
+    }
+
+    Update::CleanUpdateFiles();
+    Update::RemoveUpdateQueue();
+#endif
 }
 
 void Quasar::createTrayIcon()
 {
     trayIconMenu = new QMenu(this);
+    trayIconMenu->addAction(nameAction);
+    trayIconMenu->addSeparator();
     trayIconMenu->addAction(loadAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addMenu(widgetListMenu);
@@ -303,6 +334,126 @@ void Quasar::trayIconActivated(QSystemTrayIcon::ActivationReason reason)
         default:
             break;
     }
+}
+
+void Quasar::handleUpdateRequest(QNetworkReply* reply)
+{
+    reply->deleteLater();
+
+    if (reply->error())
+    {
+        auto errstr = reply->errorString().toStdString();
+        SPDLOG_WARN("Update check failed: {} - {}", reply->error(), errstr);
+        return;
+    }
+
+    if (!reply->url().toString().endsWith(".zip"))
+    {
+        // API query
+        QString        answer = reply->readAll();
+
+        jsoncons::json doc    = jsoncons::json::parse(answer.toStdString());
+
+        if (doc.empty() or doc.is_null())
+        {
+            SPDLOG_WARN("Error parsing Github API response");
+            return;
+        }
+
+        auto latver = doc.at("tag_name").as_string();
+        latver.erase(0, 1);
+
+        // simple case compare should suffice
+        if (latver > VERSION_STRING)
+        {
+            if (QSysInfo::productType() != "windows" || !Settings::internal.auto_update.GetValue())
+            {
+                auto reply = QMessageBox::question(nullptr,
+                    tr("Quasar Update"),
+                    tr("Quasar version ") + QString::fromStdString(latver) + tr(" is available.\n\nWould you like to download it?"),
+                    QMessageBox::Yes | QMessageBox::No);
+
+                if (reply == QMessageBox::Ok)
+                {
+                    QDesktopServices::openUrl(QUrl(QString::fromStdString(doc.at("html_url").as_string())));
+                }
+                else
+                {
+                    // TODO Ignore version
+                }
+            }
+            else if (QSysInfo::productType() == "windows" && Settings::internal.auto_update.GetValue())
+            {
+                auto assets = doc.at("assets").array_range();
+                for (const auto& item : assets)
+                {
+                    auto item_name = item.at("name").as_string();
+                    if (item_name.starts_with("quasar-windows") && item_name.ends_with(".zip"))
+                    {
+                        // Download the file, then queue the update
+                        auto   download_url = item.at("browser_download_url").as_string();
+
+                        QFile* dlfile       = new QFile(std::filesystem::path(item_name));
+                        if (!dlfile->open(QIODevice::ReadWrite))
+                        {
+                            SPDLOG_WARN("Could not open file {} for writing", item_name);
+                            return;
+                        }
+
+                        auto dlreply = updateManager->get(QNetworkRequest(QUrl(QString::fromStdString(download_url))));
+
+                        connect(dlreply, &QNetworkReply::readyRead, [=] {
+                            auto data = dlreply->readAll();
+                            dlfile->write(data);
+                        });
+
+                        connect(dlreply, &QNetworkReply::finished, [=, this] {
+                            dlreply->deleteLater();
+
+                            if (dlreply->error())
+                            {
+                                dlfile->close();
+                                dlfile->deleteLater();
+
+                                auto errstr = dlreply->errorString().toStdString();
+                                SPDLOG_WARN("File download failed: {} - {}", reply->error(), errstr);
+                                return;
+                            }
+
+                            auto filename = dlfile->fileName();
+
+                            auto data     = dlreply->readAll();
+                            dlfile->write(data);
+                            dlfile->close();
+                            dlfile->deleteLater();
+
+                            // Queue update
+                            if (!Update::QueueUpdate(filename))
+                            {
+                                SPDLOG_WARN("Failed to queue update");
+                                return;
+                            }
+
+                            nameAction->setText("Quasar " + tr("(update pending)"));
+                        });
+
+                        return;
+                    }
+                }
+            }
+        }
+        else
+        {
+            SPDLOG_INFO("No updates available. Already on the latest version.");
+        }
+    }
+}
+
+void Quasar::checkForUpdates()
+{
+    QTimer::singleShot(5000, [this] {
+        updateManager->get(QNetworkRequest(QUrl("https://api.github.com/repos/r52/quasar/releases/latest")));
+    });
 }
 
 void Quasar::closeEvent(QCloseEvent* event)
