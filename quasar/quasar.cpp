@@ -25,6 +25,8 @@
 #include <QUrl>
 #include <QWebEngineView>
 
+#include <semver/semver.hpp>
+
 #include <spdlog/async.h>
 #include <spdlog/sinks/qt_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
@@ -360,17 +362,23 @@ void Quasar::handleUpdateRequest(QNetworkReply* reply)
             return;
         }
 
-        auto latver = doc.at("tag_name").as_string();
-        latver.erase(0, 1);
+        auto            latver          = doc.at("tag_name").as_string();
 
-        // simple case compare should suffice
-        if (latver > VERSION_STRING)
+        semver::version latest_version  = semver::version::parse(latver, false);
+        semver::version current_version = semver::version::parse(VERSION_STRING, false);
+
+        SPDLOG_INFO("Newest version is {}", latest_version.str());
+        SPDLOG_INFO("Current version is {}", current_version.str());
+
+        if (latest_version > current_version)
         {
+            SPDLOG_INFO("Update available: {}", latest_version.str());
+
             if (QSysInfo::productType() != "windows" || !Settings::internal.auto_update.GetValue())
             {
                 auto reply = QMessageBox::question(nullptr,
                     tr("Quasar Update"),
-                    tr("Quasar version ") + QString::fromStdString(latver) + tr(" is available.\n\nWould you like to download it?"),
+                    tr("Quasar version ") + QString::fromStdString(latest_version.str()) + tr(" is available.\n\nWould you like to download it?"),
                     QMessageBox::Yes | QMessageBox::No);
 
                 if (reply == QMessageBox::Ok)
@@ -399,6 +407,8 @@ void Quasar::handleUpdateRequest(QNetworkReply* reply)
                             SPDLOG_WARN("Could not open file {} for writing", item_name);
                             return;
                         }
+
+                        SPDLOG_INFO("Downloading {}", download_url);
 
                         auto dlreply = updateManager->get(QNetworkRequest(QUrl(QString::fromStdString(download_url))));
 
@@ -434,7 +444,9 @@ void Quasar::handleUpdateRequest(QNetworkReply* reply)
                                 return;
                             }
 
-                            nameAction->setText("Quasar " + tr("(update pending)"));
+                            SPDLOG_INFO("{} queued for upgrade on next app restart", filename.toStdString());
+
+                            nameAction->setText("Quasar " + tr("(will update on restart)"));
                         });
 
                         return;
@@ -444,7 +456,7 @@ void Quasar::handleUpdateRequest(QNetworkReply* reply)
         }
         else
         {
-            SPDLOG_INFO("No updates available. Already on the latest version.");
+            SPDLOG_INFO("No updates available. Already on the newest version.");
         }
     }
 }

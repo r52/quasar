@@ -18,11 +18,11 @@ int32_t minizip_extract_entry_cb(void* handle, void* userdata, mz_zip_file* file
     MZ_UNUSED(path);
 
     /* Print the current entry extracting */
-    std::cout << "Extracting " << file_info->filename << "\n";
+    std::cout << "Extracting " << file_info->filename << std::endl;
     return MZ_OK;
 }
 
-bool start(char* cmd)
+bool startProcess(char* cmd)
 {
     STARTUPINFO         si;
     PROCESS_INFORMATION pi;
@@ -44,7 +44,7 @@ bool start(char* cmd)
             &pi)              // Pointer to PROCESS_INFORMATION structure
     )
     {
-        std::cout << "CreateProcess failed " << GetLastError() << "\n";
+        std::cout << "CreateProcess failed " << GetLastError() << std::endl;
         return false;
     }
 
@@ -60,7 +60,7 @@ int main(int argc, char* argv[])
     if (argc != 2)
     {
         // Too many or too few arguments
-        std::cout << "Usage: " << argv[0] << " <package.zip>\n";
+        std::cout << "Usage: " << argv[0] << " <package.zip>" << std::endl;
         return 1;
     }
 
@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
 
     if (!std::filesystem::exists(file))
     {
-        std::cout << "File " << file.string() << " does not exist\n";
+        std::cout << "File " << file.string() << " does not exist" << std::endl;
         return 1;
     }
 
@@ -99,12 +99,12 @@ int main(int argc, char* argv[])
         std::filesystem::rename(zlib, zlibold);
     }
 
-    std::cout << "Updating Quasar...\n";
+    std::cout << "Updating Quasar..." << std::endl;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 
     // Unpack
-    std::cout << "Unpacking " << file.string() << "...\n";
+    std::cout << "Unpacking " << file.string() << "..." << std::endl;
 
     void*   reader    = NULL;
     int32_t err       = MZ_OK;
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
 
     if (err != MZ_OK)
     {
-        std::cout << "Error " << err << " while opening archive " << file.string() << "\n";
+        std::cout << "Error " << err << " while opening archive " << file.string() << std::endl;
     }
     else
     {
@@ -125,14 +125,14 @@ int main(int argc, char* argv[])
 
         if (err != MZ_OK)
         {
-            std::cout << "Error " << err << " while saving entries to disk: " << file.string() << "\n";
+            std::cout << "Error " << err << " while saving entries to disk: " << file.string() << std::endl;
         }
     }
 
     err_close = mz_zip_reader_close(reader);
     if (err_close != MZ_OK)
     {
-        std::cout << "Error " << err_close << " while closing archive for reading\n";
+        std::cout << "Error " << err_close << " while closing archive for reading" << std::endl;
         err = err_close;
     }
 
@@ -149,12 +149,12 @@ int main(int argc, char* argv[])
             upd.close();
         }
 
-        std::cout << "Update complete! Starting Quasar...\n";
+        std::cout << "Update complete! Starting Quasar..." << std::endl;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 
         char q[] = "quasar.exe";
-        start(q);
+        startProcess(q);
     }
 
     return err;
