@@ -275,7 +275,7 @@ void QuasarWidget::createContextMenuActions()
     });
 
     aSetPos = new QAction(tr("S&et Position"), this);
-    connect(aSetPos, &QAction::triggered, [&] {
+    connect(aSetPos, &QAction::triggered, [&, this] {
         QDialog*     dialog = new QDialog(this);
         QFormLayout* form   = new QFormLayout(dialog);
 
@@ -307,6 +307,7 @@ void QuasarWidget::createContextMenuActions()
             if (result == QDialog::Accepted)
             {
                 this->move(wEdit->value(), hEdit->value());
+                SaveSettings();
             }
 
             dialog->deleteLater();
@@ -317,8 +318,9 @@ void QuasarWidget::createContextMenuActions()
     });
 
     aResetPos = new QAction(tr("Reset &Position"), this);
-    connect(aResetPos, &QAction::triggered, [&] {
+    connect(aResetPos, &QAction::triggered, [&, this] {
         this->move(0, 0);
+        SaveSettings();
     });
 
     aOnTop = new QAction(tr("&Always on Top"), this);
@@ -327,20 +329,22 @@ void QuasarWidget::createContextMenuActions()
 
     aFixedPos = new QAction(tr("&Fixed Position"), this);
     aFixedPos->setCheckable(true);
-    connect(aFixedPos, &QAction::triggered, [&](bool enabled) {
+    connect(aFixedPos, &QAction::triggered, [&, this](bool enabled) {
         settings.fixedPosition = enabled;
+        SaveSettings();
     });
 
     aClickable = new QAction(tr("&Clickable"), this);
     aClickable->setCheckable(true);
-    connect(aClickable, &QAction::triggered, [&](bool enabled) {
+    connect(aClickable, &QAction::triggered, [&, this](bool enabled) {
         overlay->setVisible(!enabled);
 
         settings.clickable = enabled;
+        SaveSettings();
     });
 
     aResize = new QAction(tr("Custom &Size"), this);
-    connect(aResize, &QAction::triggered, [&] {
+    connect(aResize, &QAction::triggered, [&, this] {
         QDialog*     dialog = new QDialog(this);
         QFormLayout* form   = new QFormLayout(dialog);
 
@@ -389,6 +393,8 @@ void QuasarWidget::createContextMenuActions()
 
                     settings.customSize = nsize;
                 }
+
+                SaveSettings();
             }
 
             dialog->deleteLater();
@@ -464,4 +470,5 @@ void QuasarWidget::toggleOnTop(bool ontop)
     show();
 
     settings.alwaysOnTop = ontop;
+    SaveSettings();
 }

@@ -182,6 +182,7 @@ void Quasar::createTrayMenu()
                 {
                     // Propagate settings
                     server->UpdateSettings();
+                    config->Save();
                 }
 
                 cfgdlg->deleteLater();

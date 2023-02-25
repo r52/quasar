@@ -209,6 +209,12 @@ public:
         config.lock()->WriteGenericStorage(name, label, val);
     }
 
+    //! Writes extension settings to config file
+    void WriteExtensionSettings();
+
+    //! Writes datasource settings to config file
+    void WriteDataSourceSettings();
+
     /*! Propagates custom setting value changes to the extension
         as well as all unique subscribers after a settings change
         \sa quasar_ext_info_t.update

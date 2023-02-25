@@ -596,6 +596,31 @@ void Extension::createTimer(DataSource& src)
     }
 }
 
+void Extension::WriteExtensionSettings()
+{
+    auto cfl = config.lock();
+
+    // Write extension settings
+    for (auto&& def : settings)
+    {
+        std::visit(
+            [&](auto&& arg) {
+                cfl->WriteSetting(arg);
+            },
+            def);
+    }
+}
+
+void Extension::WriteDataSourceSettings()
+{
+    auto cfl = config.lock();
+    for (auto&& [name, source] : datasources)
+    {
+        std::shared_lock<std::shared_mutex> lk(source.mutex);
+        cfl->WriteDataSourceSetting(&source.settings);
+    }
+}
+
 void Extension::UpdateExtensionSettings()
 {
     refreshDataSources();
@@ -687,15 +712,7 @@ Extension::~Extension()
         cfl->WriteDataSourceSetting(&src.settings);
     }
 
-    // Save extension settings
-    for (auto&& def : settings)
-    {
-        std::visit(
-            [&](auto&& arg) {
-                cfl->WriteSetting(arg);
-            },
-            def);
-    }
+    WriteExtensionSettings();
 
     if (nullptr != extensionInfo->shutdown)
     {
