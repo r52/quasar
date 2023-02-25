@@ -149,7 +149,7 @@ namespace Settings
         SelectionSetting<int> log_level{
             "main/loglevel",
             "Log Level",
-            LogLevel::warn,
+            LogLevel::info,
             {{LogLevel::trace, "Trace"},
                     {LogLevel::debug, "Debug"},
                     {LogLevel::info, "Info"},
