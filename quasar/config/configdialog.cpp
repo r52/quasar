@@ -28,6 +28,8 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
     ui->logToFile->setChecked(Settings::internal.log_file.GetValue());
     ui->authCheckbox->setChecked(Settings::internal.auth.GetValue());
     ui->cookieEdit->setText(QString::fromStdString(Settings::internal.cookies.GetValue()));
+    ui->updateCheckBox->setChecked(Settings::internal.update_check.GetValue());
+    ui->autoUpdateCheckBox->setChecked(Settings::internal.auto_update.GetValue());
 
     connect(ui->cookieButton, &QPushButton::clicked, [=, this](bool checked) {
         QString filename = QFileDialog::getOpenFileName(this, tr("Choose cookies.txt"), QString(), tr("cookies.txt (*.txt)"));
@@ -39,14 +41,12 @@ ConfigDialog::ConfigDialog(QWidget* parent) : QDialog(parent), ui(new Ui::Config
         }
     });
 
-#if 0
+#ifdef Q_OS_WIN
     // ------------------Startup launch
     QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
     QFileInfo lnk(startupFolder + "/Quasar.lnk");
 
-    startupCheck = new QCheckBox("Launch Quasar when system starts");
-    startupCheck->setChecked(lnk.exists());
-    ui->formLayout->setWidget(ui->formLayout->rowCount(), QFormLayout::SpanningRole, startupCheck);
+    ui->startupCheckBox->setChecked(lnk.exists());
 #endif
 
     // App launcher table
@@ -196,24 +196,24 @@ void ConfigDialog::SaveSettings()
     Settings::internal.log_file.SetValue(ui->logToFile->isChecked());
     Settings::internal.auth.SetValue(ui->authCheckbox->isChecked());
     Settings::internal.cookies.SetValue(ui->cookieEdit->text().toStdString());
+    Settings::internal.auth.SetValue(ui->authCheckbox->isChecked());
+    Settings::internal.update_check.SetValue(ui->updateCheckBox->isChecked());
+    Settings::internal.auto_update.SetValue(ui->autoUpdateCheckBox->isChecked());
 
-#if 0
-    if (startupCheck)
+#ifdef Q_OS_WIN
+    QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
+    QString   filename      = startupFolder + "/Quasar.lnk";
+    QFileInfo lnk(filename);
+
+    bool      checked = ui->startupCheckBox->isChecked();
+
+    if (checked and !lnk.exists())
     {
-        QString   startupFolder = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation) + "/Startup";
-        QString   filename      = startupFolder + "/Quasar.lnk";
-        QFileInfo lnk(filename);
-
-        bool      checked = startupCheck->isChecked();
-
-        if (checked and !lnk.exists())
-        {
-            QFile::link(QCoreApplication::applicationFilePath(), filename);
-        }
-        else if (!checked and lnk.exists())
-        {
-            QFile::remove(filename);
-        }
+        QFile::link(QCoreApplication::applicationFilePath(), filename);
+    }
+    else if (!checked and lnk.exists())
+    {
+        QFile::remove(filename);
     }
 #endif
 

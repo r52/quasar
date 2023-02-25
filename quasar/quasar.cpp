@@ -164,8 +164,9 @@ void Quasar::createTrayMenu()
     QFont f    = nameAction->font();
     f.setBold(true);
     nameAction->setFont(f);
+    nameAction->setEnabled(false);
 
-    loadAction = new QAction(tr("&Load"), this);
+    loadAction = new QAction(tr("&Load Widget"), this);
     connect(loadAction, &QAction::triggered, this, &Quasar::openWidget);
 
     widgetListMenu = new QMenu(tr("Widgets"), this);

@@ -58,12 +58,11 @@
        </property>
        <widget class="QWidget" name="generalPage">
         <layout class="QGridLayout" name="generalLayout">
-         <item row="3" column="0">
-          <widget class="QLabel" name="logLevelLabel">
-           <property name="text">
-            <string>Log Level:</string>
-           </property>
-          </widget>
+         <item row="8" column="0" colspan="3">
+          <widget class="QWidget" name="generalSpacer" native="true"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="cookieEdit"/>
          </item>
          <item row="0" column="1" colspan="2">
           <widget class="QSpinBox" name="portSpin">
@@ -72,19 +71,6 @@
            </property>
            <property name="maximum">
             <number>65535</number>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QLineEdit" name="cookieEdit"/>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="cookieLabel">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Netscape format cookies.txt&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>cookies.txt (requires restart):</string>
            </property>
           </widget>
          </item>
@@ -127,10 +113,41 @@
            </item>
           </widget>
          </item>
-         <item row="4" column="2">
-          <widget class="QPushButton" name="cookieButton">
+         <item row="2" column="0" colspan="3">
+          <widget class="QCheckBox" name="logToFile">
            <property name="text">
-            <string>Browse</string>
+            <string>Log to file (requires restart)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="logLevelLabel">
+           <property name="text">
+            <string>Log Level:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="cookieLabel">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Netscape format cookies.txt&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>cookies.txt (requires restart):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="3">
+          <widget class="QCheckBox" name="updateCheckBox">
+           <property name="text">
+            <string>Check for updates</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0" colspan="3">
+          <widget class="QCheckBox" name="autoUpdateCheckBox">
+           <property name="text">
+            <string>Automatically download and install updates (Windows only)</string>
            </property>
           </widget>
          </item>
@@ -141,22 +158,26 @@
            </property>
           </widget>
          </item>
+         <item row="4" column="2">
+          <widget class="QPushButton" name="cookieButton">
+           <property name="text">
+            <string>Browse</string>
+           </property>
+          </widget>
+         </item>
          <item row="1" column="0" colspan="3">
           <widget class="QCheckBox" name="authCheckbox">
            <property name="text">
-            <string>Allow only Quasar widgets to connect to the WebSocket server? (requires restart)</string>
+            <string>Allow only Quasar widgets to connect to the WebSocket server (requires restart)</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="0" colspan="3">
-          <widget class="QCheckBox" name="logToFile">
+         <item row="7" column="0" colspan="3">
+          <widget class="QCheckBox" name="startupCheckBox">
            <property name="text">
-            <string>Log to file? (requires restart)</string>
+            <string>Launch Quasar when system starts (Windows only)</string>
            </property>
           </widget>
-         </item>
-         <item row="5" column="0" colspan="3">
-          <widget class="QWidget" name="generalSpacer" native="true"/>
          </item>
         </layout>
        </widget>
