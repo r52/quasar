@@ -196,7 +196,6 @@ void ConfigDialog::SaveSettings()
     Settings::internal.log_file.SetValue(ui->logToFile->isChecked());
     Settings::internal.auth.SetValue(ui->authCheckbox->isChecked());
     Settings::internal.cookies.SetValue(ui->cookieEdit->text().toStdString());
-    Settings::internal.auth.SetValue(ui->authCheckbox->isChecked());
     Settings::internal.update_check.SetValue(ui->updateCheckBox->isChecked());
     Settings::internal.auto_update.SetValue(ui->autoUpdateCheckBox->isChecked());
 
