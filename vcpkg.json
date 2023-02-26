@@ -8,6 +8,13 @@
     "usockets",
     "bshoshany-thread-pool",
     "jsoncons",
+    "z4kn4fein-semver",
+    {
+      "name": "minizip-ng",
+      "default-features": false,
+      "features": ["pkcrypt", "wzaes", "zlib"],
+      "platform": "windows"
+    },
     "vulkan-headers"
   ]
 }

@@ -54,6 +54,7 @@ add_executable(quasar WIN32
   common/log.cpp
   common/util.cpp
   common/qutil.cpp
+  common/update.cpp
 
   internal/applauncher.cpp
   internal/ajax.cpp

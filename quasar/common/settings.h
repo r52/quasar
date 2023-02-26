@@ -149,7 +149,7 @@ namespace Settings
         SelectionSetting<int> log_level{
             "main/loglevel",
             "Log Level",
-            LogLevel::warn,
+            LogLevel::info,
             {{LogLevel::trace, "Trace"},
                     {LogLevel::debug, "Debug"},
                     {LogLevel::info, "Info"},
@@ -161,10 +161,13 @@ namespace Settings
         Setting<int>         port{"main/port", "WebSocket server port", 13337, 1000, 65535, 1};
         Setting<bool>        auth{"main/auth", "Allow only Quasar widgets to connect to the WebSocket server?", false};
         Setting<std::string> cookies{"main/cookies", "cookies.txt", ""};
+        Setting<bool>        update_check{"main/updatecheck", "Check for updates?", true};
+        Setting<bool>        auto_update{"main/autoupdate", "Automatically download and install updates?", false};
 
         // Hidden
         Setting<std::string> loaded_widgets{"main/loaded", "Loaded Widgets", ""};
         Setting<std::string> lastpath{"main/lastpath", "Last used file path", ""};
+        Setting<std::string> ignored_versions{"main/ignoredVersions", "Upgrade versions ignored", ""};
 
         // App launcher
         Setting<std::string> applauncher{"applauncher/list", "App Launcher entries", "[]"};

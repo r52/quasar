@@ -217,7 +217,7 @@ struct Measure
     int                                                     m_fftBufP;     // decremental counter - process FFT at zero
     std::vector<float>                                      m_bandFreq;    // buffer of band max frequencies
     std::array<std::vector<float>, MAX_CHANNELS>            m_bandOut;     // buffer of band values
-    std::span<uint8_t>                                      m_buffer;      // temp processing buffer
+    std::span<std::byte>                                    m_buffer;      // temp processing buffer
 
     Measure() :
         m_format(FMT_INVALID),
@@ -535,7 +535,7 @@ HRESULT Measure::DeviceInit()
     EXIT_ON_ERROR(hr);
 
     bufsize  = nMaxFrames * m_wfx->nBlockAlign * sizeof(uint8_t);
-    m_buffer = std::span{new uint8_t[bufsize](), bufsize};
+    m_buffer = std::span{new std::byte[bufsize](), bufsize};
 
     return S_OK;
 
@@ -584,6 +584,7 @@ void Measure::DeviceRelease()
     if (m_buffer.data())
     {
         delete[] m_buffer.data();
+        m_buffer = std::span<std::byte>();
     }
 
     m_format = FMT_INVALID;

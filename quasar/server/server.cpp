@@ -198,6 +198,8 @@ void Server::UpdateSettings()
         for (auto&& [name, ext] : extensions)
         {
             ext->UpdateExtensionSettings();
+            ext->WriteDataSourceSettings();
+            ext->WriteExtensionSettings();
         }
     });
 }
