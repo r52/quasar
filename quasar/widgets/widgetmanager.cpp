@@ -293,7 +293,7 @@ std::vector<std::string> WidgetManager::getLoadedWidgetsList()
 {
     auto loaded = Settings::internal.loaded_widgets.GetValue();
 
-    return Util::SplitString(loaded, ",");
+    return Util::SplitString<std::vector<std::string>>(loaded, ",");
 }
 
 void WidgetManager::saveLoadedWidgetsList(const std::vector<std::string>& list)

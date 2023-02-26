@@ -5,6 +5,7 @@
 #include "common/log.h"
 #include "common/qutil.h"
 #include "common/update.h"
+#include "common/util.h"
 #include "config/configdialog.h"
 #include "server/server.h"
 #include "widgets/quasarwidget.h"
@@ -351,7 +352,7 @@ void Quasar::handleUpdateRequest(QNetworkReply* reply)
         return;
     }
 
-    if (!reply->url().toString().endsWith(".zip"))
+    if (reply->url().toString().endsWith("latest"))
     {
         // API query
         QString        answer = reply->readAll();
@@ -376,20 +377,36 @@ void Quasar::handleUpdateRequest(QNetworkReply* reply)
         {
             SPDLOG_INFO("Update available: {}", latest_version.str());
 
+            auto ignored_versions = Util::SplitString<std::set<std::string>>(Settings::internal.ignored_versions.GetValue(), ",");
+
+            if (ignored_versions.contains(latest_version.str()))
+            {
+                // This version is ignored
+                SPDLOG_INFO("Version {} is ignored from updating.", latest_version.str());
+                return;
+            }
+
             if (QSysInfo::productType() != "windows" || !Settings::internal.auto_update.GetValue())
             {
                 auto reply = QMessageBox::question(nullptr,
                     tr("Quasar Update"),
                     tr("Quasar version ") + QString::fromStdString(latest_version.str()) + tr(" is available.\n\nWould you like to download it?"),
-                    QMessageBox::Yes | QMessageBox::No);
+                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Ignore);
 
-                if (reply == QMessageBox::Ok)
+                if (reply == QMessageBox::Yes)
                 {
                     QDesktopServices::openUrl(QUrl(QString::fromStdString(doc.at("html_url").as_string())));
                 }
-                else
+                else if (reply == QMessageBox::Ignore)
                 {
-                    // TODO Ignore version
+                    SPDLOG_INFO("Ingoring update version {}.", latest_version.str());
+
+                    // Ignore this version
+                    ignored_versions.insert(latest_version.str());
+
+                    // Save the setting
+                    auto joined = fmt::format("{}", fmt::join(ignored_versions, ","));
+                    Settings::internal.ignored_versions.SetValue(joined);
                 }
             }
             else if (QSysInfo::productType() == "windows" && Settings::internal.auto_update.GetValue())

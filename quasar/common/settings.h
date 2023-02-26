@@ -167,6 +167,7 @@ namespace Settings
         // Hidden
         Setting<std::string> loaded_widgets{"main/loaded", "Loaded Widgets", ""};
         Setting<std::string> lastpath{"main/lastpath", "Last used file path", ""};
+        Setting<std::string> ignored_versions{"main/ignoredVersions", "Upgrade versions ignored", ""};
 
         // App launcher
         Setting<std::string> applauncher{"applauncher/list", "App Launcher entries", "[]"};

@@ -26,6 +26,7 @@ void Config::ReadInteralSettings()
     ReadSetting(Settings::internal.cookies);
     ReadSetting(Settings::internal.loaded_widgets);
     ReadSetting(Settings::internal.lastpath);
+    ReadSetting(Settings::internal.ignored_versions);
     ReadSetting(Settings::internal.applauncher);
     ReadSetting(Settings::internal.update_check);
     ReadSetting(Settings::internal.auto_update);
@@ -98,6 +99,7 @@ void Config::WriteInternalSettings()
     WriteSetting(Settings::internal.cookies);
     WriteSetting(Settings::internal.loaded_widgets);
     WriteSetting(Settings::internal.lastpath);
+    WriteSetting(Settings::internal.ignored_versions);
     WriteSetting(Settings::internal.applauncher);
     WriteSetting(Settings::internal.update_check);
     WriteSetting(Settings::internal.auto_update);
