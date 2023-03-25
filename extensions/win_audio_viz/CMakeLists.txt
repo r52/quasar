@@ -10,7 +10,7 @@ add_library(win_audio_viz MODULE
 
 add_dependencies(win_audio_viz quasar)
 target_compile_features(win_audio_viz PRIVATE cxx_std_20)
-target_compile_definitions(win_audio_viz PRIVATE KFR_STD_COMPLEX)
+target_compile_definitions(win_audio_viz PRIVATE KFR_STD_COMPLEX NOMINMAX)
 target_link_libraries(win_audio_viz PRIVATE Tracy::TracyClient)
 target_link_libraries(win_audio_viz PRIVATE kfr kfr_dft)
 target_link_libraries(win_audio_viz PRIVATE quasar extension-api)

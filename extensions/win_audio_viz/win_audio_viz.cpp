@@ -8,8 +8,6 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#define NOMINMAX
-
 #include <tracy/Tracy.hpp>
 
 #include <algorithm>
