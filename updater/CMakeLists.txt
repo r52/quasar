@@ -5,6 +5,7 @@ find_package(minizip-ng CONFIG REQUIRED)
 add_executable(updater main.cpp)
 
 target_compile_features(updater PRIVATE cxx_std_20)
+target_compile_definitions(updater PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 target_link_libraries(updater PRIVATE MINIZIP::minizip-ng)
 
 add_custom_command(TARGET updater POST_BUILD

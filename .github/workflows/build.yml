@@ -35,14 +35,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v3
         with:
           submodules: "recursive"
 
       - name: Setup Qt
-        uses: jurplel/install-qt-action@v3.0.0
+        uses: jurplel/install-qt-action@v3
         with:
-          version: "6.4.2"
+          aqtversion: "==3.1.*"
+          py7zrversion: ">=0.20.2"
+          version: "6.4.3"
           arch: ${{ matrix.arch }}
           modules: qtwebengine qtpositioning qtwebchannel qtnetworkauth qtserialport
 

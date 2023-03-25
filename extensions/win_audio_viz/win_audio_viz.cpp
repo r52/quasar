@@ -8,9 +8,9 @@
  * version. If a copy of the GPL was not distributed with this file, You can
  * obtain one at <https://www.gnu.org/licenses/gpl-2.0.html>. */
 
-#define NOMINMAX
-
-#include <tracy/Tracy.hpp>
+#ifdef TRACY_ENABLE
+#  include <tracy/Tracy.hpp>
+#endif
 
 #include <algorithm>
 #include <array>
@@ -766,7 +766,9 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
     // query the buffer
     if (m->m_clCapture)
     {
+#ifdef TRACY_ENABLE
         ZoneScopedS(30);
+#endif
 
         BYTE*   buffer;
         UINT32  nFrames;
