@@ -26,7 +26,7 @@ Quasar does not work properly on Wayland compositors due to Wayland not supporti
 
 #### Qt on Linux
 
-Quasar has been built and tested on the latest pre-built binaries supplied by Qt, which at the time of writing is Qt 6.4.2 built against OpenSSL 1.1.1. The Qt version offered by Ubuntu 22.04's package repository is Qt 6.2.4 built against OpenSSL 3.0. As of Ubuntu 22.04, OpenSSL 3 is the default and version 1.1.1 is no longer offered in the package repository. Building Quasar on versions of Qt older than 6.4 may work but is not supported. Ensure that the version of the OpenSSL libraries installed (i.e `libcrypto.so` and `libssl.so`) matches the version your Qt installation is built against or SSL functionality will fail.
+Quasar has been built and tested on the latest pre-built binaries supplied by Qt, which at the time of writing is Qt 6.4.3 built against OpenSSL 1.1.1. The Qt version offered by Ubuntu 22.04's package repository is Qt 6.2.4 built against OpenSSL 3.0. As of Ubuntu 22.04, OpenSSL 3 is the default and version 1.1.1 is no longer offered in the package repository. Building Quasar on versions of Qt older than 6.4 may work but is not supported. Ensure that the version of the OpenSSL libraries installed (i.e `libcrypto.so` and `libssl.so`) matches the version your Qt installation is built against or SSL functionality will fail.
 
 ## Getting Started
 
@@ -54,8 +54,8 @@ Source code is [available on GitHub](https://github.com/r52/quasar).
   - Network Authorization (qtnetworkauth)
   - Serial Port (qtserialport)
 - The `Qt6_DIR` environment variable defined for your Qt installation
-  - Windows example: `C:\Qt\6.4.2\msvc2019_64`
-  - Linux example: `$HOME/Qt/6.4.2/gcc_64/`
+  - Windows example: `C:\Qt\6.4.3\msvc2019_64`
+  - Linux example: `$HOME/Qt/6.4.3/gcc_64/`
   - On Linux, additional dependencies may be needed for Qt such as the packages `libgl1-mesa-dev libglvnd-dev`
 
 ### Windows
@@ -65,8 +65,9 @@ Source code is [available on GitHub](https://github.com/r52/quasar).
 
 ### Linux
 
-- gcc/g++ 11 or later, or Clang 15 or later
+- gcc/g++ 11 or later, or Clang 16 or later
   - Tested on Ubuntu 22.04 using both g++ 11 and 12
+  - Clang 15 and earlier fails to compile gcc's implementation of the C++20 ranges library, which is used in Quasar
 - [vcpkg](https://github.com/microsoft/vcpkg) dependencies, for example including but not limited to the following Debian-based packages:
   - `build-essential tar curl zip unzip pkg-config`
 
@@ -100,6 +101,8 @@ export CC=gcc-12
 export CXX=g++-12
 cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE --install-prefix $HOME/.local/ -S./ -B./build -G "Unix Makefiles"
 ```
+
+`-G Ninja` can also be used provided that Ninja is installed.
 
 ### Building the Project
 
