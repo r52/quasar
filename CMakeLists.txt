@@ -30,7 +30,9 @@ option(TRACY_STATIC "" OFF)
 option(BUILD_SAMPLE_EXTENSIONS "Build sample extensions (Windows only)" ON)
 option(BUILD_SPOTIFY_API "Build Spotify API extension (optional)" ON)
 
-add_subdirectory(3rdparty/tracy EXCLUDE_FROM_ALL)
+if (TRACY_ENABLE)
+    add_subdirectory(3rdparty/tracy)
+endif()
 
 add_subdirectory(quasar)
 

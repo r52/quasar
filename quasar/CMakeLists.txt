@@ -90,16 +90,21 @@ target_include_directories(quasar PRIVATE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOU
 target_include_directories(quasar PRIVATE ${UWEBSOCKETS_INCLUDE_DIRS})
 target_include_directories(quasar PRIVATE ${BSHOSHANY_THREAD_POOL_INCLUDE_DIRS})
 
-target_link_libraries(quasar PRIVATE Tracy::TracyClient)
+if (TRACY_ENABLE)
+  target_link_libraries(quasar PRIVATE Tracy::TracyClient)
+endif()
+
 target_link_libraries(quasar PRIVATE extension-api)
 target_link_libraries(quasar PRIVATE fmt::fmt spdlog::spdlog)
 target_link_libraries(quasar PRIVATE jsoncons)
 target_link_libraries(quasar PRIVATE ZLIB::ZLIB $<IF:$<TARGET_EXISTS:uv_a>,uv_a,uv> debug ${USOCKETS_LIB_DEBUG} optimized ${USOCKETS_LIB_RELEASE})
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::Svg Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
-add_custom_command(TARGET quasar POST_BUILD
-  COMMAND $<$<BOOL:${TRACY_ENABLE}>:${CMAKE_COMMAND}> -E copy $<$<BOOL:${TRACY_ENABLE}>:$<TARGET_FILE:Tracy::TracyClient>> $<TARGET_FILE_DIR:quasar>
-)
+if (TRACY_ENABLE)
+  add_custom_command(TARGET quasar POST_BUILD
+    COMMAND $<$<BOOL:${TRACY_ENABLE}>:${CMAKE_COMMAND}> -E copy $<$<BOOL:${TRACY_ENABLE}>:$<TARGET_FILE:Tracy::TracyClient>> $<TARGET_FILE_DIR:quasar>
+  )
+endif()
 
 if(WIN32)
   add_custom_command(TARGET quasar POST_BUILD
