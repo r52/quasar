@@ -2,6 +2,7 @@
 #include <complex>
 #include <mutex>
 #include <ranges>
+#include <shared_mutex>
 #include <span>
 #include <thread>
 #include <unordered_map>
@@ -69,7 +70,7 @@ namespace
     pa_simple*                         server    = nullptr;
     std::unordered_map<size_t, Source> sourceMap;
     std::jthread                       pThread;  // Processing thread
-    std::mutex                         mutex;
+    std::shared_mutex                  mutex;
 
     // Audio spec
     constexpr pa_sample_spec spec          = {.format = PA_SAMPLE_S16LE, .rate = 48000, .channels = Channel::MAX_CHANNELS};
@@ -169,7 +170,7 @@ void pulse_viz_process()
 {
     int error = 0;
 
-    if (pa_simple_read(server, (void*) buffer.data(), buffer.size(), &error) == 0)
+    if (pa_simple_read(server, buffer.data(), buffer.size(), &error) == 0)
     {
         std::lock_guard lk(mutex);
         if (fftSize)
@@ -283,11 +284,10 @@ bool pulse_viz_init(quasar_ext_handle handle)
     if (server == nullptr)
     {
         warn("pa_simple_new error: {}", pa_strerror(error));
+        return false;
     }
-    else
-    {
-        info("Connected to PulseAudio server");
-    }
+
+    info("Connected to PulseAudio server");
 
     if (!init_buffers())
     {
@@ -336,9 +336,9 @@ bool pulse_viz_shutdown(quasar_ext_handle handle)
 
 bool pulse_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 {
-    std::lock_guard lk(mutex);
+    std::shared_lock lk(mutex);
 
-    size_t          type = sourceMap[srcUid];
+    size_t           type = sourceMap[srcUid];
 
     switch (type)
     {
@@ -428,9 +428,10 @@ quasar_settings_t* pulse_viz_create_settings(quasar_ext_handle handle)
 
 void pulse_viz_update_settings(quasar_settings_t* settings)
 {
-    bool   needs_reinit = false;
+    std::unique_lock lk(mutex);
+    bool             needs_reinit = false;
 
-    size_t fft          = quasar_get_uint_setting(extHandle, settings, "FFTSize");
+    size_t           fft          = quasar_get_uint_setting(extHandle, settings, "FFTSize");
     if (fft < 0 or fft & 1)
     {
         warn("Invalid FFTSize {}: must be an even integer >= 0. (powers of 2 work best)", fft);
@@ -486,6 +487,8 @@ void pulse_viz_update_settings(quasar_settings_t* settings)
         kFFT[0] = (float) kfr::exp(kfr::log10(0.01) / (freq / (fftSize - fftOverlap) * (double) envFFT[0] * 0.001));
         kFFT[1] = (float) kfr::exp(kfr::log10(0.01) / (freq / (fftSize - fftOverlap) * (double) envFFT[1] * 0.001));
     }
+
+    lk.unlock();
 
     if (needs_reinit)
     {
