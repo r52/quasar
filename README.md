@@ -68,6 +68,7 @@ Source code is [available on GitHub](https://github.com/r52/quasar).
 - gcc/g++ 11 or later, or Clang 16 or later
   - Tested on Ubuntu 22.04 using both g++ 11 and 12
   - Clang 15 and earlier fails to compile gcc's implementation of the C++20 ranges library, which is used in Quasar
+  - Clang is required if you wish to build the `pulse_viz` sample extension
 - [vcpkg](https://github.com/microsoft/vcpkg) dependencies, for example including but not limited to the following Debian-based packages:
   - `build-essential tar curl zip unzip pkg-config`
 
@@ -118,7 +119,7 @@ cmake --install ./build
 
 ## Acknowledgements
 
-- The `win_audio_viz` extension is ported from [Rainmeter's AudioLevel plugin](https://github.com/rainmeter/rainmeter/blob/master/Plugins/PluginAudioLevel/)
+- The `win_audio_viz` and `pulse_viz` extensions are ported from [Rainmeter's AudioLevel plugin](https://github.com/rainmeter/rainmeter/blob/master/Plugins/PluginAudioLevel/)
   - [Rainmeter](https://github.com/rainmeter/rainmeter) is licensed under GPLv2
 - The `win_visualizer_webgl` widget is adapted from the [three.js webaudio visualizer demo](https://threejs.org/examples/webaudio_visualizer.html)
   - [three.js](https://github.com/mrdoob/three.js) is licensed under the MIT license

@@ -23,12 +23,26 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        builder: [windows-clang, ubuntu-gcc, ubuntu-clang]
         include:
-          - os: windows-latest
+          - builder: windows-clang
+            os: windows-latest
             arch: "win64_msvc2019_64"
-          - os: ubuntu-latest
+            cc: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe'
+            cxx: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe'
+            g: '-G "Visual Studio 17 2022" -T ClangCL,host=x64 -A x64'
+          - builder: ubuntu-gcc
+            os: ubuntu-latest
             arch: "gcc_64"
+            cc: gcc-12
+            cxx: g++-12
+            g: "-G Ninja"
+          - builder: ubuntu-clang
+            os: ubuntu-latest
+            arch: "gcc_64"
+            cc: clang-16
+            cxx: clang++-16
+            g: "-G Ninja"
 
     name: Build Quasar
     runs-on: ${{ matrix.os }}
@@ -48,21 +62,26 @@ jobs:
           arch: ${{ matrix.arch }}
           modules: qtwebengine qtpositioning qtwebchannel qtnetworkauth qtserialport
 
+      - name: Set up Ninja
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y ninja-build
+
+      - name: Set up Clang
+        if: matrix.builder == 'ubuntu-clang'
+        uses: egor-tensin/setup-clang@v1
+        with:
+          version: 16
+
       - name: Cache vcpkg
         uses: lukka/run-vcpkg@v10
         with:
           vcpkgJsonGlob: "vcpkg.json"
 
-      - name: Configure Project Windows
-        if: runner.os == 'Windows'
-        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE "-DCMAKE_C_COMPILER:FILEPATH=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe" "-DCMAKE_CXX_COMPILER:FILEPATH=C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe" -S./ -B./build -G "Visual Studio 17 2022" -T ClangCL,host=x64 -A x64
-
-      - name: Configure Project Linux
-        if: runner.os == 'Linux'
+      - name: Configure Project
         env:
-          CC: gcc-12
-          CXX: g++-12
-        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build ${{ matrix.g }}
 
       - name: Build Project
         run: cmake --build ./build --config Release --

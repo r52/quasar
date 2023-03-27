@@ -2,7 +2,7 @@
 
 #include <chrono>
 #include <condition_variable>
-#include <mutex>
+#include <shared_mutex>
 #include <thread>
 
 #include <spdlog/spdlog.h>
@@ -28,7 +28,7 @@ public:
             {
                 {
                     std::unique_lock lk(mtx);
-                    if (cv.wait_for(lk, nextSleep, [&] {
+                    if (cv.wait_for(lk, token, nextSleep, [&] {
                             return token.stop_requested();
                         }))
                     {
@@ -52,21 +52,15 @@ public:
     {
         if (thread.joinable())
         {
-            {
-                std::lock_guard lk(mtx);
-                thread.request_stop();
-            }
-
-            cv.notify_one();
-
+            thread.request_stop();
             thread.join();
         }
     }
 
 private:
-    const std::string       name{};
-    std::mutex              mtx;
-    std::condition_variable cv;
-    int                     interval;
-    std::jthread            thread;
+    const std::string           name{};
+    std::shared_mutex           mtx;
+    std::condition_variable_any cv;
+    int                         interval;
+    std::jthread                thread;
 };

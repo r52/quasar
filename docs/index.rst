@@ -173,6 +173,7 @@ Resources
 
   win_simple_perf
   win_audio_viz
+  pulse_viz
 
 .. toctree::
    :maxdepth: 1
