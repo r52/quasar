@@ -59,6 +59,10 @@ jobs:
           arch: ${{ matrix.arch }}
           modules: qtwebengine qtpositioning qtwebchannel qtnetworkauth qtserialport
 
+      - name: Set up Ninja
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y ninja-build
+
       - name: Set up Clang
         if: matrix.builder == 'ubuntu-clang'
         uses: egor-tensin/setup-clang@v1
@@ -79,7 +83,7 @@ jobs:
         env:
           CC: ${{ matrix.cc }}
           CXX: ${{ matrix.cxx }}
-        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G "Unix Makefiles"
+        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G Ninja
 
       - name: Build Project
         run: cmake --build ./build --config Release --
