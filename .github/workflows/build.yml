@@ -30,16 +30,19 @@ jobs:
             arch: "win64_msvc2019_64"
             cc: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe'
             cxx: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe'
+            g: '-G "Visual Studio 17 2022" -T ClangCL,host=x64 -A x64'
           - builder: ubuntu-gcc
             os: ubuntu-latest
             arch: "gcc_64"
             cc: gcc-12
             cxx: g++-12
+            g: "-G Ninja"
           - builder: ubuntu-clang
             os: ubuntu-latest
             arch: "gcc_64"
             cc: clang-16
             cxx: clang++-16
+            g: "-G Ninja"
 
     name: Build Quasar
     runs-on: ${{ matrix.os }}
@@ -74,16 +77,11 @@ jobs:
         with:
           vcpkgJsonGlob: "vcpkg.json"
 
-      - name: Configure Project Windows
-        if: runner.os == 'Windows'
-        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE "-DCMAKE_C_COMPILER:FILEPATH=${{ matrix.cc }}" "-DCMAKE_CXX_COMPILER:FILEPATH=${{ matrix.cxx }}" -S./ -B./build -G "Visual Studio 17 2022" -T ClangCL,host=x64 -A x64
-
-      - name: Configure Project Linux
-        if: runner.os == 'Linux'
+      - name: Configure Project
         env:
           CC: ${{ matrix.cc }}
           CXX: ${{ matrix.cxx }}
-        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build -G Ninja
+        run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build ${{ matrix.g }}
 
       - name: Build Project
         run: cmake --build ./build --config Release --
