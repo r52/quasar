@@ -77,7 +77,7 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), updateManager(new QNetwor
 
     // Initialize late components
     server  = std::make_shared<Server>(config);
-    manager = std::make_shared<WidgetManager>(server);
+    manager = std::make_shared<WidgetManager>(server, config);
 
     // Setup system tray
     createTrayMenu();
@@ -116,7 +116,7 @@ Quasar::Quasar(QWidget* parent) : QMainWindow(parent), updateManager(new QNetwor
     createDirectories();
 
     // Load widgets
-    manager->LoadStartupWidgets(config);
+    manager->LoadStartupWidgets();
 
     if (Settings::internal.update_check.GetValue())
     {
@@ -312,7 +312,7 @@ void Quasar::openWidget()
         QFileInfo info(fname);
         Settings::internal.lastpath.SetValue(info.canonicalPath().toStdString());
 
-        manager->LoadWidget(fname.toStdString(), config, true);
+        manager->LoadWidget(fname.toStdString(), true);
     }
 }
 

@@ -2,6 +2,7 @@
 
 #include "quasarwidget.h"
 
+#include "common/config.h"
 #include "common/settings.h"
 #include "common/util.h"
 #include "server/server.h"
@@ -36,7 +37,7 @@ namespace
     };
 }  // namespace
 
-WidgetManager::WidgetManager(std::shared_ptr<Server> serv) : server{serv}
+WidgetManager::WidgetManager(std::shared_ptr<Server> serv, std::shared_ptr<Config> cfg) : server{serv}, config{cfg}
 {
     auto cookiesfile = Settings::internal.cookies.GetValue();
 
@@ -96,7 +97,7 @@ WidgetManager::~WidgetManager()
     widgetMap.clear();
 }
 
-bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Config> config, bool userAction)
+bool WidgetManager::LoadWidget(const std::string& filename, bool userAction)
 {
     if (filename.empty())
     {
@@ -181,7 +182,7 @@ bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Conf
 
         SPDLOG_INFO("Loading widget \"{}\" ({})", widgetName, def.fullpath);
 
-        auto widget = std::make_unique<QuasarWidget>(widgetName, def, server.lock(), shared_from_this(), config);
+        auto widget = std::make_unique<QuasarWidget>(widgetName, def, server.lock(), shared_from_this(), config.lock());
 
         widget->show();
 
@@ -244,13 +245,13 @@ void WidgetManager::CloseWidget(QuasarWidget* widget)
     }
 }
 
-void WidgetManager::LoadStartupWidgets(std::shared_ptr<Config> config)
+void WidgetManager::LoadStartupWidgets()
 {
     auto loaded = getLoadedWidgetsList();
 
     for (auto&& file : loaded)
     {
-        LoadWidget(file, config, false);
+        LoadWidget(file, false);
     }
 }
 
@@ -301,4 +302,5 @@ void WidgetManager::saveLoadedWidgetsList(const std::vector<std::string>& list)
     auto amend = fmt::format("{}", fmt::join(list, ","));
 
     Settings::internal.loaded_widgets.SetValue(amend);
+    config.lock()->Save();
 }

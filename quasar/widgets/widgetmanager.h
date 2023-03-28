@@ -21,13 +21,13 @@ public:
     WidgetManager(const WidgetManager&)             = delete;
     WidgetManager& operator= (const WidgetManager&) = delete;
 
-    WidgetManager(std::shared_ptr<Server> serv);
+    WidgetManager(std::shared_ptr<Server> serv, std::shared_ptr<Config> cfg);
     ~WidgetManager();
 
-    bool                       LoadWidget(const std::string& filename, std::shared_ptr<Config> config, bool userAction);
+    bool                       LoadWidget(const std::string& filename, bool userAction);
     void                       CloseWidget(QuasarWidget* widget);
 
-    void                       LoadStartupWidgets(std::shared_ptr<Config> config);
+    void                       LoadStartupWidgets();
 
     std::vector<QuasarWidget*> GetWidgets();
 
@@ -39,8 +39,10 @@ private:
     void                      saveLoadedWidgetsList(const std::vector<std::string>& list);
 
     WidgetMapType             widgetMap;
-    std::weak_ptr<Server>     server;
     WidgetChangedCallback     widgetChangedCb;
+
+    std::weak_ptr<Server>     server{};
+    std::weak_ptr<Config>     config{};
 
     mutable std::shared_mutex mutex;
 };
