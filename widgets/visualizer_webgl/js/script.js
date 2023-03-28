@@ -1,5 +1,5 @@
 let websocket = null;
-const source = "win_audio_viz/" + src;
+const source = `${extension}/${src}`;
 
 const vertexShader = `
 varying vec2 vUv;
@@ -79,13 +79,13 @@ let sound_data;
 // acceptable sources
 const sources = {
   band: {
-    size: "win_audio_viz/Bands",
+    size: `${extension}/Bands`,
     calc: function (e) {
       return e.val;
     },
   },
   fft: {
-    size: "win_audio_viz/FFTSize",
+    size: `${extension}/FFTSize`,
     calc: function (e) {
       return e.val / 2 + 1;
     },
@@ -106,8 +106,8 @@ function subscribe() {
 function init(dat) {
   let bSize = 0;
 
-  if ("win_audio_viz/settings" in dat) {
-    let settings = dat["win_audio_viz/settings"];
+  if (`${extension}/settings` in dat) {
+    let settings = dat[`${extension}/settings`];
 
     settings.forEach(function (e) {
       if (e.name === sources[src].size) {
@@ -187,7 +187,7 @@ function parseMsg(msg) {
     return;
   }
 
-  if ("win_audio_viz/settings" in data) {
+  if (`${extension}/settings` in data) {
     init(data);
     return;
   }
