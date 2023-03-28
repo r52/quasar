@@ -75,7 +75,7 @@ jobs:
       - name: Cache vcpkg
         uses: lukka/run-vcpkg@v10
         with:
-          vcpkgJsonGlob: "vcpkg.json"
+          prependedCacheKey: ${{ matrix.builder }}
 
       - name: Configure Project
         env:
