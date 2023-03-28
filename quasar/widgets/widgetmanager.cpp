@@ -20,7 +20,16 @@
 #include <jsoncons/json.hpp>
 #include <spdlog/spdlog.h>
 
+JSONCONS_N_MEMBER_TRAITS(ExtensionRequirement, 2, name, platform);
 JSONCONS_N_MEMBER_TRAITS(WidgetDefinition, 5, name, width, height, startFile, transparentBg, clickable, dataserver, remoteAccess, required);
+
+#if defined(Q_OS_WIN)
+constexpr auto _ostype = "windows";
+#elif defined(Q_OS_LINUX)
+constexpr auto _ostype = "linux";
+#else
+constexpr auto _ostype = "unknown";
+#endif
 
 namespace
 {
@@ -140,10 +149,36 @@ bool WidgetManager::LoadWidget(const std::string& filename, bool userAction)
 
         for (auto p : def.required.value())
         {
-            if (!serv->FindExtension(p))
+            std::string extname;
+
+            if (std::holds_alternative<std::string>(p))
+            {
+                extname = std::get<std::string>(p);
+            }
+            else if (std::holds_alternative<ExtensionRequirement>(p))
+            {
+                auto req = std::get<ExtensionRequirement>(p);
+
+                if (req.platform != "windows" && req.platform != "linux")
+                {
+                    SPDLOG_WARN("Unrecognized platform requirement: {}", req.platform);
+                    return false;
+                }
+
+                if (req.platform == _ostype)
+                {
+                    extname = req.name;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            if (!serv->FindExtension(extname))
             {
                 pass    = false;
-                failext = p;
+                failext = extname;
                 break;
             }
         }
