@@ -18,7 +18,9 @@ Quasar is licensed under GPL-3.0. All sample widgets are licensed under the MIT 
 
 ## System Requirements
 
-An OS and computer capable of running Chrome. Only 64-bit OSes are supported. On Windows, only Windows 10 and above are supported. On Linux, only X11 desktop environments with system tray support are supported.
+An OS and computer capable of running Chrome, preferably with Hardware Acceleration capabilities. Only 64-bit OSes are supported. On Windows, only Windows 10 and above are supported. On Linux, only X11 desktop environments with system tray support are supported.
+
+While Quasar is reasonably fast and lightweight, do not expect Quasar to be power efficient, especially when running heavier widgets like the [WebGL visualizer](widgets/visualizer_webgl).
 
 #### Note Regarding Wayland
 
@@ -87,7 +89,7 @@ cd quasar
 
 #### Windows
 
-The following example configures the project to build using the `clang-cl` toolkit with Visual Studio Communitry 2022 (plus the Clang MSVC toolkit) installed:
+The following example configures the project to build using the `clang-cl` toolkit with Visual Studio Community 2022 (plus the Clang MSVC toolkit) installed:
 
 ```pwsh
 cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE "-DCMAKE_C_COMPILER:FILEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\x64\bin\clang-cl.exe" "-DCMAKE_CXX_COMPILER:FILEPATH=C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\Llvm\x64\bin\clang-cl.exe" -S./ -B./build -G "Visual Studio 17 2022" -T ClangCL,host=x64 -A x64
