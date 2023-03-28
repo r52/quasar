@@ -2,6 +2,7 @@
 
 #include "quasarwidget.h"
 
+#include "common/config.h"
 #include "common/settings.h"
 #include "common/util.h"
 #include "server/server.h"
@@ -19,7 +20,16 @@
 #include <jsoncons/json.hpp>
 #include <spdlog/spdlog.h>
 
+JSONCONS_N_MEMBER_TRAITS(ExtensionRequirement, 2, name, platform);
 JSONCONS_N_MEMBER_TRAITS(WidgetDefinition, 5, name, width, height, startFile, transparentBg, clickable, dataserver, remoteAccess, required);
+
+#if defined(Q_OS_WIN)
+constexpr auto _ostype = "windows";
+#elif defined(Q_OS_LINUX)
+constexpr auto _ostype = "linux";
+#else
+constexpr auto _ostype = "unknown";
+#endif
 
 namespace
 {
@@ -36,7 +46,7 @@ namespace
     };
 }  // namespace
 
-WidgetManager::WidgetManager(std::shared_ptr<Server> serv) : server{serv}
+WidgetManager::WidgetManager(std::shared_ptr<Server> serv, std::shared_ptr<Config> cfg) : server{serv}, config{cfg}
 {
     auto cookiesfile = Settings::internal.cookies.GetValue();
 
@@ -96,7 +106,7 @@ WidgetManager::~WidgetManager()
     widgetMap.clear();
 }
 
-bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Config> config, bool userAction)
+bool WidgetManager::LoadWidget(const std::string& filename, bool userAction)
 {
     if (filename.empty())
     {
@@ -139,10 +149,36 @@ bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Conf
 
         for (auto p : def.required.value())
         {
-            if (!serv->FindExtension(p))
+            std::string extname;
+
+            if (std::holds_alternative<std::string>(p))
+            {
+                extname = std::get<std::string>(p);
+            }
+            else if (std::holds_alternative<ExtensionRequirement>(p))
+            {
+                auto req = std::get<ExtensionRequirement>(p);
+
+                if (req.platform != "windows" && req.platform != "linux")
+                {
+                    SPDLOG_WARN("Unrecognized platform requirement: {}", req.platform);
+                    return false;
+                }
+
+                if (req.platform == _ostype)
+                {
+                    extname = req.name;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            if (!serv->FindExtension(extname))
             {
                 pass    = false;
-                failext = p;
+                failext = extname;
                 break;
             }
         }
@@ -181,7 +217,7 @@ bool WidgetManager::LoadWidget(const std::string& filename, std::shared_ptr<Conf
 
         SPDLOG_INFO("Loading widget \"{}\" ({})", widgetName, def.fullpath);
 
-        auto widget = std::make_unique<QuasarWidget>(widgetName, def, server.lock(), shared_from_this(), config);
+        auto widget = std::make_unique<QuasarWidget>(widgetName, def, server.lock(), shared_from_this(), config.lock());
 
         widget->show();
 
@@ -220,7 +256,7 @@ void WidgetManager::CloseWidget(QuasarWidget* widget)
         {
             assert((it->second.get()) == widget);
             // Release unique_ptr ownership to allow Qt gc to kick in
-            it->second.release();
+            (void) it->second.release();
             widgetMap.erase(it);
         }
 
@@ -244,13 +280,13 @@ void WidgetManager::CloseWidget(QuasarWidget* widget)
     }
 }
 
-void WidgetManager::LoadStartupWidgets(std::shared_ptr<Config> config)
+void WidgetManager::LoadStartupWidgets()
 {
     auto loaded = getLoadedWidgetsList();
 
     for (auto&& file : loaded)
     {
-        LoadWidget(file, config, false);
+        LoadWidget(file, false);
     }
 }
 
@@ -301,4 +337,5 @@ void WidgetManager::saveLoadedWidgetsList(const std::vector<std::string>& list)
     auto amend = fmt::format("{}", fmt::join(list, ","));
 
     Settings::internal.loaded_widgets.SetValue(amend);
+    config.lock()->Save();
 }

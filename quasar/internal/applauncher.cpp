@@ -4,7 +4,6 @@
 
 #include "api/extension_support.hpp"
 #include "common/settings.h"
-#include "extension/extension.h"
 
 #include <QDesktopServices>
 #include <QFileInfo>

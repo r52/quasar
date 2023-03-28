@@ -1,17 +1,17 @@
 let websocket = null;
-const source = "win_audio_viz/" + src;
-let rate = 90; // milliseconds
+const source = `${extension}/${src}`;
+let rate = 10; // milliseconds
 
 // acceptable sources
 const sources = {
   band: {
-    size: "win_audio_viz/Bands",
+    size: `${extension}/Bands`,
     calc: function (e) {
       return e.val;
     },
   },
   fft: {
-    size: "win_audio_viz/FFTSize",
+    size: `${extension}/FFTSize`,
     calc: function (e) {
       return e.val / 2 + 1;
     },
@@ -32,8 +32,8 @@ function subscribe() {
 function initialize(dat) {
   const element = `<div><i></i></div>`;
 
-  if ("win_audio_viz/settings" in dat) {
-    let settings = dat["win_audio_viz/settings"];
+  if (`${extension}/settings` in dat) {
+    let settings = dat[`${extension}/settings`];
 
     settings.forEach(function (e) {
       if (e.name === sources[src].size) {
@@ -51,12 +51,12 @@ function initialize(dat) {
     });
   }
 
-  if ("rates" in dat["win_audio_viz/metadata"]) {
-    let rates = dat["win_audio_viz/metadata"]["rates"];
+  if ("rates" in dat[`${extension}/metadata`]) {
+    let rates = dat[`${extension}/metadata`]["rates"];
 
     rates.forEach(function (e) {
       if (e.name === source) {
-        rate = Math.round(e.rate * 0.9);
+        rate = Math.round(e.rate * 0.0006);
       }
     });
   }
@@ -88,7 +88,7 @@ function parseMsg(msg) {
     return;
   }
 
-  if ("win_audio_viz/settings" in data) {
+  if (`${extension}/settings` in data) {
     initialize(data);
     return;
   }

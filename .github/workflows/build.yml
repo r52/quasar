@@ -61,6 +61,7 @@ jobs:
           version: "6.4.3"
           arch: ${{ matrix.arch }}
           modules: qtwebengine qtpositioning qtwebchannel qtnetworkauth qtserialport
+          cache: "true"
 
       - name: Set up Ninja
         if: runner.os == 'Linux'
@@ -75,6 +76,7 @@ jobs:
       - name: Cache vcpkg
         uses: lukka/run-vcpkg@v10
         with:
+          prependedCacheKey: ${{ matrix.builder }}
           vcpkgJsonGlob: "vcpkg.json"
 
       - name: Configure Project
