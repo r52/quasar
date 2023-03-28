@@ -277,3 +277,6 @@ docs/xml/
 
 # quasar specific
 version.h
+
+# clang
+.cache/

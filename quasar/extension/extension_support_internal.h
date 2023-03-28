@@ -12,8 +12,6 @@
 #include <variant>
 #include <vector>
 
-#include "common/settings.h"
-
 #include <jsoncons/json.hpp>
 
 using SelectionOptionsVector = std::vector<std::pair<std::string, std::string>>;

@@ -220,7 +220,7 @@ void WidgetManager::CloseWidget(QuasarWidget* widget)
         {
             assert((it->second.get()) == widget);
             // Release unique_ptr ownership to allow Qt gc to kick in
-            it->second.release();
+            (void) it->second.release();
             widgetMap.erase(it);
         }
 
