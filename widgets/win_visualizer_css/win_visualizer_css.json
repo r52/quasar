@@ -1,9 +1,0 @@
-{
-  "name": "win_visualizer_css",
-  "width": 500,
-  "height": 200,
-  "startFile": "index.html",
-  "transparentBg": true,
-  "required": ["win_audio_viz"],
-  "dataserver": true
-}
