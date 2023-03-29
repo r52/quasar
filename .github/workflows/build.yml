@@ -1,6 +1,18 @@
 name: Build Quasar
 
 on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+      - "**.rst"
+      - "widgets/**"
+      - "**.js"
+      - "**.html"
+      - "**.css"
+      - "**.yml"
   pull_request:
     branches:
       - master
@@ -37,12 +49,14 @@ jobs:
             cc: gcc-12
             cxx: g++-12
             g: "-G Ninja"
+            packages: ninja-build
           - builder: ubuntu-clang
             os: ubuntu-latest
             arch: "gcc_64"
             cc: clang-16
             cxx: clang++-16
             g: "-G Ninja"
+            packages: ninja-build
 
     name: Build Quasar
     runs-on: ${{ matrix.os }}
@@ -63,9 +77,11 @@ jobs:
           modules: qtwebengine qtpositioning qtwebchannel qtnetworkauth qtserialport
           cache: "true"
 
-      - name: Set up Ninja
+      - name: Set up Packages
         if: runner.os == 'Linux'
-        run: sudo apt-get install -y ninja-build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.packages }}
 
       - name: Set up Clang
         if: matrix.builder == 'ubuntu-clang'
@@ -94,7 +110,7 @@ jobs:
         run: |
           $QUASAR_VERSION = (Select-String -Path ./quasar/CMakeLists.txt -Pattern 'project\(quasar VERSION ([0-9\.]+)\)') | %{$_.Matches.Groups[1].value}
           $RELEASE_PACKAGE_FILE = "quasar-windows-v$QUASAR_VERSION.zip"
-          Compress-Archive ./build/quasar/Release/* $RELEASE_PACKAGE_FILE
+          7z a ./build/quasar/Release/* $RELEASE_PACKAGE_FILE
           $release_filepath = Get-ChildItem $RELEASE_PACKAGE_FILE | %{$_[0].FullName}
           echo "RELEASE_PACKAGE_PATH=$release_filepath" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
@@ -103,7 +119,7 @@ jobs:
         shell: powershell
         run: |
           $WIDGETS_PACKAGE_FILE = "quasar-sample-widgets.zip"
-          Compress-Archive ./widgets/ $WIDGETS_PACKAGE_FILE
+          7z a ./widgets/ $WIDGETS_PACKAGE_FILE
           $widgets_filepath = Get-ChildItem $WIDGETS_PACKAGE_FILE | %{$_[0].FullName}
           echo "WIDGETS_PACKAGE_FILE=$widgets_filepath" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
