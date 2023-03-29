@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<Package>
-    <DisplayName>Quasar</DisplayName>
-    <Description>Quasar application</Description>
-    <Version inheritVersionFrom="quasar.main">2.0.2</Version>
-    <ReleaseDate>2019-10-11</ReleaseDate>
-    <Default>false</Default>
-</Package>
