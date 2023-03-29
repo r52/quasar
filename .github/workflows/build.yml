@@ -95,6 +95,7 @@ jobs:
           version: 16
 
       - name: Setup MSVC Environment (Windows)
+        if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Cache vcpkg
@@ -118,7 +119,7 @@ jobs:
         run: |
           $QUASAR_VERSION = (Select-String -Path ./quasar/CMakeLists.txt -Pattern 'project\(quasar VERSION ([0-9\.]+)\)') | %{$_.Matches.Groups[1].value}
           $RELEASE_PACKAGE_FILE = "quasar-windows-v$QUASAR_VERSION.zip"
-          7z a ./build/quasar/Release/* $RELEASE_PACKAGE_FILE
+          7z a $RELEASE_PACKAGE_FILE ./build/quasar/Release/*
           $release_filepath = Get-ChildItem $RELEASE_PACKAGE_FILE | %{$_[0].FullName}
           echo "RELEASE_PACKAGE_PATH=$release_filepath" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
@@ -127,7 +128,7 @@ jobs:
         shell: powershell
         run: |
           $WIDGETS_PACKAGE_FILE = "quasar-sample-widgets.zip"
-          7z a ./widgets/ $WIDGETS_PACKAGE_FILE
+          7z a $WIDGETS_PACKAGE_FILE ./widgets/
           $widgets_filepath = Get-ChildItem $WIDGETS_PACKAGE_FILE | %{$_[0].FullName}
           echo "WIDGETS_PACKAGE_FILE=$widgets_filepath" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
 
