@@ -40,9 +40,10 @@ jobs:
           - builder: windows-clang
             os: windows-latest
             arch: "win64_msvc2019_64"
-            cc: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe'
-            cxx: 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\x64\bin\clang-cl.exe'
-            g: '-G "Visual Studio 17 2022" -T ClangCL,host=x64 -A x64'
+            cc: clang-cl.exe
+            cxx: clang-cl.exe
+            g: '-G "Ninja Multi-Config"'
+            packages: ninja
           - builder: ubuntu-gcc
             os: ubuntu-latest
             arch: "gcc_64"
@@ -77,17 +78,24 @@ jobs:
           modules: qtwebengine qtpositioning qtwebchannel qtnetworkauth qtserialport
           cache: "true"
 
-      - name: Set up Packages
+      - name: Set up Packages (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y ${{ matrix.packages }}
 
+      - name: Set up Packages (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ${{ matrix.packages }}
+
       - name: Set up Clang
-        if: matrix.builder == 'ubuntu-clang'
+        if: matrix.builder == 'ubuntu-clang' || matrix.builder == 'windows-clang'
         uses: egor-tensin/setup-clang@v1
         with:
           version: 16
+
+      - name: Setup MSVC Environment (Windows)
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Cache vcpkg
         uses: lukka/run-vcpkg@v10
@@ -102,7 +110,7 @@ jobs:
         run: cmake --no-warn-unused-cli -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE -S./ -B./build ${{ matrix.g }}
 
       - name: Build Project
-        run: cmake --build ./build --config Release --
+        run: cmake --build ./build --config Release --target all --
 
       - name: Package Quasar
         if: runner.os == 'Windows'
