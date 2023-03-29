@@ -80,17 +80,18 @@ Windows
 ~~~~~~~~~~~~~~~~~~~
 
 * `Visual Studio 2022 or later <https://www.visualstudio.com/>`_ is required
-
-  * The Clang MSVC toolkit is also required if you wish to build the ``win_audio_viz`` sample extension
+* Clang (or the Clang MSVC toolkit in Visual Studio) is required if you wish to build the ``win_audio_viz`` sample extension
 
 
 Linux
 ~~~~~~~~~~~~~~~~~
 
-* gcc/g++ 11 or later, or Clang 15 or later
+* gcc/g++ 11 or later, or Clang 16 or later
 
   * Tested on Ubuntu 22.04 using both g++ 11 and 12
+  * Clang 15 and earlier fails to compile gcc's implementation of the C++20 ranges library, which is used in Quasar
 
+* Clang is required if you wish to build the ``pulse_viz`` sample extension
 * `vcpkg <https://github.com/microsoft/vcpkg>`_ dependencies, for example including but not limited to the following Debian-based packages:
 
   * ``build-essential tar curl zip unzip pkg-config``
