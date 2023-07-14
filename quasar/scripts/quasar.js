@@ -10,5 +10,5 @@ function quasar_authenticate(socket) {
 }
 
 function quasar_create_websocket() {
-  return new WebSocket("ws://127.0.0.1:%1");
+  return new WebSocket("ws://localhost:%1");
 }

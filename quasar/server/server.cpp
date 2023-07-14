@@ -22,9 +22,9 @@
 #include <fmt/core.h>
 #include <jsoncons/json.hpp>
 
-#define SEND_CLIENT_ERROR(d, ...)                 \
-  sendErrorToClient(d, fmt::format(__VA_ARGS__)); \
-  SPDLOG_WARN(__VA_ARGS__);
+#define SEND_CLIENT_ERROR(d, ...)                   \
+    sendErrorToClient(d, fmt::format(__VA_ARGS__)); \
+    SPDLOG_WARN(__VA_ARGS__);
 
 JSONCONS_N_MEMBER_TRAITS(ClientMsgParams, 0, topics, params, code, args);
 JSONCONS_ALL_MEMBER_TRAITS(ClientMessage, method, params);
@@ -114,7 +114,7 @@ Server::Server(std::shared_ptr<Config> cfg) :
 
                            SPDLOG_INFO("Client disconnected.");
                        }})
-            .listen("127.0.0.1",
+            .listen("localhost",
                 Settings::internal.port.GetValue(),
                 [](auto* socket) {
                     if (socket)
