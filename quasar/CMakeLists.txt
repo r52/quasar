@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.23)
 
-project(quasar VERSION 3.0.0)
+project(quasar VERSION 3.0.1)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)

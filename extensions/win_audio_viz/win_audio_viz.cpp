@@ -1238,7 +1238,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     }
 }
 
-quasar_ext_info_fields_t fields = {.version = "3.0",
+quasar_ext_info_fields_t fields = {.version = "3.0.1",
     .author                                 = "r52",
     .description                            = "Supplies desktop audio frequency data. Adapted from Rainmeter's AudioLevel plugin.",
     .url                                    = "https://github.com/r52/quasar"};
