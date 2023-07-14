@@ -106,11 +106,10 @@ int main(int argc, char* argv[])
     // Unpack
     std::cout << "Unpacking " << file.string() << "..." << std::endl;
 
-    void*   reader    = NULL;
     int32_t err       = MZ_OK;
     int32_t err_close = MZ_OK;
 
-    mz_zip_reader_create(&reader);
+    void*   reader    = mz_zip_reader_create();
     mz_zip_reader_set_entry_cb(reader, NULL, minizip_extract_entry_cb);
 
     err = mz_zip_reader_open_file(reader, file.string().c_str());

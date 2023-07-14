@@ -78,7 +78,7 @@ namespace
             if (reply->error() != QNetworkReply::NoError)
             {
                 auto errstr = reply->errorString().toStdString();
-                SPDLOG_WARN("AJAX: {} - {}", reply->error(), errstr);
+                SPDLOG_WARN("AJAX: {} - {}", (int) reply->error(), errstr);
                 quasar_append_error(hData, errstr.c_str());
                 return false;
             }
@@ -108,7 +108,7 @@ namespace
             if (reply->error() != QNetworkReply::NoError)
             {
                 auto errstr = reply->errorString().toStdString();
-                SPDLOG_WARN("AJAX: {} - {}", reply->error(), errstr);
+                SPDLOG_WARN("AJAX: {} - {}", (int) reply->error(), errstr);
                 quasar_append_error(hData, errstr.c_str());
                 return false;
             }
