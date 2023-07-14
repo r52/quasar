@@ -28,7 +28,7 @@ Quasar does not work properly on Wayland compositors due to Wayland not supporti
 
 #### Qt on Linux
 
-Quasar has been built and tested on the latest pre-built binaries supplied by Qt, which at the time of writing is Qt 6.4.3 built against OpenSSL 1.1.1. The Qt version offered by Ubuntu 22.04's package repository is Qt 6.2.4 built against OpenSSL 3.0. As of Ubuntu 22.04, OpenSSL 3 is the default and version 1.1.1 is no longer offered in the package repository. Building Quasar on versions of Qt older than 6.4 may work but is not supported. Ensure that the version of the OpenSSL libraries installed (i.e `libcrypto.so` and `libssl.so`) matches the version your Qt installation is built against or SSL functionality will fail.
+Quasar has been built and tested on the latest pre-built binaries supplied by Qt, which at the time of writing is Qt 6.5.1 built against OpenSSL 1.1.1. The Qt version offered by Ubuntu 22.04's package repository is Qt 6.2.4 built against OpenSSL 3.0. As of Ubuntu 22.04, OpenSSL 3 is the default and version 1.1.1 is no longer offered in the package repository. Building Quasar on versions of Qt older than 6.4 may work but is not supported. Ensure that the version of the OpenSSL libraries installed (i.e `libcrypto.so` and `libssl.so`) matches the version your Qt installation is built against or SSL functionality will fail.
 
 ## Getting Started
 
@@ -56,8 +56,8 @@ Source code is [available on GitHub](https://github.com/r52/quasar).
   - Network Authorization (qtnetworkauth)
   - Serial Port (qtserialport)
 - The `Qt6_DIR` environment variable defined for your Qt installation
-  - Windows example: `C:\Qt\6.4.3\msvc2019_64`
-  - Linux example: `$HOME/Qt/6.4.3/gcc_64/`
+  - Windows example: `C:\Qt\6.5.1\msvc2019_64`
+  - Linux example: `$HOME/Qt/6.5.1/gcc_64/`
   - On Linux, additional dependencies may be needed for Qt such as the packages `libgl1-mesa-dev libglvnd-dev`
 
 ### Windows
