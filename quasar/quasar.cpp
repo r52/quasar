@@ -348,7 +348,7 @@ void Quasar::handleUpdateRequest(QNetworkReply* reply)
     if (reply->error())
     {
         auto errstr = reply->errorString().toStdString();
-        SPDLOG_WARN("Update check failed: {} - {}", reply->error(), errstr);
+        SPDLOG_WARN("Update check failed: {} - {}", (int) reply->error(), errstr);
         return;
     }
 
@@ -445,7 +445,7 @@ void Quasar::handleUpdateRequest(QNetworkReply* reply)
                                 dlfile->deleteLater();
 
                                 auto errstr = dlreply->errorString().toStdString();
-                                SPDLOG_WARN("File download failed: {} - {}", reply->error(), errstr);
+                                SPDLOG_WARN("File download failed: {} - {}", (int) reply->error(), errstr);
                                 return;
                             }
 

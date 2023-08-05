@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.23)
 
-project(quasar VERSION 3.0.0)
+project(quasar VERSION 3.0.1)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
@@ -16,7 +16,7 @@ find_library(USOCKETS_LIB_RELEASE NAMES uSockets PATHS "${_VCPKG_INSTALLED_DIR}/
 find_library(USOCKETS_LIB_DEBUG   NAMES uSockets PATHS "${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/lib" NO_DEFAULT_PATH)
 find_path(UWEBSOCKETS_INCLUDE_DIRS "uwebsockets/App.h")
 find_path(BSHOSHANY_THREAD_POOL_INCLUDE_DIRS "BS_thread_pool.hpp")
-find_package(Qt6 6.4 CONFIG COMPONENTS Core Gui Widgets Network NetworkAuth Svg WebEngineCore WebEngineWidgets REQUIRED)
+find_package(Qt6 CONFIG COMPONENTS Core Gui Widgets Network NetworkAuth Svg WebEngineCore WebEngineWidgets REQUIRED)
 
 #CPMFindPackage(
 #   NAME glaze
@@ -97,7 +97,7 @@ endif()
 target_link_libraries(quasar PRIVATE extension-api)
 target_link_libraries(quasar PRIVATE fmt::fmt spdlog::spdlog)
 target_link_libraries(quasar PRIVATE jsoncons)
-target_link_libraries(quasar PRIVATE ZLIB::ZLIB $<IF:$<TARGET_EXISTS:uv_a>,uv_a,uv> debug ${USOCKETS_LIB_DEBUG} optimized ${USOCKETS_LIB_RELEASE})
+target_link_libraries(quasar PRIVATE ZLIB::ZLIB $<IF:$<TARGET_EXISTS:libuv::uv_a>,libuv::uv_a,libuv::uv> debug ${USOCKETS_LIB_DEBUG} optimized ${USOCKETS_LIB_RELEASE})
 target_link_libraries(quasar PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network Qt6::NetworkAuth Qt6::Svg Qt6::WebEngineCore Qt6::WebEngineWidgets)
 
 if (TRACY_ENABLE)

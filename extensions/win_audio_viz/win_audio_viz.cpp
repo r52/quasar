@@ -65,21 +65,21 @@ constexpr float normalizeAsFloat(T val)
     return val * imax;
 }
 
-#define qlog(l, ...)                                                      \
-  {                                                                       \
-    auto msg = fmt::format("{}: {}", EXT_NAME, fmt::format(__VA_ARGS__)); \
-    quasar_log(l, msg.c_str());                                           \
-  }
+#define qlog(l, ...)                                                          \
+    {                                                                         \
+        auto msg = fmt::format("{}: {}", EXT_NAME, fmt::format(__VA_ARGS__)); \
+        quasar_log(l, msg.c_str());                                           \
+    }
 
 #define debug(...) qlog(QUASAR_LOG_DEBUG, __VA_ARGS__)
 #define info(...)  qlog(QUASAR_LOG_INFO, __VA_ARGS__)
 #define warn(...)  qlog(QUASAR_LOG_WARNING, __VA_ARGS__)
 
 #define EXIT_ON_ERROR(hres) \
-  if (FAILED(hres))         \
-  {                         \
-    goto Exit;              \
-  }
+    if (FAILED(hres))       \
+    {                       \
+        goto Exit;          \
+    }
 
 template<typename T>
 struct IFaceDeleter
@@ -129,7 +129,7 @@ struct WInterface
 
     constexpr T*  operator->() const { return _data; }
 
-    constexpr     operator bool () const { return (_data != nullptr); }
+    constexpr operator bool () const { return (_data != nullptr); }
 
 private:
     T* _data = nullptr;
@@ -636,7 +636,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
                 {
                     for (auto&& i : std::views::iota((size_t) 0, (m->m_fftSize / 2) + 1))
                     {
-                        output[Measure::TYPE_FFTFREQ][i] = (double) (i * m->m_wfx->nSamplesPerSec / m->m_fftSize);
+                        output[Measure::TYPE_FFTFREQ][i] = (double) i * m->m_wfx->nSamplesPerSec / m->m_fftSize;
                     }
 
                     quasar_set_data_double_vector(hData, output[Measure::TYPE_FFTFREQ]);
@@ -739,7 +739,7 @@ bool win_audio_viz_get_data(size_t srcUid, quasar_data_handle hData, char* args)
 
                                 if (device->GetId(&id) == S_OK and props->GetValue(PKEY_Device_FriendlyName, &varName) == S_OK)
                                 {
-                                    auto device = fmt::format(L"{}: {}", id, varName.pwszVal);
+                                    auto device = fmt::format(L"{}: {}", id.get(), varName.pwszVal);
                                     list.push_back(string_conv(device).c_str());
                                 }
 
@@ -1238,7 +1238,7 @@ void win_audio_viz_update_settings(quasar_settings_t* settings)
     }
 }
 
-quasar_ext_info_fields_t fields = {.version = "3.0",
+quasar_ext_info_fields_t fields = {.version = "3.0.1",
     .author                                 = "r52",
     .description                            = "Supplies desktop audio frequency data. Adapted from Rainmeter's AudioLevel plugin.",
     .url                                    = "https://github.com/r52/quasar"};
